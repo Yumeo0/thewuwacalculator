@@ -4,6 +4,7 @@
                sets by legal Echo piece-count bucket.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { ChevronDown, X } from 'lucide-react'
 import { useAppStore } from '@/application/state'
 import { useCallback, useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react'
@@ -362,7 +363,7 @@ export function AllowedSets({
                         onMouseDown={(event) => event.preventDefault()}
                       >
                           <span className="co-set-dropdown__tile-icon" aria-hidden="true">
-                            <img src={set.icon} alt="" className="co-set-dropdown__icon" onError={withDefIconM} />
+                            <DisplayImage src={set.icon} alt="" className="co-set-dropdown__icon" onError={withDefIconM} />
                           </span>
                         <span className="co-set-dropdown__tile-name">{set.name}</span>
                         <span className="co-set-dropdown__tile-dot" aria-hidden="true" />

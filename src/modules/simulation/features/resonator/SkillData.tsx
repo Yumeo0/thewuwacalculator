@@ -3,6 +3,7 @@
   Description: Resolves and displays runtime-prepared skill data, parameters, hits, and effect descriptions.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { Fragment, type CSSProperties, useMemo, useState } from 'react'
 import type { SkillTabKey } from '@/domain/entities/resonator'
 import type { ResRuntime } from '@/domain/entities/runtime'
@@ -178,7 +179,7 @@ export function SkillData({
                         }
                       }}
                     >
-                      <img src={mate.profile} alt="" onError={withDefResMg} />
+                      <DisplayImage src={mate.profile} alt="" onError={withDefResMg} />
                     </button>
                   )
                 })}

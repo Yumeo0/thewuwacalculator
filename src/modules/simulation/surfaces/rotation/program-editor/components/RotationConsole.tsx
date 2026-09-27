@@ -3,6 +3,7 @@
   Description: Projects executed rotation spans, active-member handoffs, containers, and state tracks.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import {
   useCallback,
   useId,
@@ -495,7 +496,7 @@ export function RotationConsole({ model, members, decimals, selectedId, onSelect
           const member = byId.get(span.memberId)
           if (!member || (span.b - span.a + 1) * slot < 22) return null
           return (
-            <img
+            <DisplayImage
               key={`${span.memberId}-${span.a}-art`} className="rcon__face"
               src={member.profile}
               alt={member.name}

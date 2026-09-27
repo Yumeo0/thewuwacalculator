@@ -4,6 +4,7 @@
                source-state controls, progression edits, and report access.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CSSProperties, RefObject } from 'react'
@@ -187,7 +188,7 @@ function Glyph({ glyph, className }: { glyph: BayGlyph; className: string }) {
   if (glyph.img) {
     return (
       <span className={className}>
-        <img src={glyph.img} alt="" loading="lazy" onError={withDefIconM} />
+        <DisplayImage src={glyph.img} alt="" loading="lazy" onError={withDefIconM} />
       </span>
     )
   }
@@ -565,7 +566,7 @@ export function ModulationView({
           >
             <span className="pgs-view-port" aria-hidden="true">
               {forte.member?.profile ? (
-                <img src={forte.member.profile} alt="" loading="lazy" onError={withDefResMg} />
+                <DisplayImage src={forte.member.profile} alt="" loading="lazy" onError={withDefResMg} />
               ) : null}
             </span>
             <span className="pgs-view-text">

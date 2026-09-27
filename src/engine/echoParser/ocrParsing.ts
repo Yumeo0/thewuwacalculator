@@ -9,7 +9,14 @@ import { listEchoes } from '@/data/catalog/echoCatalogService'
 import { listResSds } from '@/data/catalog/resonatorSeedService'
 import { listWpnsByTy } from '@/data/catalog/weaponCatalogService'
 import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay'
-import { getEchoMgMap, getSetNameMg, getSetNameTo } from '@/engine/echoParser/imageMap'
+import {
+  getEchoMgKeys,
+  getEchoMgMap,
+  getEchoNamFrmKey,
+  isPhantomKey,
+  getSetNameMg,
+  getSetNameTo,
+} from '@/engine/echoParser/imageMap'
 import {
   ATTRIBUTE_REGION,
   BUILD_REGIONS,
@@ -47,10 +54,10 @@ import {
   prldEchoMgs,
   prldSetMgs,
   mtchSetFrst,
-  mtchEchoFrom,
+  rnkEchoFrom,
   loadImage,
 } from '@/engine/echoParser/imageMatching'
-import type { ImageRegion } from '@/engine/echoParser/imageMatching'
+import type { EchoMatch, ImageRegion } from '@/engine/echoParser/imageMatching'
 import { costForMain } from '@/engine/echoParser/echoBuilder'
 import type { AttributeKey } from '@/domain/entities/stats'
 import type { EchoDef } from '@/domain/entities/catalog'
@@ -576,6 +583,20 @@ function slotHasEcho(canvas: HTMLCanvasElement, region: ImageRegion): boolean {
   return ink >= FILLED_PANEL_MIN_INK
 }
 
+// a phantom echo is the rarer sight, and its art is pale enough to sit close to
+// other pale art, so it only takes the slot when it beats the plain art clearly
+const PHANTOM_MARGIN = 0.1
+
+function pickEchoKey(ranked: EchoMatch[]): string | null {
+  const best = ranked[0]
+  if (!best) return null
+  if (!isPhantomKey(best.key)) return best.key
+
+  const plain = ranked.find((match) => !isPhantomKey(match.key))
+  if (!plain || getEchoNamFrmKey(plain.key) === getEchoNamFrmKey(best.key)) return best.key
+  return best.score * (1 + PHANTOM_MARGIN) <= plain.score ? best.key : plain.key
+}
+
 // the sonata marks say which echoes a card can hold, so only those icons load
 function pickSetEchoMgs(
     echoImages: Record<string, string>,
@@ -589,8 +610,9 @@ function pickSetEchoMgs(
   const wanted: Record<string, string> = {}
 
   for (const echo of catalog) {
-    if (echoImages[echo.name] && echo.sets.some((setId) => setIds.has(setId))) {
-      wanted[echo.name] = echoImages[echo.name]
+    if (!echo.sets.some((setId) => setIds.has(setId))) continue
+    for (const key of getEchoMgKeys(echo.name)) {
+      if (echoImages[key]) wanted[key] = echoImages[key]
     }
   }
 
@@ -775,19 +797,20 @@ export async function prsBldFromMg(
         readSlot(index, 7)
         const setName = slotSets[index]
 
-        // filter echo candidates by set and cost
+        // filter echo candidates by set and cost; a candidate brings every form it
+        // has, so a phantom echo is matched against its own art
         let fltrNms: string[] = []
         if (setName !== null) {
           const setId = getSetNameTo()[setName]
           fltrNms = echoCatalog
               .filter((echo) => echo.sets.includes(setId) && String(echo.cost) === cost)
-              .map((echo) => echo.name)
+              .flatMap((echo) => getEchoMgKeys(echo.name))
 
           // if cost filtering removes everything, fall back to set-only filtering
           if (fltrNms.length === 0) {
             fltrNms = echoCatalog
                 .filter((echo) => echo.sets.includes(setId))
-                .map((echo) => echo.name)
+                .flatMap((echo) => getEchoMgKeys(echo.name))
           }
         }
 
@@ -798,7 +821,9 @@ export async function prsBldFromMg(
 
         // match echo icon from remaining candidates
         readSlot(index, 8)
-        const echoName = mtchEchoFrom(canvas, slot.echoImage, fltrNms, echoCache)
+        const echoName = getEchoNamFrmKey(
+          pickEchoKey(rnkEchoFrom(canvas, slot.echoImage, fltrNms, echoCache)),
+        )
 
         results.push({
           cost,

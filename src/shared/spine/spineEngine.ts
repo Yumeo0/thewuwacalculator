@@ -8,6 +8,7 @@ import type {
 // use the window global instead. Vite emits it as a hashed asset in prod.
 import spineRuntimeUrl from '@esotericsoftware/spine-webgl/dist/iife/spine-webgl.min.js?url'
 import { canRenderSpineInWorker, createSpineWorkerInstance } from './spineWorkerClient.ts'
+import { SPINE_TEXTURE_MAX_EDGE, spineDisplayTextureUrl } from './spineQuality.ts'
 
 type SpineRuntime = typeof SpineWebGL
 
@@ -93,8 +94,8 @@ async function loadSpineAssets(
 
   try {
     for (const page of atlas.pages) {
-      const blob = await fetchRequired(`${baseUrl}${page.name}`, signal).then((response) => response.blob())
-      const textureScale = Math.min(1, 4096 / Math.max(page.width, page.height))
+      const blob = await fetchRequired(spineDisplayTextureUrl(baseUrl, page.name), signal).then((response) => response.blob())
+      const textureScale = Math.min(1, SPINE_TEXTURE_MAX_EDGE / Math.max(page.width, page.height))
       const bitmap = await createImageBitmap(blob, {
         premultiplyAlpha: 'premultiply',
         colorSpaceConversion: 'none',

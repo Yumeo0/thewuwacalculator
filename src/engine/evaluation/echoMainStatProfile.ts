@@ -5,6 +5,7 @@
 */
 
 import { getGameDataMode } from '@/data/gameData'
+import { makeEvaluationKey } from './buildEvaluationKey'
 import { ECHO_MAIN_STATS, SUBSTAT_RANGES } from '@/data/gameData/catalog/echoStats'
 import {
   activateEchoMainStatScoreProfile,
@@ -97,7 +98,7 @@ export function makeEchoMainStatProfileKey(
   // The scoring target follows combat context and the equipped main-stat
   // layout, but not the substat rolls currently being graded. Otherwise tuning
   // a single roll would move the 100% reference underneath the user.
-  return JSON.stringify({
+  return makeEvaluationKey({
     version: 6,
     mode: getGameDataMode(),
     weights: getWeightSetKey(),

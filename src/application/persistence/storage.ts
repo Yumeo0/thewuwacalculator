@@ -4,12 +4,15 @@
                domain writes, and recovery cleanup.
 */
 
+import { DEF_UI_PREFS } from '@/domain/entities/preferences'
+import { SHOWCASE_INDEX, readShowcaseCards, writeShowcaseCards, clearShowcaseCards } from './showcaseCards'
 import type { HydratedAppState, PersistedState } from '@/domain/entities/appState'
 import type { PersistedUnknown } from '@/engine/runtime/defaults'
-import type { CombatScenario, CombatScenarioId } from '@/domain/entities/combatScenario'
+import { makeScenarioTeam, type CombatScenario, type CombatScenarioId } from '@/domain/entities/combatScenario'
 import { copyScenarioRecords, summarizeScenario, type ScenarioSummary, type ScenarioWorkspace } from '@/domain/entities/scenarioLibrary'
 import { makeAppState, initAppState, normalizeStoredCombatScenario } from '@/engine/runtime/defaults'
 import { compressToUTF16, decompressFromUTF16 } from 'lz-string'
+import { readStoredScenarioIds } from './resonatorScope'
 import {
   APP_STATE_VER,
   persistedSchema,
@@ -24,6 +27,11 @@ import {
   prssUiLytSlc,
   prssUiSvdRoh,
   parseCombatScenario,
+  parseScenarioMember,
+  parseScenarioTarget,
+  parseScenarioEnvironment,
+  parseScenarioProgram,
+  parseDormantScenarioMembers,
 } from '@/engine/runtime/schema'
 
 import {
@@ -67,6 +75,7 @@ const COMPRESSED_ROTATIONS_PREFIX = 'wwcalc-lz1:'
 export type PersistKey =
   | 'ui.appearance'
   | 'ui.layout'
+  | 'ui.showcaseCards'
   | 'ui.savedRotationPreferences'
   | 'combat.workspace'
   | 'simulation.optimizerSettings'
@@ -79,18 +88,16 @@ export type PersistKey =
 const NONINVDMNKEY: PersistKey[] = [
   'ui.appearance',
   'ui.layout',
+  'ui.showcaseCards',
   'ui.savedRotationPreferences',
   'combat.workspace',
   'simulation.optimizerSettings',
   'simulation.suggestions',
 ]
 
-const INV_DOMAIN_KEYS: PersistKey[] = [
-  'library.echoes',
-  'library.builds',
-  'library.rotations',
-  'library.scenarios',
-]
+const GEAR_DOMAIN_KEYS: PersistKey[] = ['library.echoes', 'library.builds']
+const SAVED_ROTATION_DOMAIN_KEYS: PersistKey[] = ['library.rotations', 'library.scenarios']
+const INV_DOMAIN_KEYS: PersistKey[] = [...GEAR_DOMAIN_KEYS, ...SAVED_ROTATION_DOMAIN_KEYS]
 
 export const ALL_DOMAIN_KEYS: PersistKey[] = [
   ...NONINVDMNKEY,
@@ -117,6 +124,7 @@ const pndnPrssDmnL = new Set<() => void>()
 let combatRecordSerial = 0
 let lastCombatManifest: string | null = null
 const lastSavedCombatRefs = new Map<string, CombatScenario>()
+let combatCleanupTimer: ReturnType<typeof setTimeout> | null = null
 
 interface CombatStorageIndex {
   version: number
@@ -124,6 +132,50 @@ interface CombatStorageIndex {
   order: CombatScenarioId[]
   recordsById: Record<string, string>
   summaryById?: Record<string, ScenarioSummary>
+  resonatorIdsById?: Record<string, string[]>
+}
+
+interface ScenarioRecordManifest {
+  format: 2
+  id: CombatScenarioId
+  revision: number
+  contextMemberId: CombatScenario['contextMemberId']
+  initialOnFieldMemberId: CombatScenario['initialOnFieldMemberId']
+  team: string[]
+  memberIds: string[]
+  memberRecords: Record<string, string>
+  targetRecord: string
+  environmentRecord: string
+  programRecord: string
+  dormantRecord?: string
+}
+
+function decodeCombatRecord(key: string): unknown {
+  const record = localStorage.getItem(key)
+  if (!record) throw new Error(`Missing combat scenario record: ${key}`)
+  const json = record.startsWith(COMPRESSED_ROTATIONS_PREFIX)
+    ? decompressFromUTF16(record.slice(COMPRESSED_ROTATIONS_PREFIX.length))
+    : record
+  if (!json) throw new Error(`Unreadable combat scenario record: ${key}`)
+  return JSON.parse(json)
+}
+
+function scenarioManifest(key: string): ScenarioRecordManifest | null {
+  const value = decodeCombatRecord(key) as Partial<ScenarioRecordManifest> | null
+  if (!value || value.format !== 2) return null
+  if (!Array.isArray(value.memberIds) || !value.memberRecords
+    || !value.targetRecord || !value.environmentRecord || !value.programRecord) {
+    throw new Error(`Invalid combat scenario manifest: ${key}`)
+  }
+  return value as ScenarioRecordManifest
+}
+
+function writeCombatRecord(id: string, part: string, value: unknown, created: string[]): string {
+  const key = `${APPSTORECMBTREC}${encodeURIComponent(id)}.${Date.now().toString(36)}.${combatRecordSerial++}.${part}`
+  const json = JSON.stringify(value)
+  localStorage.setItem(key, json.length < 1024 ? json : `${COMPRESSED_ROTATIONS_PREFIX}${compressToUTF16(json)}`)
+  created.push(key)
+  return key
 }
 
 function parseCombatStorageIndex(raw: string): CombatStorageIndex {
@@ -148,6 +200,11 @@ function parseCombatStorageIndex(raw: string): CombatStorageIndex {
           || !Number.isFinite(summary.rotationNodes)
       })
     ))
+    || (index.resonatorIdsById != null && (
+      Object.keys(index.resonatorIdsById).length !== index.order.length
+      || index.order.some((id) => !Array.isArray(index.resonatorIdsById?.[id])
+        || index.resonatorIdsById![id].some((resonatorId) => typeof resonatorId !== 'string'))
+    ))
     || index.order.some((id) => typeof id !== 'string'
       || typeof index.recordsById[id] !== 'string'
       || !index.recordsById[id].startsWith(APPSTORECMBTREC))) {
@@ -156,22 +213,56 @@ function parseCombatStorageIndex(raw: string): CombatStorageIndex {
   return index
 }
 
+function scheduleCombatRecordCleanup(): void {
+  if (combatCleanupTimer !== null) clearTimeout(combatCleanupTimer)
+  combatCleanupTimer = setTimeout(() => {
+    combatCleanupTimer = null
+    const raw = localStorage.getItem(APPSTORECMBTINDEX)
+    if (!raw) return
+    let index: CombatStorageIndex
+    try { index = parseCombatStorageIndex(raw) } catch { return }
+    const liveRecords = new Set(Object.values(index.recordsById))
+    try {
+      for (const key of Object.values(index.recordsById)) {
+        const manifest = scenarioManifest(key)
+        if (!manifest) continue
+        for (const section of [manifest.targetRecord, manifest.environmentRecord, manifest.programRecord,
+          manifest.dormantRecord, ...Object.values(manifest.memberRecords)]) {
+          if (section) liveRecords.add(section)
+        }
+      }
+    } catch { return }
+    for (let cursor = localStorage.length - 1; cursor >= 0; cursor -= 1) {
+      const key = localStorage.key(cursor)
+      if (key?.startsWith(APPSTORECMBTREC) && !liveRecords.has(key)) localStorage.removeItem(key)
+    }
+  }, 5_000)
+  ;(combatCleanupTimer as unknown as { unref?: () => void }).unref?.()
+}
+
 type StoredScenarioGetter = (() => CombatScenario) & { recordKey?: string }
 
 function readScenarioRecord(id: string, recordKey: string): CombatScenario {
-  const record = localStorage.getItem(recordKey)
-  if (!record) throw new Error(`Missing combat scenario record: ${id}`)
-  const json = record.startsWith(COMPRESSED_ROTATIONS_PREFIX)
-    ? decompressFromUTF16(record.slice(COMPRESSED_ROTATIONS_PREFIX.length))
+  const record = decodeCombatRecord(recordKey) as Partial<ScenarioRecordManifest> & { id?: unknown }
+  const parsed = record?.format === 2
+    ? {
+      id: record.id,
+      revision: record.revision,
+      contextMemberId: record.contextMemberId,
+      initialOnFieldMemberId: record.initialOnFieldMemberId,
+      team: { members: record.memberIds!.map((memberId) => decodeCombatRecord(record.memberRecords![memberId])) },
+      target: decodeCombatRecord(record.targetRecord!),
+      environment: decodeCombatRecord(record.environmentRecord!),
+      program: decodeCombatRecord(record.programRecord!),
+      ...(record.dormantRecord ? { dormantMembersByResonatorId: decodeCombatRecord(record.dormantRecord) } : {}),
+    }
     : record
-  if (!json) throw new Error(`Unreadable combat scenario record: ${id}`)
-  const parsed = JSON.parse(json) as { id?: unknown }
   if (!parsed || parsed.id !== id) throw new Error(`Invalid combat scenario record: ${id}`)
   const result = parseCombatScenario(parsed)
   if (!result.success) throw new Error(`Invalid combat scenario record: ${id}`)
   // Normalize one record when it is actually read; this restores catalog
   // derived weapon fields without expanding every saved scenario at startup.
-  return normalizeStoredCombatScenario(parsed as CombatScenario)
+  return normalizeStoredCombatScenario(parsed as unknown as CombatScenario)
 }
 
 function makeLazyScenarioRecords(index: CombatStorageIndex): Record<string, CombatScenario> {
@@ -213,8 +304,10 @@ function readCombatWorkspace(): ReturnType<typeof makeCombatWorkspace> | null {
     const records = makeLazyScenarioRecords(index)
     // Validate the selected record eagerly. Other records are parsed only
     // when their scenario is selected, copied, or exported.
-    void records[index.selectedScenarioId]
+    const selectedScenario = records[index.selectedScenarioId]
     lastSavedCombatRefs.clear()
+    lastSavedCombatRefs.set(index.selectedScenarioId, selectedScenario)
+    scheduleCombatRecordCleanup()
     return {
       version: APP_STATE_VER,
       combat: {
@@ -229,6 +322,76 @@ function readCombatWorkspace(): ReturnType<typeof makeCombatWorkspace> | null {
     lastCombatManifest = null
     lastSavedCombatRefs.clear()
     return null
+  }
+}
+
+function validateScenarioForWrite(
+  id: CombatScenarioId,
+  scenario: CombatScenario,
+  previous: CombatScenario | undefined,
+  previousManifest: ScenarioRecordManifest | null,
+): CombatScenario {
+  const fullParse = () => {
+    const parsed = parseCombatScenario(scenario)
+    if (!parsed.success || parsed.data.id !== id) throw new Error(`Refusing to save invalid combat scenario: ${id}`)
+    return parsed.data as unknown as CombatScenario
+  }
+  if (!previous || !previousManifest) return fullParse()
+
+  // This path only trusts section references that were validated at the last
+  // successful manifest commit. New sections still go through their schemas.
+  const allowed = new Set(['id', 'revision', 'team', 'contextMemberId', 'initialOnFieldMemberId',
+    'dormantMembersByResonatorId', 'target', 'environment', 'program'])
+  const members = scenario.team?.members
+  if (scenario.id !== id || !Number.isInteger(scenario.revision) || scenario.revision < 0
+    || Object.keys(scenario).some((key) => !allowed.has(key))
+    || Object.keys(scenario.team ?? {}).some((key) => key !== 'members')
+    || !Array.isArray(members) || members.length < 1 || members.length > 3) {
+    throw new Error(`Refusing to save invalid combat scenario: ${id}`)
+  }
+  const requireValid = <T>(result: { success: boolean; data?: unknown }, label: string): T => {
+    if (!result.success) throw new Error(`Refusing to save invalid ${label} in combat scenario: ${id}`)
+    return result.data as T
+  }
+  const validatedMembers = members.map((member) => {
+    const old = previous.team.members.find((candidate) => candidate.id === member.id)
+    return old === member ? member
+      : requireValid<CombatScenario['team']['members'][number]>(parseScenarioMember(member), 'member')
+  })
+  const memberIds = new Set<string>(validatedMembers.map((member) => member.id))
+  const resonatorIds = new Set(validatedMembers.map((member) => member.resonatorId))
+  if (memberIds.size !== validatedMembers.length || resonatorIds.size !== validatedMembers.length
+    || !memberIds.has(scenario.contextMemberId) || !memberIds.has(scenario.initialOnFieldMemberId)) {
+    throw new Error(`Refusing to save invalid combat scenario members: ${id}`)
+  }
+  const environment = previous.environment === scenario.environment ? scenario.environment
+    : requireValid<CombatScenario['environment']>(parseScenarioEnvironment(scenario.environment), 'environment')
+  for (const [sourceId, routes] of Object.entries(environment.routing.bySourceMemberId)) {
+    if (!memberIds.has(sourceId) || Object.values(routes).some((targetId) => targetId !== null && !memberIds.has(targetId))) {
+      throw new Error(`Refusing to save invalid combat scenario routing: ${id}`)
+    }
+  }
+  if (environment.manualEffects.some((effect) => effect.selector.kind === 'members'
+    && effect.selector.memberIds.some((memberId) => !memberIds.has(memberId)))) {
+    throw new Error(`Refusing to save invalid combat scenario effects: ${id}`)
+  }
+  const target = previous.target === scenario.target ? scenario.target
+    : requireValid<CombatScenario['target']>(parseScenarioTarget(scenario.target), 'target')
+  const program = previous.program === scenario.program ? scenario.program
+    : requireValid<CombatScenario['program']>(parseScenarioProgram(scenario.program), 'program')
+  const dormantMembersByResonatorId = previous.dormantMembersByResonatorId === scenario.dormantMembersByResonatorId
+    ? scenario.dormantMembersByResonatorId
+    : scenario.dormantMembersByResonatorId
+      ? requireValid<NonNullable<CombatScenario['dormantMembersByResonatorId']>>(
+        parseDormantScenarioMembers(scenario.dormantMembersByResonatorId), 'dormant members')
+      : undefined
+  return {
+    ...scenario,
+    team: makeScenarioTeam(validatedMembers),
+    target,
+    environment,
+    program,
+    ...(dormantMembersByResonatorId ? { dormantMembersByResonatorId } : {}),
   }
 }
 
@@ -262,7 +425,9 @@ function writeCombatWorkspace(combat: PersistedState['combat']): void {
 
   const recordsById: Record<string, string> = {}
   const summaryById: Record<string, ScenarioSummary> = {}
+  const resonatorIdsById: Record<string, string[]> = {}
   const createdKeys: string[] = []
+  const retiredKeys: string[] = []
   try {
     for (const id of order) {
       const previousKey = oldIndex?.recordsById[id]
@@ -270,6 +435,7 @@ function writeCombatWorkspace(combat: PersistedState['combat']): void {
       const getterKey = (descriptor?.get as StoredScenarioGetter | undefined)?.recordKey
       if (previousKey && getterKey === previousKey && oldRaw === lastCombatManifest) {
         recordsById[id] = previousKey
+        resonatorIdsById[id] = oldIndex?.resonatorIdsById?.[id] ?? readStoredScenarioIds(previousKey)
         summaryById[id] = oldIndex?.summaryById?.[id]
           ?? combat.summaryById?.[id]
           ?? summarizeScenario(combat.scenariosById[id])
@@ -278,19 +444,60 @@ function writeCombatWorkspace(combat: PersistedState['combat']): void {
       const scenario = combat.scenariosById[id]
       if (previousKey && lastSavedCombatRefs.get(id) === scenario) {
         recordsById[id] = previousKey
+        resonatorIdsById[id] = oldIndex?.resonatorIdsById?.[id]
+          ?? scenario.team.members.map((member) => member.resonatorId)
         summaryById[id] = combat.summaryById?.[id] ?? summarizeScenario(scenario)
         continue
       }
-      const parsed = parseCombatScenario(scenario)
-      if (!parsed.success || parsed.data.id !== id) {
-        throw new Error(`Refusing to save invalid combat scenario: ${id}`)
+      const previousScenario = lastSavedCombatRefs.get(id)
+      const previousManifest = previousKey ? scenarioManifest(previousKey) : null
+      const validated = validateScenarioForWrite(id, scenario, previousScenario, previousManifest)
+      const memberRecords: Record<string, string> = {}
+      for (const member of validated.team.members) {
+        const oldMember = previousScenario?.team.members.find((candidate) => candidate.id === member.id)
+        const currentMember = scenario.team.members.find((candidate) => candidate.id === member.id)
+        memberRecords[member.id] = oldMember === currentMember && previousManifest?.memberRecords[member.id]
+          ? previousManifest.memberRecords[member.id]
+          : writeCombatRecord(id, `member-${encodeURIComponent(member.id)}`, member, createdKeys)
       }
-      const recordKey = `${APPSTORECMBTREC}${encodeURIComponent(id)}.${Date.now().toString(36)}.${combatRecordSerial++}`
-      localStorage.setItem(recordKey,
-        `${COMPRESSED_ROTATIONS_PREFIX}${compressToUTF16(JSON.stringify(parsed.data))}`)
-      createdKeys.push(recordKey)
+      const targetRecord = previousScenario?.target === scenario.target && previousManifest?.targetRecord
+        ? previousManifest.targetRecord : writeCombatRecord(id, 'target', validated.target, createdKeys)
+      const environmentRecord = previousScenario?.environment === scenario.environment && previousManifest?.environmentRecord
+        ? previousManifest.environmentRecord : writeCombatRecord(id, 'environment', validated.environment, createdKeys)
+      const programRecord = previousScenario?.program === scenario.program && previousManifest?.programRecord
+        ? previousManifest.programRecord : writeCombatRecord(id, 'program', validated.program, createdKeys)
+      const dormantRecord = scenario.dormantMembersByResonatorId
+        ? previousScenario?.dormantMembersByResonatorId === scenario.dormantMembersByResonatorId && previousManifest?.dormantRecord
+          ? previousManifest.dormantRecord
+          : writeCombatRecord(id, 'dormant', validated.dormantMembersByResonatorId, createdKeys)
+        : undefined
+      const recordKey = writeCombatRecord(id, 'manifest', {
+        format: 2,
+        id,
+        revision: validated.revision,
+        contextMemberId: validated.contextMemberId,
+        initialOnFieldMemberId: validated.initialOnFieldMemberId,
+        team: validated.team.members.map((member) => member.resonatorId),
+        memberIds: validated.team.members.map((member) => member.id),
+        memberRecords,
+        targetRecord,
+        environmentRecord,
+        programRecord,
+        ...(dormantRecord ? { dormantRecord } : {}),
+      } satisfies ScenarioRecordManifest, createdKeys)
+      if (previousKey) retiredKeys.push(previousKey)
+      if (previousManifest) {
+        const retained = new Set([targetRecord, environmentRecord, programRecord, dormantRecord,
+          ...Object.values(memberRecords)])
+        for (const key of [previousManifest.targetRecord, previousManifest.environmentRecord,
+          previousManifest.programRecord, previousManifest.dormantRecord,
+          ...Object.values(previousManifest.memberRecords)]) {
+          if (key && !retained.has(key)) retiredKeys.push(key)
+        }
+      }
       recordsById[id] = recordKey
-      summaryById[id] = summarizeScenario(parsed.data as unknown as CombatScenario)
+      resonatorIdsById[id] = validated.team.members.map((member) => member.resonatorId)
+      summaryById[id] = summarizeScenario(validated)
     }
 
     const nextRaw = JSON.stringify({
@@ -299,6 +506,7 @@ function writeCombatWorkspace(combat: PersistedState['combat']): void {
       order,
       recordsById,
       summaryById,
+      resonatorIdsById,
     } satisfies CombatStorageIndex)
     localStorage.setItem(APPSTORECMBTINDEX, nextRaw)
     lastCombatManifest = nextRaw
@@ -306,18 +514,16 @@ function writeCombatWorkspace(combat: PersistedState['combat']): void {
     for (const key of createdKeys) localStorage.removeItem(key)
     throw error
   }
+  let cleanupFailed = false
+  for (const key of retiredKeys) {
+    try { localStorage.removeItem(key) } catch { cleanupFailed = true }
+  }
   lastSavedCombatRefs.clear()
   for (const id of order) {
     const descriptor = Object.getOwnPropertyDescriptor(combat.scenariosById, id)
     if (descriptor && 'value' in descriptor) lastSavedCombatRefs.set(id, descriptor.value)
   }
-  const liveRecords = new Set(Object.values(recordsById))
-  for (let index = localStorage.length - 1; index >= 0; index -= 1) {
-    const key = localStorage.key(index)
-    if (key?.startsWith(APPSTORECMBTREC) && !liveRecords.has(key)) {
-      localStorage.removeItem(key)
-    }
-  }
+  if (cleanupFailed) scheduleCombatRecordCleanup()
   localStorage.removeItem(APPSTORECMBT)
 }
 
@@ -344,7 +550,7 @@ function makeLayout(state: PersistedState) {
   return {
     version: state.version,
     ui: {
-      preferences: state.ui.preferences,
+      preferences: { ...state.ui.preferences, showcaseCards: {} },
       leftPaneView: state.ui.leftPaneView,
       suggsViewMode: state.ui.suggsViewMode,
       showSubHits: state.ui.showSubHits,
@@ -354,6 +560,7 @@ function makeLayout(state: PersistedState) {
       historyMax: state.ui.historyMax,
       itemFreq: state.ui.itemFreq,
       optimizerCpuHintSeen: state.ui.optimizerCpuHintSeen,
+      compressedExports: state.ui.compressedExports,
       rotationEditorPreferences: state.ui.rotationEditorPreferences,
     },
   }
@@ -450,6 +657,7 @@ function decodePersistedDomain(key: PersistKey, raw: string): string {
 
 type PersistSpecMap = {
   'ui.appearance': PersistSpec<ReturnType<typeof makeAppearance>>
+  'ui.showcaseCards': PersistSpec<{ cards: PersistedState['ui']['preferences']['showcaseCards'] }>
   'ui.layout': PersistSpec<ReturnType<typeof makeLayout>>
   'ui.savedRotationPreferences': PersistSpec<ReturnType<typeof makeRotPrefs>>
   'combat.workspace': PersistSpec<ReturnType<typeof makeCombatWorkspace>>
@@ -465,6 +673,12 @@ type PrssDmnSlc<K extends PersistKey> =
   PersistSpecMap[K] extends PersistSpec<infer TSlice> ? TSlice : never
 
 const DOMAIN_SPECS: PersistSpecMap = {
+  'ui.showcaseCards': {
+    label: 'Showcase cards', storageKey: SHOWCASE_INDEX,
+    schema: { safeParse: (value: unknown) => ({ success: true as const, data: value }) },
+    build: (state) => ({ cards: state.ui.preferences.showcaseCards }),
+    apply: (state, slice) => { state.ui = { ...state.ui, preferences: { ...DEF_UI_PREFS, ...state.ui.preferences, showcaseCards: slice.cards } } },
+  },
   'ui.appearance': {
     label: 'ui appearance',
     storageKey: APPSTOREUIPP,
@@ -586,7 +800,8 @@ const DOMAIN_SPECS: PersistSpecMap = {
   },
 }
 
-function getPrssDmnKe(includeInventory: boolean): PersistKey[] {
+function getPrssDmnKe(includeInventory: boolean | 'gear'): PersistKey[] {
+  if (includeInventory === 'gear') return [...NONINVDMNKEY, ...GEAR_DOMAIN_KEYS]
   return includeInventory
     ? ALL_DOMAIN_KEYS
     : NONINVDMNKEY
@@ -745,7 +960,12 @@ function readVldtStor<T>(
 
 function readPrssDmn<K extends PersistKey>(
   key: K,
+  loadedJson?: Map<PersistKey, string>,
 ): PrssDmnSlc<K> | null {
+  if (key === 'ui.showcaseCards') {
+    const cards = readShowcaseCards()
+    return cards ? { cards } as PrssDmnSlc<K> : null
+  }
   if (key === 'combat.workspace') {
     const indexed = readCombatWorkspace()
     if (indexed) return indexed as PrssDmnSlc<K>
@@ -757,7 +977,14 @@ function readPrssDmn<K extends PersistKey>(
   }
 
   try {
-    return readVldtStor(decodePersistedDomain(key, raw), spec.schema, spec.label)
+    const json = decodePersistedDomain(key, raw)
+    const slice = readVldtStor<PrssDmnSlc<K>>(json, spec.schema, spec.label)
+    // Plain rotations still need their one-time compression migration. Retain
+    // other decoded payloads only for this load, to detect real repair writes.
+    if (key !== 'library.rotations' || raw.startsWith(COMPRESSED_ROTATIONS_PREFIX)) {
+      loadedJson?.set(key, json)
+    }
+    return slice
   } catch (error) {
     console.warn(`[storage] failed to parse ${spec.label}`, error)
     try {
@@ -838,8 +1065,8 @@ function normalizeAppState(
   return initAppState(state)
 }
 
-function ssmbPrssAppS(includeInventory: boolean): HydratedAppState | null {
-  const state = makePersistDraft(includeInventory)
+function ssmbPrssAppS(includeInventory: boolean | 'gear'): HydratedAppState | null {
+  const state = makePersistDraft(Boolean(includeInventory))
   const loadedDomains: PersistKey[] = []
   let hasLddDmn = false
 
@@ -890,25 +1117,37 @@ export function parsePersisted(raw: string): HydratedAppState {
   return normPrssAppS(parsed)
 }
 
-// load persisted app state from storage, optionally omitting the inventory slice
+// Gear supports equipped-status checks throughout the app; saved snapshots are opt-in.
 export function loadPrssAppS(
-  options: { includeInventory?: boolean } = {},
+  options: { includeInventory?: boolean | 'gear' } = {},
 ): HydratedAppState | null {
   const includeInventory = options.includeInventory ?? true
 
-  if (!hasCurStoreE()) {
-    return readMnlthPrssS() ?? readLegacyState()
+  const loaded = hasCurStoreE()
+    ? ssmbPrssAppS(includeInventory)
+    : readMnlthPrssS() ?? readLegacyState()
+  if (!loaded || includeInventory === true) return loaded
+  // Legacy migration persists the complete library before trimming resident data.
+  return {
+    ...loaded,
+    library: {
+      echoes: includeInventory === 'gear' ? loaded.library.echoes : [],
+      builds: includeInventory === 'gear' ? loaded.library.builds : [],
+      rotations: [],
+      scenarios: [],
+    },
   }
-
-  return ssmbPrssAppS(includeInventory)
 }
 
-export function loadPrssInvS(): PersistedState['library'] {
+export function loadPrssInvS(scope: 'gear' | 'saved' | 'all' = 'all'): PersistedState['library'] {
+  const domains = scope === 'gear' ? GEAR_DOMAIN_KEYS
+    : scope === 'saved' ? SAVED_ROTATION_DOMAIN_KEYS : INV_DOMAIN_KEYS
   const state = makePersistDraft(true)
+  const loadedJson = new Map<PersistKey, string>()
   let hasLddInv = false
 
-  for (const key of INV_DOMAIN_KEYS) {
-    const domain = readPrssDmn(key)
+  for (const key of domains) {
+    const domain = readPrssDmn(key, loadedJson)
     if (!domain) {
       continue
     }
@@ -917,7 +1156,7 @@ export function loadPrssInvS(): PersistedState['library'] {
     hasLddInv = true
   }
 
-  if (!hasLddInv) {
+  if (!hasLddInv && scope === 'all' && !hasCurStoreE()) {
     const migrated = readMnlthPrssS() ?? readLegacyState()
     if (migrated) {
       return migrated.library
@@ -927,7 +1166,18 @@ export function loadPrssInvS(): PersistedState['library'] {
   }
 
   const normalState = normalizeAppState(state)
-  saveAppState(normalState, { domains: INV_DOMAIN_KEYS })
+  // Hydration runs again after inventory eviction. Recompressing and rewriting
+  // every unchanged rotation here used to block the next modal's open handler.
+  // Compare the same validated shape that persistence writes; catalog repairs
+  // and encoding migrations still reach storage, once, through the usual path.
+  const changedDomains = domains.filter((key) => {
+    const spec = DOMAIN_SPECS[key]
+    const result = spec.schema.safeParse(spec.build(normalState))
+    return !result.success || loadedJson.get(key) !== JSON.stringify(result.data)
+  })
+  if (changedDomains.length > 0) {
+    saveAppState(normalState, { domains: changedDomains })
+  }
 
   return normalState.library
 }
@@ -953,6 +1203,15 @@ export function saveAppState(
   }
 
   const domains = new Set(options.domains ?? ALL_DOMAIN_KEYS)
+  // Always migrate cards before a layout write can remove their legacy copy.
+  if (domains.has('ui.layout') || domains.has('ui.showcaseCards')) {
+    try { writeShowcaseCards(persistedState.ui.preferences.showcaseCards) }
+    catch (error) {
+      console.warn('[storage] failed to persist Showcase cards', error)
+      domains.delete('ui.layout')
+    }
+    domains.delete('ui.showcaseCards')
+  }
   for (const key of domains) {
     if (key === 'combat.workspace') {
       try {
@@ -1020,6 +1279,7 @@ export function sbscToDrtyPr(listener: () => void): () => void {
 
 // clear persisted app state entries
 export function clrPrssAppSt(): void {
+  clearShowcaseCards()
   pndnPrssDmns.clear()
   localStorage.removeItem(APP_STORAGE_KEY)
   localStorage.removeItem(RETIRED_SESSION_STORE_KEY)

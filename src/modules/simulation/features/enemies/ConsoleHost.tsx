@@ -5,7 +5,6 @@
 */
 
 import { useCallback, useEffect, useMemo } from 'react'
-import { create } from 'zustand'
 import { useAppStore } from '@/application/state'
 import { selActResId, selEnemyProf, selWorkDrvd } from '@/application/state'
 import type { EnemyProfile } from '@/domain/entities/appState.ts'
@@ -17,26 +16,12 @@ import { selLiveRun } from '@/modules/simulation/model/selectors.ts'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
 import { EnemyConsole } from '@/modules/simulation/features/enemies/Console.tsx'
-
-interface EnemyConsoleStore {
-  open: boolean
-  show: () => void
-  close: () => void
-}
+import { useEnemyCnsl } from '@/modules/simulation/features/enemies/consoleRequest'
+export { openEnemyCnsl, useEnemyCnsl } from '@/modules/simulation/features/enemies/consoleRequest'
 
 interface EnemyConfigDraft {
   runtime: ResRuntime | null
   enemy: EnemyProfile
-}
-
-export const useEnemyCnsl = create<EnemyConsoleStore>((set) => ({
-  open: false,
-  show: () => set({ open: true }),
-  close: () => set({ open: false }),
-}))
-
-export function openEnemyCnsl(): void {
-  useEnemyCnsl.getState().show()
 }
 
 export function EnemyConsoleHost() {

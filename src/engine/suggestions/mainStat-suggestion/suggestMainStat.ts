@@ -61,19 +61,18 @@ export function sggsMainStts({
   // evaluate the current recipe set and insert it into the ranked results
   function mybNsrtRslt(costUsed: number) {
     const avgDamage = scoreRecipes(curRcps)
-
-    results.push({
+    // Stable insertion retains the DFS tie order used by Array.sort, while
+    // avoiding recipe clones and a full sort for candidates below the cutoff.
+    let insertAt = results.findIndex((entry) => avgDamage > entry.damage)
+    if (insertAt < 0) insertAt = results.length
+    if (insertAt >= topK) return
+    results.splice(insertAt, 0, {
       damage: avgDamage,
       totalCost: costUsed,
       isRotation: isRotMode,
       recipes: curRcps.map((recipe) => ({ ...recipe })),
     })
-
-    // keep results sorted best-first and trim to topK
-    results.sort((a, b) => b.damage - a.damage)
-    if (results.length > topK) {
-      results.length = topK
-    }
+    if (results.length > topK) results.length = topK
   }
 
   // depth-first search over non-decreasing recipe choices

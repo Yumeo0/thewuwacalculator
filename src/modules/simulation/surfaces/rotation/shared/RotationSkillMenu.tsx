@@ -4,6 +4,7 @@
                maintains valid keyboard focus as search and hit filters change.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import * as Collapsible from "@radix-ui/react-collapsible";
 import type {
   RotationMember,
@@ -312,7 +313,7 @@ export function RotationSkillMenu({
                       }
                     }}
                   >
-                    <img src={member.profile} alt="" onError={withDefResMg} loading="lazy" />
+                    <DisplayImage src={member.profile} alt="" onError={withDefResMg} loading="lazy" />
                   </button>
                 )
               })}
@@ -400,7 +401,7 @@ export function RotationSkillMenu({
                                   }}
                                 >
                                   {meta.icon ? (
-                                    <img
+                                    <DisplayImage
                                       src={meta.icon}
                                       alt=""
                                       aria-hidden="true" className="skill-type-icon"

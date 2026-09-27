@@ -5,6 +5,7 @@
                density, while preserving inventory slot indices.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { CSSProperties as CssProps, HTMLAttributes as HtmlAttrs, MouseEventHandler as MsVntHnd, ReactNode } from 'react'
 import type { EchoInstance } from '@/domain/entities/runtime'
 import { getEchoById } from '@/data/catalog/echoCatalogService'
@@ -209,7 +210,7 @@ export function EchoRow({
   )
 
   const setCoin = setIcon
-    ? <img src={setIcon} alt={setName ?? ''} className="ecr__setcoin" loading="lazy" onError={withDefIconM} />
+    ? <DisplayImage src={setIcon} alt={setName ?? ''} className="ecr__setcoin" loading="lazy" onError={withDefIconM} />
     : null
 
   /* the card is the shared face, so a loadout reads the same in a modal as it
@@ -253,7 +254,7 @@ export function EchoRow({
         <span className="ecr__pip" aria-hidden="true" />
         <span className="ecr__disc">
           {definition?.icon && (
-            <img src={definition.icon} alt={definition.name ?? 'Echo'} loading="lazy" onError={withDefEchoMg} />
+            <DisplayImage src={definition.icon} alt={definition.name ?? 'Echo'} loading="lazy" onError={withDefEchoMg} />
           )}
         </span>
         {setCoin}
@@ -288,7 +289,7 @@ export function EchoRow({
           into the row. the gradient carries the sonata, not a rarity. */}
       <div className="ecr__wedge">
         {definition?.icon && (
-          <img
+          <DisplayImage
             src={definition.icon}
             alt={definition.name ?? 'Echo'} className="ecr__art"
             loading="lazy"
@@ -379,7 +380,7 @@ export function EchoRowsFoot({
               title={`${name} ${entry.pieces}pc`}
             >
               <span className="ecr-foot__pc">{entry.pieces}<small>pc</small></span>
-              {icon && <img src={icon} alt="" className="ecr__setcoin" loading="lazy" onError={withDefIconM} />}
+              {icon && <DisplayImage src={icon} alt="" className="ecr__setcoin" loading="lazy" onError={withDefIconM} />}
               <span className="ecr-foot__name">{name}</span>
             </span>
           )

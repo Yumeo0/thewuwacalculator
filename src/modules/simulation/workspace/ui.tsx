@@ -3,6 +3,9 @@
   Description: Provides shared workspace glyph, stat, rating, and formatting primitives.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { resolveDisplayImage } from '@/shared/lib/displayAssets'
+import { currentPixelRatio } from '@/shared/lib/displayImageSizing'
 import type { CSSProperties, KeyboardEvent, MouseEvent, RefCallback } from 'react'
 import type { SpinePlacement } from '@/shared/spine/SpinePortrait.tsx'
 import type { AttributeKey } from '@/domain/entities/stats'
@@ -235,7 +238,7 @@ export function SonataTokens({
         return (
           <span key={set.setId} className="workspace-sonata-set" title={`${set.name} · ${set.pieces}pc`}>
             {icon ? (
-              <img src={icon} alt="" className="workspace-sonata-icon" loading="lazy" onError={withDefIconM} />
+              <DisplayImage src={icon} alt="" className="workspace-sonata-icon" loading="lazy" onError={withDefIconM} />
             ) : (
               <span className="workspace-sonata-icon workspace-sonata-icon--fallback" />
             )}
@@ -277,12 +280,14 @@ export const EVALUATION_SURFACE_ENTER_MS = 460
 export const EVALUATION_RAIL_RESIZE_MS = 460
 export const EVALUATION_RAIL_PRELOAD_TIMEOUT_MS = 260
 
-export function preloadEvaluationRailImages(urls: string[]): Promise<void> {
-  if (typeof window === 'undefined' || urls.length === 0) {
+export function preloadEvaluationRailImages(assets: Array<{ src: string; width: number }>): Promise<void> {
+  if (typeof window === 'undefined' || assets.length === 0) {
     return Promise.resolve()
   }
 
-  const uniqueUrls = Array.from(new Set(urls))
+  const uniqueUrls = Array.from(new Set(assets.filter(({ width }) => width > 0)
+    .map(({ src, width }) => resolveDisplayImage(src, width, currentPixelRatio()).src)))
+  if (!uniqueUrls.length) return Promise.resolve()
   return new Promise((resolve) => {
     let pending = uniqueUrls.length
     let finished = false
@@ -296,7 +301,10 @@ export function preloadEvaluationRailImages(urls: string[]): Promise<void> {
         image.onerror = null
         // A timed-out transition must not keep decoding images that are no
         // longer needed by the incoming rail.
-        if (!image.complete) image.removeAttribute('src')
+        if (!image.complete) {
+          image.removeAttribute('srcset')
+          image.removeAttribute('src')
+        }
       }
       resolve()
     }
@@ -678,5 +686,14 @@ export function EvaluationSeqRail({
         )
       })}
     </div>
+  )
+}
+
+export function ResonatorName({ name, onOpen }: { name: string; onOpen?: () => void }) {
+  if (!onOpen) return <>{name}</>
+  return (
+    <button type="button" className="workspace-name-link" onClick={onOpen} aria-label={`Configure ${name}`}>
+      {name}
+    </button>
   )
 }

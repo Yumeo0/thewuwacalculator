@@ -3,6 +3,7 @@
   Description: Projects executed node state, damage, writes, and loop context for read-only inspection.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { CSSProperties } from 'react'
 import { ArrowRight, BarChart3, MessageSquareText, Repeat, Swords } from 'lucide-react'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
@@ -132,7 +133,7 @@ export function ReadInspector({
 
         {handoff ? (
           <div className="rte-inspector__top rte-hoff__top">
-            <img className="rte-hoff__top-out"
+            <DisplayImage className="rte-hoff__top-out"
               src={node.handoffFrom?.profile ?? ''}
               alt=""
               title={node.handoffFrom?.name}
@@ -140,7 +141,7 @@ export function ReadInspector({
               loading="lazy"
             />
             <ArrowRight className="rte-hoff__top-arw" size="0.85rem" aria-hidden="true" />
-            <img className="rte-hoff__top-in"
+            <DisplayImage className="rte-hoff__top-in"
               src={node.handoffTo?.profile ?? ''}
               alt=""
               title={node.handoffTo?.name}
@@ -164,14 +165,14 @@ export function ReadInspector({
               </span>
             ) : echoId ? (
               <span className="rte-inspector__mark">
-                <img className="rte-inspector__avatar"
+                <DisplayImage className="rte-inspector__avatar"
                   src={echo?.icon ?? `/assets/game/echoes/icons/${echoId}.webp`}
                   alt=""
                   title={echo?.name ?? 'Echo'}
                   onError={withDefEchoMg}
                   loading="lazy"
                 />
-                <img className="rte-inspector__caster"
+                <DisplayImage className="rte-inspector__caster"
                   src={node.owner?.profile ?? ''}
                   alt=""
                   title={node.owner ? `Cast by ${node.owner.name}` : undefined}
@@ -184,7 +185,7 @@ export function ReadInspector({
                 <Swords size="1rem" />
               </span>
             ) : (
-              <img
+              <DisplayImage
                 className={`rte-inspector__avatar${condition ? ' is-source' : ''}`}
                 src={node.headIcon}
                 alt=""
@@ -197,7 +198,7 @@ export function ReadInspector({
               <b>{node.label}</b>
             </span>
             {elementIcon ? (
-              <img className="rte-inspector__element"
+              <DisplayImage className="rte-inspector__element"
                 src={elementIcon}
                 alt={node.element ?? ''}
                 onError={withDefIconM}

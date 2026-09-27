@@ -5,7 +5,7 @@
 
 import type { ReactNode } from 'react'
 import { GRADE_LADDER } from '@/engine/evaluation/evaluation/grades.ts'
-import type { BuildEvaluationReport } from '@/engine/evaluation/buildEvaluation.ts'
+import type { EvaluationSummary } from '@/engine/evaluation/buildEvaluationWorkerTypes'
 import {
   formatBuildEvaluationScore,
   getBuildEvaluationEmoji,
@@ -58,7 +58,7 @@ export function EvaluationBand({
   tone,
   banner,
 }: {
-  report: BuildEvaluationReport | null
+  report: { evaluation: Omit<EvaluationSummary, 'percent'> } | null
   score: number | null
   grade: string | null
   tone: string

@@ -36,6 +36,87 @@ function clearGameDataState() {
 }
 
 describe('game data bootstrap invariants', () => {
+  it('hydrates the app from core catalogs before loading calculation sources', async () => {
+    vi.resetModules()
+    clearGameDataState()
+    const previousFetch = globalThis.fetch
+    const requested: string[] = []
+    let failFullSourceOnce = false
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = resolveRequestUrl(input)
+      requested.push(url)
+      if (url === '/data/beta/echoes/sources.json' && failFullSourceOnce) {
+        failFullSourceOnce = false
+        throw new Error('source unavailable')
+      }
+      return { ok: true, json: async () => JSON.parse(await readFile(`public${url}`, 'utf8')) } as Response
+    }) as typeof fetch
+    try {
+      const { DEF_RES_ID } = await import('@/data/gameData/constants')
+      const data = await import('@/data/gameData')
+      await data.initCoreGameData({ mode: 'beta', resonatorIds: [DEF_RES_ID] })
+      const coreSource = data.getGameData().sourcesByKey[`resonator:${DEF_RES_ID}`]
+      expect(coreSource).toBeDefined()
+      expect(coreSource.skills).toHaveLength(0)
+      expect(requested).toContain('/data/beta/weapons/core-catalog.json')
+      expect(requested).not.toContain('/data/beta/weapons/catalog.json')
+      const { getWpnsById } = await import('@/data/gameData/weapons/weaponDataStore')
+      const fullWeapons = JSON.parse(await readFile('public/data/beta/weapons/catalog.json', 'utf8')) as Array<{
+        id: string; statsByLevel: Record<string, { atk: number; secondaryStatValue: number }>
+      }>
+      const oneWeapon = fullWeapons[0]
+      expect(getWpnsById()[oneWeapon.id].statsByLevel[90]).toEqual(oneWeapon.statsByLevel['90'])
+      const { makeAppState } = await import('@/engine/runtime/defaults')
+      expect(makeAppState().combat.order).toHaveLength(1)
+      const { useAppStore, selScenarioProfiles } = await import('@/application/state')
+      expect(Object.keys(selScenarioProfiles(useAppStore.getState()))).toContain(DEF_RES_ID)
+      failFullSourceOnce = true
+      await expect(data.initGameData({ mode: 'beta', resonatorIds: [DEF_RES_ID] })).rejects.toThrow('source unavailable')
+      expect(data.getGameData().sourcesByKey[`resonator:${DEF_RES_ID}`].skills).toHaveLength(0)
+      await data.initGameData({ mode: 'beta', resonatorIds: [DEF_RES_ID] })
+      expect(data.getGameData().sourcesByKey[`resonator:${DEF_RES_ID}`].skills?.length).toBeGreaterThan(0)
+      expect(data.getGameData().sourcesByKey['resonator:1205']).toBeUndefined()
+      data.releaseCalculationGameData()
+      expect(data.getGameData().sourcesByKey[`resonator:${DEF_RES_ID}`].skills).toHaveLength(0)
+      expect(data.getGameData().sourcesByKey['resonator:1205']).toBeDefined()
+      await data.initGameData({ mode: 'beta', resonatorIds: [DEF_RES_ID] })
+      expect(data.getGameData().sourcesByKey[`resonator:${DEF_RES_ID}`].skills?.length).toBeGreaterThan(0)
+    } finally {
+      globalThis.fetch = previousFetch
+      clearGameDataState()
+      vi.resetModules()
+    }
+  })
+
+  it('releases data loaded by a non-Simulation action after its lease ends', async () => {
+    vi.resetModules()
+    clearGameDataState()
+    const previousFetch = globalThis.fetch
+    vi.stubGlobal('window', { location: { pathname: '/' } })
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => ({
+      ok: true,
+      json: async () => JSON.parse(await readFile(`public${resolveRequestUrl(input)}`, 'utf8')),
+    } as Response)) as typeof fetch
+    try {
+      const data = await import('@/data/gameData')
+      await data.initCoreGameData({ resonatorIds: ['1202'] })
+      vi.useFakeTimers()
+      const release = data.holdResonatorData(['1202'])
+      await data.ensureResonatorData(['1202'])
+      expect(data.hasResonatorData(['1202'])).toBe(true)
+      await vi.advanceTimersByTimeAsync(1_201)
+      expect(data.hasResonatorData(['1202'])).toBe(true)
+      release()
+      expect(data.hasResonatorData(['1202'])).toBe(false)
+    } finally {
+      vi.useRealTimers()
+      vi.unstubAllGlobals()
+      globalThis.fetch = previousFetch
+      clearGameDataState()
+      vi.resetModules()
+    }
+  })
+
   it('throws when the registry is read before initialization', async () => {
     vi.resetModules()
     clearGameDataState()
@@ -71,6 +152,10 @@ describe('game data bootstrap invariants', () => {
         case '/data/beta/sonata/sets.json':
         case '/data/beta/sonata/effects.json':
           return createJsonResponse([])
+        case '/data/beta/source-manifest.json':
+          return createJsonResponse({ sources: [], featureIds: [] })
+        case '/data/beta/weapons/core-catalog.json':
+          return createJsonResponse({ levels: [], weapons: [] })
         case '/data/beta/resonators/details.json':
           return createJsonResponse({})
         case '/data/beta/echoes/stats.json':
@@ -96,7 +181,7 @@ describe('game data bootstrap invariants', () => {
         initializeGameData(),
       ])
 
-      expect(fetchMock).toHaveBeenCalledTimes(12)
+      expect(fetchMock).toHaveBeenCalledTimes(14)
       expect(() => getGameData()).not.toThrow()
     } finally {
       globalThis.fetch = previousFetch
@@ -128,6 +213,10 @@ describe('game data bootstrap invariants', () => {
         case '/data/beta/sonata/sets.json':
         case '/data/beta/sonata/effects.json':
           return createJsonResponse([])
+        case '/data/beta/source-manifest.json':
+          return createJsonResponse({ sources: [], featureIds: [] })
+        case '/data/beta/weapons/core-catalog.json':
+          return createJsonResponse({ levels: [], weapons: [] })
         case '/data/beta/resonators/details.json':
           return createJsonResponse({})
         case '/data/beta/echoes/stats.json':
@@ -157,7 +246,7 @@ describe('game data bootstrap invariants', () => {
 
       await expect(initGameData()).resolves.toBeUndefined()
 
-      expect(fetchMock).toHaveBeenCalledTimes(24)
+      expect(fetchMock).toHaveBeenCalledTimes(28)
       expect(() => getGameData()).not.toThrow()
     } finally {
       globalThis.fetch = previousFetch
@@ -212,6 +301,10 @@ describe('game data bootstrap invariants', () => {
         case '/data/live/sonata/sets.json':
         case '/data/live/sonata/effects.json':
           return createJsonResponse([])
+        case '/data/live/source-manifest.json':
+          return createJsonResponse({ sources: [], featureIds: [] })
+        case '/data/live/weapons/core-catalog.json':
+          return createJsonResponse({ levels: [], weapons: [] })
         case '/data/live/resonators/details.json':
           return createJsonResponse({})
         case '/data/live/echoes/stats.json':
@@ -233,7 +326,7 @@ describe('game data bootstrap invariants', () => {
 
       await expect(initGameData({ mode: 'live' })).resolves.toBeUndefined()
 
-      expect(fetchMock).toHaveBeenCalledTimes(12)
+      expect(fetchMock).toHaveBeenCalledTimes(14)
       expect(getGameDataMode()).toBe('live')
     } finally {
       globalThis.fetch = previousFetch
@@ -264,6 +357,12 @@ describe('game data bootstrap invariants', () => {
         return createJsonResponse({
           primaryStats: {}, secondaryStats: {}, substatKeys: [], substatRanges: {},
         })
+      }
+      if (url.endsWith('/source-manifest.json')) {
+        return createJsonResponse({ sources: [{ type: 'resonator', id: '1234' }], featureIds: [] })
+      }
+      if (url.endsWith('/weapons/core-catalog.json')) {
+        return createJsonResponse({ levels: [], weapons: [] })
       }
       return createJsonResponse([])
     }) as typeof fetch

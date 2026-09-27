@@ -4,6 +4,7 @@
                projections, inventory operations, and optimizer execution state.
 */
 
+import { compactTheoryEchoes } from '@/engine/optimizer/results/theoryEchoes'
 import { ensureResonatorData, hasResonatorData, retainResonatorData } from '@/data/gameData'
 import { collectResonatorIds, readStoredScenarioIds } from '@/application/persistence/resonatorScope'
 import { useTstStr } from '@/shared/util/toastStore'
@@ -92,23 +93,16 @@ import { cloneOptInventorySelection } from '@/domain/entities/profile'
 import type {SntSetConds} from '@/domain/entities/sonataSetConditionals'
 import type {SuggestState, SuggsViewMod, WeaponPlanSet} from '@/domain/entities/suggestions'
 import type {
-    OptBckn,
     OptBagResult,
-    OptFinalResult,
+    OptStoredResult,
     OptPrgr,
     OptRawResult,
     OptStartPay,
     OptStts,
     PrepOptPay,
 } from '@/engine/optimizer/types'
-import {
-    cnclActOptWr,
-    rstOptWrkrPo,
-    runOptWithWr,
-} from '@/engine/optimizer/workers/poolClient'
 import {matThryRsltCh} from '@/engine/optimizer/results/theoryEchoes.ts'
-import {ROT_GPU_JOB, CPU_THEORY_JOB, GPU_THEORY_JOB,} from '@/engine/optimizer/config/constants'
-import {errorOpt, logOptimizer} from '@/engine/optimizer/config/log.ts'
+import { ROT_GPU_JOB, CPU_THEORY_JOB, GPU_THEORY_JOB, CPU_JOB_SIZE, TARGET_GPU_JOB } from '@/engine/optimizer/config/constants'
 import {
     makeAppState,
     makeScenarioMemberFromProfile,
@@ -122,9 +116,11 @@ import {
     mkLeftPaneVi,
     mkRtUpdHistL,
     mkTeamMemRtU,
-    clonePrssSna,
+    applyHistoryEntry,
+    makeHistoryEntry,
+    queueHistoryCompaction,
+    changedPersistDomains,
     mkMptyHistSt,
-    mkHistEnt,
     type PrssHistEnt,
     type PrssHistStt,
     resFllbHistL,
@@ -155,7 +151,6 @@ import {resSdsById} from '@/data/catalog/resonatorSeedService'
 import {getEchoById} from '@/data/catalog/echoCatalogService'
 import {cloneResProf, cloneRtSttVl,} from '@/engine/runtime/runtimeCloning'
 import {catWpnAtk} from '@/engine/runtime/weaponState'
-import { isSimulationSurfaceRoute } from '@/shared/lib/appRoutes'
 import {getSystTheme, type RslvSystThem} from '@/shared/lib/systemTheme'
 import {
     mkDefMkName,
@@ -163,17 +158,6 @@ import {
     mkNtlAppStt,
     getSuggsSttF,
 } from '@/application/state/storeHelpers'
-import {
-    bgnOptRun,
-    compOptPayIn,
-    ensOptCompWr,
-    inferOptBtch,
-    nvldOptRun,
-    isOptRunCur,
-    matOptRsltsI,
-    resOptBtchSi,
-    stopOptCompW,
-} from '@/application/state/storeOptimizerRuntime'
 import {selectPersisted} from '@/application/state/serialization'
 import {
     acknowledgeAdvancedRotationMigrations as acknowledgeAdvancedRotationMigrationsState,
@@ -205,6 +189,7 @@ function applyPrssSna(
     ...state,
     ...initAppState(snapshot),
     invHydr: true,
+    savedRotationsHydrated: true,
     optimizer: mkIdleOptStt(),
     history,
   }
@@ -318,14 +303,16 @@ export interface AppStore extends Omit<PersistedState, 'simulation' | 'combat'> 
   invOpen: boolean
   invEchoQ: string
   invMounted: boolean
+  // Echoes and builds remain resident for saved-status checks.
   invHydr: boolean
+  savedRotationsHydrated: boolean
   history: PrssHistStt
   // optimizer keeps the compiled payload and result echo rows only for the
   // active browser session, so these keys can stay compact without migrations.
   optimizer: {
     status: OptStts
     progress: OptPrgr | null
-    results: Array<OptRawResult | OptFinalResult>
+    results: Array<OptRawResult | OptStoredResult>
     error: string | null
     batchSize: number | null
     resPay: PrepOptPay | null
@@ -342,7 +329,9 @@ export interface AppStore extends Omit<PersistedState, 'simulation' | 'combat'> 
   undoHist: () => PrssHistEnt[]
   redoHist: () => PrssHistEnt[]
   ensInvHydr: () => void
-  acquireInvLease: () => () => void
+  ensureSavedRotations: () => void
+  acquireSavedRotationsLease: () => () => void
+  ensureFullLibrary: () => void
   flushPrssNow: () => void
   // preference actions wrap persisted ui writes; the action names are short,
   // while the underlying saved ui keys remain unchanged inside each updater.
@@ -562,16 +551,41 @@ export interface AppStore extends Omit<PersistedState, 'simulation' | 'combat'> 
 
 // main zustand store
 const ntlPrssStt = mkNtlAppStt()
-const ntlInvHydr =
-    (typeof window !== 'undefined' && isSimulationSurfaceRoute(window.location.pathname, 'optimizer'))
-    || INV_LEFT_PANES.has(ntlPrssStt.ui.leftPaneView)
+// Only complete saved scenarios are evicted. Gear is used throughout the app.
+const SAVED_ROTATIONS_IDLE_EVICT_MS = 15_000
+let savedRotationsLeaseCount = 0
+let savedRotationsEvictTimer: number | null = null
+type OptimizerRunModule = typeof import('./optimizerRun')
+let optimizerRunModule: OptimizerRunModule | null = null
+let optimizerRunLoading: Promise<OptimizerRunModule> | null = null
+let optimizerRequestGeneration = 0
 
-// Inventory data is intentionally cold outside an owning surface. Keep it only
-// long enough for the close transition to finish, then persist and release the
-// large library arrays instead of holding them through Modulation rest state.
-const INVENTORY_IDLE_EVICT_MS = 400
-let inventoryLeaseCount = 0
-let inventoryEvictTimer: number | null = null
+function loadOptimizerRun(): Promise<OptimizerRunModule> {
+  optimizerRunLoading ??= import('./optimizerRun').then((module) => {
+    optimizerRunModule = module
+    return module
+  }).catch((error) => {
+    optimizerRunLoading = null
+    throw error
+  })
+  return optimizerRunLoading
+}
+
+function cancelOptimizerRequest(): void {
+  optimizerRequestGeneration += 1
+  optimizerRunModule?.cancelOptimizerRun()
+}
+
+function disposeOptimizerRequest(): void {
+  optimizerRequestGeneration += 1
+  optimizerRunModule?.disposeOptimizerRun()
+}
+
+function initialOptimizerBatch(input: OptStartPay): number {
+  if (input.settings.searchMode === 'theory') return input.settings.enableGpu ? GPU_THEORY_JOB : CPU_THEORY_JOB
+  if (input.settings.rotationMode && input.settings.enableGpu) return ROT_GPU_JOB
+  return input.settings.enableGpu ? TARGET_GPU_JOB : CPU_JOB_SIZE
+}
 
 export const useAppStore = create<AppStore>((set, get) => {
   const flushPrssNow = () => {
@@ -581,30 +595,31 @@ export const useAppStore = create<AppStore>((set, get) => {
     }
   }
 
-  const cancelInvEviction = () => {
-    if (inventoryEvictTimer != null) {
-      clearTimeout(inventoryEvictTimer)
-      inventoryEvictTimer = null
+  const cancelSavedRotationsEviction = () => {
+    if (savedRotationsEvictTimer != null) {
+      clearTimeout(savedRotationsEvictTimer)
+      savedRotationsEvictTimer = null
     }
   }
 
-  const scheduleInvEviction = () => {
-    cancelInvEviction()
-    if (inventoryLeaseCount > 0 || typeof window === 'undefined') return
-    inventoryEvictTimer = window.setTimeout(() => {
-      inventoryEvictTimer = null
-      if (inventoryLeaseCount > 0 || get().invOpen) return
+  const scheduleSavedRotationsEviction = () => {
+    cancelSavedRotationsEviction()
+    if (savedRotationsLeaseCount > 0 || typeof window === 'undefined') return
+    savedRotationsEvictTimer = window.setTimeout(() => {
+      savedRotationsEvictTimer = null
+      if (savedRotationsLeaseCount > 0) return
       flushPrssNow()
-      set((state) => state.invHydr ? {
+      set((state) => state.savedRotationsHydrated ? {
         ...state,
-        invHydr: false,
-        library: { echoes: [], builds: [], rotations: [], scenarios: [] },
+        savedRotationsHydrated: false,
+        library: { ...state.library, rotations: [], scenarios: [] },
       } : state)
-    }, INVENTORY_IDLE_EVICT_MS)
+    }, SAVED_ROTATIONS_IDLE_EVICT_MS)
   }
 
   const rstrPrssSnap = (
     snapshot: PersistedState,
+    domains: PersistKey[],
     {
       past,
       future,
@@ -613,15 +628,16 @@ export const useAppStore = create<AppStore>((set, get) => {
       future: PrssHistEnt[]
     },
   ) => {
-    nvldOptRun()
-    stopOptCompW()
-    cnclActOptWr()
-    set((state) => applyPrssSna(state, snapshot, {
-      past,
-      future,
-      isRestoring: false,
+    cancelOptimizerRequest()
+    set((state) => ({
+      ...state,
+      ...snapshot,
+      savedRotationsHydrated: state.savedRotationsHydrated
+        || domains.includes('library.rotations') || domains.includes('library.scenarios'),
+      optimizer: mkIdleOptStt(),
+      history: { past, future, isRestoring: false },
     }))
-    markPrssDmns(ALL_DOMAIN_KEYS)
+    markPrssDmns(domains)
   }
 
   const resHistLbl = (
@@ -637,62 +653,64 @@ export const useAppStore = create<AppStore>((set, get) => {
   }
 
   const undoToHistNd = (index: number) => {
-    const state = get()
+    let state = get()
     if (!RUNTIME_APP_HISTORY_ENABLED || !state.ui.haveHistory || index < 0 || index >= state.history.past.length) {
       return
     }
-
-    const curSnap = clonePrssSna(selectPersisted(state))
-    const steps = index + 1
-    const selectedPast = state.history.past.slice(-steps)
-    const tgtSnap = selectedPast[0]?.snapshot
-
-    if (!tgtSnap) {
-      return
+    const selectedPast = state.history.past.slice(-(index + 1))
+    if (!state.savedRotationsHydrated && selectedPast.some((entry) =>
+      entry.domains.includes('library.rotations') || entry.domains.includes('library.scenarios'))) {
+      state.ensureSavedRotations()
+      state = get()
     }
 
-    const nextFuture = [
-      ...selectedPast.map((entry, entryIndex) => mkHistEnt(
-        entryIndex < selectedPast.length - 1
-          ? selectedPast[entryIndex + 1]!.snapshot
-          : curSnap,
-        entry.label,
-      )),
-      ...state.history.future,
-    ]
-
-    rstrPrssSnap(tgtSnap, {
+    const steps = index + 1
+    let target = selectPersisted(state)
+    for (const entry of selectedPast.slice().reverse()) target = applyHistoryEntry(target, entry, false)
+    const ids = selectedCombatScenario(target.combat).team.members.map((member) => member.resonatorId)
+    if (!hasResonatorData(ids)) {
+      const history = state.history.past
+      void ensureResonatorData(ids).then(() => {
+        if (get().history.past === history) undoToHistNd(index)
+      }).catch((error: unknown) => {
+        useTstStr.getState().show({ content: error instanceof Error ? error.message : 'Could not load resonator data.', variant: 'error' })
+      })
+      return
+    }
+    const nextFuture = [...selectedPast, ...state.history.future]
+    rstrPrssSnap(target, [...new Set(selectedPast.flatMap((entry) => entry.domains))], {
       past: state.history.past.slice(0, -steps),
       future: trimHistEnts(nextFuture, state.ui.historyMax, 'earliest'),
     })
   }
 
   const redoToHistNd = (index: number) => {
-    const state = get()
+    let state = get()
     if (!RUNTIME_APP_HISTORY_ENABLED || !state.ui.haveHistory || index < 0 || index >= state.history.future.length) {
       return
     }
-
-    const curSnap = clonePrssSna(selectPersisted(state))
-    const steps = index + 1
-    const selFtr = state.history.future.slice(0, steps)
-    const tgtSnap = selFtr[selFtr.length - 1]?.snapshot
-
-    if (!tgtSnap) {
-      return
+    const selFtr = state.history.future.slice(0, index + 1)
+    if (!state.savedRotationsHydrated && selFtr.some((entry) =>
+      entry.domains.includes('library.rotations') || entry.domains.includes('library.scenarios'))) {
+      state.ensureSavedRotations()
+      state = get()
     }
 
-    const nextPast = [
-      ...state.history.past,
-      ...selFtr.map((entry, entryIndex) => mkHistEnt(
-        entryIndex === 0
-          ? curSnap
-          : selFtr[entryIndex - 1]!.snapshot,
-        entry.label,
-      )),
-    ]
-
-    rstrPrssSnap(tgtSnap, {
+    const steps = index + 1
+    let target = selectPersisted(state)
+    for (const entry of selFtr) target = applyHistoryEntry(target, entry, true)
+    const ids = selectedCombatScenario(target.combat).team.members.map((member) => member.resonatorId)
+    if (!hasResonatorData(ids)) {
+      const history = state.history.future
+      void ensureResonatorData(ids).then(() => {
+        if (get().history.future === history) redoToHistNd(index)
+      }).catch((error: unknown) => {
+        useTstStr.getState().show({ content: error instanceof Error ? error.message : 'Could not load resonator data.', variant: 'error' })
+      })
+      return
+    }
+    const nextPast = [...state.history.past, ...selFtr]
+    rstrPrssSnap(target, [...new Set(selFtr.flatMap((entry) => entry.domains))], {
       past: trimHistEnts(nextPast, state.ui.historyMax, 'recent'),
       future: state.history.future.slice(steps),
     })
@@ -740,21 +758,25 @@ export const useAppStore = create<AppStore>((set, get) => {
         retainResonatorData(ids)
       }
       if (next !== state) {
+        const beforePersisted = selectPersisted(state)
+        const afterPersisted = selectPersisted(next)
+        const changedDomains = changedPersistDomains(beforePersisted, afterPersisted, dirtyDomains)
         if (RUNTIME_APP_HISTORY_ENABLED
           && !state.history.isRestoring
           && state.ui.haveHistory
           && options.recHist !== false) {
-          const curSnap = selectPersisted(state)
+          const entry = makeHistoryEntry(beforePersisted, afterPersisted, changedDomains,
+            resHistLbl(changedDomains, options))
+          if (entry) {
+            queueHistoryCompaction(entry)
             next.history = {
               ...state.history,
-              past: trimHistEnts([...state.history.past, mkHistEnt(
-                  curSnap,
-                  resHistLbl(dirtyDomains, options),
-              )], state.ui.historyMax, 'recent'),
+              past: trimHistEnts([...state.history.past, entry], state.ui.historyMax, 'recent'),
               future: [],
+            }
           }
         }
-        markPrssDmns(dirtyDomains)
+        if (changedDomains.length) markPrssDmns(changedDomains)
       }
       return next
     })
@@ -928,43 +950,47 @@ export const useAppStore = create<AppStore>((set, get) => {
   invOpen: false,
   invEchoQ: '',
   invMounted: false,
-  invHydr: ntlInvHydr,
+  invHydr: true,
+  savedRotationsHydrated: false,
   history: mkMptyHistSt(),
   optimizer: mkIdleOptStt(),
 
   hydrate: (payload) => {
     if (deferForData(collectResonatorIds(payload), () => get().hydrate(payload), 'hydrate')) return
+    get().ensureFullLibrary()
     const curSnap = selectPersisted(get())
-    const nextSnapshot = clonePrssSna(payload)
+    const nextSnapshot = structuredClone(payload)
     const { ui } = get()
 
-    nvldOptRun()
-    stopOptCompW()
-    cnclActOptWr()
+    cancelOptimizerRequest()
+    const importEntry = RUNTIME_APP_HISTORY_ENABLED && ui.haveHistory
+      ? makeHistoryEntry(curSnap, nextSnapshot, ALL_DOMAIN_KEYS, 'Imported App State')
+      : null
+    if (importEntry) queueHistoryCompaction(importEntry)
     set((state) => applyPrssSna(state, nextSnapshot, {
       past: RUNTIME_APP_HISTORY_ENABLED && ui.haveHistory
-        ? trimHistEnts(
-          [...state.history.past, mkHistEnt(curSnap, 'Imported App State')],
-          ui.historyMax,
-          'recent',
-        )
+        ? trimHistEnts([
+          ...state.history.past,
+          ...(importEntry ? [importEntry] : []),
+        ], ui.historyMax, 'recent')
         : [],
       future: [],
       isRestoring: false,
     }))
     retainResonatorData(selectedCombatScenario(get().combat).team.members.map((member) => member.resonatorId))
     markPrssDmns(ALL_DOMAIN_KEYS)
+    scheduleSavedRotationsEviction()
   },
 
   resetState: () => {
     if (deferForData([DEF_RES_ID], () => get().resetState(), 'selection')) return
     pendingDataActions.clear()
     retainResonatorData([DEF_RES_ID])
-    stopOptCompW()
-    cnclActOptWr()
+    cancelOptimizerRequest()
     set(() => ({
       ...makeAppState(),
-      invHydr: false,
+      invHydr: true,
+      savedRotationsHydrated: false,
       history: mkMptyHistSt(),
       optimizer: mkIdleOptStt(),
     }))
@@ -992,36 +1018,49 @@ export const useAppStore = create<AppStore>((set, get) => {
   redoHist: () => RUNTIME_APP_HISTORY_ENABLED && get().ui.haveHistory ? get().history.future.slice() : [],
 
   ensInvHydr: () => {
-    if (get().invHydr || typeof window === 'undefined') {
-      return
-    }
-
-    const inventory = loadPrssInvS()
+    if (get().invHydr || typeof window === 'undefined') return
+    const { echoes, builds } = loadPrssInvS('gear')
     set((state) => ({
       ...state,
       invHydr: true,
-      library: inventory,
+      library: { ...state.library, echoes, builds },
     }))
-    scheduleInvEviction()
   },
 
-  acquireInvLease: () => {
-    cancelInvEviction()
-    inventoryLeaseCount += 1
-    get().ensInvHydr()
+  ensureSavedRotations: () => {
+    if (!get().savedRotationsHydrated && typeof window !== 'undefined') {
+      const { rotations, scenarios } = loadPrssInvS('saved')
+      set((state) => ({
+        ...state,
+        savedRotationsHydrated: true,
+        library: { ...state.library, rotations, scenarios },
+      }))
+    }
+    scheduleSavedRotationsEviction()
+  },
+
+  acquireSavedRotationsLease: () => {
+    cancelSavedRotationsEviction()
+    savedRotationsLeaseCount += 1
+    get().ensureSavedRotations()
     let released = false
     return () => {
       if (released) return
       released = true
-      inventoryLeaseCount = Math.max(0, inventoryLeaseCount - 1)
-      scheduleInvEviction()
+      savedRotationsLeaseCount = Math.max(0, savedRotationsLeaseCount - 1)
+      scheduleSavedRotationsEviction()
     }
+  },
+
+  ensureFullLibrary: () => {
+    get().ensInvHydr()
+    get().ensureSavedRotations()
   },
 
   flushPrssNow,
 
   migrateAdvancedRotations: () => {
-    get().ensInvHydr()
+    get().ensureSavedRotations()
     let migrations: AdvancedRotationMigration[] = []
 
     persistedSet(
@@ -1047,6 +1086,7 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   acknowledgeAdvancedRotationMigrations: (entryIds) => {
+    get().ensureSavedRotations()
     const ids = new Set(entryIds)
     persistedSet(
       ['library.rotations'],
@@ -1283,9 +1323,10 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   patchShowcaseCardStyle: (resId, patch) => {
-    persistedSet(['ui.layout'], (state) => {
+    persistedSet(['ui.showcaseCards'], (state) => {
       const cards = state.ui.preferences.showcaseCards
       const current = cards[resId] ?? { style: DEF_SHOWCASE_CARD_STYLE, hidden: DEF_SHOWCASE_HIDE }
+      if (Object.entries(patch).every(([key, value]) => Object.is(current.style[key as keyof typeof current.style], value))) return state
       return {
         ...state,
         ui: {
@@ -1303,7 +1344,7 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   toggleShowcaseHide: (resId, key) => {
-    persistedSet(['ui.layout'], (state) => {
+    persistedSet(['ui.showcaseCards'], (state) => {
       const cards = state.ui.preferences.showcaseCards
       const current = cards[resId] ?? { style: DEF_SHOWCASE_CARD_STYLE, hidden: DEF_SHOWCASE_HIDE }
       return {
@@ -1323,9 +1364,10 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   patchShowcaseCardHidden: (resId, patch) => {
-    persistedSet(['ui.layout'], (state) => {
+    persistedSet(['ui.showcaseCards'], (state) => {
       const cards = state.ui.preferences.showcaseCards
       const current = cards[resId] ?? { style: DEF_SHOWCASE_CARD_STYLE, hidden: DEF_SHOWCASE_HIDE }
+      if (Object.entries(patch).every(([key, value]) => Object.is(current.hidden[key as keyof typeof current.hidden], value))) return state
       return {
         ...state,
         ui: {
@@ -1343,7 +1385,7 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   resetShowcaseCard: (resId) => {
-    persistedSet(['ui.layout'], (state) => {
+    persistedSet(['ui.showcaseCards'], (state) => {
       const cards = state.ui.preferences.showcaseCards
       if (!(resId in cards)) return state
       const next = { ...cards }
@@ -2538,7 +2580,7 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   addInvRot: ({ name, duration, note, scenario }) => {
-    get().ensInvHydr()
+    get().ensureSavedRotations()
     const rotations = get().library.rotations
     const contextMember = contextScenarioMember(scenario)
     const contextName = resSdsById[contextMember.resonatorId]?.name ?? contextMember.resonatorId
@@ -2564,7 +2606,7 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   updInvRot: (entryId, changes) => {
-    get().ensInvHydr()
+    get().ensureSavedRotations()
     persistedSet(['library.rotations'], (state) => ({
       ...state,
       library: {
@@ -2587,7 +2629,7 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   rmInvRot: (entryId) => {
-    get().ensInvHydr()
+    get().ensureSavedRotations()
     persistedSet(['library.rotations'], (state) => ({
       ...state,
       library: {
@@ -2598,7 +2640,7 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   clrInvRot: () => {
-    get().ensInvHydr()
+    get().ensureSavedRotations()
     persistedSet(['library.rotations'], (state) => ({
       ...state,
       library: {
@@ -2609,7 +2651,7 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   saveScenario: (input = {}) => {
-    get().ensInvHydr()
+    get().ensureSavedRotations()
     const state = get()
     const scenarioId = input.scenarioId ?? state.combat.selectedScenarioId
     const scenario = state.combat.scenariosById[scenarioId]
@@ -2634,7 +2676,7 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   updSavedScenario: (entryId, changes) => {
-    get().ensInvHydr()
+    get().ensureSavedRotations()
     persistedSet(['library.scenarios'], (state) => ({
       ...state,
       library: {
@@ -2652,7 +2694,7 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   rmSavedScenario: (entryId) => {
-    get().ensInvHydr()
+    get().ensureSavedRotations()
     persistedSet(['library.scenarios'], (state) => ({
       ...state,
       library: {
@@ -2663,7 +2705,7 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   clrSavedScenarios: () => {
-    get().ensInvHydr()
+    get().ensureSavedRotations()
     persistedSet(['library.scenarios'], (state) => ({
       ...state,
       library: {
@@ -2674,7 +2716,7 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   loadSavedScenario: (entryId) => {
-    get().ensInvHydr()
+    get().ensureSavedRotations()
     const entry = get().library.scenarios.find((candidate) => candidate.id === entryId)
     return entry ? get().applyScenarioSnapshot(entry.scenario) : null
   },
@@ -2692,204 +2734,39 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   startOpt: (input, hooks = {}) => {
-    const current = get()
-    if (current.optimizer.status === 'running') {
-      current.cnclOpt()
-    }
-
-    // keep the compile worker warm across runs (it hydrates game data once);
-    // only the task-worker pool is reset here. explicit teardown still happens
-    // on cancel / clear / error so resources free when the surface is left.
-    rstOptWrkrPo()
-    const runToken = bgnOptRun()
-
-    logOptimizer('[optimizer:store] run started', {
-      runToken,
-      resonatorId: input.resonatorId,
-      rotationMode: input.settings.rotationMode,
-      enableGpu: input.settings.enableGpu,
-      lowMem: input.settings.lowMemoryMode,
-      invSize: input.invChs.length,
-      resultsLimit: input.settings.resultsLimit,
-      sabAvail: typeof SharedArrayBuffer !== 'undefined',
-    })
-
+    if (get().optimizer.status === 'running') get().cnclOpt()
+    const request = ++optimizerRequestGeneration
     set((state) => ({
       ...state,
       optimizer: {
-        status: 'running' as const,
+        status: 'running',
         progress: null,
         results: [],
         error: null,
-        batchSize: inferOptBtch(input),
+        batchSize: initialOptimizerBatch(input),
         resPay: null,
         resultEchoes: [],
       },
     }))
-
-    const compWrkr = ensOptCompWr()
-    const runStartTime = performance.now()
-
-    void (async () => {
-      try {
-        await hooks.settle?.()
-        if (!isOptRunCur(runToken)) {
-          logOptimizer('[optimizer:store] run superseded while settling, dropping', { runToken })
-          return
-        }
-
-        const compPay = await compOptPayIn(compWrkr, runToken, input)
-        if (!isOptRunCur(runToken)) {
-          logOptimizer('[optimizer:store] run superseded after compile, dropping', { runToken })
-          return
-        }
-
-        const backend: OptBckn = input.settings.enableGpu ? 'gpu' : 'cpu'
-
-        logOptimizer('[optimizer:store] starting pool search', {
-          runToken,
-          backend,
-          mode: compPay.mode,
-          totalCombos: compPay.totalCombos,
-          resultsLimit: compPay.resultsLimit,
-          lowMem: compPay.lowMmryMode,
-        })
-
-        set((state) => ({
-          ...state,
-          optimizer: {
-            ...state.optimizer,
-            batchSize:
-                compPay.mode === 'theoryTarget' || compPay.mode === 'theoryRotation'
-                    ? backend === 'gpu'
-                        ? GPU_THEORY_JOB
-                        : CPU_THEORY_JOB
-                    : compPay.mode === 'rotation' && backend === 'gpu'
-                        ? ROT_GPU_JOB
-                        : resOptBtchSi(backend),
-            resPay: null,
-          },
-        }))
-
-        // Publish the compiled candidate count before worker progress replaces
-        // this initial snapshot; it supersedes any pre-compilation estimate.
-        hooks.onProgress?.({
-          progress: 0,
-          elapsedMs: 0,
-          remainingMs: Infinity,
-          processed: 0,
-          speed: 0,
-          total: compPay.totalCombos,
-          phase: 'evaluating',
-          discovered: 0,
-        })
-
-        const searchT0 = performance.now()
-        const results = await runOptWithWr(compPay, backend, {
-          isCancelled: () => !isOptRunCur(runToken),
-          onProgress: (progress) => {
-            if (!isOptRunCur(runToken)) {
-              return
-            }
-
-            hooks.onProgress?.(progress)
-          },
-        })
-
-        if (!isOptRunCur(runToken)) {
-          logOptimizer('[optimizer:store] run superseded after search, dropping', { runToken })
-          return
-        }
-
-        logOptimizer('[optimizer:store] pool search complete', {
-          runToken,
-          rawRsltCnt: results.length,
-          srchMs: Math.round(performance.now() - searchT0),
-        })
-
-        const lazyTheory =
-            compPay.mode === 'theoryTarget' ||
-            compPay.mode === 'theoryRotation'
-        const fnlzRslts = lazyTheory
-            ? (await import('@/engine/optimizer/results/materialize.ts')).matOptRsltsF([], results, {
-                payload: compPay,
-                limit: compPay.resultsLimit,
-              })
-            : await matOptRsltsI(
-                compWrkr,
-                runToken,
-                compPay,
-                results,
-                input.invChs.map((echo) => echo.uid),
-                compPay.resultsLimit,
-            )
-
-        if (!isOptRunCur(runToken)) {
-          logOptimizer('[optimizer:store] run superseded after materialize, dropping', { runToken })
-          return
-        }
-
-        logOptimizer('[optimizer:store] run complete', {
-          runToken,
-          finRsltCnt: fnlzRslts.length,
-          lazyTheory,
-          ttlMs: Math.round(performance.now() - runStartTime),
-        })
-
-        set((state) => ({
-          ...state,
-          optimizer: {
-            status: 'done',
-            progress: state.optimizer.progress,
-            results: fnlzRslts,
-            error: null,
-            batchSize: state.optimizer.batchSize,
-            resPay: null,
-            resultEchoes: [],
-          },
-        }))
-
-        // Results are fully self-contained. Release every worker and compiled
-        // buffer now instead of retaining an engine-sized backing payload.
-        stopOptCompW()
-        rstOptWrkrPo()
-
-      } catch (error) {
-        errorOpt('[optimizer:store] run failed', {
-          runToken,
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
-          elapsedMs: Math.round(performance.now() - runStartTime),
-        })
-
-        stopOptCompW()
-        rstOptWrkrPo()
-
-        if (!isOptRunCur(runToken)) {
-          return
-        }
-
-        set((state) => ({
-          ...state,
-          optimizer: {
-            status: 'error',
-            progress: state.optimizer.progress,
-            results: [],
-            error: error instanceof Error ? error.message : 'Optimizer worker pool failed unexpectedly',
-            batchSize: state.optimizer.batchSize,
-            resPay: null,
-            resultEchoes: [],
-          },
-        }))
-      }
-    })()
+    void loadOptimizerRun().then((module) => {
+      if (request !== optimizerRequestGeneration) return
+      module.startOptimizerRun(set, input, hooks, () => request === optimizerRequestGeneration)
+    }).catch((error: unknown) => {
+      if (request !== optimizerRequestGeneration) return
+      set((state) => ({
+        ...state,
+        optimizer: {
+          ...state.optimizer,
+          status: 'error',
+          results: [],
+          error: error instanceof Error ? error.message : 'Optimizer failed to load',
+        },
+      }))
+    })
   },
 
   cnclOpt: () => {
-    nvldOptRun()
-    stopOptCompW()
-    cnclActOptWr()
-    rstOptWrkrPo()
+    cancelOptimizerRequest()
 
     set((state) => ({
       ...state,
@@ -2906,8 +2783,7 @@ export const useAppStore = create<AppStore>((set, get) => {
   },
 
   clrOptRslt: () => {
-    stopOptCompW()
-    rstOptWrkrPo()
+    disposeOptimizerRequest()
     set((state) => ({
       ...state,
       optimizer: {
@@ -2927,8 +2803,7 @@ export const useAppStore = create<AppStore>((set, get) => {
       get().cnclOpt()
       return
     }
-    stopOptCompW()
-    rstOptWrkrPo()
+    disposeOptimizerRequest()
   },
 
   applyOpt: (index) => {
@@ -2959,8 +2834,8 @@ export const useAppStore = create<AppStore>((set, get) => {
     }
 
     // apply materialized theoretical results
-    if ('echoes' in result && Array.isArray(result.echoes)) {
-      const nextEchoes = result.echoes.map((echo, i) => cloneEchoFor(echo, i))
+    if ('theory' in result || ('echoes' in result && Array.isArray(result.echoes))) {
+      const nextEchoes = ('theory' in result ? compactTheoryEchoes(result) : result.echoes).map((echo, i) => cloneEchoFor(echo, i))
       if (nextEchoes.length === 0) return
 
       const actResId = getActResId(selectedCombatScenario(get().combat))

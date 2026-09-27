@@ -7,11 +7,12 @@
 import { StrictMode, Suspense, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@/appearanceEntry'
-import { initGameData } from '@/data/gameData/index'
+import { initCoreGameData, initGameData } from '@/data/gameData/index'
 import { readBootstrapResonatorIds } from '@/application/persistence/resonatorScope'
 import { readPersistedGameDataMode } from '@/application/persistence/gameDataMode'
 import { StartupErrorNotice } from '@/modules/system/pages/StartupErrorNotice'
 import { RootErrorBoundary } from '@/modules/system/pages/RootErrorBoundary'
+import { isSimulationRoute } from '@/shared/lib/appRoutes'
 const root = createRoot(document.getElementById('root')!)
 
 function BootLoading() {
@@ -33,7 +34,9 @@ async function startApp() {
   )
   try {
     const gameDataMode = readPersistedGameDataMode()
-    await initGameData({ mode: gameDataMode, resonatorIds: readBootstrapResonatorIds() })
+    const options = { mode: gameDataMode, resonatorIds: readBootstrapResonatorIds() }
+    if (isSimulationRoute(window.location.pathname)) await initGameData(options)
+    else await initCoreGameData(options)
     const { AppRoot } = await import('@/app/AppRoot')
 
     root.render(

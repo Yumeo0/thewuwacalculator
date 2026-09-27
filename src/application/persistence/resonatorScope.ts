@@ -47,7 +47,12 @@ export function readBootstrapResonatorIds(): string[] {
   try {
     const rawIndex = localStorage.getItem(APPSTORECMBTINDEX)
     if (rawIndex) {
-      const index = JSON.parse(rawIndex) as { selectedScenarioId?: string; recordsById?: Record<string, string> }
+      const index = JSON.parse(rawIndex) as { selectedScenarioId?: string; recordsById?: Record<string, string>; resonatorIdsById?: Record<string, string[]> }
+      const storedIds = index.selectedScenarioId && index.resonatorIdsById?.[index.selectedScenarioId]
+      if (Array.isArray(storedIds)) {
+        for (const id of storedIds) if (/^\d{4}$/.test(id)) ids.add(id)
+        return [...ids]
+      }
       const key = index.selectedScenarioId && index.recordsById?.[index.selectedScenarioId]
       if (key) {
         for (const id of readStoredScenarioIds(key)) ids.add(id)

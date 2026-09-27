@@ -12,6 +12,7 @@ import { makeRuntimeMap } from '@/engine/runtime/runtimeAdapters'
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
 import { mkPrepWpnSu, resSuggDmg, runSuggSmlt } from '@/engine/suggestions/shared'
 import { runPrepWpn } from '@/engine/suggestions/weapon-suggestion/compute'
+import { isOptRotTgt } from '@/engine/optimizer/rules/eligibility.ts'
 
 describe('weapon suggestion parity', () => {
   it('scores rotation candidates through their fully materialized runtime', () => {
@@ -46,9 +47,21 @@ describe('weapon suggestion parity', () => {
       weapon: settings,
       topK: 5,
     }
-    const prep = mkPrepWpnSu(input, runSuggSmlt(input))
+    const simulation = runSuggSmlt(input)
+    const prep = mkPrepWpnSu(input, simulation)
     expect(prep).toBeTruthy()
     if (!prep) throw new Error('failed to prepare weapon suggestions')
+    const compact = mkPrepWpnSu(input, structuredClone({
+      finalStats: simulation.finalStats,
+      allSkills: simulation.allSkills.filter((entry) => isOptRotTgt(entry, runtime.id, { includeEchoAttacks: true })),
+      rotation: { sequence: { entries: simulation.rotation.sequence.entries.filter(
+        (entry) => isOptRotTgt(entry, runtime.id, { includeEchoAttacks: true }),
+      ) } },
+    }))
+    expect(compact?.context.mode).toBe(prep.context.mode)
+    if (compact?.context.mode === 'rotation' && prep.context.mode === 'rotation') {
+      expect(compact.context.contexts).toEqual(prep.context.contexts)
+    }
 
     const results = runPrepWpn(prep)
     expect(results).not.toHaveLength(0)

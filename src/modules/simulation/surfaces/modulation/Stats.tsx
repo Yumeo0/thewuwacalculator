@@ -3,6 +3,8 @@
   Description: Projects baseline and evaluated stats and resolves source-level arithmetic for a selected row.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { observeSelectionPip } from '@/shared/lib/observeSelectionPip'
 import { Fragment, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import type {
@@ -895,7 +897,7 @@ function SonataPlan({ sets }: { sets: BuiltOnFrame['sets'] }) {
             className={set.pieces === 1 ? 'pst-son-pc is-lone' : 'pst-son-pc'}
             title={`${set.name} · ${set.pieces}pc`}
           >
-            {set.icon ? <img src={set.icon} alt="" loading="lazy" onError={withDefIconM} /> : <s />}
+            {set.icon ? <DisplayImage src={set.icon} alt="" loading="lazy" onError={withDefIconM} /> : <s />}
             <b>{set.pieces}</b>
           </span>
         </Fragment>
@@ -920,7 +922,7 @@ function BuiltOnRow({ frame }: { frame: BuiltOnFrame }) {
             <span className="pst-bo-echo" title={`${frame.main.name} · ${frame.main.cost} cost`}>
               <figure>
                 {frame.main.icon
-                  ? <img src={frame.main.icon} alt="" loading="lazy" onError={withDefIconM} />
+                  ? <DisplayImage src={frame.main.icon} alt="" loading="lazy" onError={withDefIconM} />
                   : <s />}
               </figure>
               <span className="pst-bo-nm">{frame.main.name}</span>
@@ -1158,30 +1160,7 @@ export function ModulationStats({
     const rows = list.current
     if (!wrap || !mark || !rows) return
 
-    const place = () => {
-      const row = at ? wrap.querySelector<HTMLElement>(`[data-row="${CSS.escape(at)}"]`) : null
-      if (!row) {
-        mark.classList.remove('is-on')
-        return
-      }
-
-      const wrapBox = wrap.getBoundingClientRect()
-      const rowBox = row.getBoundingClientRect()
-      const card = wrap.querySelector<HTMLElement>('.pgd-aside')
-      const channel = card
-        ? (rows.getBoundingClientRect().right + card.getBoundingClientRect().left) / 2
-        : rows.getBoundingClientRect().right
-
-      mark.style.setProperty('--pgd-pip-top', `${Math.round(rowBox.top + rowBox.height / 2 - wrapBox.top)}px`)
-      mark.style.setProperty('--pgd-pip-x', `${Math.round(channel - wrapBox.left)}px`)
-      mark.style.setProperty('--pgd-pip-e', getComputedStyle(row).getPropertyValue('--pgd-ink'))
-      mark.classList.add('is-on')
-    }
-
-    place()
-    const watch = new ResizeObserver(place)
-    watch.observe(rows)
-    return () => watch.disconnect()
+    return observeSelectionPip(wrap, rows, mark, at)
   }, [at, groups, shut])
 
   if (!active || groups.length === 0) {

@@ -6,7 +6,7 @@
 
 import type { EchoInstance } from '@/domain/entities/runtime.ts'
 import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@/data/gameData/catalog/echoStats.ts'
-import type { OptBagResult, OptRawResult, PrepTheoryRot, PrepTheoryTarget, TheoryResultRow } from '@/engine/optimizer/types.ts'
+import type { CompactTheoryResult, OptBagResult, OptRawResult, PrepTheoryRot, PrepTheoryTarget, TheoryResultRow } from '@/engine/optimizer/types.ts'
 import { fillOptBagRs } from './collector.ts'
 
 type ThryPay = PrepTheoryTarget | PrepTheoryRot
@@ -134,4 +134,55 @@ export function matThryRsltCh(
   return 'ids' in result
       ? matThryEcho(payload, result)
       : matThryBagEcho(payload, result)
+}
+
+export function compactTheoryEchoes(result: CompactTheoryResult): EchoInstance[] {
+  return result.indices.map((index, slot) => {
+    const echo = result.theory.candidates[index]!
+    return { ...echo, mainEcho: slot === result.mainSlot,
+      mainStats: { primary: { ...echo.mainStats.primary }, secondary: { ...echo.mainStats.secondary } },
+      substats: { ...echo.substats } }
+  })
+}
+
+/** Resolves identity/legality without allocating a loadout per retained result. */
+export function theoryResultCompactor(payload: ThryPay) {
+  const theory: CompactTheoryResult['theory'] = { candidates: [] }
+  const byUid = new Map<string, number>()
+  const catById = new Map(payload.cats.map((cat) => [cat.id, cat]))
+  return (result: OptRawResult): Omit<CompactTheoryResult, 'stats' | 'weaponId'> | null => {
+    if ('ids' in result && (result.ids.length !== payload.profs.length || result.sets.length !== payload.profs.length || result.mains.length !== payload.profs.length)) return null
+    const rawIds = 'ids' in result ? null : fillOptBagRs(new Int32Array(5), result)
+    const mainSlot = 'ids' in result ? result.main : payload.theoryRows[result.i0]?.slot ?? -1
+    if (mainSlot < 0 || mainSlot >= payload.profs.length) return null
+    const indices = new Array<number>(payload.profs.length).fill(-1)
+    const used = new Set<string>()
+    for (let index = 0; index < payload.profs.length; index++) {
+      const row = rawIds ? payload.theoryRows[rawIds[index]!] : null
+      const slot = row?.slot ?? index
+      const id = row ? row.id || row.ids.find((id) => !used.has(id)) : 'ids' in result ? result.ids[index] : undefined
+      const set = row?.set ?? ('sets' in result ? result.sets[index] : undefined)
+      const main = row?.main ?? ('mains' in result ? result.mains[index] : undefined)
+      const cat = id ? catById.get(id) : undefined
+      const cost = row?.cost ?? cat?.cost
+      const prof = payload.profs[slot]
+      if (!id || used.has(id) || !prof || set == null || !main || cost == null || (rawIds && !row)) return null
+      if (!rawIds && (!cat || !cat.sets.includes(set))) return null
+      const primary = ECHO_MAIN_STATS[cost]?.[main]
+      const secondary = ECHO_SIDE_STATS[cost]
+      if (primary == null || !secondary || indices[slot] !== -1) return null
+      used.add(id)
+      const uid = `theory:${prof.uid}:${id}:${set}:${main}:${slot}`
+      let candidate = byUid.get(uid)
+      if (candidate == null) {
+        candidate = theory.candidates.length
+        byUid.set(uid, candidate)
+        theory.candidates.push({ uid, id, set, mainEcho: false,
+          mainStats: { primary: { key: main, value: primary }, secondary: { ...secondary } },
+          substats: { ...prof.substats } })
+      }
+      indices[slot] = candidate
+    }
+    return indices.some((index) => index < 0) ? null : { theory, indices, mainSlot, damage: result.damage }
+  }
 }

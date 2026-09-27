@@ -5,6 +5,7 @@
                see which buffs and conditions feed the selected build.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { ReactEventHandler } from 'react'
 import type { StateGroup } from '@/modules/simulation/model/stateSummary.ts'
 import { Expandable } from '@/shared/ui/Expandable'
@@ -44,7 +45,7 @@ function StateSourceGroup({
       header={
         <div className="workspace-source-head">
           <span className="workspace-source-frame">
-            <img
+            <DisplayImage
               src={group.srcProf || '/assets/game/default.webp'}
               alt={group.sourceName} className="workspace-source-avatar"
               loading="lazy"

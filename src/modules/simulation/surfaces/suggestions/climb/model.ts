@@ -10,10 +10,12 @@ import { getSntSetClr, getSntSetIco, getSntSetNam } from '@/data/gameData/catalo
 import { applySetPlan, mkEchoMainSt } from '@/engine/suggestions/mutate.ts'
 import { applyMainSta } from '@/engine/suggestions/mainStat-suggestion/utils.ts'
 import type {
+  CompactSetPlanSuggest,
   MainStatSugg,
-  SetPlanSuggest,
+  SetPlanEntry,
   WeaponEntry,
 } from '@/engine/suggestions/types.ts'
+import type { MainStatRecipe } from '@/engine/suggestions/mainStat-suggestion/utils.ts'
 import { formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import { getRarityColor } from '@/modules/simulation/model/display.ts'
 import { statIconSrc } from '@/modules/simulation/workspace/ui.tsx'
@@ -83,8 +85,8 @@ export interface ClimbRow {
   delta: number
   marks: ClimbMark[]
   trays: ClimbTray[]
-  /** Materialized Echo candidate; weapon-only results leave it unchanged. */
-  echoes: Array<EchoInstance | null> | null
+  recipe: MainStatRecipe[] | null
+  setPlan: SetPlanEntry[] | null
   weapon: WeaponEntry | null
   variants: ClimbVariant[]
 }
@@ -180,7 +182,8 @@ function mainStatRows(
       delta: percentDiff(result.damage, base),
       marks,
       trays,
-      echoes: applyMainSta(result.recipes, echoes),
+      recipe: result.recipes,
+      setPlan: null,
       weapon: null,
       variants: [],
     }
@@ -188,9 +191,8 @@ function mainStatRows(
 }
 
 function setPlanRows(
-  results: SetPlanSuggest[],
+  results: CompactSetPlanSuggest[],
   base: number,
-  echoes: Array<EchoInstance | null>,
   worn: SetPlanSmmrE[],
 ): ClimbRow[] {
   return results.map((result, index) => {
@@ -244,7 +246,8 @@ function setPlanRows(
       delta: percentDiff(result.avgDamage, base),
       marks,
       trays,
-      echoes: applySetPlan(result.setPlan, echoes),
+      recipe: null,
+      setPlan: result.setPlan,
       weapon: null,
       variants: [],
     }
@@ -289,7 +292,8 @@ function weaponRows(
         secondary: null,
         held: false,
       })),
-      echoes: null,
+      recipe: null,
+      setPlan: null,
       weapon: lead,
       variants: plans.map((plan) => ({
         mode: plan.mode,
@@ -313,7 +317,7 @@ export function climbRows({
 }: {
   kind: ClimbKind
   mainStatRslt: MainStatSugg[]
-  setPlanRslt: SetPlanSuggest[]
+  setPlanRslt: CompactSetPlanSuggest[]
   wpnRslt: WeaponEntry[]
   base: number
   echoes: Array<EchoInstance | null>
@@ -322,6 +326,12 @@ export function climbRows({
   runtime: ResRuntime
 }): ClimbRow[] {
   if (kind === 'mainStats') return mainStatRows(mainStatRslt, base, echoes, worn)
-  if (kind === 'setPlans') return setPlanRows(setPlanRslt, base, echoes, wornSetPlan)
+  if (kind === 'setPlans') return setPlanRows(setPlanRslt, base, wornSetPlan)
   return weaponRows(wpnRslt, base, runtime)
+}
+
+export function materializeRowEchoes(row: ClimbRow, echoes: Array<EchoInstance | null>): Array<EchoInstance | null> | null {
+  if (row.recipe) return applyMainSta(row.recipe, echoes)
+  if (row.setPlan) return applySetPlan(row.setPlan, echoes)
+  return null
 }

@@ -4,10 +4,11 @@
                gates mode-dependent settings, and opens delegated configuration.
 */
 
+import { useOptimizerProgress, type OptimizerProgressSource } from '../lib/progressStore'
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useMemo, useState } from 'react'
 import { Settings2, Trash2 } from 'lucide-react'
 import type { OptSearchMode, OptSetChoice, OptSets, OptStatCstr } from '@/domain/entities/optimizer'
-import type { OptPrgr } from '@/engine/optimizer/types'
 import type { SelectGroup, SelectOption } from '@/application/ui/LiquidSelect'
 import type { SntSetConds } from '@/domain/entities/sonataSetConditionals'
 import type { WeaponPlanSet } from '@/domain/entities/suggestions'
@@ -15,7 +16,6 @@ import { ECHO_SET_DEFS } from '@/data/gameData/echoSets/effects'
 import { getSntSetIco, getSntSetNam } from '@/data/gameData/catalog/sonataSets'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback'
 import { Choice, DropHead, DropHost, Glyph, OutRow, Slide, Toggle } from './Drop.tsx'
-import { formatOptimizerTime } from '../lib/progress.ts'
 import {
   optSetPieceCount,
   type OptSetPieceCount as PieceCount,
@@ -82,7 +82,7 @@ export type OptTransportConfig = Pick<
 
 export interface OptTransportProps {
   isLoading: boolean
-  progress: OptPrgr
+  progressSource: OptimizerProgressSource
   cancelled: boolean
   success: boolean
   echoCount: number
@@ -130,8 +130,8 @@ export interface OptTransportProps {
 
 export function OptTransport(props: OptTransportProps) {
   const {
-    isLoading, progress, cancelled, success,
-    echoCount, resultCount, batchSize,
+    isLoading,
+    echoCount, batchSize,
     comboAvailable,
     skillOptions, skillGroups, skillColors, comboOptions, targetSkillId, targetComboId,
     mainEcho,
@@ -251,16 +251,6 @@ export function OptTransport(props: OptTransportProps) {
     ? comboOptions.find((option) => option.value === draftTargetComboId)?.label ?? 'Select combo'
     : skillOptions.find((option) => option.value === draftTargetSkillId)?.label ?? 'Select skill'
 
-  const status = isLoading
-    ? progress.phase === 'discovering'
-      ? `Discovering · ${progress.discovered ? progress.discovered.toLocaleString() : '...'}`
-      : `${Math.floor(progress.progress * 100)}% · ${progress.processed.toLocaleString()} processed`
-    : cancelled
-      ? 'Cancelled'
-      : success
-        ? `${resultCount.toLocaleString()} builds · ${formatOptimizerTime(progress.elapsedMs, '...')}`
-        : `Standby · ${echoCount} ${isTheory ? 'build echoes' : 'echoes'}`
-
   const limitToSlider = (limit: number) => {
     const clamped = Math.min(LIMIT_MAX, Math.max(LIMIT_MIN, limit))
     return (Math.log2(clamped / LIMIT_MIN) / LIMIT_POW) * 100
@@ -294,22 +284,13 @@ export function OptTransport(props: OptTransportProps) {
         {isLoading ? 'Halt' : 'Run'}
       </button>
 
-      <span className="rte-read opb-read">
-        <span className="rte-read__face">
-          <span className="rte-read__dot" aria-hidden="true" />
-          <span className="rte-read__name">{status}</span>
-        </span>
-      </span>
-
-      <span className="rte-pipe" aria-hidden="true" />
-
       <DropHost
         id="target"
         openId={drop}
         onOpen={changeDrop}
         label="Target"
         trigger={({ open, toggle }) => (
-          <button type="button" className={`opb-tag${open ? ' is-on' : ''}`} onClick={toggle}>
+          <button type="button" className={`opb-tag__target opb-tag ${open ? ' is-on' : ''}`} onClick={toggle}>
             {isCombo ? 'Combo' : 'Skill'}
             <i>{targetLabel}</i>
             <span className="opb-tag__car" aria-hidden="true" />
@@ -434,7 +415,7 @@ export function OptTransport(props: OptTransportProps) {
       >
         {mainEcho ? (
           <>
-            <img className="opb-tag__ico" src={mainEcho.icon} alt="" loading="lazy" onError={withDefEchoMg} />
+            <DisplayImage className="opb-tag__ico" src={mainEcho.icon} alt="" loading="lazy" onError={withDefEchoMg} />
             {mainEcho.name}
           </>
         ) : (
@@ -493,7 +474,7 @@ export function OptTransport(props: OptTransportProps) {
                   onClick={() => toggleSet(row.id)}
                 >
                   <span className="opb-box" aria-hidden="true" />
-                  {row.icon ? <img src={row.icon} alt="" loading="lazy" onError={withDefIconM} /> : null}
+                  {row.icon ? <DisplayImage src={row.icon} alt="" loading="lazy" onError={withDefIconM} /> : null}
                   <span>{row.name}</span>
                 </button>
               )
@@ -776,6 +757,15 @@ export function OptTransport(props: OptTransportProps) {
         </div>
       </DropHost>
 
+      <TransportClear progressSource={props.progressSource} isLoading={isLoading} cancelled={props.cancelled} success={props.success} resultCount={props.resultCount} onClear={props.onClear} />
+    </div>
+  )
+}
+
+type TransportProgressProps = Pick<OptTransportProps, 'progressSource' | 'isLoading' | 'cancelled' | 'success' | 'resultCount'>
+function TransportClear({ progressSource, isLoading, cancelled, success, resultCount, onClear }: TransportProgressProps & Pick<OptTransportProps, 'onClear'>) {
+  const progress = useOptimizerProgress(progressSource)
+  return (
       <button
         type="button" className="rte-tool rte-tool__danger"
         title="Clear results"
@@ -787,10 +777,9 @@ export function OptTransport(props: OptTransportProps) {
           progress.processed === 0 &&
           progress.discovered === 0
         )}
-        onClick={props.onClear}
+        onClick={onClear}
       >
         <Trash2 size="0.86rem" />
       </button>
-    </div>
   )
 }

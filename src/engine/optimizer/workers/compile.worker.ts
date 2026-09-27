@@ -6,6 +6,7 @@
                result entries.
 */
 
+import { sharePayload, payloadTransfers } from './payloadBuffers'
 /// <reference lib="webworker" />
 
 import { hydrGameData, initGameData } from '@/data/gameData'
@@ -16,11 +17,6 @@ import { initWpnData } from '@/data/gameData/weapons/weaponDataStore'
 import { initEchoSetD } from '@/data/gameData/echoSets/effects'
 import type {
   OptStartPay,
-  PrepOptPay,
-  PrepRotRun,
-  PrepTheoryRot,
-  PrepTheoryTarget,
-  PrepTargetSkill,
 } from '@/engine/optimizer/types.ts'
 import type {
   OptCompDoneM,
@@ -32,7 +28,9 @@ import type {
 import { errorOpt, logOptimizer } from '@/engine/optimizer/config/log.ts'
 
 let optCompMdlsP: Promise<{
+  compileBaseline: typeof import('@/engine/optimizer/compiler').compileBaseline
   cmplOptPay: typeof import('@/engine/optimizer/compiler').compOptPay
+  compactTheoryResults: typeof import('@/engine/optimizer/results/materialize.ts').compactTheoryResults
   matOptResults: typeof import('@/engine/optimizer/results/materialize.ts').matOptRsltsF
   evalBaseline: typeof import('@/engine/optimizer/results/materialize.ts').evalPrepOptB
   listDynamicSetStateParts: typeof import('@/engine/optimizer/encode/sets.ts').listDynamicSetStateParts
@@ -54,7 +52,9 @@ async function loadOptCompM() {
       import('@/engine/optimizer/encode/sets.ts'),
     ]).then(([compiler, materialize, sets]) => ({
       cmplOptPay: compiler.compOptPay,
+      compileBaseline: compiler.compileBaseline,
       matOptResults: materialize.matOptRsltsF,
+      compactTheoryResults: materialize.compactTheoryResults,
       evalBaseline: materialize.evalPrepOptB,
       listDynamicSetStateParts: sets.listDynamicSetStateParts,
       makeSetMask: sets.makeSetMask,
@@ -77,183 +77,6 @@ function hydrOptSttcD(
   if (snapshot.echoStats) {
     initEchoStts(snapshot.echoStats)
   }
-}
-
-// typed-array families we may clone into SharedArrayBuffer-backed views
-type ShrdTypdRry =
-    | Float32Array
-    | Int32Array
-    | Uint32Array
-    | Uint16Array
-    | Uint8Array
-
-// feature check: shared buffers are only available in supported environments
-function canShrTypdRr(): boolean {
-  return typeof SharedArrayBuffer !== 'undefined'
-}
-
-// copy a typed array into a SharedArrayBuffer-backed view of the same type
-function shrTypdRry<T extends ShrdTypdRry>(view: T): T {
-  if (!canShrTypdRr()) {
-    return view
-  }
-
-  const sharedBuffer = new SharedArrayBuffer(view.byteLength)
-  const Ctor = view.constructor as {
-    new (buffer: SharedArrayBuffer, byteOffset?: number, length?: number): T
-  }
-
-  const shared = new Ctor(sharedBuffer, 0, view.length)
-  shared.set(view)
-  return shared
-}
-
-// convert every transferable numeric buffer in a target-skill payload
-// into shared memory so downstream workers/threads can read it without copies
-function shrPrepTgtSk<T extends PrepTargetSkill | PrepTheoryTarget>(payload: T): T {
-  if (!canShrTypdRr()) {
-    return payload
-  }
-
-  return {
-    ...payload,
-    constraints: shrTypdRry(payload.constraints),
-    costs: shrTypdRry(payload.costs),
-    sets: shrTypdRry(payload.sets),
-    kinds: shrTypdRry(payload.kinds),
-    comboIndexMap: shrTypdRry(payload.comboIndexMap),
-    comboBinom: shrTypdRry(payload.comboBinom),
-    stats: shrTypdRry(payload.stats),
-    setConstLut: shrTypdRry(payload.setConstLut),
-    mainEchoBuffs: shrTypdRry(payload.mainEchoBuffs),
-    lockMainCands: shrTypdRry(payload.lockMainCands),
-  }
-}
-
-// same shared-memory upgrade path, but for rotation payloads
-function shrPrepRotRu<T extends PrepRotRun | PrepTheoryRot>(payload: T): T {
-  if (!canShrTypdRr()) {
-    return payload
-  }
-
-  return {
-    ...payload,
-    constraints: shrTypdRry(payload.constraints),
-    costs: shrTypdRry(payload.costs),
-    sets: shrTypdRry(payload.sets),
-    kinds: shrTypdRry(payload.kinds),
-    comboIndexMap: shrTypdRry(payload.comboIndexMap),
-    comboBinom: shrTypdRry(payload.comboBinom),
-    lockMainCands: shrTypdRry(payload.lockMainCands),
-    contexts: shrTypdRry(payload.contexts),
-    contextWeight: shrTypdRry(payload.contextWeight),
-    displayContext: shrTypdRry(payload.displayContext),
-    stats: shrTypdRry(payload.stats),
-    setConstLut: shrTypdRry(payload.setConstLut),
-    mainEchoBuffs: shrTypdRry(payload.mainEchoBuffs),
-  }
-}
-
-// gather transferable buffers for a target-skill payload.
-// SharedArrayBuffer-backed views are skipped because they are shared, not transferred.
-function cllcTgtSkllT(
-    payload: PrepTargetSkill | PrepTheoryTarget,
-): Transferable[] {
-  const maybePush = (items: Transferable[], buffer: ArrayBufferLike) => {
-    if (typeof SharedArrayBuffer !== 'undefined' && buffer instanceof SharedArrayBuffer) {
-      return
-    }
-
-    items.push(buffer)
-  }
-
-  const out: Transferable[] = []
-  maybePush(out, payload.constraints.buffer)
-  maybePush(out, payload.costs.buffer)
-  maybePush(out, payload.sets.buffer)
-  maybePush(out, payload.kinds.buffer)
-  maybePush(out, payload.comboIndexMap.buffer)
-  maybePush(out, payload.comboBinom.buffer)
-  maybePush(out, payload.stats.buffer)
-  maybePush(out, payload.setConstLut.buffer)
-  maybePush(out, payload.mainEchoBuffs.buffer)
-  maybePush(out, payload.lockMainCands.buffer)
-  return out
-}
-
-// gather transferable buffers for a rotation payload
-function cllcRotTrns(
-    payload: PrepRotRun | PrepTheoryRot,
-): Transferable[] {
-  const maybePush = (items: Transferable[], buffer: ArrayBufferLike) => {
-    if (typeof SharedArrayBuffer !== 'undefined' && buffer instanceof SharedArrayBuffer) {
-      return
-    }
-
-    items.push(buffer)
-  }
-
-  const out: Transferable[] = []
-  maybePush(out, payload.constraints.buffer)
-  maybePush(out, payload.costs.buffer)
-  maybePush(out, payload.sets.buffer)
-  maybePush(out, payload.kinds.buffer)
-  maybePush(out, payload.comboIndexMap.buffer)
-  maybePush(out, payload.comboBinom.buffer)
-  maybePush(out, payload.lockMainCands.buffer)
-  maybePush(out, payload.contexts.buffer)
-  maybePush(out, payload.contextWeight.buffer)
-  maybePush(out, payload.displayContext.buffer)
-  maybePush(out, payload.stats.buffer)
-  maybePush(out, payload.setConstLut.buffer)
-  maybePush(out, payload.mainEchoBuffs.buffer)
-  return out
-}
-
-// route to the correct transferable collector based on payload mode
-function cllcTrns(
-    payload: PrepOptPay,
-): Transferable[] {
-  if (payload.mode === 'rotation') {
-    return cllcRotTrns(payload)
-  }
-
-  if (payload.mode === 'targetSkill') {
-    return cllcTgtSkllT(payload)
-  }
-
-  if (payload.mode === 'theoryTarget') {
-    return cllcTgtSkllT(payload)
-  }
-
-  if (payload.mode === 'theoryRotation') {
-    return cllcRotTrns(payload)
-  }
-
-  return []
-}
-
-// route to the correct shared-memory conversion path based on payload mode
-function shrPrepPay(
-    payload: PrepOptPay,
-): PrepOptPay {
-  if (payload.mode === 'rotation') {
-    return shrPrepRotRu(payload)
-  }
-
-  if (payload.mode === 'targetSkill') {
-    return shrPrepTgtSk(payload)
-  }
-
-  if (payload.mode === 'theoryTarget') {
-    return shrPrepTgtSk(payload)
-  }
-
-  if (payload.mode === 'theoryRotation') {
-    return shrPrepRotRu(payload)
-  }
-
-  return payload
 }
 
 // main worker entrypoint:
@@ -283,6 +106,10 @@ self.onmessage = async (event: MessageEvent<OptCompInMsg>) => {
       } else {
         await initGameData({
           mode: message.payload.gameDataMode,
+          calculationOnly: true,
+          weaponIds: [message.payload.runtime, ...Object.values(message.payload.runtimesById ?? {})]
+            .flatMap((runtime) => runtime.build.weapon.id ? [runtime.build.weapon.id] : [])
+            .concat(message.payload.weaponDataIds ?? []),
           resonatorIds: [message.payload.runtime.id,
             ...Object.keys(message.payload.runtimesById ?? {})],
         })
@@ -301,7 +128,8 @@ self.onmessage = async (event: MessageEvent<OptCompInMsg>) => {
       })
 
       const t0 = performance.now()
-      const compiled = cmplPtmzPyld(message.payload)
+      const compiled = message.type === 'baseline'
+        ? modules.compileBaseline(message.payload) : cmplPtmzPyld(message.payload)
 
       if (message.type === 'baseline') {
         const baselinePayload = compiled.mode === 'targetSkill' || compiled.mode === 'rotation'
@@ -333,9 +161,9 @@ self.onmessage = async (event: MessageEvent<OptCompInMsg>) => {
       })
 
       // compile the raw payload, then upgrade eligible buffers to shared memory
-      const payload = shrPrepPay(compiled)
+      const payload = sharePayload(compiled)
 
-      const trns = cllcTrns(payload)
+      const trns = payloadTransfers(payload)
       logOptimizer('[optimizer:compile-worker] posting compiled payload', {
         runId: message.runId,
         transferableCount: trns.length,
@@ -360,8 +188,10 @@ self.onmessage = async (event: MessageEvent<OptCompInMsg>) => {
     })
 
     const t0 = performance.now()
-    const { matOptResults: mtrlPtmzRslt } = await loadOptCompM()
-    const results = mtrlPtmzRslt(
+    const { matOptResults: mtrlPtmzRslt, compactTheoryResults } = await loadOptCompM()
+    const results = message.payload.mode === 'theoryTarget' || message.payload.mode === 'theoryRotation'
+      ? compactTheoryResults(message.payload, message.results, message.limit)
+      : mtrlPtmzRslt(
         message.uidByIndex,
         message.results,
         {

@@ -4,6 +4,7 @@
                weapon edits, state controls, and teammate config entry points.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { Fragment, type CSSProperties as CssProps, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronDown, Plus, RefreshCw, Wrench, X } from 'lucide-react'
 import { isNoWeaponId, type ResRuntime } from '@/domain/entities/runtime.ts'
@@ -313,7 +314,7 @@ export function Teams({
           `${view.mainEchoDef.name} (main echo)`,
           view.echoStates.length > 0,
           <span className="tlu-seal-coin">
-            <img src={view.mainEchoDef.icon} alt="" loading="lazy" onError={withDefIconM} />
+            <DisplayImage src={view.mainEchoDef.icon} alt="" loading="lazy" onError={withDefIconM} />
           </span>,
         )
       : null
@@ -326,7 +327,7 @@ export function Teams({
           <>
             {view.sonataPlan.map((entry) => (
               <span key={entry.id} className="tlu-seal-coin">
-                {entry.icon ? <img src={entry.icon} alt="" loading="lazy" onError={withDefIconM} /> : null}
+                {entry.icon ? <DisplayImage src={entry.icon} alt="" loading="lazy" onError={withDefIconM} /> : null}
               </span>
             ))}
           </>,
@@ -337,7 +338,7 @@ export function Teams({
       <div className="tlu-meta">
         {attrIcon ? (
           <span className="tlu-meta-attr" title={view.member.attribute}>
-            <img src={attrIcon} alt="" onError={withDefIconM} />
+            <DisplayImage src={attrIcon} alt="" onError={withDefIconM} />
           </span>
         ) : null}
         <span className="tlu-meta-chip">Lv<b>{view.memRt.base.level}</b></span>
@@ -384,7 +385,7 @@ export function Teams({
       return (
         <section className="tlu-weapon is-empty">
           <span className="tlu-sec-label">
-            {typeIcon ? <img className="tlu-sec-type" src={typeIcon} alt="" onError={withDefIconM} /> : null}
+            {typeIcon ? <DisplayImage className="tlu-sec-type" src={typeIcon} alt="" onError={withDefIconM} /> : null}
             {getWpnTypeLb(member.weaponType)}
           </span>
           <div className="tlu-console">
@@ -392,7 +393,7 @@ export function Teams({
               <>
                 {typeIcon ? (
                   <span className="tlu-weapon-icon">
-                    <img src={typeIcon} alt="" onError={withDefIconM} />
+                    <DisplayImage src={typeIcon} alt="" onError={withDefIconM} />
                   </span>
                 ) : null}
                 <span className="tlu-id-plate">
@@ -425,7 +426,7 @@ export function Teams({
               onClick={() => toggleEffect(view.id)}
             >
               <span className="tlu-sec-label">
-                {typeIcon ? <img className="tlu-sec-type" src={typeIcon} alt="" onError={withDefIconM} /> : null}
+                {typeIcon ? <DisplayImage className="tlu-sec-type" src={typeIcon} alt="" onError={withDefIconM} /> : null}
                 {getWpnTypeLb(member.weaponType)}
                 <i className="tlu-sec-sep" aria-hidden="true" />
                 <span className="tlu-sec-passive">{weaponDef.passive.name || 'Weapon effect'}</span>
@@ -438,7 +439,7 @@ export function Teams({
           </div>
         ) : (
           <span className="tlu-sec-label">
-            {typeIcon ? <img className="tlu-sec-type" src={typeIcon} alt="" onError={withDefIconM} /> : null}
+            {typeIcon ? <DisplayImage className="tlu-sec-type" src={typeIcon} alt="" onError={withDefIconM} /> : null}
             {getWpnTypeLb(member.weaponType)}
             <i className="tlu-sec-sep" aria-hidden="true" />
             <span className="tlu-sec-passive">{weaponDef.passive.name || 'Weapon effect'}</span>
@@ -449,7 +450,7 @@ export function Teams({
           {renderIdRow(
             <>
               <span className="tlu-weapon-icon">
-                <img src={weaponDef.icon} alt="" loading="lazy" onError={withDefWpnMg} />
+                <DisplayImage src={weaponDef.icon} alt="" loading="lazy" onError={withDefWpnMg} />
                 <i className="tlu-weapon-rank">R{memRt.build.weapon.rank}</i>
               </span>
               <span className="tlu-id-plate">
@@ -571,7 +572,7 @@ export function Teams({
                 onClick={() => setTargetRes(view.id, routeKey, option.value)}
               >
                 {target?.profile ? (
-                  <img src={target.profile} alt={option.label} onError={withDefResMg} />
+                  <DisplayImage src={target.profile} alt={option.label} onError={withDefResMg} />
                 ) : (
                   <span className="tlu-route-mono">{option.label.slice(0, 2)}</span>
                 )}
@@ -738,7 +739,7 @@ export function Teams({
       <div className="tlu-echo-brief">
         <div className="tlu-echo-brief-head">
           <span className="tlu-echo-icon">
-            <img src={def.icon} alt="" loading="lazy" onError={withDefIconM} />
+            <DisplayImage src={def.icon} alt="" loading="lazy" onError={withDefIconM} />
           </span>
           <span className="tlu-echo-brief-id">
             <span className="tlu-echo-brief-name">{def.name}</span>
@@ -772,7 +773,7 @@ export function Teams({
         <section key={group.setId} className="tlu-sonata-entry">
           <header className="tlu-sonata-head">
             <span className="tlu-sonata-icon">
-              {group.icon ? <img src={group.icon} alt="" loading="lazy" onError={withDefIconM} /> : null}
+              {group.icon ? <DisplayImage src={group.icon} alt="" loading="lazy" onError={withDefIconM} /> : null}
             </span>
             <span className="tlu-sonata-name">{group.name}</span>
             <span className="tlu-sonata-pips" aria-hidden="true">
@@ -1058,7 +1059,7 @@ export function Teams({
                 onClick={() => openTeamPckr(index)}
                 data-accent={ATTR_COLORS[view.member.attribute]}
               >
-                <img src={view.member.profile} alt="" onError={withDefResMg} />
+                <DisplayImage src={view.member.profile} alt="" onError={withDefResMg} />
               </button>
               <div className="tlu-content pane-section">
                 {!isLead ? (

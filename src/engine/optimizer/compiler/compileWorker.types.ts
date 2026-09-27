@@ -6,7 +6,7 @@
 */
 
 import type {
-  OptFinalResult,
+  OptStoredResult,
   OptRawResult,
   OptResultStats,
   OptStartPay,
@@ -28,10 +28,14 @@ export interface OptCompDoneM {
   payload: PrepOptPay
 }
 
+export type OptBaselineInput = Omit<OptStartPay, 'settings' | 'weaponPlan'> & {
+  settings: Pick<OptStartPay['settings'], 'rotationMode' | 'targetSkillId'>
+}
+
 export interface OptBaselineStartM {
   type: 'baseline'
   runId: number
-  payload: OptStartPay
+  payload: OptBaselineInput
   mainIndex: number
   setConds: SntSetConds
 }
@@ -57,7 +61,7 @@ export interface OptMatStartM {
 export interface OptMatDoneMs {
   type: 'materialized'
   runId: number
-  results: OptFinalResult[]
+  results: OptStoredResult[]
 }
 
 // generic worker error response used for either compile or materialize failures

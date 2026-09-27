@@ -5,6 +5,7 @@
                targeting a single skill or a full rotation run.
 */
 
+import { makeOptSets } from '@/engine/runtime/defaults'
 import type {
   PrepOptPay,
   OptStartPay,
@@ -31,4 +32,12 @@ export function compOptPay(
   return input.settings.rotationMode
       ? compRotRun(input)
       : compTgtRun(input)
+}
+
+/** Equipped-build evaluation shares the numeric compiler, without search metadata. */
+export function compileBaseline(input: import('./compileWorker.types').OptBaselineInput): PrepOptPay {
+  const request: OptStartPay = { ...input, settings: { ...makeOptSets(), ...input.settings, searchMode: 'inventory' } }
+  return request.settings.rotationMode
+    ? compRotRun(request, { baseline: true })
+    : compTgtRun(request, true)
 }

@@ -23,7 +23,12 @@ import {
 import { ImportSurfaceProvider } from '@/modules/simulation/shell/imports/ImportSurface.tsx'
 import { ShareLinkWatcher } from '@/modules/simulation/shell/imports/ShareLinkWatcher.tsx'
 import { useSimulationSurface } from '@/modules/simulation/shell/simulationSurface'
+import { SkllDataProv } from '@/modules/simulation/features/resonator/SkillDataHost'
+import { releaseEvaluationResources } from '@/engine/evaluation/buildEvaluationClient'
+import { clearSuggsSss } from '@/engine/suggestions/sessionCache'
+import { releaseCalculationGameData } from '@/data/gameData'
 import { SIMULATION_SURFACES, isWorkspaceSurface } from '@/shared/lib/appRoutes'
+import { isSimulationRoute } from '@/shared/lib/appRoutes'
 import type { SimulationSurface } from '@/shared/lib/appRoutes'
 
 // the panes are the same warmable chunks the rail fetches on intent, so a
@@ -45,6 +50,14 @@ const LOADING_TEXT: Record<SimulationSurface, string> = {
 
 export function SimulationPage() {
   const surface = useSimulationSurface()
+  useEffect(() => () => {
+    // StrictMode's development effect replay remains on a Simulation URL.
+    if (!isSimulationRoute(window.location.pathname)) releaseCalculationGameData()
+  }, [])
+  useEffect(() => () => {
+    releaseEvaluationResources()
+    if (surface === 'suggestions') clearSuggsSss([''])
+  }, [surface])
   const pane = surface ? SIMULATION_SURFACES[surface].pane : null
   const layoutRef = useRef<HTMLDivElement | null>(null)
   const subjectResonatorId = useAppStore(selSubjectResonatorId)
@@ -124,6 +137,7 @@ export function SimulationPage() {
   }, [curCcnt])
 
   return (
+    <SkllDataProv>
       <SimulationProvider actResId={subjectResonatorId}>
       <ImportSurfaceProvider>
       <ShareLinkWatcher enabled />
@@ -148,5 +162,6 @@ export function SimulationPage() {
       </div>
       </ImportSurfaceProvider>
       </SimulationProvider>
+    </SkllDataProv>
   )
 }

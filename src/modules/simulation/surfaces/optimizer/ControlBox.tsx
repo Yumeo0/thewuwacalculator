@@ -3,6 +3,8 @@
   Description: Renders controls for the Optimizer tool.
 */
 
+import { useOptimizerProgress, type OptimizerProgressSource } from './lib/progressStore'
+import type { ComponentProps } from 'react'
 import type { OptSearchMode } from '@/domain/entities/optimizer'
 import type { OptPrgr } from '@/engine/optimizer/types'
 import { formatTruncCompact } from '@/shared/lib/number.ts'
@@ -106,7 +108,7 @@ export function ControlBox({
       ? `Discovering combos${progress.discovered ? ` · ${progress.discovered.toLocaleString()}` : '...'}`
       : Number.isFinite(progress.remainingMs)
         ? `${formatOptimizerTime(progress.remainingMs)} left · ${progress.speed.toLocaleString()}/s`
-        : progress.total && progress.total > 0
+        : progress.total && (progress.total ?? 0) > 0
           ? `${progress.processed.toLocaleString()} / ${progress.total.toLocaleString()}`
           : 'Estimating...'
     : cancelled
@@ -310,4 +312,9 @@ export function ControlBox({
       </div>
     </div>
   )
+}
+
+export function ProgressControlBox({ progressSource, ...props }: Omit<ComponentProps<typeof ControlBox>, 'progress'> & { progressSource: OptimizerProgressSource }) {
+  const progress = useOptimizerProgress(progressSource)
+  return <ControlBox {...props} progress={progress} cmbnLbl={props.searchMode === 'theory' ? ((progress.total ?? 0) > 0 ? Math.floor(progress.total ?? 0).toLocaleString() : '...') : props.cmbnLbl} />
 }

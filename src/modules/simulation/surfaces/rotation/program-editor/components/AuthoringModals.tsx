@@ -3,6 +3,7 @@
   Description: Hosts note, block, loop, condition, and feature authoring dialogs over editor operations.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type {
   CondChoice,
   FeatureConditionDraft,
@@ -453,7 +454,7 @@ export function Condition({
             >
               <span className="cnv-node__badge" aria-hidden>
                 {owner.kind === 'resonator' ? (
-                  <img className="cnv-node__avatar"
+                  <DisplayImage className="cnv-node__avatar"
                     src={owner.profile || '/assets/game/default.webp'}
                     alt=""
                     loading="lazy"

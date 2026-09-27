@@ -10,6 +10,7 @@ import {
   TextureAtlas,
   Vector2,
 } from '@esotericsoftware/spine-webgl'
+import { SPINE_TEXTURE_MAX_EDGE, spineDisplayTextureUrl } from './spineQuality.ts'
 
 interface InitMessage {
   type: 'init'
@@ -68,8 +69,8 @@ async function loadWorkerAssets(
   const atlas = new TextureAtlas(atlasText)
   try {
     for (const page of atlas.pages) {
-      const blob = await fetchRequired(`${baseUrl}${page.name}`).then((response) => response.blob())
-      const textureScale = Math.min(1, 4096 / Math.max(page.width, page.height))
+      const blob = await fetchRequired(spineDisplayTextureUrl(baseUrl, page.name)).then((response) => response.blob())
+      const textureScale = Math.min(1, SPINE_TEXTURE_MAX_EDGE / Math.max(page.width, page.height))
       const bitmap = await createImageBitmap(blob, {
         premultiplyAlpha: 'premultiply',
         colorSpaceConversion: 'none',

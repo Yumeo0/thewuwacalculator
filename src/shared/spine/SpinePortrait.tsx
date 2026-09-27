@@ -4,12 +4,14 @@
                and worker-backed rendering for reusable resonator portraits.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { createSpineInstance } from './spineEngine.ts'
 import type { SpineInstance } from './spineEngine.ts'
 import { getLoadedSpineManifest, loadSpineManifest, spineBaseUrl, spineSetupUrl } from './spineManifest.ts'
 import type { SpineVariant } from './spineManifest.ts'
+import { chooseSpineResolution } from './spineQuality.ts'
 
 export interface SpinePlacement {
   /** Focal point in the intrinsic square canvas coordinate space. */
@@ -20,15 +22,7 @@ export interface SpinePlacement {
 }
 
 const SPINE_PLACEMENT_SPACE = 4096
-const SPINE_RESOLUTION_BUCKETS = [1024, 1536, 2048, 2560, 3072] as const
-const SPINE_DPR_CAP = 1.5
 const SPINE_RESIZE_SETTLE_MS = 520
-function chooseSpineResolution(cssSize: number): number {
-  const dpr = Math.min(SPINE_DPR_CAP, Math.max(1, window.devicePixelRatio || 1))
-  const target = Math.max(SPINE_RESOLUTION_BUCKETS[0], cssSize * dpr)
-  return SPINE_RESOLUTION_BUCKETS.find((size) => size >= target)
-    ?? SPINE_RESOLUTION_BUCKETS[SPINE_RESOLUTION_BUCKETS.length - 1]
-}
 
 function placementStyle({ x, y, scale }: SpinePlacement, canvasSize: number): CSSProperties {
   return {
@@ -67,20 +61,22 @@ export function SpineSetupBackground({
   className,
   variant = 'luckdraw',
   style,
+  captureUrl,
 }: {
   resId: string | null
   fallbackUrl: string
   className: string
   variant?: SpineVariant
   style?: CSSProperties
+  captureUrl?: string
 }) {
   const variantAvailable = useSpineVariantAvailable(resId, variant)
 
   if (variantAvailable == null) {
-    return <SpineBackgroundLayer className={className} imageUrl={fallbackUrl} style={style} />
+    return <SpineBackgroundLayer className={className} imageUrl={fallbackUrl} style={style} exportUrl={captureUrl} />
   }
   if (!variantAvailable || !resId) {
-    return <SpineBackgroundLayer className={className} imageUrl={fallbackUrl} style={style} />
+    return <SpineBackgroundLayer className={className} imageUrl={fallbackUrl} style={style} exportUrl={captureUrl} />
   }
 
   return (
@@ -90,37 +86,44 @@ export function SpineSetupBackground({
       variant={variant}
       className={className}
       style={style}
+      captureUrl={captureUrl}
     />
   )
 }
 
 function SpineSetupBackgroundLayer({
+  captureUrl,
   resId,
   variant,
   className,
   style,
 }: {
+  captureUrl?: string
   resId: string
   variant: SpineVariant
   className: string
   style?: CSSProperties
 }) {
-  return <SpineBackgroundLayer className={className} imageUrl={spineSetupUrl(resId, variant)} style={style} />
+  return <SpineBackgroundLayer className={className} imageUrl={spineSetupUrl(resId, variant)} exportUrl={captureUrl ?? spineSetupUrl(resId, variant, 'export')} style={style} />
 }
 
 function SpineBackgroundLayer({
   className,
   imageUrl,
+  exportUrl,
   style,
 }: {
   className: string
   imageUrl: string
+  exportUrl?: string
   style?: CSSProperties
 }) {
   return (
     <div
       className={className}
       style={{ backgroundImage: `url("${imageUrl}")`, ...style }}
+      data-capture-background={exportUrl}
+      data-display-background={style?.backgroundImage ?? `url("${imageUrl}")`}
       aria-hidden="true"
     />
   )
@@ -325,6 +328,8 @@ export function SpinePortrait({
   placement,
   fallback,
   overrideImageUrl,
+  captureImageUrl,
+  onImageReady,
 }: {
   resId: string | null
   variant?: SpineVariant
@@ -336,6 +341,8 @@ export function SpinePortrait({
   placement: SpinePlacement
   fallback: ReactNode
   overrideImageUrl?: string | null
+  captureImageUrl?: string
+  onImageReady?: (source: string) => void
 }) {
   const variantAvailable = useSpineVariantAvailable(resId, variant)
 
@@ -344,6 +351,8 @@ export function SpinePortrait({
       <OverridePortrait
         key={overrideImageUrl}
         url={overrideImageUrl}
+        captureImageUrl={captureImageUrl}
+        onImageReady={onImageReady}
         spineClassName={spineClassName}
         style={placementStyle(placement, placementSpace)}
       />
@@ -366,29 +375,35 @@ export function SpinePortrait({
       playing={playing}
       placement={placement}
       fallback={fallback}
+      onImageReady={onImageReady}
     />
   )
 }
 
 function OverridePortrait({
   url,
+  captureImageUrl,
+  onImageReady,
   spineClassName,
   style,
 }: {
   url: string
+  captureImageUrl?: string
+  onImageReady?: (source: string) => void
   spineClassName: string
   style: CSSProperties
 }) {
   const [loaded, setLoaded] = useState(false)
   return (
-    <img
+    <DisplayImage
       className={`${spineClassName} is-override${loaded ? ' is-ready' : ''}`}
       style={style}
       src={url}
+      data-capture-src={captureImageUrl}
       alt=""
       aria-hidden="true"
       draggable={false}
-      onLoad={() => setLoaded(true)}
+      onLoad={(event) => { setLoaded(true); onImageReady?.(event.currentTarget.currentSrc || event.currentTarget.src) }}
     />
   )
 }
@@ -403,6 +418,7 @@ function SpineLayers({
   playing,
   placement,
   fallback,
+  onImageReady,
 }: {
   resId: string
   variant: SpineVariant
@@ -413,6 +429,7 @@ function SpineLayers({
   playing: boolean
   placement: SpinePlacement
   fallback: ReactNode
+  onImageReady?: (source: string) => void
 }) {
   const [setupReady, setSetupReady] = useState(false)
   const [setupPresented, setSetupPresented] = useState(false)
@@ -451,6 +468,7 @@ function SpineLayers({
       {!setupUnsupported ? (
         <img
           src={spineSetupUrl(resId, variant)}
+          data-capture-src={spineSetupUrl(resId, variant, 'export')}
           alt=""
           className={`${spineClassName} spine-setup${setupReady ? ' is-ready' : ''}${animationVisible ? ' is-obscured' : ''}`}
           style={placementStyle(placement, placementSpace)}
@@ -458,6 +476,7 @@ function SpineLayers({
           draggable={false}
           aria-hidden="true"
           onLoad={() => {
+            onImageReady?.(spineSetupUrl(resId, variant, 'export'))
             setSetupReady(true)
             if (setupFrameRef.current != null) cancelAnimationFrame(setupFrameRef.current)
             setupFrameRef.current = requestAnimationFrame(() => {

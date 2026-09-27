@@ -4,7 +4,7 @@
                such as navigation, history, inventory access, and reset flows.
 */
 
-import { useCallback, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
@@ -12,12 +12,6 @@ import { useConfirm } from '@/shared/hooks/useConfirmation'
 import { useNavX } from '@/shared/navigation/useNavX'
 import { selActResId } from '@/application/state'
 import { useAppStore } from '@/application/state'
-import {
-  EchoConsoleHost,
-  TeamConsoleHost,
-  WeaponConsoleHost,
-} from '@/modules/simulation/api/chrome'
-import { AppSttsMdl } from '@/app/shell/AppStatusModal'
 import { ConfirmHost } from '@/shared/ui/ConfirmationModal'
 import { useAppModal } from '@/shared/ui/useAppModal'
 import { routeCtxBuilder } from '@/application/context-menu/routeContextBuilders.tsx'
@@ -38,6 +32,11 @@ import {
 import { useTstStr } from '@/shared/util/toastStore'
 import { RUNTIME_APP_HISTORY_ENABLED } from '@/application/state/history'
 
+const TeamConsoleHost = lazy(async () => ({ default: (await import('@/modules/simulation/api/consoleHosts')).TeamConsoleHost }))
+const WeaponConsoleHost = lazy(async () => ({ default: (await import('@/modules/simulation/api/consoleHosts')).WeaponConsoleHost }))
+const EchoConsoleHost = lazy(async () => ({ default: (await import('@/modules/simulation/api/consoleHosts')).EchoConsoleHost }))
+const AppSttsMdl = lazy(async () => ({ default: (await import('@/app/shell/AppStatusModal')).AppSttsMdl }))
+
 export function RtMenuProv({ children }: { children: ReactNode }) {
   const location = useLocation()
   const navigate = useNavX()
@@ -46,6 +45,8 @@ export function RtMenuProv({ children }: { children: ReactNode }) {
   const showToast = useTstStr((state) => state.show)
   const [historyScope, setHistoryScope] = useState<RouteHistoryScope | null>(null)
   const simulationActive = isSimulationRoute(location.pathname)
+  const [simulationVisited, setSimulationVisited] = useState(simulationActive)
+  if (simulationActive && !simulationVisited) setSimulationVisited(true)
   const optimizerActive = isSimulationSurfaceRoute(location.pathname, 'optimizer')
   const modulationActive = isSimulationSurfaceRoute(location.pathname, 'modulation')
   const {
@@ -292,15 +293,17 @@ export function RtMenuProv({ children }: { children: ReactNode }) {
     <RouteMenuContext.Provider value={value}>
       {children}
       <ConfirmHost control={confirmation} portalTarget={typeof document !== 'undefined' ? document.body : null} />
-      {appStatus.visible ? <AppSttsMdl
+      {appStatus.visible ? <Suspense fallback={null}><AppSttsMdl
         visible={appStatus.visible}
         open={appStatus.open}
         closing={appStatus.closing}
         onClose={appStatus.hide}
-      /> : null}
-      <TeamConsoleHost />
-      <WeaponConsoleHost />
-      <EchoConsoleHost />
+      /></Suspense> : null}
+      {simulationVisited ? <Suspense fallback={null}>
+        <TeamConsoleHost />
+        <WeaponConsoleHost />
+        <EchoConsoleHost />
+      </Suspense> : null}
     </RouteMenuContext.Provider>
   )
 }

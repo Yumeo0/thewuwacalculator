@@ -20,9 +20,9 @@ import { evaluationSetConditions } from '@/engine/evaluation/setStatePolicy';
 import { buildSetRows, type DynamicSetStatePart } from '@/engine/optimizer/encode/sets';
 import type { SntSetConds } from '@/domain/entities/sonataSetConditionals';
 import type { EvaluationAlternative, EvaluationReportOpts, EvaluationReportSections, EvaluationRotationSummary, EvaluationSetSummary, BuildEvaluation, BuildEvaluationReport, DefRotEvaluationIn } from './types.ts';
-import { ENERGY_REGEN, scorePercentX100 } from './stats.ts';
+import { ENERGY_REGEN, scorePercent, scorePercentX100 } from './stats.ts';
 import { cloneEchoSlot, makeSetSummary, preservedMainEchoFor, retainsUtilityPlan, utilityPlanFor } from './echoDiscovery.ts';
-import { assembleEvaluation, evaluationErTarget, buildEvaluation, buildEvaluationAnchors, type EvaluationCancelCheck, type EvaluationAnchors, type BuildEvaluationOptions } from './search.ts';
+import { assembleEvaluation, evaluateEquippedDamage, evaluationErTarget, buildEvaluation, buildEvaluationAnchors, type EvaluationCancelCheck, type EvaluationAnchors, type BuildEvaluationOptions } from './search.ts';
 import { makeEvaluationKey } from '@/engine/evaluation/buildEvaluationKey';
 import { getGameDataMode } from '@/data/gameData';
 import { EVALUATION_ANCHOR_CACHE_REVISION, loadPersistedAnchors, persistAnchor } from './anchorStore.ts';
@@ -67,6 +67,7 @@ function reportBuildOptions(options: EvaluationReportOpts = {}): BuildEvaluation
     includeFeatures: sections.rotationFeatures,
     includeStatRows: sections.echoStatsTable,
     includeEvaluationTargets: sections.evaluationTargets,
+    includeInvariantStats: sections.evaluationTargets,
   }
 }
 
@@ -546,16 +547,8 @@ export function buildEvaluationReport(
   }
 }
 
-export function rotationBuildEvaluationReport(
-  input: DefRotEvaluationIn,
-  options: EvaluationReportOpts = {},
-  checkCancel?: EvaluationCancelCheck,
-): BuildEvaluationReport | null {
-  const { runtime, simulation, enemy, runtimesById } = input
-  if (!simulation) {
-    return null
-  }
-
+function prepareRotationEvaluation(input: Omit<DefRotEvaluationIn, 'simulation'>) {
+  const { runtime, enemy, runtimesById } = input
   const seed = getResSeedBy(runtime.id)
   if (!seed) {
     return null
@@ -590,26 +583,63 @@ export function rotationBuildEvaluationReport(
     setConds,
     tgtFeatId: null,
     rotationMode: true,
-  }, simulation)
+  })
 
   if (!context) {
     return null
   }
 
   const evaluationContext = withUtilitySetRows(context, evaluationRuntime, setConds, utilityPlan)
-  const includeRotationDetails = options.sections?.rotationFeatures ?? true
-  // Report jobs are assembled from the same anchor contract used by the report
-  // sections, so the report remains the single evaluation computation path.
-  const anchors = cachedEvaluationAnchors(
-    evaluationContext,
-    evaluationRuntime,
-    enemy,
-    checkCancel,
-  )
-  if (!anchors) {
-    return null
-  }
+  return { evaluationContext, evaluationRuntime, defaultRotation }
+}
 
+// Calculate the equipped build first. Only the returned grading operation needs
+// reference anchors; callers can publish damage before loading/searching them.
+export function prepareRotationBuildScore(input: Omit<DefRotEvaluationIn, 'simulation'>) {
+  const prepared = prepareRotationEvaluation(input)
+  if (!prepared) return null
+  const { evaluationContext, evaluationRuntime } = prepared
+  const userDamage = evaluateEquippedDamage(evaluationContext, input.runtime.build.echoes)
+  return {
+    userDamage,
+    calculateSummary(checkCancel?: EvaluationCancelCheck): import('../buildEvaluationWorkerTypes').EvaluationSummary | null {
+      const anchors = cachedEvaluationAnchors(evaluationContext, evaluationRuntime, input.enemy, checkCancel)
+      return anchors ? {
+        userDamage,
+        percent: scorePercent(userDamage, anchors.baselineDamage, anchors.referenceDamage, anchors.maximumDamage),
+        baselineDamage: anchors.baselineDamage,
+        referenceDamage: anchors.referenceDamage,
+        maximumDamage: anchors.maximumDamage,
+      } : null
+    },
+    calculatePercent(checkCancel?: EvaluationCancelCheck): number | null {
+      const anchors = cachedEvaluationAnchors(evaluationContext, evaluationRuntime, input.enemy, checkCancel)
+      return anchors ? scorePercent(userDamage, anchors.baselineDamage, anchors.referenceDamage, anchors.maximumDamage) : null
+    },
+  }
+}
+
+export function rotationBuildEvaluationScore(input: DefRotEvaluationIn, checkCancel?: EvaluationCancelCheck) {
+  if (!input.simulation) return null
+  const prepared = prepareRotationBuildScore(input)
+  if (!prepared) return null
+  const percent = prepared.calculatePercent(checkCancel)
+  return percent == null ? null : { userDamage: prepared.userDamage, percent }
+}
+
+export function rotationBuildEvaluationReport(
+  input: DefRotEvaluationIn,
+  options: EvaluationReportOpts = {},
+  checkCancel?: EvaluationCancelCheck,
+): BuildEvaluationReport | null {
+  if (!input.simulation) return null
+  const prepared = prepareRotationEvaluation(input)
+  if (!prepared) return null
+  const { evaluationContext, evaluationRuntime, defaultRotation } = prepared
+  const anchors = cachedEvaluationAnchors(evaluationContext, evaluationRuntime, input.enemy, checkCancel)
+  if (!anchors) return null
+  const { runtime } = input
+  const includeRotationDetails = options.sections?.rotationFeatures ?? true
   return buildEvaluationReport(
     evaluationContext,
     runtime.build.echoes,

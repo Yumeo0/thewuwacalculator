@@ -5,6 +5,7 @@
                complete team in one scenario update.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useId, useMemo, useRef, useState } from 'react'
 import type { CSSProperties as CssProps, PointerEvent as ReactPointerEvent } from 'react'
 import { Lock, X } from 'lucide-react'
@@ -12,7 +13,7 @@ import { ensureResonatorData } from '@/data/gameData'
 import { useTstStr } from '@/shared/util/toastStore'
 import { AppModal } from '@/shared/ui/AppModal'
 import { ModalHeader } from '@/shared/ui/AppModalShell'
-import { PickerCard, useDeferredImages } from '@/modules/simulation/ui/PickerModal.tsx'
+import { PickerCard, useDeferredImages, usePickerEntrance } from '@/modules/simulation/ui/PickerModal.tsx'
 import { usePickerMotion, type PickerMove } from '@/modules/simulation/ui/pickerMotion.ts'
 import { usePickerFilters, useResPickerView } from '@/modules/simulation/features/resonator/Picker.tsx'
 import { RES_MENU } from '@/modules/simulation/features/resonator/lib/resonator.ts'
@@ -313,6 +314,7 @@ function TeamPickerContent({
 
   const imageKey = `${rosterItems.map((item) => item.id).join('|')}|${seats.join('|')}`
   useDeferredImages(bodyRef, visible, imageKey)
+  usePickerEntrance(bodyRef, visible)
 
   const onScroll = useCallback(() => {
     const body = bodyRef.current
@@ -398,7 +400,7 @@ function TeamPickerContent({
                       : `Seat ${index + 1} open`}
                     onClick={() => { if (index > 0 && id) pick(id) }}
                   >
-                    {id ? <img src={profileOf(id)} alt="" onError={withDefIconM} /> : index + 1}
+                    {id ? <DisplayImage src={profileOf(id)} alt="" onError={withDefIconM} /> : index + 1}
                   </button>
                 ))}
               </div>

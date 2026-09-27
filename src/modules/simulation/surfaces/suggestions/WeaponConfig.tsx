@@ -4,6 +4,7 @@
                and drafts configuration shared by suggestion and optimizer runs.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties as CssProps } from 'react'
 import { Search } from 'lucide-react'
@@ -346,7 +347,7 @@ function useWpnCfg({
                     <td>
                       <span className="wcfg__pool">
                         {pool.map((wpn) => (
-                          <img key={`wpn-pool-${wpn.id}`} src={wpn.icon} alt={wpn.name} title={wpn.name} loading="lazy" onError={withDefWpnMg} />
+                          <DisplayImage key={`wpn-pool-${wpn.id}`} src={wpn.icon} alt={wpn.name} title={wpn.name} loading="lazy" onError={withDefWpnMg} />
                         ))}
                       </span>
                     </td>
@@ -373,7 +374,7 @@ function useWpnCfg({
                   <td>
                     <span className="wcfg__pool">
                       {stdWpns.map((wpn) => (
-                        <img key={`std-pool-${wpn.id}`} src={wpn.icon} alt={wpn.name} title={wpn.name} loading="lazy" onError={withDefWpnMg} />
+                        <DisplayImage key={`std-pool-${wpn.id}`} src={wpn.icon} alt={wpn.name} title={wpn.name} loading="lazy" onError={withDefWpnMg} />
                       ))}
                     </span>
                   </td>
@@ -437,7 +438,7 @@ function useWpnCfg({
               style={rarityVars(wpn.rarity, false, '--wcfg-r') as CssProps}
             >
               <span className="wcfg__plate">
-                <img src={wpn.icon} alt={wpn.name} className="wcfg__plate-img" loading="lazy" onError={withDefWpnMg} />
+                <DisplayImage src={wpn.icon} alt={wpn.name} className="wcfg__plate-img" loading="lazy" onError={withDefWpnMg} />
               </span>
               <div className="wcfg__wpn-body">
                 <header className="wcfg__wpn-head">

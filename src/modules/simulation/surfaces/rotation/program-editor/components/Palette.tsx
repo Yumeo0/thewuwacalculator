@@ -3,6 +3,7 @@
   Description: Builds searchable feature and condition choices from the live team and target state.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useMemo, useState, type CSSProperties } from 'react'
 import { ChevronDown, Crosshair, Repeat, Search, Sparkles } from 'lucide-react'
 import { Expandable } from '@/shared/ui/Expandable.tsx'
@@ -255,7 +256,7 @@ function featTile(
       }, entry.art)}
     >
       {hitIndex == null ? (
-        <img className="rte-tile__art"
+        <DisplayImage className="rte-tile__art"
           src={entry.art}
           alt=""
           onError={entry.echoId ? withDefEchoMg : withDefResMg}
@@ -591,7 +592,7 @@ export function Palette({
                 onClick={() => setOwner(tab.id)}
               >
                 {tab.profile ? (
-                  <img
+                  <DisplayImage
                     src={tab.profile}
                     alt=""
                     onError={tab.isEnemy ? withDefIconM : withDefResMg}

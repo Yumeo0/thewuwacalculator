@@ -4,7 +4,12 @@
                routing, and loadouts with optional externally controlled channels.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { isEchoSaved, isBuildSaved, selectSavedEchoSignatures, selectSavedBuildSignatures } from '@/application/state/savedGearStatus'
+
 import {
+  Suspense,
+  lazy,
   type CSSProperties as CssProps,
   type ReactNode,
   useCallback,
@@ -16,13 +21,13 @@ import {
 import { ArrowRightLeft, Clipboard, Copy, Gem, Layers, Network, Package, Pencil, Save, Scissors, Sparkles, Trash2, X, Zap } from 'lucide-react'
 import { isNoWeaponId, type EchoInstance, type ResRuntime } from '@/domain/entities/runtime.ts'
 import type { GenWpn } from '@/domain/entities/weapon.ts'
-import { equalEchoes, equalBuildSnapshots, cloneEchoFor, cloneEchoLoadout, sameEchoUid, saveEchoSlots, type SavedBuild, type SavedEcho } from '@/domain/entities/inventoryStorage.ts'
+import { cloneEchoFor, cloneEchoLoadout, sameEchoUid, saveEchoSlots, type SavedBuild, type SavedEcho } from '@/domain/entities/inventoryStorage.ts'
 import type { SourceState } from '@/domain/gameData/contracts.ts'
 import { getResStateControls } from '@/domain/gameData/resonatorStateGraph'
 import { initWpnStts } from '@/engine/runtime/sourceStateInit.ts'
 import { useAppStore } from '@/application/state'
-import { selInvSg } from '@/application/state'
 import { listWpnsByTy } from '@/data/catalog/weaponCatalogService.ts'
+import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
 import { getOwnForKey, listStatesFor, listOwnersFor } from '@/data/catalog/gameDataService.ts'
 import { getMainEchoS } from '@/engine/services/runtimeSourceService.ts'
 import { getEchoById, listEchoes } from '@/data/catalog/echoCatalogService.ts'
@@ -59,19 +64,14 @@ import {
   WPN_STAT_CNS,
 } from '@/modules/simulation/features/weapons/lib/weapon.ts'
 import { scopedTargetOwnerKey } from '@/domain/gameData/targetRouting.ts'
-import { Edit } from '@/modules/simulation/features/echoes/Edit.tsx'
-import { EchoPicker } from '@/modules/simulation/features/echoes/Picker.tsx'
-import { Parser } from '@/modules/simulation/features/echoes/Parser.tsx'
-import { QuickSetup } from '@/modules/simulation/features/echoes/QuickSetup.tsx'
 import { listActiveSets } from '@/modules/simulation/model/activeEchoSets.ts'
-import { InvMdl } from '@/modules/simulation/features/inventory/InventoryModal.tsx'
 import { useEchoClipboard } from '@/modules/simulation/model/useEchoClipboard.ts'
 import { getEchoMptyC, getEchoPaneC, getEchoSlotC } from '@/modules/simulation/features/echoes/lib/ctx.tsx'
 import { readBuildClpb, writeBuildClpb } from '@/modules/simulation/features/inventory/lib/buildClipboard.ts'
 import { useSel } from '@/modules/simulation/lib/sel.tsx'
 import { useAppModal, useAppModalValue } from '@/shared/ui/useAppModal.ts'
 import { useTeamSlots } from '@/modules/simulation/features/teams/lib/teamSlots.ts'
-import { TeamPicker } from '@/modules/simulation/features/teams/TeamPicker.tsx'
+import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay.tsx'
 import { ConfirmHost } from '@/shared/ui/ConfirmationModal.tsx'
 import { useConfirm } from '@/shared/hooks/useConfirmation.ts'
 import { useTstStr } from '@/shared/util/toastStore.ts'
@@ -81,7 +81,7 @@ import { SourceStateCtrl } from '@/modules/simulation/features/controls/SourceSt
 import { LiquidSelect } from '@/application/ui/LiquidSelect.tsx'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
 import { Expandable } from '@/shared/ui/Expandable.tsx'
-import { getResonator, spriteVars, type ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
+import { spriteVars, type ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import {
   mkForteDock,
   mkForteMode,
@@ -100,6 +100,25 @@ import {
   tglTrcNd,
 } from '@/modules/simulation/features/resonator/lib/buildEdits.ts'
 import { withDefIconM, withDefResMg, withDefWpnMg } from '@/shared/lib/imageFallback.ts'
+
+// Nested tools are not needed to display the member. Keep their loading boundary
+// below the editor so opening one cannot suspend the whole console session.
+const Edit = lazy(async () => ({
+  default: (await import('@/modules/simulation/features/echoes/Edit.tsx')).Edit,
+}))
+const EchoPicker = lazy(async () => ({
+  default: (await import('@/modules/simulation/features/echoes/Picker.tsx')).EchoPicker,
+}))
+const Parser = lazy(async () => ({
+  default: (await import('@/modules/simulation/features/echoes/Parser.tsx')).Parser,
+}))
+const QuickSetup = lazy(async () => ({
+  default: (await import('@/modules/simulation/features/echoes/QuickSetup.tsx')).QuickSetup,
+}))
+const TeamPicker = lazy(async () => ({
+  default: (await import('@/modules/simulation/features/teams/TeamPicker.tsx')).TeamPicker,
+}))
+const MemberInventory = lazy(() => import('./MemberInventory.tsx'))
 
 export type ChannelId = 'loadout' | 'skills' | 'effects' | 'echoes' | 'buffs'
 const MAX_ECHO_COST = 12
@@ -285,15 +304,16 @@ function LevelTray({
 
 function BuildCard({
   entry,
-  member,
   index,
   onApply,
 }: {
   entry: SavedBuild
-  member: ResView
   index: number
   onApply: () => void
 }) {
+  // Portrait metadata is available even when this build's character kit isn't loaded.
+  const resonator = getResSeedBy(entry.resonatorId)
+  const portrait = resonator?.sprite || resonator?.profile
   const mainEcho = entry.build.echoes[0]
   const mainEchoDef = mainEcho ? getEchoById(mainEcho.id) : null
   const bldWpnId = entry.build.weapon.id
@@ -308,13 +328,15 @@ function BuildCard({
       onClick={onApply}
     >
       <span className="mcc-build-card-art" aria-hidden="true">
-        <img
-          src={member.sprite || member.profile}
-          alt=""
-          loading="lazy"
-          style={spriteVars(member)}
-          onError={withDefResMg}
-        />
+        {portrait ? (
+          <DisplayImage
+            src={portrait}
+            alt=""
+            loading="lazy"
+            style={spriteVars(resonator)}
+            onError={withDefResMg}
+          />
+        ) : null}
       </span>
       <span className="mcc-build-card-port" aria-hidden="true" />
       <span className="mcc-build-card-name">{entry.name}</span>
@@ -325,7 +347,7 @@ function BuildCard({
               style={rarityVars(bldWpnDef.rarity, false, '--mcc-accent') as CssProps}
               title={bldWpnDef.name}
             >
-              <img src={bldWpnDef.icon} alt="" loading="lazy" onError={withDefWpnMg} />
+              <DisplayImage src={bldWpnDef.icon} alt="" loading="lazy" onError={withDefWpnMg} />
               <i>R{entry.build.weapon.rank}</i>
             </span>
             <span className="mcc-build-card-gap" aria-hidden="true" />
@@ -333,7 +355,7 @@ function BuildCard({
         ) : null}
         <span className="mcc-build-card-echo" title={mainEchoDef?.name}>
           {mainEchoDef?.icon ? (
-            <img src={mainEchoDef.icon} alt="" loading="lazy" onError={withDefIconM} />
+            <DisplayImage src={mainEchoDef.icon} alt="" loading="lazy" onError={withDefIconM} />
           ) : null}
         </span>
         <span className="mcc-build-card-gap" aria-hidden="true" />
@@ -341,7 +363,7 @@ function BuildCard({
           {sonataPlan.map((set) => (
             <span key={set.id} className="mcc-build-card-set">
               {set.icon ? (
-                <img src={set.icon} alt="" loading="lazy" onError={withDefIconM} />
+                <DisplayImage src={set.icon} alt="" loading="lazy" onError={withDefIconM} />
               ) : (
                 <span className="mcc-build-card-set-fallback" />
               )}
@@ -380,7 +402,7 @@ function WeaponCard({
       onClick={onPick}
     >
       <span className="mcc-wpn-card-art" aria-hidden="true">
-        <img src={def.icon} alt="" loading="lazy" onError={withDefWpnMg} />
+        <DisplayImage src={def.icon} alt="" loading="lazy" onError={withDefWpnMg} />
       </span>
       <span className="mcc-wpn-card-port" aria-hidden="true" />
       <span className="mcc-wpn-card-name">{def.name}</span>
@@ -705,8 +727,9 @@ function ResonatorView({
   // Nested dialogs use the supplied host or the shared app portal.
   const dialogHost = portalTarget ?? mainPortal()
   const maxWpnOnInit = useAppStore((state) => state.ui.preferences.maxResOnInit)
+  const savedEchoes = useAppStore(selectSavedEchoSignatures)
+  const savedBuilds = useAppStore(selectSavedBuildSignatures)
   const invChs = useAppStore((state) => state.library.echoes)
-  const invSg = useAppStore(selInvSg)
   const addEchoesToInv = useAppStore((state) => state.addInvEchoes)
   const updEchoInInv = useAppStore((state) => state.updInvEcho)
   const rmEchoFromInv = useAppStore((state) => state.rmInvEcho)
@@ -950,18 +973,13 @@ function ResonatorView({
     )),
     [runtime.build.echoes],
   )
-  const currentSaved = useMemo(
-    () => invBlds.some((entry) =>
-      equalBuildSnapshots(entry.build, {
-        weapon: runtime.build.weapon,
-        echoes: runtime.build.echoes,
-      }),
-    ),
-    [invBlds, runtime.build.echoes, runtime.build.weapon],
-  )
+  const currentSaved = isBuildSaved(savedBuilds, {
+    weapon: runtime.build.weapon,
+    echoes: runtime.build.echoes,
+  })
   const canSaveEcho = useCallback((echo: EchoInstance | null | undefined) => (
-    Boolean(echo) && !invChs.some((entry) => equalEchoes(entry.echo, echo))
-  ), [invChs])
+    Boolean(echo) && !isEchoSaved(savedEchoes, echo)
+  ), [savedEchoes])
   const svblQppdChs = useMemo(() => (
     runtime.build.echoes.filter((echo): echo is EchoInstance => canSaveEcho(echo))
   ), [canSaveEcho, runtime.build.echoes])
@@ -1771,11 +1789,6 @@ function ResonatorView({
                         <span className="mcc-build-card-wrap">
                           <BuildCard
                             entry={entry}
-                            member={
-                              entry.resonatorId === member.id
-                                ? member
-                                : (getResonator(entry.resonatorId) ?? member)
-                            }
                             index={index}
                             onApply={() => confirmApplyBld(entry)}
                           />
@@ -1982,7 +1995,7 @@ function ResonatorView({
                                   >
                                     <span className="mcc-orbit-face">
                                       {mainEchoDef?.icon ? (
-                                        <img src={mainEchoDef.icon} alt="" loading="lazy" onError={withDefIconM} />
+                                        <DisplayImage src={mainEchoDef.icon} alt="" loading="lazy" onError={withDefIconM} />
                                       ) : (
                                         <span className="mcc-echo-slot-void" />
                                       )}
@@ -1990,7 +2003,7 @@ function ResonatorView({
                                     <span className="mcc-orbit-sat is-cost">{mainEchoDef?.cost ?? 0}</span>
                                     {getSntSetIco(mainEcho.set) ? (
                                       <span className="mcc-orbit-sat is-set" title={getSntSetNam(mainEcho.set)}>
-                                        <img src={getSntSetIco(mainEcho.set) ?? ''} alt="" onError={withDefIconM} />
+                                        <DisplayImage src={getSntSetIco(mainEcho.set) ?? ''} alt="" onError={withDefIconM} />
                                       </span>
                                     ) : null}
                                   </button>
@@ -2067,7 +2080,7 @@ function ResonatorView({
                                 >
                                   <span className="mcc-orbit-face">
                                     {def?.icon ? (
-                                      <img src={def.icon} alt="" loading="lazy" onError={withDefIconM} />
+                                      <DisplayImage src={def.icon} alt="" loading="lazy" onError={withDefIconM} />
                                     ) : (
                                       <span className="mcc-echo-slot-void" />
                                     )}
@@ -2075,7 +2088,7 @@ function ResonatorView({
                                   <span className="mcc-orbit-sat is-cost">{def?.cost ?? 0}</span>
                                   {setIcon ? (
                                     <span className="mcc-orbit-sat is-set" title={getSntSetNam(echo.set)}>
-                                      <img src={setIcon} alt="" onError={withDefIconM} />
+                                      <DisplayImage src={setIcon} alt="" onError={withDefIconM} />
                                     </span>
                                   ) : null}
                                 </button>
@@ -2110,7 +2123,7 @@ function ResonatorView({
                                 <span className="mcc-echo-brief-tags">
                                   {getSntSetIco(previewEcho.set) ? (
                                     <span className="mcc-echo-brief-set" title={getSntSetNam(previewEcho.set)}>
-                                      <img src={getSntSetIco(previewEcho.set) ?? ''} alt="" onError={withDefIconM} />
+                                      <DisplayImage src={getSntSetIco(previewEcho.set) ?? ''} alt="" onError={withDefIconM} />
                                     </span>
                                   ) : null}
                                   <span className="mcc-echo-brief-cost">{previewDef.cost}C</span>
@@ -2224,7 +2237,7 @@ function ResonatorView({
                         <div key={setId} className="mcc-set">
                           <div className="mcc-set-head">
                             <span className="mcc-set-icon">
-                              {icon ? <img src={icon} alt="" onError={withDefIconM} /> : null}
+                              {icon ? <DisplayImage src={icon} alt="" onError={withDefIconM} /> : null}
                             </span>
                             <span className="mcc-set-name">{def.name}</span>
                             <span className="mcc-set-meter">
@@ -2291,7 +2304,7 @@ function ResonatorView({
           onClick={(event) => event.stopPropagation()}
         >
         <aside className="mcc-spine">
-          <img
+          <DisplayImage
             src={member.sprite || member.profile}
             alt="" className="mcc-art"
             style={spriteVars(member)}
@@ -2349,7 +2362,7 @@ function ResonatorView({
             />
 
             <div className="mcc-type">
-              <img
+              <DisplayImage
                 src={`/assets/game/attributes/icons/${member.attribute}.webp`}
                 alt={member.attribute}
                 style={member.attribute === 'physical' ? { filter: 'grayscale(1) brightness(0.6)' } : undefined}
@@ -2380,7 +2393,7 @@ function ResonatorView({
                   aria-label={weaponDef ? `Change weapon, now ${weaponDef.name}` : 'Pick a weapon'}
                   onClick={() => setWpnRackOpen(!wpnRackOpen)}
                 >
-                  <img
+                  <DisplayImage
                     src={weaponDef?.icon ?? `/assets/game/weapons/icons/${weaponId}.webp`}
                     alt=""
                     onError={withDefWpnMg}
@@ -2507,7 +2520,7 @@ function ResonatorView({
                         }
                       }}
                     >
-                      <img src={mate.profile} alt="" onError={withDefResMg} />
+                      <DisplayImage src={mate.profile} alt="" onError={withDefResMg} />
                     </button>
                   )
                 })}
@@ -2523,6 +2536,7 @@ function ResonatorView({
         </div>
         )}
       </ContextTrigger>
+    <Suspense fallback={<AppLoaderOverlay mode="scrim" />}>
     {echoEditModal.visible && editSlot != null && editEcho ? (
       <Edit
         visible={echoEditModal.visible}
@@ -2614,7 +2628,7 @@ function ResonatorView({
       />
     ) : null}
     {invModal.visible ? (
-      <InvMdl
+      <MemberInventory
         key={invEchoSearch ? `teammate-inventory:${runtime.id}:${invEchoSearch}` : `teammate-inventory:${runtime.id}`}
         visible={invModal.visible}
         open={invModal.open}
@@ -2628,8 +2642,6 @@ function ResonatorView({
         invChs={invChs}
         invBlds={invBlds}
         ntlEchoSrch={invEchoSearch}
-        bldUsrsById={invSg.buildUseByBldId}
-        echoSgByUid={invSg.echoUseByUid}
         onClose={() => {
           invModal.hide(() => setInvEchoSearch(''))
         }}
@@ -2673,6 +2685,7 @@ function ResonatorView({
         />
       ) : null
     })()}
+    </Suspense>
     <ConfirmHost control={confirmation} portalTarget={dialogHost} />
     </>
   )

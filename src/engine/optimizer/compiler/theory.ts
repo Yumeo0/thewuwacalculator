@@ -5,6 +5,7 @@
                and normal optimizer target or rotation contexts.
 */
 
+import { optimizerFloats } from '@/engine/optimizer/workers/payloadBuffers'
 import { listEchoes } from '@/data/catalog/echoCatalogService.ts'
 import { getGameData } from '@/data/gameData'
 import {
@@ -610,23 +611,8 @@ function prnThryRows<T extends PrepTheoryTarget | PrepTheoryRot>(
   const { statMask, mainMask } = mkCntrMasks(payload)
   const rowMap = new Map<string, number>()
   const outRows: TheoryRow[] = []
-  const costs = new Uint8Array(rows.length)
-  const sets = new Uint8Array(rows.length)
-  const stats = new Float32Array(rows.length * ECHO_STAT_STRIDE)
-  const mains = new Float32Array(rows.length * MAIN_BUFF_LEN)
+  const sourceRows: number[] = []
   const keepSet = statMask.some(Boolean) || mainMask.some(Boolean)
-
-  function copyPacked(dst: number, src: number): void {
-    costs[dst] = encoded.costs[src] ?? 0
-    sets[dst] = encoded.sets[src] ?? 0
-
-    for (let offset = 0; offset < ECHO_STAT_STRIDE; offset += 1) {
-      stats[dst * ECHO_STAT_STRIDE + offset] = encoded.stats[src * ECHO_STAT_STRIDE + offset] ?? 0
-    }
-    for (let offset = 0; offset < MAIN_BUFF_LEN; offset += 1) {
-      mains[dst * MAIN_BUFF_LEN + offset] = mainEchoBuffs[src * MAIN_BUFF_LEN + offset] ?? 0
-    }
-  }
 
   for (let index = 0; index < rows.length; index += 1) {
     const row = rows[index]
@@ -652,7 +638,7 @@ function prnThryRows<T extends PrepTheoryTarget | PrepTheoryRot>(
       if (row.cost !== prev.cost) {
         if (row.cost < prev.cost) {
           outRows[seen] = { ...row, ids: [...row.ids] }
-          copyPacked(seen, index)
+          sourceRows[seen] = index
         }
         continue
       }
@@ -660,7 +646,7 @@ function prnThryRows<T extends PrepTheoryTarget | PrepTheoryRot>(
       if (!keepSet && row.set !== prev.set) {
         if (row.ids.length > prev.ids.length) {
           outRows[seen] = { ...row, ids: [...row.ids] }
-          copyPacked(seen, index)
+          sourceRows[seen] = index
         }
         continue
       }
@@ -672,7 +658,20 @@ function prnThryRows<T extends PrepTheoryTarget | PrepTheoryRot>(
     rowMap.set(key, outRows.length)
     outRows.push({ ...row, ids: [...row.ids] })
     const dst = outRows.length - 1
-    copyPacked(dst, index)
+    sourceRows[dst] = index
+  }
+
+  // Allocate only the surviving numeric rows, directly in final storage.
+  const costs = new Uint8Array(outRows.length)
+  const sets = new Uint8Array(outRows.length)
+  const stats = optimizerFloats(outRows.length * ECHO_STAT_STRIDE)
+  const mains = optimizerFloats(outRows.length * MAIN_BUFF_LEN)
+  for (let dst = 0; dst < sourceRows.length; dst++) {
+    const src = sourceRows[dst]!
+    costs[dst] = encoded.costs[src] ?? 0
+    sets[dst] = encoded.sets[src] ?? 0
+    stats.set(encoded.stats.subarray(src * ECHO_STAT_STRIDE, (src + 1) * ECHO_STAT_STRIDE), dst * ECHO_STAT_STRIDE)
+    mains.set(mainEchoBuffs.subarray(src * MAIN_BUFF_LEN, (src + 1) * MAIN_BUFF_LEN), dst * MAIN_BUFF_LEN)
   }
 
   const kinds = new Uint16Array(outRows.length)
@@ -691,16 +690,16 @@ function prnThryRows<T extends PrepTheoryTarget | PrepTheoryRot>(
 
   return {
     ...payload,
-    costs: costs.slice(0, outRows.length),
-    sets: sets.slice(0, outRows.length),
+    costs,
+    sets,
     kinds,
     comboN: outRows.length,
     totalCombos: exactTtl,
     lockMainCands: Int32Array.from(outRows
         .map((row, index) => row.mainOk ? index : -1)
         .filter((index) => index >= 0)),
-    stats: stats.slice(0, outRows.length * ECHO_STAT_STRIDE),
-    mainEchoBuffs: mains.slice(0, outRows.length * MAIN_BUFF_LEN),
+    stats,
+    mainEchoBuffs: mains,
     theoryTotal: exactTtl,
     theoryRows: outRows,
   }

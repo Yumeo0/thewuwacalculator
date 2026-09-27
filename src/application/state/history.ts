@@ -8,17 +8,22 @@
 import type { HistoryMax, LeftPaneView, PersistedState } from '@/domain/entities/appState'
 import type { ResRuntime, TeamMemRtVie } from '@/domain/entities/runtime'
 import type { PersistKey } from '@/application/persistence/storage'
+import { decompressFromUTF16 } from 'lz-string'
 
-/**
- * Global persisted-state history is temporarily suspended while the
- * Simulation memory model is being tightened.  The stored preference remains
- * readable/editable so it can be honoured again without a migration.  Route
- * owned histories (notably the rotation editor) do not use this capability.
- */
-export const RUNTIME_APP_HISTORY_ENABLED = false
+export const RUNTIME_APP_HISTORY_ENABLED = true
+
+export interface PersistChange {
+  path: (string | number)[]
+  before: unknown
+  after: unknown
+  beforeExists: boolean
+  afterExists: boolean
+}
 
 export interface PrssHistEnt {
-  snapshot: PersistedState
+  changes: PersistChange[]
+  packed?: string
+  domains: PersistKey[]
   label: string
 }
 
@@ -36,15 +41,154 @@ export function mkMptyHistSt(): PrssHistStt {
   }
 }
 
-export function clonePrssSna(snapshot: PersistedState): PersistedState {
-  return structuredClone(snapshot)
+const DOMAIN_ROOTS: Record<PersistKey, readonly string[]> = {
+  'ui.appearance': ['ui'],
+  'ui.layout': ['ui'],
+  'ui.showcaseCards': ['ui', 'preferences', 'showcaseCards'],
+  'ui.savedRotationPreferences': ['ui', 'savedRotationPreferences'],
+  'combat.workspace': ['combat'],
+  'simulation.optimizerSettings': ['simulation'],
+  'simulation.suggestions': ['simulation'],
+  'library.echoes': ['library', 'echoes'],
+  'library.builds': ['library', 'builds'],
+  'library.rotations': ['library', 'rotations'],
+  'library.scenarios': ['library', 'scenarios'],
 }
 
-export function mkHistEnt(snapshot: PersistedState, label: string): PrssHistEnt {
-  return {
-    snapshot: clonePrssSna(snapshot),
-    label,
+function isObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object'
+}
+
+function child(value: unknown, key: string | number): { exists: boolean; value: unknown; descriptor?: PropertyDescriptor } {
+  if (!isObject(value)) return { exists: false, value: undefined }
+  const descriptor = Object.getOwnPropertyDescriptor(value, key)
+  return descriptor ? { exists: true, value: 'value' in descriptor ? descriptor.value : undefined, descriptor } : { exists: false, value: undefined }
+}
+
+function atPath(value: unknown, path: readonly string[]): unknown {
+  for (const key of path) value = child(value, key).value
+  return value
+}
+
+/** The action's declared domains describe ownership; reference changes tell
+ * persistence which of those domains actually changed in this transaction. */
+export function changedPersistDomains(before: PersistedState, after: PersistedState, domains: PersistKey[]): PersistKey[] {
+  return domains.filter((domain) => !Object.is(
+    atPath(before, DOMAIN_ROOTS[domain]),
+    atPath(after, DOMAIN_ROOTS[domain]),
+  ))
+}
+
+function addChanges(before: unknown, after: unknown, path: (string | number)[], output: PersistChange[], beforeExists = true, afterExists = true): void {
+  if (beforeExists && afterExists && Object.is(before, after)) return
+  if (beforeExists && afterExists && isObject(before) && isObject(after)
+    && Array.isArray(before) === Array.isArray(after)) {
+    if (Array.isArray(before) && Array.isArray(after) && before.length === after.length
+      && before.every((item) => isObject(item) && typeof item.id === 'string')
+      && after.every((item) => isObject(item) && typeof item.id === 'string')
+      && before.some((item, index) => item.id !== after[index].id)) {
+      output.push({ path, before, after, beforeExists, afterExists })
+      return
+    }
+    const keys = new Set([...Object.keys(before), ...Object.keys(after)])
+    // Array length changes are represented by the array itself so restoration
+    // cannot leave holes or an incorrect length after a remove/reorder.
+    if (!Array.isArray(before) || before.length === after.length) {
+      for (const key of keys) {
+        const oldChild = child(before, key)
+        const newChild = child(after, key)
+        if (oldChild.descriptor?.get && oldChild.descriptor.get === newChild.descriptor?.get) continue
+        addChanges(oldChild.descriptor?.get ? oldChild.descriptor.get.call(before) : oldChild.value,
+          newChild.descriptor?.get ? newChild.descriptor.get.call(after) : newChild.value,
+          [...path, Array.isArray(before) ? Number(key) : key], output, oldChild.exists, newChild.exists)
+      }
+      return
+    }
   }
+  output.push({ path, before, after, beforeExists, afterExists })
+}
+
+/** Walk only changed immutable branches; unchanged lazy scenario getters stay cold. */
+export function makeHistoryEntry(before: PersistedState, after: PersistedState, domains: PersistKey[], label: string): PrssHistEnt | null {
+  const changes: PersistChange[] = []
+  const roots = new Set(domains.map((domain) => DOMAIN_ROOTS[domain].join('\u0000')))
+  for (const root of roots) {
+    const path = root.split('\u0000')
+    addChanges(atPath(before, path), atPath(after, path), path, changes)
+  }
+  return changes.length ? { changes, domains: [...new Set(domains)], label } : null
+}
+
+const historyCompactionQueue: PrssHistEnt[] = []
+let historyCompacting = false
+
+function shouldCompact(entry: PrssHistEnt): boolean {
+  return entry.changes.length > 100 || entry.changes.some((change) =>
+    (Array.isArray(change.before) && change.before.length > 32)
+    || (Array.isArray(change.after) && change.after.length > 32))
+}
+
+/** Large, cold transactions are compressed in a short-lived worker. Ordinary
+ * scalar edits stay as tiny path/value pairs and never start a worker. */
+export function queueHistoryCompaction(entry: PrssHistEnt): void {
+  if (typeof Worker === 'undefined' || !shouldCompact(entry)) return
+  historyCompactionQueue.push(entry)
+  if (historyCompacting) return
+  const drain = () => {
+    const next = historyCompactionQueue.shift()
+    if (!next) { historyCompacting = false; return }
+    const changes = next.changes
+    let worker: Worker
+    try {
+      worker = new Worker(new URL('./historyCompression.worker.ts', import.meta.url), { type: 'module' })
+    } catch { drain(); return }
+    worker.onmessage = (event: MessageEvent<{ packed: string | null }>) => {
+      if (event.data.packed && next.changes === changes) {
+        next.packed = event.data.packed
+        next.changes = []
+      }
+      worker.terminate()
+      drain()
+    }
+    worker.onerror = () => { worker.terminate(); drain() }
+    try { worker.postMessage(changes) }
+    catch { worker.terminate(); drain() }
+  }
+  historyCompacting = true
+  if (typeof requestIdleCallback === 'function') requestIdleCallback(drain, { timeout: 2_000 })
+  else setTimeout(drain, 0)
+}
+
+function cloneBranch(value: unknown): Record<string, unknown> | unknown[] {
+  if (Array.isArray(value)) return value.slice()
+  return Object.defineProperties({}, Object.getOwnPropertyDescriptors(value ?? {}))
+}
+
+function applyOne(root: PersistedState, change: PersistChange, forward: boolean): PersistedState {
+  const { path } = change
+  const applyAt = (current: unknown, depth: number): unknown => {
+    const key = path[depth]
+    const copy = cloneBranch(current)
+    if (depth === path.length - 1) {
+      const exists = forward ? change.afterExists : change.beforeExists
+      if (exists) Object.defineProperty(copy, key, { value: forward ? change.after : change.before, enumerable: true, writable: true, configurable: true })
+      else delete (copy as Record<string | number, unknown>)[key]
+    } else {
+      Object.defineProperty(copy, key, { value: applyAt(child(current, key).value, depth + 1), enumerable: true, writable: true, configurable: true })
+    }
+    return copy
+  }
+  return applyAt(root, 0) as PersistedState
+}
+
+export function applyHistoryEntry(state: PersistedState, entry: PrssHistEnt, forward: boolean): PersistedState {
+  let next = state
+  const unpacked = entry.packed
+    ? JSON.parse(decompressFromUTF16(entry.packed) ?? '[]') as PersistChange[]
+    : entry.changes
+  const changes = forward ? unpacked : unpacked.slice().reverse()
+  for (const change of changes) next = applyOne(next, change, forward)
+  return next
 }
 
 export function trimHistEnts<TEntry>(entries: TEntry[], max: HistoryMax, keep: 'recent' | 'earliest'): TEntry[] {
@@ -58,9 +202,12 @@ export function trimHistEnts<TEntry>(entries: TEntry[], max: HistoryMax, keep: '
 }
 
 function areVlsQl(left: unknown, right: unknown): boolean {
-  // deep equality only matters for desc selection, so json comparison keeps
-  // the helper tiny and predictable across plain persisted runtime data.
-  return JSON.stringify(left) === JSON.stringify(right)
+  if (Object.is(left, right)) return true
+  if (!isObject(left) || !isObject(right) || Array.isArray(left) !== Array.isArray(right)) return false
+  if (Array.isArray(left) && left.length !== (right as unknown as unknown[]).length) return false
+  const keys = Object.keys(left)
+  if (keys.length !== Object.keys(right).length) return false
+  return keys.every((key) => Object.hasOwn(right, key) && areVlsQl(left[key], right[key]))
 }
 
 export function resFllbHistL(dirtyDomains: PersistKey[]): string {

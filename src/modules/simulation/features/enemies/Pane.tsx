@@ -4,6 +4,7 @@
                resistance, class, and status controls preserve encounter state.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties as CssProps, ReactNode } from 'react'
 import type { EnemyProfile, EnemyStateValue } from '@/domain/entities/appState.ts'
@@ -642,7 +643,7 @@ export function EnemyPane({
             >
               <span className="resonator-avatar-button__frame" aria-hidden="true" />
               <span className="resonator-avatar-button__media">
-                <img
+                <DisplayImage
                   src={selEnemyIcon}
                   alt={selEnemy?.name ?? 'Enemy'} className="resonator-avatar resonator-avatar--sprite"
                   onError={withDefIconM}

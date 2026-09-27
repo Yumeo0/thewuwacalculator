@@ -3,6 +3,7 @@
   Description: Provides canonical Simulation workspace state and mutations to nested surfaces.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { createContext as mkCtx, useCallback, useContext, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import type { LeftPaneView } from '@/domain/entities/appState.ts'
@@ -202,7 +203,7 @@ export function SimulationProvider({
       label: entry.name,
       art: seedRsntById[entry.id]?.sprite || seedRsntById[entry.id]?.profile,
       icon: <span style={{ width: '16px', height: '16px' }} className="rotation-node-member-icon" title={seedRsntById[entry.id]?.name}>
-              <img src={seedRsntById[entry.id]?.profile} alt="" onError={withDefResMg} />
+              <DisplayImage src={seedRsntById[entry.id]?.profile} alt="" onError={withDefResMg} />
             </span>,
       onSelect: () => swtcToRes(entry.id),
     }))
@@ -222,7 +223,7 @@ export function SimulationProvider({
     WORKPANEPTNS.map((option) => ({
       id: `workspace-pane:${option.id}`,
       label: option.label,
-      icon: <img
+      icon: <DisplayImage
           style={{ width: '15px', height: '15px' }}
           src={`/assets/app/icons/${toolbarIconTheme}/${option.id}.png`}
           alt=""

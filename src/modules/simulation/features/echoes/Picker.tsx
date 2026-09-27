@@ -4,11 +4,12 @@
                before handing the selected echo id back to the caller.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useMemo, useState } from 'react'
 import { Check, Search } from 'lucide-react'
 import type { EchoDef } from '@/domain/entities/catalog.ts'
 import { getSntSetClr, getSntSetIco, SONATA_SETS } from '@/data/gameData/catalog/sonataSets.ts'
-import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback.ts'
+import { withDefIconM, withPickerImageFallback } from '@/shared/lib/imageFallback.ts'
 import { PickerModal as ShrdPckrMdl } from '@/modules/simulation/ui/PickerModal.tsx'
 import { mkSrchTkns, mtchSrchTkns } from '@/modules/simulation/features/echoes/lib/search.ts'
 
@@ -136,7 +137,7 @@ export function EchoPicker({
                 )
               }
             >
-              {setIcon ? <img src={setIcon} alt="" aria-hidden="true" onError={withDefIconM} /> : <span />}
+              {setIcon ? <DisplayImage src={setIcon} alt="" aria-hidden="true" onError={withDefIconM} /> : <span />}
               <span className="amdl__tab-label">{set.name}</span>
               {picked ? <Check size="0.7rem" /> : <span />}
             </button>
@@ -178,9 +179,11 @@ export function EchoPicker({
         leading: (
           <div className="picker-modal__media-frame">
             <img
-              src={echo.icon}
+              data-deferred-src={echo.icon}
+              data-full-src={echo.icon}
               alt={echo.name} className="picker-modal__media-image"
-              onError={withDefEchoMg}
+              decoding="async"
+              onError={withPickerImageFallback}
             />
           </div>
         ),
@@ -197,7 +200,7 @@ export function EchoPicker({
               {echo.sets.map((setId) => {
                 const setIcon = getSntSetIco(setId)
                 return setIcon ? (
-                  <img key={setId} src={setIcon} alt="" className="picker-modal__meta-icon" onError={withDefIconM} />
+                  <DisplayImage key={setId} src={setIcon} alt="" className="picker-modal__meta-icon" onError={withDefIconM} />
                 ) : null
               })}
             </span>

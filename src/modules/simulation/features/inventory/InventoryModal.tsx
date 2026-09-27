@@ -4,6 +4,7 @@
                selection actions, equip targets, and persistence commands.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { CSSProperties as CssProps, HTMLAttributes as HtmlAttrs, KeyboardEvent as KeyboardEvent, MouseEvent as RctMsVnt, ReactNode } from 'react'
 import {ArrowBigDownDash as ArrowDownIcon, Check, ChevronLeft, ChevronRight, Clipboard, Copy, Maximize2, Minimize2, Pencil, Plus, Rows3, Scissors, Search, Trash2, X} from 'lucide-react'
@@ -171,7 +172,7 @@ function InvWear({ label, users }: { label: string; users: Array<InvEchoSg | Inv
     <div className="inv-wear">
       <span className="inv-wear__lab">{label}</span>
       {shown.map((user) => (
-        <img
+        <DisplayImage
           key={`${user.resonatorId}-${'slotIndex' in user ? user.slotIndex : 'build'}`}
           src={user.icon}
           alt={`${user.resName} has it equipped`}
@@ -193,7 +194,7 @@ function InvBadge({ users }: { users: InvEchoSg[] }) {
   return (
     <span className="inv-badge" title={shown.map((user) => `${user.resName} · slot ${user.slotIndex + 1}`).join('\n')}>
       {shown.map((user) => (
-        <img
+        <DisplayImage
           key={`${user.resonatorId}-${user.slotIndex}`}
           src={user.icon}
           alt={`${user.resName} has it equipped`} className="inv-wear__face"
@@ -331,7 +332,7 @@ function InvEchoEntCa({
         }}
         onKeyDown={onTileKeyDow}
       >
-        <img
+        <DisplayImage
           src={definition.icon}
           alt={definition.name}
           loading="lazy"
@@ -339,7 +340,7 @@ function InvEchoEntCa({
           onError={hideBrknMg}
         />
         {setIcon ? (
-          <img
+          <DisplayImage
             src={setIcon}
             alt=""
             aria-hidden="true" className="inv-tile__coin"
@@ -350,7 +351,7 @@ function InvEchoEntCa({
         <span className="inv-tile__cost">{definition.cost}c</span>
         {wornSlot >= 0 ? <span className="inv-tile__here">S{wornSlot + 1}</span> : null}
         {wornSlot < 0 && wearer ? (
-          <img
+          <DisplayImage
             src={wearer.icon}
             alt=""
             aria-hidden="true"
@@ -468,7 +469,7 @@ function EchoBagRdt({
   return (
     <aside className="inv-rdt" style={echoCardVars({ setColor: sntTone(entry.echo.set), cv })} aria-label="Selected echo">
       <div className="inv-rdt__art">
-        <img
+        <DisplayImage
           src={definition.icon}
           alt=""
           loading="lazy"
@@ -554,7 +555,7 @@ function SvdMkCard({
     >
       <div className="inv-bld__band">
         {resonatorDef?.profile ? (
-          <img
+          <DisplayImage
             src={resonatorDef.profile}
             alt={entry.resonatorName}
             title={entry.resonatorName} className="inv-bld__face"
@@ -591,7 +592,7 @@ function SvdMkCard({
 
         {weaponDef ? (
           <div className="inv-wpn" style={rarityVars(weaponDef.rarity) as CssProps}>
-            <img
+            <DisplayImage
               src={weaponDef.icon}
               alt={weaponDef.name}
               title={`${weaponDef.name} R${entry.build.weapon.rank}`}
@@ -618,7 +619,7 @@ function SvdMkCard({
             >
               {definition ? (
                 <>
-                  <img
+                  <DisplayImage
                     src={definition.icon}
                     alt={definition.name}
                     title={`${definition.name} · ${getSntSetNam(echo!.set)}`}
@@ -626,7 +627,7 @@ function SvdMkCard({
                     onError={hideBrknMg}
                   />
                   {setIcon ? (
-                    <img
+                    <DisplayImage
                       src={setIcon}
                       alt=""
                       aria-hidden="true" className="inv-pip__coin"
@@ -1451,7 +1452,7 @@ export function InvMdl({
                 <span className="inv-bench__n">{slotIndex + 1}</span>
                 <span className={`inv-bench__face${definition ? '' : ' inv-bench__face--void'}`}>
                   {definition ? (
-                    <img src={definition.icon} alt="" aria-hidden="true" loading="lazy" onError={hideBrknMg} />
+                    <DisplayImage src={definition.icon} alt="" aria-hidden="true" loading="lazy" onError={hideBrknMg} />
                   ) : null}
                 </span>
                 <span className="inv-bench__name">{definition?.name ?? 'Empty'}</span>
@@ -1516,7 +1517,7 @@ export function InvMdl({
                     setEchoPage(0)
                   }}
                 >
-                  {setIcon ? <img src={setIcon} alt="" aria-hidden="true" onError={withDefIconM} /> : <span />}
+                  {setIcon ? <DisplayImage src={setIcon} alt="" aria-hidden="true" onError={withDefIconM} /> : <span />}
                   <span className="amdl__tab-label">{getSntSetNam(setId)}</span>
                   {picked ? <Check size="0.7rem" /> : <span className="amdl__tab-n">{count}</span>}
                 </button>
@@ -1553,7 +1554,7 @@ export function InvMdl({
                 title={`Show only ${info.name} builds`}
               >
                 {info.icon ? (
-                  <img src={info.icon} alt="" aria-hidden="true" style={{ borderRadius: '50%' }} onError={withDefResMg} />
+                  <DisplayImage src={info.icon} alt="" aria-hidden="true" style={{ borderRadius: '50%' }} onError={withDefResMg} />
                 ) : <span />}
                 <span className="amdl__tab-label">{info.name}</span>
                 <span className="amdl__tab-n">{info.n}</span>
@@ -1643,7 +1644,7 @@ export function InvMdl({
                           {group.setId != null ? (
                             <div className="inv-band" style={{ '--inv-tone': sntTone(group.setId) } as CssProps}>
                               {getSntSetIco(group.setId) ? (
-                                <img
+                                <DisplayImage
                                   src={getSntSetIco(group.setId) ?? ''}
                                   alt=""
                                   aria-hidden="true" className="inv-band__ico"
@@ -1747,7 +1748,7 @@ export function InvMdl({
                         {group.resonatorId === '__all__' ? null : (
                         <div className="inv-band">
                           {group.icon ? (
-                            <img
+                            <DisplayImage
                               src={group.icon}
                               alt=""
                               aria-hidden="true" className="inv-band__ico inv-band__ico--face"

@@ -5,7 +5,8 @@
                geometry derived from rendered measurements.
 */
 
-import { useLayoutEffect, useMemo, useRef, type KeyboardEvent, type ReactNode } from 'react'
+import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { memo, useLayoutEffect, useMemo, useRef, type KeyboardEvent, type ReactNode } from 'react'
 import type { EchoInstance } from '@/domain/entities/runtime'
 import type { ShowcaseCardHidden, StatsColumnHighlight } from '@/domain/entities/preferences'
 import { useAppStore } from '@/application/state'
@@ -24,6 +25,7 @@ import { groupUid } from '@/modules/simulation/features/echoes/lib/playerIdentit
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
 import {
   EvaluationSeqRail,
+  ResonatorName,
   statFamily,
   type CssVars,
   type EvaluationEchoSelection,
@@ -47,26 +49,36 @@ export function rarityVars(rarity: number | null | undefined): CssVars | undefin
 }
 
 // Reduce marked text only until it fits its container or reaches its declared floor.
-function fitLines(root: HTMLElement): void {
-  for (const node of root.querySelectorAll<HTMLElement>('[data-fit]')) {
-    node.style.removeProperty('font-size')
-    const floor = Number(node.dataset.fit) || 10
-    let size = parseFloat(getComputedStyle(node).fontSize)
-    while (node.scrollWidth > node.clientWidth + 0.5 && size > floor) {
-      size = Math.max(floor, size - 0.5)
-      node.style.fontSize = `${size}px`
+function fitSignature(node: HTMLElement): string {
+  const style = getComputedStyle(node)
+  return [node.textContent, node.clientWidth, style.fontFamily, style.fontSize, style.fontWeight, style.letterSpacing].join('|')
+}
+
+function fitLines(root: HTMLElement, cache: WeakMap<HTMLElement, string>): void {
+  const nodes = [...root.querySelectorAll<HTMLElement>('[data-fit]')].filter((node) => cache.get(node) !== fitSignature(node))
+  for (const node of nodes) node.style.removeProperty('font-size')
+  const pending = nodes.map((node) => ({ node, floor: Number(node.dataset.fit) || 10, size: parseFloat(getComputedStyle(node).fontSize) }))
+  // Read every overflow before writing this step, avoiding a layout per label.
+  for (;;) {
+    const shrinking = pending.filter(({ node, floor, size }) => size > floor && node.scrollWidth > node.clientWidth + 0.5)
+    if (!shrinking.length) break
+    for (const entry of shrinking) {
+      entry.size = Math.max(entry.floor, entry.size - 0.5)
+      entry.node.style.fontSize = `${entry.size}px`
     }
   }
+  for (const node of nodes) cache.set(node, fitSignature(node))
 }
 
 // Derive the ribbon opening from the measured seal bounds.
 function openRibbon(ribbon: HTMLElement, seal: HTMLElement): void {
   const start = seal.offsetLeft - ribbon.offsetLeft
-  ribbon.style.setProperty('--seal-open-start', `${start}px`)
-  ribbon.style.setProperty('--seal-open-end', `${start + seal.offsetWidth}px`)
+  const end = start + seal.offsetWidth
+  if (ribbon.style.getPropertyValue('--seal-open-start') !== `${start}px`) ribbon.style.setProperty('--seal-open-start', `${start}px`)
+  if (ribbon.style.getPropertyValue('--seal-open-end') !== `${end}px`) ribbon.style.setProperty('--seal-open-end', `${end}px`)
 }
 
-export function SealShowcase({
+export const SealShowcase = memo(function SealShowcase({
   model,
   build,
   score,
@@ -80,6 +92,7 @@ export function SealShowcase({
   resId,
   onSequence,
   onEditWeapon,
+  onOpenMember,
   team,
   onEchoOpen,
   echoSelection,
@@ -98,6 +111,7 @@ export function SealShowcase({
   resId: string | null
   onSequence?: (node: number) => void
   onEditWeapon?: () => void
+  onOpenMember?: () => void
   team: ReactNode
   onEchoOpen?: (slotIndex: number) => void
   echoSelection?: EvaluationEchoSelection
@@ -110,7 +124,7 @@ export function SealShowcase({
   const playerUid = useAppStore((state) => state.ui.preferences.playerUid)
   const relStats = useMemo(() => makeRelStats(build.charId), [build.charId])
   const showRel = !hidden.relStats
-  const slots = Array.from({ length: 5 }, (_, slot) => build.echoes[slot] ?? null)
+  const slots = useMemo(() => Array.from({ length: 5 }, (_, slot) => build.echoes[slot] ?? null), [build.echoes])
   const echoScores = useEchoScores(build.charId, slots)
   const cv = loadoutCv(slots, blank)
   const buildByKey = buildTotalsByKey(build.buildStatsView)
@@ -127,32 +141,36 @@ export function SealShowcase({
   if (!hidden.backdropCredit && backdropCredit) credits.push({ tag: 'BG', who: backdropCredit })
 
   useLayoutEffect(() => {
-    if (rootRef.current) fitLines(rootRef.current)
-  })
-
-  useLayoutEffect(() => {
-    let live = true
-    void document.fonts?.ready.then(() => {
-      if (live && rootRef.current) fitLines(rootRef.current)
-    })
-    return () => {
-      live = false
-    }
-  }, [])
-
-  // Recalculate after every render because score content can move the seal.
-  useLayoutEffect(() => {
-    if (ribbonRef.current && sealRef.current) openRibbon(ribbonRef.current, sealRef.current)
-  })
-
-  // ResizeObserver covers geometry changes that do not trigger a React render.
-  useLayoutEffect(() => {
+    const root = rootRef.current
     const ribbon = ribbonRef.current
     const sealNode = sealRef.current
-    if (!ribbon || !sealNode) return undefined
-    const observer = new ResizeObserver(() => openRibbon(ribbon, sealNode))
-    observer.observe(sealNode)
-    return () => observer.disconnect()
+    if (!root || !ribbon || !sealNode) return
+    let frame = 0
+    let lastWidth = -1
+    let fitted = new WeakMap<HTMLElement, string>()
+    const schedule = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => { fitLines(root, fitted); openRibbon(ribbon, sealNode) })
+    }
+    const resize = new ResizeObserver(() => {
+      const width = root.clientWidth
+      if (width !== lastWidth) { lastWidth = width; schedule() }
+      else openRibbon(ribbon, sealNode)
+    })
+    resize.observe(root)
+    resize.observe(sealNode)
+    const text = new MutationObserver(schedule)
+    text.observe(root, { childList: true, characterData: true, subtree: true })
+    const card = root.closest('.workspace-rail')
+    const typography = () => { fitted = new WeakMap(); schedule() }
+    card?.addEventListener('showcase:typography', typography)
+    document.fonts?.addEventListener('loadingdone', typography)
+    schedule()
+    return () => {
+      cancelAnimationFrame(frame); resize.disconnect(); text.disconnect()
+      card?.removeEventListener('showcase:typography', typography)
+      document.fonts?.removeEventListener('loadingdone', typography)
+    }
   }, [])
 
   const weaponRarity = model.weaponRarity ?? model.weapon?.rarity ?? null
@@ -162,7 +180,7 @@ export function SealShowcase({
       <span className="seal-bloom-halftone" aria-hidden="true" />
       <span className="seal-bloom-glow" aria-hidden="true" />
       {model.weaponIcon ? (
-        <img className="seal-bloom-gun" src={model.weaponIcon} alt="" decoding="async" onError={withDefIconM} />
+        <DisplayImage className="seal-bloom-gun" src={model.weaponIcon} alt="" decoding="async" onError={withDefIconM} />
       ) : (
         <span className="seal-bloom-gun seal-bloom-gun--empty" aria-hidden="true" />
       )}
@@ -261,9 +279,11 @@ export function SealShowcase({
       <div className="seal-id">
         <span className="seal-id-head">
           {model.attrIcon ? (
-            <img className="seal-id-attr" src={model.attrIcon} alt="" decoding="async" onError={withDefIconM} />
+            <DisplayImage className="seal-id-attr" src={model.attrIcon} alt="" decoding="async" onError={withDefIconM} />
           ) : null}
-          <strong className="seal-id-name" data-fit="28">{model.seed?.name ?? 'Resonator'}</strong>
+          <strong className="seal-id-name" data-fit="28">
+            <ResonatorName name={model.seed?.name ?? 'Resonator'} onOpen={onOpenMember} />
+          </strong>
         </span>
         <span className="seal-id-meta">
           <span className="seal-stars" role="img" aria-label={`${model.rarity}-star resonator`}>
@@ -351,7 +371,7 @@ export function SealShowcase({
       )}
     </div>
   )
-}
+})
 
 function SealEcho({
   echo,
@@ -431,14 +451,14 @@ function SealEcho({
       <span className="seal-echo-halo" aria-hidden="true" />
       <span className="seal-echo-medal">
         {echoDef?.icon ? (
-          <img src={echoDef.icon} alt="" className="seal-echo-icon" decoding="async" onError={withDefIconM} />
+          <DisplayImage src={echoDef.icon} alt="" className="seal-echo-icon" decoding="async" onError={withDefIconM} />
         ) : (
           <span className="seal-echo-icon seal-echo-icon--fallback" />
         )}
       </span>
       {setIcon ? (
         <span className="seal-echo-coin seal-echo-coin--set">
-          <img src={setIcon} alt="" onError={withDefIconM} />
+          <DisplayImage src={setIcon} alt="" onError={withDefIconM} />
         </span>
       ) : null}
       <span className="seal-echo-coin seal-echo-coin--cost" aria-label={`${echoDef?.cost ?? 0} cost`}>

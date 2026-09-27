@@ -4,6 +4,8 @@
                update toast surfaces.
 */
 
+import { CURRENT_CHANGE_NOTICE } from './currentChangelogNotice'
+
 export interface ChngEnt {
   type: 'paragraph'
   content: string
@@ -877,8 +879,7 @@ export const curChngEnts: ChngRcrd[] = [
     shortDesc: `3.7.0 beta update`,
   },
   {
-    date: '11/09/2026',
-    patchVersion: '3.7.1 beta',
+    ...CURRENT_CHANGE_NOTICE,
     entries: [
       {
         type: 'paragraph',
@@ -890,7 +891,6 @@ export const curChngEnts: ChngRcrd[] = [
         content: `Updated <strong>Suoming</strong>'s <strong>Unison Boom</strong> stack limit.`,
       }
     ],
-    shortDesc: `3.7.1 beta update`,
   },
 ]
 

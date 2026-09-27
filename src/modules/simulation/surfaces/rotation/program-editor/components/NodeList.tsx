@@ -5,6 +5,7 @@
                out, and moving where a block ends.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAnimatedVisibility } from '@/shared/hooks/useAnimatedVisibility'
@@ -408,7 +409,7 @@ function NoteAside({
         >
           <span className="rte-aside__who">
             {speaker ? (
-              <img className="rte-aside__face" src={speaker.src} alt="" onError={speaker.onError} loading="lazy" />
+              <DisplayImage className="rte-aside__face" src={speaker.src} alt="" onError={speaker.onError} loading="lazy" />
             ) : null}
             {speaker?.alt ?? 'Note'}
             {note.label ? <s>{note.label}</s> : null}
@@ -1081,9 +1082,9 @@ function SwapRow({
       {...drag.props(node.id, node)}
     >
       <Grip handlers={drag.grip(node.id)} />
-      <img className="rte-swap__out" src={from.profile} alt="" onError={withDefResMg} loading="lazy" />
+      <DisplayImage className="rte-swap__out" src={from.profile} alt="" onError={withDefResMg} loading="lazy" />
       <ArrowRight className="rte-swap__arw" size="0.85rem" aria-hidden="true" />
-      <img className="rte-swap__in" src={to.profile} alt="" onError={withDefResMg} loading="lazy" />
+      <DisplayImage className="rte-swap__in" src={to.profile} alt="" onError={withDefResMg} loading="lazy" />
       <b className="rte-swap__to">{to.name}</b>
       {node.attachedNote ? (
         <NoteAside note={node.attachedNote} speaker={{ src: to.profile, alt: to.name, onError: withDefResMg }} />
@@ -1186,7 +1187,7 @@ function CondLine({
           : {})}
       >
         {artSrc ? (
-          <img className="rte-cond__art"
+          <DisplayImage className="rte-cond__art"
             src={artSrc}
             alt=""
             onError={withDefEchoMg}
@@ -1692,7 +1693,7 @@ export function NodeList({
                   }
                 : {})}
             >
-              <img className="rte-step__art" src={art.src} alt="" onError={art.onError} loading="lazy" />
+              <DisplayImage className="rte-step__art" src={art.src} alt="" onError={art.onError} loading="lazy" />
               {foldable ? <i className="rte-step__runs">{runLength}</i> : null}
             </span>
           ) : (
@@ -1731,7 +1732,7 @@ export function NodeList({
           ) : null}
           <span className="rte-step__fill" />
           {node.sourceIcon ? (
-            <img className="rte-step__source" src={node.sourceIcon} alt="" onError={withDefEchoMg} loading="lazy" />
+            <DisplayImage className="rte-step__source" src={node.sourceIcon} alt="" onError={withDefEchoMg} loading="lazy" />
           ) : null}
           {node.gate ? (
             <GateChip gate={node.gate} />
@@ -1794,7 +1795,7 @@ export function NodeList({
                   >
                     <span className="rte-step">
                       <span className="rte-step__owner" title={childArt.alt}>
-                        <img className="rte-step__art" src={childArt.src} alt="" onError={childArt.onError} loading="lazy" />
+                        <DisplayImage className="rte-step__art" src={childArt.src} alt="" onError={childArt.onError} loading="lazy" />
                       </span>
                       <em className="rte-step__name">{child.label}</em>
                       {childMult > 1 ? <i className="rte-step__mult">x{childMult}</i> : null}
@@ -2379,7 +2380,7 @@ export function NodeList({
               >
                 <CornerLeftUp className="rte-sticky__mark" size="0.7rem" aria-hidden="true" />
                 {scope.icon ? (
-                  <img className="rte-sticky__icon" src={scope.icon} alt="" onError={withDefResMg} />
+                  <DisplayImage className="rte-sticky__icon" src={scope.icon} alt="" onError={withDefResMg} />
                 ) : null}
                 <b className="rte-sticky__name">{scope.label}</b>
                 {scope.note ? <i className="rte-sticky__note">{scope.note}</i> : null}

@@ -5,7 +5,7 @@
 
 import { useCallback, useMemo } from 'react'
 import type { EchoInstance } from '@/domain/entities/runtime.ts'
-import { equalEchoes } from '@/domain/entities/inventoryStorage.ts'
+import { isEchoSaved, selectSavedEchoSignatures } from '@/application/state/savedGearStatus'
 import { useAppStore } from '@/application/state'
 import { useCtxBuilder } from '@/modules/simulation/shell/context-menu/useContextMenuBuilder.ts'
 import { useTstStr } from '@/shared/util/toastStore.ts'
@@ -28,7 +28,7 @@ export function useEchoSrfcM({
   onQpEchoAtjg: onQpEchoAtSl,
 }: UseEchoSrfcM) {
   const menu = useCtxBuilder()
-  const invChs = useAppStore((state) => state.library.echoes)
+  const savedEchoes = useAppStore(selectSavedEchoSignatures)
   const addEchoToInv = useAppStore((state) => state.addInvEcho)
   const showToast = useTstStr((state) => state.show)
 
@@ -36,8 +36,8 @@ export function useEchoSrfcM({
   const curSlotCsts = useMemo(() => mkEchoSlotCs(crrnChs), [crrnChs])
 
   const canSaveEcho = useCallback((echo: EchoInstance) => (
-    !invChs.some((entry) => equalEchoes(entry.echo, echo))
-  ), [invChs])
+    !isEchoSaved(savedEchoes, echo)
+  ), [savedEchoes])
 
   const copyChsToClp = useCallback(async (echoes: EchoInstance[]) => {
     if (echoes.length === 0) {

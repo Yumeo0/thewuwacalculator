@@ -18,6 +18,7 @@ import { applyMainSta } from '@/engine/suggestions/mainStat-suggestion/utils'
 import { applySetPlan } from '@/engine/suggestions/mutate'
 import { ECHO_SET_DEFS } from '@/data/gameData/echoSets/effects'
 import { sggsSetPlns } from '@/engine/suggestions/setPlan-suggestion/suggestSetPlan'
+import { isOptRotTgt } from '@/engine/optimizer/rules/eligibility.ts'
 
 describe('main-stat suggestion worker payload', () => {
   it.each([true, false])('returns canonical Galbrena scores after structured clone (rotation: %s)', (rotationMode) => {
@@ -48,6 +49,21 @@ describe('main-stat suggestion worker payload', () => {
     const simulation = runSuggSmlt(input)
     const prepared = mkPrepMainSt(input, simulation)
     if (!prepared) throw new Error('Failed to prepare main-stat suggestions')
+    const compactSimulation = structuredClone({
+      finalStats: simulation.finalStats,
+      allSkills: simulation.allSkills.filter((entry) => isOptRotTgt(entry, runtime.id, { includeEchoAttacks: true })),
+      rotation: { sequence: { entries: simulation.rotation.sequence.entries.filter(
+        (entry) => isOptRotTgt(entry, runtime.id, { includeEchoAttacks: true }),
+      ) } },
+    })
+    const compactMain = mkPrepMainSt(input, compactSimulation)
+    expect(compactMain?.statWeight).toEqual(prepared.statWeight)
+    expect(compactMain?.context.mode).toBe(prepared.context.mode)
+    if (compactMain?.context.mode === 'rotation' && prepared.context.mode === 'rotation') {
+      expect(compactMain.context.contexts).toEqual(prepared.context.contexts)
+    } else if (compactMain?.context.mode === 'target' && prepared.context.mode === 'target') {
+      expect(compactMain.context.pckdCtx).toEqual(prepared.context.pckdCtx)
+    }
     // Worker transfer must retain every input needed for finalist simulation.
     const transferred = structuredClone(prepared)
     expect(transferred.scoringInput.runtime.id).toBe('1208')
@@ -62,6 +78,13 @@ describe('main-stat suggestion worker payload', () => {
     })
     const preparedSets = mkPrepSetPla({ ...input, includeEchoAttacks: undefined }, simulation)
     if (!preparedSets) throw new Error('Failed to prepare Sonata suggestions')
+    const compactSets = mkPrepSetPla({ ...input, includeEchoAttacks: undefined }, compactSimulation)
+    expect(compactSets?.context.mode).toBe(preparedSets.context.mode)
+    if (compactSets?.context.mode === 'rotation' && preparedSets.context.mode === 'rotation') {
+      expect(compactSets.context.contexts).toEqual(preparedSets.context.contexts)
+    } else if (compactSets?.context.mode === 'target' && preparedSets.context.mode === 'target') {
+      expect(compactSets.context.pckdCtx).toEqual(preparedSets.context.pckdCtx)
+    }
     const setResults = runSetPlanqc(structuredClone(preparedSets))
     expect(setResults.length).toBeGreaterThan(0)
     // Changing Echo bodies during full simulation must not reintroduce plans

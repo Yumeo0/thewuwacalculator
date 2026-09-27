@@ -4,6 +4,7 @@
                without changing the authored rotation tree.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { CSSProperties as CssProps } from 'react'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import { Play, RotateCcw, Square } from 'lucide-react'
@@ -340,7 +341,7 @@ export function CtnSqnc({
             ) : (
               <span className="rss-sequence__avatar-wrap">
                 {action.profile ? (
-                  <img className="rss-sequence__avatar" src={action.profile} alt="" aria-hidden="true" onError={withDefResMg} />
+                  <DisplayImage className="rss-sequence__avatar" src={action.profile} alt="" aria-hidden="true" onError={withDefResMg} />
                 ) : (
                   <span className="rss-sequence__avatar rss-sequence__avatar--empty" aria-hidden="true" />
                 )}

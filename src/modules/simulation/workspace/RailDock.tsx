@@ -3,6 +3,7 @@
   Description: Portals build actions into persistent chrome and synchronizes them with the active member.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { AnimationEvent, CSSProperties, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
@@ -25,7 +26,7 @@ import {
   type EnemyElemId,
 } from '@/domain/entities/enemy'
 import { ATTR_COLORS, getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
-import { openEnemyCnsl } from '@/modules/simulation/features/enemies/ConsoleHost.tsx'
+import { openEnemyCnsl } from '@/modules/simulation/features/enemies/consoleRequest'
 import { openEchoImport } from '@/modules/simulation/features/echoes/lib/echoImportStore.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback'
 import { useSkllData } from '@/modules/simulation/features/resonator/SkillDataHost.tsx'
@@ -481,16 +482,16 @@ function TargetKey({
       onClick={() => onActivate('target')}
     >
       <Edge cast={cast} onCastEnd={onCastEnd} measure={lands != null ? Math.max(0, Math.min(1, lands / 100)) : undefined} />
-      <img className="rdk-face" src={icon} alt="" onError={withDefIconM} />
+      <DisplayImage className="rdk-face" src={icon} alt="" onError={withDefIconM} />
       <kbd className="rdk-kbd" aria-hidden="true">T</kbd>
       <span className="rdk-plate" aria-hidden="true">
-        <img className="rdk-plate-art" src={icon} alt="" onError={withDefIconM} />
+        <DisplayImage className="rdk-plate-art" src={icon} alt="" onError={withDefIconM} />
         <span className="rdk-plate-head">
           <span className="rdk-plate-name">{name}</span>
           <span className="rdk-plate-pills">
             {className ? (
               <span className="rdk-pill">
-                {elementIcon ? <img src={elementIcon} alt="" /> : null}
+                {elementIcon ? <DisplayImage src={elementIcon} alt="" /> : null}
                 {className}
               </span>
             ) : null}
@@ -502,7 +503,7 @@ function TargetKey({
             const src = getAttributeIconSrc(ENEMY_ELEM_ATTR[id])
             return (
               <span key={id} className="rdk-well" data-you={id === yours ? 'true' : undefined}>
-                <i>{src ? <img src={src} alt="" /> : null}</i>
+                <i>{src ? <DisplayImage src={src} alt="" /> : null}</i>
                 {enemy.res[id]}
               </span>
             )

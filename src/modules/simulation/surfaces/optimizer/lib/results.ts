@@ -4,6 +4,7 @@
                structures for cards, stat summaries, and equip previews.
 */
 
+import { compactTheoryEchoes } from '@/engine/optimizer/results/theoryEchoes'
 import type { EchoInstance } from '@/domain/entities/runtime.ts'
 import { cloneEchoFor } from '@/domain/entities/inventoryStorage.ts'
 import {
@@ -22,6 +23,7 @@ import type {
   OptResultStats,
   PrepOptPay,
   TheoryResult,
+  CompactTheoryResult,
   TheoryResultRow,
 } from '@/engine/optimizer/types.ts'
 import {
@@ -61,7 +63,7 @@ export function plchRslt(): OptDisplayRow {
 // produced one. raw theory bag results carry an index into the run's weaponIds;
 // materialized theory results carry the resolved weaponId directly.
 function weaponDisplay(
-    entry: OptBagResult | LegOptRsltEn | TheoryResult | TheoryResultRow,
+    entry: OptBagResult | LegOptRsltEn | TheoryResult | CompactTheoryResult | TheoryResultRow,
     payload: PrepOptPay | null,
 ): { weaponIcon: string | null; weaponName: string | null } {
   let weaponId: string | null = null
@@ -231,7 +233,7 @@ interface RsltDsplCtx {
 // build one display row from a raw result entry, branching across the three
 // row shapes (theory raw / materialized theory / legacy uid / bag index).
 function dsplRowFor(
-  entry: OptBagResult | LegOptRsltEn | TheoryResult | TheoryResultRow,
+  entry: OptBagResult | LegOptRsltEn | TheoryResult | CompactTheoryResult | TheoryResultRow,
   ctx: RsltDsplCtx,
 ): OptDisplayRow {
   const { invChsByUid, optResultEchoes: ptmzRsltChs, optResultData: ptmzRsltPyld } = ctx
@@ -255,8 +257,8 @@ function dsplRowFor(
     }
   }
 
-  if (isThryRslt(entry)) {
-    const summary = smmrEchoLdt(entry.echoes)
+  if ('theory' in entry || isThryRslt(entry)) {
+    const summary = smmrEchoLdt('theory' in entry ? compactTheoryEchoes(entry) : entry.echoes)
     return {
       damage: entry.damage,
       costs: summary.costs,
@@ -299,7 +301,7 @@ function dsplRowFor(
 }
 
 export function vsblRslts(args: {
-  optResults: Array<OptBagResult | LegOptRsltEn | TheoryResult | TheoryResultRow>
+  optResults: Array<OptBagResult | LegOptRsltEn | TheoryResult | CompactTheoryResult | TheoryResultRow>
   pageStart: number
   pageEnd: number
   invChsByUid: Map<string, EchoInstance>
@@ -313,7 +315,7 @@ export function vsblRslts(args: {
 // render rows for an explicit list of original result indices (the current
 // page of a filtered/sorted view). missing indices fall back to a placeholder.
 export function vsblRsltsAt(args: {
-  optResults: Array<OptBagResult | LegOptRsltEn | TheoryResult | TheoryResultRow>
+  optResults: Array<OptBagResult | LegOptRsltEn | TheoryResult | CompactTheoryResult | TheoryResultRow>
   indices: number[]
   invChsByUid: Map<string, EchoInstance>
   optResultEchoes: EchoInstance[]
@@ -327,7 +329,7 @@ export function vsblRsltsAt(args: {
 }
 
 export function prvwChs(args: {
-  optResults: Array<OptBagResult | LegOptRsltEn | TheoryResult | TheoryResultRow>
+  optResults: Array<OptBagResult | LegOptRsltEn | TheoryResult | CompactTheoryResult | TheoryResultRow>
   rslvPrvwIdx: number | null
   invChsByUid: Map<string, EchoInstance>
   optResultEchoes: EchoInstance[]
@@ -356,8 +358,8 @@ export function prvwChs(args: {
     return normEchoLdt(matThryRsltCh(ptmzRsltPyld, entry) ?? [])
   }
 
-  if (isThryRslt(entry)) {
-    return normEchoLdt(entry.echoes)
+  if ('theory' in entry || isThryRslt(entry)) {
+    return normEchoLdt('theory' in entry ? compactTheoryEchoes(entry) : entry.echoes)
   }
 
   if (isLegRslt(entry)) {
@@ -370,7 +372,7 @@ export function prvwChs(args: {
 }
 
 export function rsltLdt(args: {
-  optResults: Array<OptBagResult | LegOptRsltEn | TheoryResult | TheoryResultRow>
+  optResults: Array<OptBagResult | LegOptRsltEn | TheoryResult | CompactTheoryResult | TheoryResultRow>
   index: number
   invChsByUid: Map<string, EchoInstance>
   optResultEchoes: EchoInstance[]
@@ -386,8 +388,8 @@ export function rsltLdt(args: {
     return cloneRsltChs(matThryRsltCh(ptmzRsltPyld, entry) ?? [])
   }
 
-  if (isThryRslt(entry)) {
-    return cloneRsltChs(entry.echoes)
+  if ('theory' in entry || isThryRslt(entry)) {
+    return cloneRsltChs('theory' in entry ? compactTheoryEchoes(entry) : entry.echoes)
   }
 
   if (isLegRslt(entry)) {
@@ -399,7 +401,7 @@ export function rsltLdt(args: {
     : normEchoLdt([])
 }
 
-export type RsltEntry = OptBagResult | LegOptRsltEn | TheoryResult | TheoryResultRow
+export type RsltEntry = OptBagResult | LegOptRsltEn | TheoryResult | CompactTheoryResult | TheoryResultRow
 
 export interface ResultFacet {
   damage: number
@@ -414,6 +416,54 @@ export interface ResultFacet {
   // resolved stat line (atk/hp/def/er/cr/cd/bonus/amp), null when unevaluated.
   stats: OptResultStats | null
 }
+
+const FACET_STATS = ['atk', 'hp', 'def', 'er', 'cr', 'cd', 'bonus', 'amp'] as const
+/** Dense numeric columns and shared plans; no retained per-result facet objects. */
+export class ResultFacetTable implements Iterable<ResultFacet> {
+  private readonly values: Float64Array
+  private readonly hasStats: Uint8Array
+  private readonly mainIds: string[]
+  private readonly planIds: Uint32Array
+  private readonly plans: Array<Pick<ResultFacet, 'planKey' | 'setBadges'>> = []
+  private readonly planIndex = new Map<string, number>()
+  readonly length: number
+  constructor(length: number) {
+    this.length = length
+    this.values = new Float64Array(length * 10)
+    this.hasStats = new Uint8Array(length)
+    this.mainIds = new Array<string>(length)
+    this.planIds = new Uint32Array(length)
+  }
+  set(index: number, facet: ResultFacet): void {
+    const offset = index * 10
+    this.values[offset] = facet.damage
+    this.values[offset + 1] = facet.totalCost
+    this.hasStats[index] = facet.stats ? 1 : 0
+    for (let col = 0; col < FACET_STATS.length; col++) this.values[offset + col + 2] = facet.stats?.[FACET_STATS[col]!] ?? 0
+    this.mainIds[index] = facet.mainId
+    let plan = this.planIndex.get(facet.planKey)
+    if (plan == null) {
+      plan = this.plans.length
+      this.planIndex.set(facet.planKey, plan)
+      this.plans.push({ planKey: facet.planKey, setBadges: facet.setBadges })
+    }
+    this.planIds[index] = plan
+  }
+  get(index: number): ResultFacet {
+    const offset = index * 10
+    const stats = this.hasStats[index] ? {
+      atk: this.values[offset + 2]!, hp: this.values[offset + 3]!, def: this.values[offset + 4]!, er: this.values[offset + 5]!,
+      cr: this.values[offset + 6]!, cd: this.values[offset + 7]!, bonus: this.values[offset + 8]!, amp: this.values[offset + 9]!,
+    } : null
+    return { damage: this.values[offset]!, totalCost: this.values[offset + 1]!, mainId: this.mainIds[index]!,
+      ...this.plans[this.planIds[index]!]!, stats }
+  }
+  *[Symbol.iterator](): Iterator<ResultFacet> {
+    for (let index = 0; index < this.length; index++) yield this.get(index)
+  }
+}
+type Facets = ResultFacetTable | ResultFacet[]
+const facetAt = (facets: Facets, index: number) => facets instanceof ResultFacetTable ? facets.get(index) : facets[index]!
 
 // canonical, order-independent string for a set plan so equal plans group and
 // compare cheaply.
@@ -492,8 +542,8 @@ function facetFor(entry: RsltEntry, ctx: RsltDsplCtx): ResultFacet {
       }
       mainId = entry.ids[entry.main] ?? ''
     }
-  } else if (isThryRslt(entry)) {
-    const summary = facetFromEchoes(entry.echoes)
+  } else if ('theory' in entry || isThryRslt(entry)) {
+    const summary = facetFromEchoes('theory' in entry ? entry.indices.map((index) => entry.theory.candidates[index]!) : entry.echoes)
     mainId = summary.mainId
     totalCost = summary.totalCost
     counts = summary.counts
@@ -665,19 +715,21 @@ function facetSortValue(facet: ResultFacet, key: ViewSortKey): number {
 // original result indices the view should render. ties break by original index
 // so the order stays stable.
 export function buildResultView(
-  facets: ResultFacet[],
+  facets: Facets,
   criteria: ResultViewCriteria,
 ): number[] {
   const indices: number[] = []
   for (let i = 0; i < facets.length; i += 1) {
-    if (facetMatches(facets[i], criteria.filter)) {
+    if (facetMatches(facetAt(facets, i), criteria.filter)) {
       indices.push(i)
     }
   }
 
+  const valuesByIndex = new Float64Array(facets.length)
+  indices.forEach((index) => { valuesByIndex[index] = facetSortValue(facetAt(facets, index), criteria.sortKey) })
   const dir = criteria.sortDir === 'asc' ? 1 : -1
   indices.sort((a, b) => {
-    const delta = facetSortValue(facets[a], criteria.sortKey) - facetSortValue(facets[b], criteria.sortKey)
+    const delta = valuesByIndex[a]! - valuesByIndex[b]!
     return delta !== 0 ? delta * dir : a - b
   })
 
@@ -692,7 +744,7 @@ export interface PlanFacet {
 
 // distinct set plans present in the results, each with its row count, ordered
 // by frequency for the faceted set-plan filter (group-by style).
-export function facetPlans(facets: ResultFacet[]): PlanFacet[] {
+export function facetPlans(facets: Facets): PlanFacet[] {
   const byKey = new Map<string, PlanFacet>()
   for (const facet of facets) {
     if (!facet.planKey) {
@@ -709,7 +761,7 @@ export function facetPlans(facets: ResultFacet[]): PlanFacet[] {
 }
 
 // distinct main echoes present, by frequency for the main-echo filter.
-export function facetMainEchoes(facets: ResultFacet[]): Array<{ id: string; count: number }> {
+export function facetMainEchoes(facets: Facets): Array<{ id: string; count: number }> {
   const byId = new Map<string, number>()
   for (const facet of facets) {
     if (!facet.mainId) {
@@ -724,7 +776,7 @@ export function facetMainEchoes(facets: ResultFacet[]): Array<{ id: string; coun
 
 // distinct activated sets present across all plans for the contains-set
 // filter.
-export function facetSets(facets: ResultFacet[]): Array<{ id: number; count: number }> {
+export function facetSets(facets: Facets): Array<{ id: number; count: number }> {
   const byId = new Map<number, number>()
   for (const facet of facets) {
     for (const badge of facet.setBadges) {

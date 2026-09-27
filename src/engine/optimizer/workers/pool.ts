@@ -5,6 +5,8 @@
                search results into final optimizer output.
 */
 
+import { theoryBufferPlan } from './theoryBudget'
+import { ECHO_SET_DEFS } from '@/data/gameData/echoSets/effects'
 import {
   CPU_JOB_SIZE,
   TARGET_GPU_JOB,
@@ -56,7 +58,6 @@ import {
   type TgtJobSpec,
 } from '@/engine/optimizer/workers/targetGpu.ts'
 import {logOptimizer} from '@/engine/optimizer/config/log.ts'
-import { getGameDataMode } from '@/data/gameData'
 
 // guardrails for GPU result collection so per-job and collector heaps do not blow up
 const GPU_RESULT_LIMIT = 65536
@@ -160,6 +161,7 @@ let actRunCtx: OptPoolRunCt | null = null
 // theory run, parallelizes across CPU cores instead of serializing on one
 // thread while the GPU sits idle. torn down in rstOptWrkrPo / cnclActOptWr.
 let thryProducers: Worker[] = []
+let wakeTheoryRun: (() => void) | null = null
 
 // ensure at least `count` warm producer workers exist; returns the first
 // `count` of them.
@@ -174,6 +176,8 @@ function ensThryProds(count: number): Worker[] {
 }
 
 function stopThryProd(): void {
+  wakeTheoryRun?.()
+  wakeTheoryRun = null
   for (const producer of thryProducers) {
     producer.terminate()
   }
@@ -882,7 +886,9 @@ async function runThryBtcWr(
           : useGpu
             ? WORKER_COUNT.gpu
             : WORKER_COUNT.cpu
-  const effBatch = bchSzFr(useGpu ? GPU_THEORY_JOB : CPU_THEORY_JOB, lowMmryMode)
+  const { batchSize: effBatch } = theoryBufferPlan(
+    bchSzFr(useGpu ? GPU_THEORY_JOB : CPU_THEORY_JOB, lowMmryMode), 1, lowMmryMode,
+  )
   const stmtJobs = Math.max(
       1,
       Math.ceil(totalCombos / Math.max(1, effBatch)),
@@ -938,20 +944,14 @@ async function runThryBtcWr(
   // producer path wires them up. invoked in finally so the shared workers are
   // left clean regardless of how the run exits.
   let detachProducer: (() => void) | null = null
+  let wakeRun: (() => void) | null = null
+  const pendingBatches = new Set<Promise<void>>()
 
-  // theory production (combo enumeration) is the dominant cost of a GPU run and
-  // is embarrassingly parallel over (set-plan, main-row) units, so shard it
-  // across CPU cores. CPU-backend runs already saturate cores with evaluation
-  // workers, so they keep a single producer to avoid oversubscription.
-  //
-  // use as many producers as the CPU worker budget allows: finishing the
-  // generation sooner is what matters. (on thermally constrained machines the
-  // total combos/sec is capped by the power envelope regardless of producer
-  // count, so fewer-but-longer-running producers only sustain the load and
-  // throttle harder; more producers that finish faster is never worse.)
-  const producerCount = (useGpu && !lowMmryMode && totalCombos >= MIN_PAR_COMBOS)
-      ? Math.min(WORKER_COUNT.cpu, stmtJobs)
-      : 1
+  // Each producer holds one batch credit; all producers fit the byte budget.
+  const { producers: producerCount } = theoryBufferPlan(effBatch,
+    useGpu && !lowMmryMode && totalCombos >= MIN_PAR_COMBOS ? Math.min(WORKER_COUNT.cpu, stmtJobs) : 1,
+    lowMmryMode,
+  )
 
   try {
     if (workerCount <= 0) {
@@ -972,7 +972,7 @@ async function runThryBtcWr(
       const producers = ensThryProds(producerCount)
 
       const rsblBtchLngt = effBatch * 5
-      const inFlight = new Set<Promise<void>>()
+      const inFlight = pendingBatches
       const maxInFlghJob = lowMmryMode ? 1 : Math.max(1, workerCount)
       const batchQueue: Array<{
         combos: Int32Array
@@ -997,6 +997,8 @@ async function runThryBtcWr(
           resolve()
         }
       }
+
+      wakeRun = wakeTheoryRun = wake
 
       // wire one producer's message/error listeners, tagging batches with their
       // source worker so returned reuse buffers go back to the right producer.
@@ -1062,7 +1064,8 @@ async function runThryBtcWr(
         const startMsg: OptThryProdIn = {
           type: 'startTheoryProducer',
           runId,
-          payload: { ...payload, gameDataMode: payload.gameDataMode ?? getGameDataMode() },
+          payload: { theoryRows: payload.theoryRows, profs: payload.profs },
+          echoSetDefs: ECHO_SET_DEFS,
           batchSize: effBatch,
           shard: { index, count: producers.length },
         }
@@ -1126,19 +1129,10 @@ async function runThryBtcWr(
               jobsDone += 1
               rsltsSeen += done.results.length
 
-              if (
-                  done.rtrnCmbsBtch &&
-                  done.rtrnCmbsBtch.length === rsblBtchLngt &&
-                  activeRunId === runId
-              ) {
-                const returnMsg: OptThryProdIn = {
-                  type: 'returnTheoryBuffer',
-                  runId,
-                  buffer: done.rtrnCmbsBtch,
-                  lowMem: lowMmryMode,
-                }
-                localProducer.postMessage(returnMsg, [done.rtrnCmbsBtch.buffer])
-              }
+              const buffer = done.rtrnCmbsBtch?.length === rsblBtchLngt
+                ? done.rtrnCmbsBtch : undefined
+              const returnMsg: OptThryProdIn = { type: 'returnTheoryBuffer', runId, buffer }
+              localProducer.postMessage(returnMsg, buffer ? [buffer.buffer] : [])
             })
             .finally(() => {
               inFlight.delete(jobPromise)
@@ -1171,19 +1165,23 @@ async function runThryBtcWr(
       error: error instanceof Error ? error.message : String(error),
     })
     // defensively replace the producer on error when it may be in a bad state.
-    stopThryProd()
-    rstOptWrkrPo()
+    if (activeRunId === runId) {
+      stopThryProd()
+      rstOptWrkrPo()
+    }
     throw error
   } finally {
     // leave the producer warm; just detach this run's listeners. teardown of
     // the worker itself happens via rstOptWrkrPo / cnclActOptWr (incl. the
     // error path above, which already called rstOptWrkrPo).
     detachProducer?.()
+    await Promise.allSettled(pendingBatches)
+    if (wakeTheoryRun === wakeRun) wakeTheoryRun = null
     if (activeRunId === runId) {
       activeRunId = null
       progress.complete()
+      actRunCtx = null
     }
-    actRunCtx = null
   }
 
   const finalResults = collector.sorted()
@@ -1252,8 +1250,8 @@ async function runTgtSkllGp(
     if (activeRunId === runId) {
       activeRunId = null
       progress.complete()
+      actRunCtx = null
     }
-    actRunCtx = null
   }
 
   return collector.sorted()
@@ -1315,8 +1313,8 @@ async function runRotGpuWit(
     if (activeRunId === runId) {
       activeRunId = null
       progress.complete()
+      actRunCtx = null
     }
-    actRunCtx = null
   }
 
   return collector.sorted()
@@ -1430,8 +1428,8 @@ async function runTgtSkllCp(
     if (activeRunId === runId) {
       activeRunId = null
       progress.complete()
+      actRunCtx = null
     }
-    actRunCtx = null
   }
 
   return collector.sorted()
@@ -1540,8 +1538,8 @@ async function runRotCpuWit(
     if (activeRunId === runId) {
       activeRunId = null
       progress.complete()
+      actRunCtx = null
     }
-    actRunCtx = null
   }
 
   return collector.sorted()

@@ -3,12 +3,15 @@
   Description: Verifies legacy migration and granular v28 scenario-library persistence.
 */
 
+import { SHOWCASE_INDEX } from '@/application/persistence/showcaseCards'
+import { APPSTOREUILY } from '@/application/persistence/storageKeys'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { combatScenarioId, contextScenarioMember } from '@/domain/entities/combatScenario'
+import { decompressFromUTF16 } from 'lz-string'
+import { combatScenarioId, contextScenarioMember, makeScenarioTeam } from '@/domain/entities/combatScenario'
 import { makeSavedScenario } from '@/domain/entities/inventoryStorage'
 import { makeSavedRotation } from '@/domain/entities/inventoryStorage'
 import { addScenario, listContextResonatorScenarios, replaceScenario, selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
-import { makeAppState, makeResProfile, makeScenarioFromProfiles } from '@/engine/runtime/defaults'
+import { makeAppState, makeResProfile, makeScenarioFromProfiles, mkDefRandGnr } from '@/engine/runtime/defaults'
 import { listResSds } from '@/data/catalog/resonatorSeedService'
 import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE } from '@/domain/entities/preferences'
 import { projectScenarioWorkspaceProfiles } from '@/engine/runtime/scenarioRuntime'
@@ -21,6 +24,7 @@ import {
   APPSTOREINVS,
   APPSTOREOPTS,
   APPSTOREUIPP,
+  consumePersist,
   loadPrssAppS,
   loadPrssInvS,
   parsePersisted,
@@ -45,6 +49,83 @@ describe('persisted state compatibility', () => {
   })
 
   afterEach(() => vi.unstubAllGlobals())
+
+  it.each([false, true])('persists compressed exports = %s through the settings action and reload', (enabled) => {
+    consumePersist()
+    useAppStore.getState().setCmprXprts(enabled)
+    useAppStore.getState().flushPrssNow()
+
+    expect(JSON.parse(localStorage.getItem(APPSTOREUILY)!).ui.compressedExports).toBe(enabled)
+    expect(loadPrssAppS({ includeInventory: false })?.ui.compressedExports).toBe(enabled)
+  })
+
+  it('writes only the changed Showcase card and keeps it out of layout serialization', () => {
+    const state = makeAppState()
+    const card = { style: { ...DEF_SHOWCASE_CARD_STYLE }, hidden: { ...DEF_SHOWCASE_HIDE } }
+    state.ui.preferences.showcaseCards = { a: card, b: { ...card } }
+    saveAppState(state, { domains: ['ui.layout'] })
+    const write = vi.spyOn(localStorage, 'setItem')
+    const next = { ...state, ui: { ...state.ui, preferences: { ...state.ui.preferences, showcaseCards: {
+      ...state.ui.preferences.showcaseCards, a: { ...card, style: { ...card.style, opacity: 42 } },
+    } } } }
+    saveAppState(next, { domains: ['ui.showcaseCards'] })
+    expect(write.mock.calls.map(([key]) => key)).toEqual([`${SHOWCASE_INDEX}.card.a`])
+    expect(JSON.parse(localStorage.getItem(APPSTOREUILY)!).ui.preferences.showcaseCards).toEqual({})
+    expect(loadPrssAppS()?.ui.preferences.showcaseCards.a.style.opacity).toBe(42)
+    write.mockRestore()
+  })
+
+  it('migrates legacy cards before removing their layout copy and preserves reset deletions', () => {
+    const state = makeAppState()
+    saveAppState(state)
+    const layout = JSON.parse(localStorage.getItem(APPSTOREUILY)!)
+    layout.ui.preferences.showcaseCards = { a: { style: { ...DEF_SHOWCASE_CARD_STYLE, opacity: 31 }, hidden: DEF_SHOWCASE_HIDE } }
+    localStorage.setItem(APPSTOREUILY, JSON.stringify(layout))
+    localStorage.removeItem(SHOWCASE_INDEX)
+    const loaded = loadPrssAppS()!
+    expect(loaded.ui.preferences.showcaseCards.a.style.opacity).toBe(31)
+    expect(JSON.parse(localStorage.getItem(SHOWCASE_INDEX)!)).toEqual(['a'])
+    loaded.ui.preferences.showcaseCards = {}
+    saveAppState(loaded, { domains: ['ui.showcaseCards'] })
+    expect(loadPrssAppS()?.ui.preferences.showcaseCards).toEqual({})
+  })
+
+  it('keeps the legacy card copy when migration storage fails', () => {
+    const state = makeAppState()
+    saveAppState(state)
+    const layout = JSON.parse(localStorage.getItem(APPSTOREUILY)!)
+    layout.ui.preferences.showcaseCards = { a: { style: DEF_SHOWCASE_CARD_STYLE, hidden: DEF_SHOWCASE_HIDE } }
+    localStorage.setItem(APPSTOREUILY, JSON.stringify(layout))
+    localStorage.removeItem(SHOWCASE_INDEX)
+    const original = localStorage.setItem.bind(localStorage)
+    const write = vi.spyOn(localStorage, 'setItem').mockImplementation((key, value) => {
+      if (key.startsWith(SHOWCASE_INDEX)) throw new Error('quota')
+      original(key, value)
+    })
+    expect(loadPrssAppS()?.ui.preferences.showcaseCards.a).toBeDefined()
+    expect(JSON.parse(localStorage.getItem(APPSTOREUILY)!).ui.preferences.showcaseCards.a).toBeDefined()
+    write.mockRestore()
+  })
+
+  it('round-trips preset targets while preserving legacy current-rotation selections', () => {
+    const state = makeAppState()
+    state.simulation.suggestionsByResonatorId = {
+      '1208': { settings: { targetFeatureId: null, rotationMode: true, rotationSource: 'default' }, random: mkDefRandGnr() },
+      '1108': { settings: { targetFeatureId: 'damage:1108001', rotationMode: true }, random: mkDefRandGnr() },
+    }
+    state.simulation.optimizerSettings = {
+      ...state.simulation.optimizerSettings,
+      targetMode: 'combo',
+      rotationMode: true,
+      targetComboSourceId: 'default:1208',
+    }
+    saveAppState(state)
+
+    const loaded = loadPrssAppS()
+    expect(loaded?.simulation.suggestionsByResonatorId).toEqual(state.simulation.suggestionsByResonatorId)
+    expect(loaded?.simulation.optimizerSettings.targetComboSourceId).toBe('default:1208')
+    expect(loaded?.simulation.optimizerSettings.rotationMode).toBe(true)
+  })
 
   it('edits a reloaded getter-backed scenario through the runtime store and persists the change', () => {
     const originalState = useAppStore.getState()
@@ -281,6 +362,7 @@ describe('persisted state compatibility', () => {
     const before = JSON.parse(localStorage.getItem(APPSTORECMBTINDEX)!) as {
       recordsById: Record<string, string>
     }
+    const beforeManifestRaw = localStorage.getItem(before.recordsById[first.id])!
 
     const updated = {
       ...first,
@@ -298,7 +380,19 @@ describe('persisted state compatibility', () => {
 
     expect(after.recordsById[first.id]).not.toBe(before.recordsById[first.id])
     expect(after.recordsById[other.id]).toBe(before.recordsById[other.id])
-    expect(localStorage.getItem(after.recordsById[first.id])?.startsWith('wwcalc-lz1:')).toBe(true)
+    const decodeManifest = (raw: string) => {
+      return JSON.parse(raw.startsWith('wwcalc-lz1:') ? decompressFromUTF16(raw.slice('wwcalc-lz1:'.length))! : raw) as {
+        format: number; targetRecord: string; environmentRecord: string; programRecord: string; memberRecords: Record<string, string>
+      }
+    }
+    const oldManifest = decodeManifest(beforeManifestRaw)
+    const newManifest = decodeManifest(localStorage.getItem(after.recordsById[first.id])!)
+    expect(newManifest.format).toBe(2)
+    expect(newManifest.targetRecord).not.toBe(oldManifest.targetRecord)
+    expect(newManifest.environmentRecord).toBe(oldManifest.environmentRecord)
+    expect(newManifest.programRecord).toBe(oldManifest.programRecord)
+    expect(newManifest.memberRecords).toEqual(oldManifest.memberRecords)
+    // Known obsolete keys are reclaimed directly after the manifest commit.
     expect(localStorage.getItem(before.recordsById[first.id])).toBeNull()
     const reloaded = loadPrssAppS()?.combat
     expect(Object.getOwnPropertyDescriptor(reloaded?.scenariosById, other.id)?.get).toBeTypeOf('function')
@@ -336,6 +430,43 @@ describe('persisted state compatibility', () => {
     expect(after.recordsById[inactive.id]).toBe(before.recordsById[inactive.id])
     expect(Object.getOwnPropertyDescriptor(loaded.combat.scenariosById, inactive.id)?.get)
       .toBeTypeOf('function')
+  })
+
+  it('writes only an edited member and rejects invalid cross-member references', () => {
+    const state = makeAppState()
+    const original = selectedCombatScenario(state.combat)
+    saveAppState(state, { domains: ['combat.workspace'] })
+    const firstIndex = JSON.parse(localStorage.getItem(APPSTORECMBTINDEX)!) as { recordsById: Record<string, string> }
+    const readManifest = (key: string) => {
+      const raw = localStorage.getItem(key)!
+      return JSON.parse(raw.startsWith('wwcalc-lz1:')
+        ? decompressFromUTF16(raw.slice('wwcalc-lz1:'.length))! : raw) as {
+        memberRecords: Record<string, string>; targetRecord: string; environmentRecord: string; programRecord: string
+      }
+    }
+    const before = readManifest(firstIndex.recordsById[original.id])
+    const member = original.team.members[0]
+    const changed = {
+      ...original,
+      revision: original.revision + 1,
+      team: makeScenarioTeam([{ ...member, progression: { ...member.progression, level: member.progression.level + 1 } },
+        ...original.team.members.slice(1)]),
+    }
+    state.combat = replaceScenario(state.combat, changed)
+    saveAppState(state, { domains: ['combat.workspace'] })
+    const secondIndex = JSON.parse(localStorage.getItem(APPSTORECMBTINDEX)!) as { recordsById: Record<string, string> }
+    const after = readManifest(secondIndex.recordsById[original.id])
+    expect(after.memberRecords[member.id]).not.toBe(before.memberRecords[member.id])
+    expect(after.targetRecord).toBe(before.targetRecord)
+    expect(after.environmentRecord).toBe(before.environmentRecord)
+    expect(after.programRecord).toBe(before.programRecord)
+    const invalid = { ...changed, revision: changed.revision + 1, contextMemberId: 'missing' as typeof changed.contextMemberId }
+    state.combat = replaceScenario(state.combat, invalid)
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    saveAppState(state, { domains: ['combat.workspace'] })
+    expect(localStorage.getItem(APPSTORECMBTINDEX)).toBe(JSON.stringify(secondIndex))
+    expect(loadPrssAppS()?.combat.scenariosById[original.id].team.members[0].progression.level)
+      .toBe(member.progression.level + 1)
   })
 
   it('migrates the prior whole-workspace key without losing its scenarios', () => {

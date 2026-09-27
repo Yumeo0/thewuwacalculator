@@ -4,6 +4,10 @@
                comparison, history, clipboard, and saved-rotation workflows.
 */
 
+import '@/styles/modules/simulation/surfaces/rotation/rotation-program-editor.css'
+import '@/styles/modules/simulation/surfaces/rotation/rotation-flat-list.css'
+import '@/styles/modules/simulation/surfaces/rotation/rotation-saved-list.css'
+import '@/styles/modules/simulation/surfaces/rotation/rotation-console.css'
 import {
   type CSSProperties,
   startTransition,
@@ -19,7 +23,7 @@ import { ChevronDown, Copy, Scissors, Trash2 } from 'lucide-react'
 import {useTstStr} from '@/shared/util/toastStore.ts'
 import {useAppStore} from '@/application/state'
 import {selEnemyProf, selWorkDrvd} from '@/application/state'
-import { useInventoryLease } from '@/application/hooks/useInventoryLease.ts'
+import { useSavedRotationsLease } from '@/application/hooks/useSavedRotationsLease.ts'
 import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
 import type {RotationNode} from '@/domain/gameData/contracts.ts'
 import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
@@ -557,7 +561,7 @@ export function ProgramEditor() {
   const [nodeCmpIds, setNodeCmpIds] = useState<string[]>([])
   const [nodeCmpMode, setNodeCmpMode] = useState(false)
   const showSavedRotationList = savedView !== 'off'
-  useInventoryLease(showSavedRotationList)
+  useSavedRotationsLease(showSavedRotationList)
 
   const [drawnSaved, setDrawnSaved] = useState(showSavedRotationList)
   const [leaving, setLeaving] = useState<boolean | null>(null)

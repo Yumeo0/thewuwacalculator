@@ -4,6 +4,7 @@
                edits sparse disabled-part overrides against catalog defaults.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, CSSProperties as CssProps } from 'react'
 import { ChevronRight, Search } from 'lucide-react'
@@ -407,7 +408,7 @@ export function SetCond(props: {
                         >
                           <span className="sscr-well">
                             {setMeta.icon ? (
-                              <img src={setMeta.icon} alt="" loading="lazy" onError={withDefIconM} />
+                              <DisplayImage src={setMeta.icon} alt="" loading="lazy" onError={withDefIconM} />
                             ) : (
                               <span className="sscr-well-fallback">{setMeta.id}</span>
                             )}

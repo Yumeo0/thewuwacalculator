@@ -68,7 +68,6 @@ export function makeRailModel(resId: string | null, ctx: RailModelCtx): BuildRai
       const mateWpnKey = getWpnVisKey(mateWpn?.weaponType ?? res.weaponType ?? null)
       const sets = mateRt
         ? buildSonataPlan(mateRt.build.echoes)
-            .slice(0, 2)
             .map((entry) => ({ ...entry, name: getSntSetNam(entry.id) }))
         : []
       return {

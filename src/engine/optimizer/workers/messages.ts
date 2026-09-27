@@ -176,7 +176,8 @@ export type OptTaskOutMs =
 export interface OptThryProdSt {
   type: 'startTheoryProducer'
   runId: number
-  payload: PrepTheoryTarget | PrepTheoryRot
+  payload: Pick<PrepTheoryTarget | PrepTheoryRot, 'theoryRows' | 'profs'>
+  echoSetDefs: import('@/data/gameData/echoSets/effects').SetDef[]
   batchSize: number
   // optional shard assignment so multiple producer workers can split the
   // (set-plan, main-row) unit space and generate disjoint combo subsets in
@@ -191,7 +192,7 @@ export interface OptThryProdSt {
 export interface OptThryProdRt {
   type: 'returnTheoryBuffer'
   runId: number
-  buffer: Int32Array
+  buffer?: Int32Array
   lowMem?: boolean
 }
 

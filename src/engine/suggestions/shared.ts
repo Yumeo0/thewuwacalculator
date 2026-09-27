@@ -26,6 +26,7 @@ import type {
   SetPlanSuggs,
   SuggestContext,
   SuggestInput,
+  SuggestionSimulation,
 } from '@/engine/suggestions/types'
 import { materializeResRotation, runResSmlt } from '@/engine/pipeline'
 import type { SimResult, RotationTargetSimulation } from '@/engine/pipeline/types'
@@ -226,7 +227,7 @@ export function runSuggSmlt(
 
 // get the direct target feature entry that suggestions should optimize around
 export function getLgblDrctE(
-    simulation: SimResult,
+    simulation: SuggestionSimulation,
     input: SuggestInput,
 ): FeatureResult | null {
   const entries = simulation.allSkills.filter((entry) => (
@@ -249,7 +250,7 @@ export function getLgblDrctE(
 
 // resolve the main damage figure used to rank suggestions
 export function resSuggDmg(
-    simulation: SimResult,
+    simulation: SuggestionSimulation,
     input: SuggestInput,
 ): number {
   if (input.rotationMode) {
@@ -265,7 +266,7 @@ export function resSuggDmg(
 
 // build the stat-weight map used by suggestion scoring heuristics
 export function mkSuggWghtMa(
-    simulation: SimResult,
+    simulation: SuggestionSimulation,
     input: SuggestInput,
     bias = 0,
 ): OptStatWeight {
@@ -323,7 +324,7 @@ export function mkSuggWghtMa(
 // build the packed direct-target evaluation context used for fast scoring
 export function mkDrctSuggCt(
     input: SuggestInput,
-    simulation: SimResult,
+    simulation: SuggestionSimulation,
 ): DrctSuggCtx | null {
   const entry = getLgblDrctE(simulation, input)
   if (!entry) {
@@ -400,9 +401,22 @@ function mkRotTrgt(
 
 // build the packed multi-context rotation evaluation context
 export function mkRotSuggCtx(
+    input: SuggestInput & { includeEchoAttacks?: false },
+    simulation?: RotationTargetSimulation,
+): RotSuggCtx | null
+export function mkRotSuggCtx(
     input: SuggestInput,
     simulation: RotationTargetSimulation,
+): RotSuggCtx | null
+export function mkRotSuggCtx(
+    input: SuggestInput,
+    simulation?: RotationTargetSimulation,
 ): RotSuggCtx | null {
+  // Only optional Echo attack targets come from a prior simulation. The
+  // authored rotation below materializes its own ordinary damage targets.
+  if (input.includeEchoAttacks && !simulation) {
+    throw new Error('Echo attack targets require a simulation')
+  }
   const seed = getResSeedBy(input.runtime.id)
   if (!seed) {
     return null
@@ -426,7 +440,7 @@ export function mkRotSuggCtx(
     detail: 'summary',
   })
   const { graph, context: activeContext } = materialized
-  const targets = input.includeEchoAttacks
+  const targets = input.includeEchoAttacks && simulation
       ? [
         ...mkRotTrgt(materialized.entries, input.runtime.id),
         ...mkRotTrgt(simulation.rotation.sequence.entries, input.runtime.id, true)
@@ -489,7 +503,7 @@ export function mkRotSuggCtx(
 // choose the correct evaluation context based on direct or rotation mode
 export function mkSuggVltnCt(
     input: SuggestInput,
-    simulation: SimResult,
+    simulation: SuggestionSimulation,
 ): SuggestContext | null {
   return input.rotationMode
       ? mkRotSuggCtx(input, simulation)
@@ -498,7 +512,7 @@ export function mkSuggVltnCt(
 
 export function mkPrepMainSt(
     input: MainStatSuwo,
-    simulation: SimResult,
+    simulation: SuggestionSimulation,
 ): MainStatPrep | null {
   const scoringInput: SuggestInput = {
     ...input,
@@ -525,7 +539,7 @@ export function mkPrepMainSt(
 
 export function mkPrepSetPla(
     input: SetPlanSuggs,
-    simulation: SimResult,
+    simulation: SuggestionSimulation,
 ): PrepSetPlanS | null {
   const scoringInput: SuggestInput = { ...input, includeEchoAttacks: input.includeEchoAttacks ?? true }
   const context = mkSuggVltnCt(input, simulation)
@@ -581,7 +595,7 @@ function mkNoWpnNpt<T extends SuggestInput>(input: T): T {
 
 export function mkPrepWpnSu(
     input: (MainStatSuwo | SetPlanSuggs) & { weapon: WeaponPlanSet },
-    simulation: SimResult,
+    simulation: SuggestionSimulation,
 ): PrepWeaponPlan | null {
   const clean = mkNoWpnNpt(input)
   const context = mkSuggVltnCt({

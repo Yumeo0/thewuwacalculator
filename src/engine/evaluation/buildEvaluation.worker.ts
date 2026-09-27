@@ -5,11 +5,13 @@
 
 /// <reference lib="webworker" />
 
+import { computeShowcaseAnalysis } from './showcaseAnalysis'
 import { initGameData } from '@/data/gameData'
 import {
   ensureAnchorStoreHydrated,
   rotationBuildEvaluationReport,
 } from '@/engine/evaluation/buildEvaluation'
+import { prepareRotationBuildScore } from '@/engine/evaluation/evaluation/report.ts'
 import type {
   EvaluationWorkerIn,
   EvaluationWorkerOut,
@@ -19,7 +21,7 @@ const scope = self as DedicatedWorkerGlobalScope
 const REPORT_CANCEL_ERR = 'Build evaluation report superseded'
 
 function makeCancelCheck(message: EvaluationWorkerIn): (() => void) | undefined {
-  if (message.type !== 'report' || !message.cancelBuf) {
+  if (!message.cancelBuf) {
     return undefined
   }
 
@@ -43,22 +45,24 @@ scope.onmessage = async (event: MessageEvent<EvaluationWorkerIn>) => {
   const message = event.data
 
   try {
-    const resonatorIds = Array.from(new Set([
-      message.payload.runtime.id,
-      ...Object.keys(message.payload.runtimesById),
-    ]))
-    await initGameData({
-      mode: message.gameDataMode,
-      resonatorIds,
-      calculationOnly: true,
-      weaponIds: [message.payload.runtime, ...Object.values(message.payload.runtimesById)]
-        .flatMap((runtime) => runtime.build.weapon.id ? [runtime.build.weapon.id] : []),
+    const contexts = message.type === 'showcase' ? [message.payload.evaluation, message.payload.live] : [message.payload]
+    const participants = contexts.flatMap((context) => [context.runtime, ...Object.values(context.runtimesById)])
+    const resonatorIds = [...new Set(participants.map((runtime) => runtime.id))]
+    await initGameData({ mode: message.gameDataMode, resonatorIds, calculationOnly: true,
+      weaponIds: participants.flatMap((runtime) => runtime.build.weapon.id ? [runtime.build.weapon.id] : []),
     })
     // Rehydrate persisted anchors before the first search so a cold worker (idle
     // teardown / page reload) can re-score from disk instead of re-searching.
-    await ensureAnchorStoreHydrated()
+    if (message.type === 'report' || message.type === 'score' || message.type === 'summary') await ensureAnchorStoreHydrated()
     makeCancelCheck(message)?.()
-    const result = message.type === 'report' ? buildReport(message) : null
+    const result = message.type === 'report' ? buildReport(message)
+      : message.type === 'summary' ? prepareRotationBuildScore(message.payload)?.calculateSummary(makeCancelCheck(message)) ?? null
+      : message.type === 'score' ? prepareRotationBuildScore(message.payload)?.calculatePercent(makeCancelCheck(message)) ?? null
+      : await computeShowcaseAnalysis(
+      message.payload,
+      makeCancelCheck(message),
+      (progress) => scope.postMessage({ id: message.id, progress } satisfies EvaluationWorkerOut),
+    )
 
     const response: EvaluationWorkerOut = {
       id: message.id,

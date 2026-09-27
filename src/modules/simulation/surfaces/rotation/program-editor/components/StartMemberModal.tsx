@@ -4,6 +4,7 @@
                which resonator starts on field before it writes them.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { ModalFrame } from '@/modules/simulation/surfaces/rotation/program-editor/components/AuthoringModals.tsx'
@@ -100,7 +101,7 @@ export function StartMemberModal({
           >
             <div className="zmk__who">
               <span className="zmk__mark">
-                <img src={member.profile} alt="" onError={withDefResMg} />
+                <DisplayImage src={member.profile} alt="" onError={withDefResMg} />
               </span>
               <span className="zmk__name">{member.name}</span>
               <span className="zmk__count">
@@ -135,7 +136,7 @@ export function StartMemberModal({
                 className={member.id === choice ? 'zmk__seat is-on' : 'zmk__seat'}
                 onClick={() => setPicked(member.id)}
               >
-                <img src={member.profile} alt="" onError={withDefResMg} />
+                <DisplayImage src={member.profile} alt="" onError={withDefResMg} />
                 <span>{member.name}</span>
               </button>
             ))}

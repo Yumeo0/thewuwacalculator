@@ -5,6 +5,7 @@
                application-shell portal.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation } from 'react-router-dom'
@@ -354,7 +355,7 @@ export function HomePage() {
                       style={{ '--el': who.colour } as never}
                       key={who.signature.id}
                     >
-                      {who.signature.icon ? <img src={who.signature.icon} alt="" /> : null}
+                      {who.signature.icon ? <DisplayImage src={who.signature.icon} alt="" /> : null}
                       <span>
                         <span className="hm-also__k">{who.name}&rsquo;s weapon</span>
                         <span className="hm-also__v">{who.signature.name}</span>
@@ -364,7 +365,7 @@ export function HomePage() {
                 ))}
                 {arrivals.echoes.map((echo) => (
                   <div className="hm-also" key={echo.id}>
-                    {echo.icon ? <img src={echo.icon} alt="" /> : null}
+                    {echo.icon ? <DisplayImage src={echo.icon} alt="" /> : null}
                     <span>
                       <span className="hm-also__k">New echo</span>
                       <span className="hm-also__v">{echo.name}</span>

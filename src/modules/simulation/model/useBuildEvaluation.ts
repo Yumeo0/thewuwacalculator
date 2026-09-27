@@ -3,6 +3,8 @@
   Description: Simulation-level hook for default-rotation evaluation reports.
 */
 
+import { runEvaluationSummary } from '@/engine/evaluation/buildEvaluationClient'
+import type { EvaluationSummary } from '@/engine/evaluation/buildEvaluationWorkerTypes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { EnemyProfile } from '@/domain/entities/appState'
 import type { ResRuntime } from '@/domain/entities/runtime'
@@ -11,6 +13,7 @@ import type { EvaluationReportOpts, BuildEvaluationReport, DefRotEvaluationIn } 
 import {
   runEvaluationReport,
   cancelEvaluationReport,
+  runEvaluationScore,
 } from '@/engine/evaluation/buildEvaluationClient.ts'
 import type { SimResult } from '@/engine/pipeline/types'
 import {
@@ -361,4 +364,86 @@ export function useEvaluationReport({
     error,
     refresh,
   }
+}
+
+export function useSuggestionsRailScore({
+  runtime, enemy, runtimesById, identityKey, enabled,
+}: {
+  runtime: ResRuntime | null
+  enemy: EnemyProfile
+  runtimesById: Record<string, ResRuntime>
+  identityKey: string | null
+  enabled: boolean
+}): number | null {
+  const [reading, setReading] = useState<{ identity: string | null; percent: number | null }>({ identity: null, percent: null })
+  useEffect(() => {
+    if (!enabled || !runtime) return
+    let valid = true
+    const fullPayload = mkEvaluationPayload({
+      runtime, simulation: null, enemy, runtimesById,
+    })
+    const payload = {
+      scenarioId: fullPayload.scenarioId,
+      memberId: fullPayload.memberId,
+      runtime: fullPayload.runtime,
+      enemy: fullPayload.enemy,
+      runtimesById: fullPayload.runtimesById,
+    }
+    const cancelScheduled = scheduleAfterSettled(() => {
+      void runEvaluationScore(payload).then((percent) => {
+        if (valid) setReading({ identity: identityKey, percent })
+      }).catch((error) => {
+        if (valid && error instanceof Error && error.message !== 'Evaluation cancelled') {
+          console.error('[Suggestions] rail score failed', error)
+        }
+      })
+    }, { settleDelayMs: 220 })
+    return () => {
+      valid = false
+      cancelScheduled()
+      cancelEvaluationReport()
+    }
+  }, [enabled, enemy, identityKey, runtime, runtimesById])
+  return reading.identity === identityKey ? reading.percent : null
+}
+
+export function useEvaluationSummary({
+  runtime, enemy, runtimesById, identityKey, enabled,
+}: {
+  runtime: ResRuntime | null
+  enemy: EnemyProfile
+  runtimesById: Record<string, ResRuntime>
+  identityKey: string | null
+  enabled: boolean
+}): EvaluationSummary | null {
+  const [reading, setReading] = useState<{ identity: string | null; summary: EvaluationSummary | null }>({ identity: null, summary: null })
+  useEffect(() => {
+    if (!enabled || !runtime) return
+    let valid = true
+    const fullPayload = mkEvaluationPayload({
+      runtime, simulation: null, enemy, runtimesById,
+    })
+    const payload = {
+      scenarioId: fullPayload.scenarioId,
+      memberId: fullPayload.memberId,
+      runtime: fullPayload.runtime,
+      enemy: fullPayload.enemy,
+      runtimesById: fullPayload.runtimesById,
+    }
+    const cancelScheduled = scheduleAfterSettled(() => {
+      void runEvaluationSummary(payload).then((summary) => {
+        if (valid) setReading({ identity: identityKey, summary })
+      }).catch((error) => {
+        if (valid && error instanceof Error && error.message !== 'Evaluation cancelled') {
+          console.error('[Evaluation] rail score failed', error)
+        }
+      })
+    }, { settleDelayMs: 320 })
+    return () => {
+      valid = false
+      cancelScheduled()
+      cancelEvaluationReport()
+    }
+  }, [enabled, enemy, identityKey, runtime, runtimesById])
+  return reading.identity === identityKey ? reading.summary : null
 }

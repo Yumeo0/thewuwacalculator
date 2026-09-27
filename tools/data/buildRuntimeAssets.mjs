@@ -1,7 +1,10 @@
-import { readFile, readdir, mkdir, stat, writeFile } from 'node:fs/promises'
+import { readFile, mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import sharp from 'sharp'
+import { buildDisplayAssets } from './buildDisplayAssets.mjs'
+import { normalizeEchoIcons } from './normalizeEchoIcons.mjs'
+import { buildSourceManifest } from './buildSourceManifest.mjs'
+import { buildWeaponCoreCatalog } from './buildWeaponCoreCatalog.mjs'
 
 // Worker calculations need control/trace semantics, not skill prose or tables.
 function runtimeDetails(detail) {
@@ -17,6 +20,8 @@ function runtimeDetails(detail) {
 const publicDir = fileURLToPath(new URL('../../public/', import.meta.url))
 
 for (const mode of ['beta', 'live']) {
+  await buildSourceManifest(mode)
+  await buildWeaponCoreCatalog(mode)
   const resonatorDir = join(publicDir, 'data', mode, 'resonators')
   const [sources, damageEntries, details, catalog] = await Promise.all([
     readFile(join(resonatorDir, 'sources.json'), 'utf8').then(JSON.parse),
@@ -88,18 +93,5 @@ for (const mode of ['beta', 'live']) {
   await writeFile(join(enemyDir, 'summary.json'), JSON.stringify(summary))
 }
 
-const sourceDir = join(publicDir, 'assets', 'game', 'resonators', 'sprites')
-const pickerDir = join(publicDir, 'assets', 'game', 'resonators', 'picker')
-await mkdir(pickerDir, { recursive: true })
-for (const filename of await readdir(sourceDir)) {
-  if (!filename.endsWith('.webp')) continue
-  const source = join(sourceDir, filename)
-  const output = join(pickerDir, filename)
-  const sourceStats = await stat(source)
-  const outputStats = await stat(output).catch(() => null)
-  if (outputStats && outputStats.mtimeMs >= sourceStats.mtimeMs) continue
-  await sharp(source)
-    .resize({ width: 320, withoutEnlargement: true })
-    .webp({ quality: 85, effort: 5 })
-    .toFile(output)
-}
+await normalizeEchoIcons()
+await buildDisplayAssets()

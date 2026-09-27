@@ -3,6 +3,7 @@
   Description: Filters resonator catalog entries and returns a selected resonator identity.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { ensureResonatorData } from '@/data/gameData'
 import { useTstStr } from '@/shared/util/toastStore'
 import {type CSSProperties as CssProps, useCallback, useEffect, useMemo, useRef, useState} from 'react'
@@ -16,7 +17,7 @@ import {
   WPNTYPETOKEY,
 } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { toTitle } from '@/shared/lib/format.ts'
-import { withDefIconM } from '@/shared/lib/imageFallback.ts'
+import { withDefIconM, withPickerImageFallback } from '@/shared/lib/imageFallback.ts'
 import { PickerModal as ShrdPckrMdl, type PckrMdlItem } from '@/modules/simulation/ui/PickerModal.tsx'
 import { useResQStr } from '@/shared/util/resonatorQueueStore.ts'
 import {
@@ -246,7 +247,7 @@ export function useResPickerView({
             aria-pressed={selWpnFltr === weapon.key}
             onClick={() => setSelWpnFlt((prev) => (prev === weapon.key ? null : weapon.key))}
           >
-            <img src={`/assets/game/weapons/types/${weapon.key}.webp`} alt="" aria-hidden="true" onError={withDefIconM} />
+            <DisplayImage src={`/assets/game/weapons/types/${weapon.key}.webp`} alt="" aria-hidden="true" onError={withDefIconM} />
           </button>
         ))}
       </div>
@@ -264,7 +265,7 @@ export function useResPickerView({
             aria-pressed={selTtrbFltr === attribute}
             onClick={() => setSelTtrbFl((prev) => (prev === attribute ? null : attribute))}
           >
-            <img
+            <DisplayImage
               src={`/assets/game/attributes/icons/${attribute}.webp`}
               alt=""
               aria-hidden="true"
@@ -374,11 +375,12 @@ export function useResPickerView({
           style={rarityVars(entry.rarity) as CssProps}
         >
           <img
-            data-deferred-src={entry.sprite.replace('/sprites/', '/picker/')}
+            data-deferred-src={entry.sprite}
+            data-full-src={entry.sprite}
             loading="lazy"
             decoding="async"
             alt={entry.displayName} className="picker-modal__media-image"
-            onError={withDefIconM}
+            onError={withPickerImageFallback}
           />
         </div>
       ),
@@ -387,7 +389,7 @@ export function useResPickerView({
       meta: (
         <>
           <span className="picker-modal__spec-item picker-modal__spec-item--rarity">{entry.rarity}★</span>
-          <img
+          <DisplayImage
             src={`/assets/game/attributes/icons/${entry.attribute}.webp`}
             alt=""
             aria-hidden="true" className="picker-modal__meta-icon"
@@ -395,7 +397,7 @@ export function useResPickerView({
             style={entry.attribute === 'physical' ? { filter: 'grayscale(1) brightness(0.6)' } : undefined}
             onError={withDefIconM}
           />
-          <img
+          <DisplayImage
             src={`/assets/game/weapons/types/${WPNTYPETOKEY[entry.weaponType]}.webp`}
             alt=""
             aria-hidden="true" className="picker-modal__meta-icon picker-modal__meta-icon--theme-contrast"

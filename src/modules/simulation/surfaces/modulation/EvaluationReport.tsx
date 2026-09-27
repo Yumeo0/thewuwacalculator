@@ -4,6 +4,7 @@
                recomputing damage or contribution math.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { Fragment, useMemo } from 'react'
 import type { CSSProperties as CssProps } from 'react'
 import type { ReactNode } from 'react'
@@ -105,7 +106,7 @@ function SrelMainEcho({ echoes }: { echoes: EvaluationEchoSlot[] }) {
     <span className="workspace-srel-echo" title={`${echoDef?.name ?? mainEcho.echoName} · ${mainEcho.cost} cost`}>
       <span className="workspace-srel-echo-frame">
         {echoDef?.icon ? (
-          <img
+          <DisplayImage
             src={echoDef.icon}
             alt="" className="workspace-srel-echo-icon"
             loading="lazy"
@@ -499,7 +500,7 @@ function RotationSpectrumBar({
           <li key={segment.key} className={`workspace-spec-chip${segment === lead ? ' workspace-spec-chip--lead' : ''}`}>
             <span className="workspace-spec-dot" style={{ background: segment.color }} />
             {segment.icon ? (
-              <img src={segment.icon} alt="" className="workspace-spec-chip-icon" loading="lazy" onError={withDefIconM} />
+              <DisplayImage src={segment.icon} alt="" className="workspace-spec-chip-icon" loading="lazy" onError={withDefIconM} />
             ) : null}
             <span className="workspace-spec-chip-label">{segment.label}</span>
             <span className="workspace-spec-chip-pct">{formatTruncCompact(segment.pct, 1)}%</span>
@@ -628,7 +629,7 @@ function RotationFeatures({
                   <td>
                     <span className="workspace-table-stat">
                       {type.icon ? (
-                        <img src={type.icon} alt="" className="workspace-type-icon" loading="lazy" onError={withDefIconM} />
+                        <DisplayImage src={type.icon} alt="" className="workspace-type-icon" loading="lazy" onError={withDefIconM} />
                       ) : null}
                       {type.short ?? type.label}
                     </span>

@@ -4,7 +4,8 @@
                ladders, echo scoring, sonata badges, and relevant-stat emphasis.
 */
 
-import { useMemo, type KeyboardEvent } from 'react'
+import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { memo, useMemo, type KeyboardEvent } from 'react'
 import type { EchoInstance } from '@/domain/entities/runtime'
 import type { StatsColumnHighlight } from '@/domain/entities/preferences'
 import { useAppStore } from '@/application/state'
@@ -207,11 +208,11 @@ function ShowcaseEcho({
       <header className="showcase-echo-head">
         <span className="showcase-echo-frame">
           {echoDef?.icon ? (
-            <img src={echoDef.icon} alt="" className="showcase-echo-icon" loading="lazy" decoding="async" onError={withDefIconM} />
+            <DisplayImage src={echoDef.icon} alt="" className="showcase-echo-icon" loading="lazy" decoding="async" onError={withDefIconM} />
           ) : (
             <span className="showcase-echo-icon showcase-echo-icon--fallback" />
           )}
-          {setIcon ? <img src={setIcon} alt="" className="showcase-echo-set" loading="lazy" onError={withDefIconM} /> : null}
+          {setIcon ? <DisplayImage src={setIcon} alt="" className="showcase-echo-set" loading="lazy" onError={withDefIconM} /> : null}
         </span>
         <span className="showcase-echo-titles">
           <strong className="showcase-echo-name">{echoDef?.name ?? 'Echo'}</strong>
@@ -349,7 +350,7 @@ export function buildTotalsByKey(view: StatsView | null): Map<string, number> {
   return totals
 }
 
-export function ShowcaseBuild({
+export const ShowcaseBuild = memo(function ShowcaseBuild({
   echoes,
   combatStatsView,
   buildStatsView,
@@ -391,7 +392,7 @@ export function ShowcaseBuild({
   echoSelection?: EvaluationEchoSelection
   blank?: boolean
 }) {
-  const slots = Array.from({ length: 5 }, (_, slot) => echoes[slot] ?? null)
+  const slots = useMemo(() => Array.from({ length: 5 }, (_, slot) => echoes[slot] ?? null), [echoes])
   const fill = score != null ? Math.max(2, Math.min(100, score / 2)) : 0
   const { total: totalCv, tone: totalCvTone } = loadoutCv(slots, blank)
   const relStats = useMemo(() => makeRelStats(charId), [charId])
@@ -424,7 +425,7 @@ export function ShowcaseBuild({
               {sonataSets.map((set) => (
                 <li key={set.setId} className="showcase-sonata-set" title={`${set.name} · ${set.pieces}pc`}>
                   {set.icon ? (
-                    <img src={set.icon} alt="" className="showcase-sonata-icon" loading="lazy" onError={withDefIconM} />
+                    <DisplayImage src={set.icon} alt="" className="showcase-sonata-icon" loading="lazy" onError={withDefIconM} />
                   ) : (
                     <span className="showcase-sonata-icon showcase-sonata-icon--fallback" />
                   )}
@@ -509,4 +510,4 @@ export function ShowcaseBuild({
       ))}
     </>
   )
-}
+})

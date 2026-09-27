@@ -131,6 +131,11 @@ export function listResRttn(resonatorId: string): RotDef[] {
   return getResRttn(getGameData(), resonatorId)
 }
 
+export function getDefaultRotation(resonatorId: string): RotDef | null {
+  const rotation = listResRttn(resonatorId)[0]
+  return rotation?.items.length ? rotation : null
+}
+
 // get an owner definition by owner key
 export function getOwnForKey(ownerKey: string): SrcOwnDef | null {
   return getSrcOwnByK(getGameData(), ownerKey)

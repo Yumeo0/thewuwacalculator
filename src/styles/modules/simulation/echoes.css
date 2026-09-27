@@ -1585,11 +1585,7 @@
 }
 
 .eec-sugg {
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 0.25rem);
-  left: -0.45rem;
-  width: max(100%, 13rem);
+  min-width: 13rem;
   display: grid;
   padding: 0.25rem;
   border: 1px solid var(--amdl-line);
@@ -1599,6 +1595,10 @@
 }
 
 .eec-sugg-opt {
+  appearance: none;
+  background: none;
+  border: 0;
+  margin: 0;
   display: grid;
   grid-template-columns: 1rem minmax(0, 1fr) auto;
   align-items: center;
@@ -1606,14 +1606,21 @@
   padding: 0.34rem 0.45rem;
   border-radius: 0.36rem;
   text-align: left;
+  font: inherit;
   font-size: 0.76rem;
   color: var(--amdl-muted);
   cursor: pointer;
 }
 
-.eec-sugg-opt.is-hi {
+.eec-sugg-opt.is-hi,
+.eec-sugg-opt:hover:not(:disabled) {
   color: var(--amdl-text);
   background: var(--amdl-sunk);
+}
+
+.eec-sugg-opt:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--amdl-accent) 55%, transparent);
+  outline-offset: 1px;
 }
 
 .eec-sugg-opt:disabled {

@@ -44,6 +44,6 @@ export function spineBaseUrl(resId: string, variant: SpineVariant): string {
   return `/assets/game/resonators/spine/${variant}/${resId}/`
 }
 
-export function spineSetupUrl(resId: string, variant: SpineVariant): string {
-  return `/assets/game/resonators/spine/setup/${variant}/${resId}.webp`
+export function spineSetupUrl(resId: string, variant: SpineVariant, quality: 'display' | 'export' = 'display'): string {
+  return `/assets/game/resonators/spine/setup/${quality === 'display' ? 'display/' : ''}${variant}/${resId}.webp`
 }

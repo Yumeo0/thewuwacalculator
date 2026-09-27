@@ -4,6 +4,10 @@
                system clipboard without adding capture code to the main bundle.
 */
 
+import { rasterizeCard } from './captureRaster'
+import { waitForFontStylesheets } from '@/application/theme/typography'
+import { resolveImageRef } from '@/application/media/imageUpload'
+
 function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -13,237 +17,270 @@ function blobToDataUrl(blob: Blob): Promise<string> {
   })
 }
 
-function isInlineSafeUrl(url: string): boolean {
-  return (
-    url.length > 0
-    && !url.startsWith('data:')
-    && !url.startsWith('blob:')
-    && !url.startsWith('#')
-  )
-}
-
-async function inlineCssAssetUrls(css: string): Promise<string> {
-  const matches = Array.from(css.matchAll(/url\(\s*["']?([^)"']+)["']?\s*\)/g))
-  const urls = Array.from(new Set(
-    matches
-      .map((match) => match[1]?.trim() ?? '')
-      .filter(isInlineSafeUrl),
-  ))
-  if (urls.length === 0) {
-    return css
-  }
-
-  const inlined = await Promise.all(
-    urls.map(async (rawUrl) => {
-      try {
-        const resolved = new URL(rawUrl, document.baseURI).href
-        const blob = await (await fetch(resolved)).blob()
-        return [rawUrl, await blobToDataUrl(blob)] as const
-      } catch {
-        return null
-      }
-    }),
-  )
-
-  let out = css
-  for (const entry of inlined) {
-    if (entry) out = out.split(entry[0]).join(entry[1])
-  }
-  return out
-}
-
 // Inline reachable font assets so the exported image is self-contained.
 export function resolveFontAssetUrl(url: string, stylesheetHref: string | null, documentBase: string): string {
   return new URL(url, stylesheetHref || documentBase).href
 }
 
-async function inlineFontUrls(css: string, pattern: RegExp, stylesheetHref: string | null = null): Promise<string> {
-  const urls = Array.from(new Set(Array.from(css.matchAll(pattern)).map((match) => match[1])))
-  const inlined = await Promise.all(
-    urls.map(async (url) => {
-      try {
-        const resolved = resolveFontAssetUrl(url, stylesheetHref, document.baseURI)
-        return [url, await blobToDataUrl(await (await fetch(resolved)).blob())] as const
-      } catch {
-        return null
-      }
-    }),
-  )
-  let out = css
-  for (const entry of inlined) {
-    if (entry) out = out.split(entry[0]).join(entry[1])
+type FontUsage = Map<string, Set<string>>
+function recordFonts(usage: FontUsage, style: CSSStyleDeclaration) {
+  for (const raw of (style.fontFamily ?? '').split(',')) {
+    const family = raw.trim().replace(/^['"]|['"]$/g, '').toLowerCase()
+    let variants = usage.get(family)
+    if (!variants) usage.set(family, variants = new Set())
+    variants.add(`${style.fontStyle}:${style.fontWeight}`)
   }
-  return out
 }
 
-// Every Google Fonts sheet the app pulls in, whether the user-pasted ones added as
-// <link> or the app defaults loaded via @import in base.css. Same-origin @import
-// rules expose their href; cross-origin sheets (the Google sheets themselves) throw
-// on .cssRules and are skipped, so we fetch them by href instead.
-function collectGoogleFontHrefs(): string[] {
-  const hrefs = new Set<string>()
-  for (const link of Array.from(
-    document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href*="fonts.googleapis.com"]'),
-  )) {
-    hrefs.add(link.href)
+export function fontFaceUsed(css: string, usage: FontUsage, text: string): boolean {
+  const family = /font-family:\s*([^;]+)/i.exec(css)?.[1].trim().replace(/^['"]|['"]$/g, '').toLowerCase()
+  if (!family || !usage.has(family)) return false
+  const range = /unicode-range:\s*([^;}]+)/i.exec(css)?.[1]
+  if (range) {
+    const ranges = range.split(',').map((entry) => {
+      const token = entry.trim().replace(/^U\+/i, '')
+      const [first, last] = token.split('-')
+      return [parseInt(first.replace(/\?/g, '0'), 16), parseInt((last ?? first).replace(/\?/g, 'f'), 16)]
+    })
+    if (![...text].some((char) => ranges.some(([min, max]) => char.codePointAt(0)! >= min && char.codePointAt(0)! <= max))) return false
   }
-  for (const sheet of Array.from(document.styleSheets)) {
-    let rules: CSSRuleList | null = null
-    try {
-      rules = sheet.cssRules
-    } catch {
-      continue
-    }
-    if (!rules) continue
-    for (const rule of Array.from(rules)) {
-      if (rule instanceof CSSImportRule && rule.href.includes('fonts.googleapis.com')) {
-        hrefs.add(rule.href)
-      }
-    }
-  }
-  return Array.from(hrefs)
+  // Keep all declared weights of a used family: browser font matching may select
+  // a nearby weight or synthesize bold/italic when an exact face is absent.
+  return true
 }
 
-// Self-hosted @font-face rules (e.g. Stormfaze, the --game-font) live in our own
-// bundled CSS with same-origin font files that the Google path never touches.
-async function collectLocalFontFaces(): Promise<string> {
+function makeCaptureResources() {
+  const pending = new Map<string, Promise<string>>()
+  return {
+    load(url: string): Promise<string> {
+      const absolute = new URL(url, document.baseURI).href
+      if (absolute.startsWith('data:')) return Promise.resolve(absolute)
+      let value = pending.get(absolute)
+      if (!value) {
+        value = (async () => {
+          const image = await resolveImageRef(url)
+          if (!image) throw new Error('Capture artwork is unavailable.')
+          try {
+            const response = await fetch(image.url)
+            if (!response.ok) throw new Error(`Capture asset could not be loaded: ${response.status}`)
+            return await blobToDataUrl(await response.blob())
+          } finally { image.revoke?.() }
+        })()
+        pending.set(absolute, value)
+      }
+      return value
+    },
+    dispose() { pending.clear() },
+  }
+}
+
+export async function embedCaptureUrls(css: string, load: (url: string) => Promise<string>, base = document.baseURI): Promise<string> {
+  const pattern = /url\(["']?([^)"']+)["']?\)/g
+  const replacements = new Map<string, string>()
+  for (const match of css.matchAll(pattern)) {
+    const url = match[1]
+    if (replacements.has(url) || url.startsWith('data:') || url.startsWith('#')) continue
+    const absolute = new URL(url, base).href
+    const embedded = absolute.split('#')[0] === document.baseURI.split('#')[0] && absolute.includes('#')
+      ? '#' + absolute.split('#')[1] : await load(absolute)
+    replacements.set(url, `url("${embedded}")`)
+  }
+  // Replace complete URL tokens. A relative URL may also be a substring of a
+  // computed absolute URL on the same node; replacing substrings corrupts both.
+  return css.replace(pattern, (token, url: string) => replacements.get(url) ?? token)
+}
+
+async function buildFontEmbedCss(usage: FontUsage, text: string, load: (url: string) => Promise<string>): Promise<string> {
+  const visited = new Set<string>()
   const blocks: string[] = []
-  for (const sheet of Array.from(document.styleSheets)) {
-    let rules: CSSRuleList | null = null
-    try {
-      rules = sheet.cssRules
-    } catch {
-      continue
+  const add = async (css: string, base: string) => {
+    for (const match of css.matchAll(/@font-face\s*\{[^}]*\}/gi)) {
+      if (fontFaceUsed(match[0], usage, text)) blocks.push(await embedCaptureUrls(match[0], load, base))
     }
-    if (!rules) continue
-    for (const rule of Array.from(rules)) {
-      if (rule instanceof CSSFontFaceRule && !rule.cssText.includes('fonts.gstatic.com')) {
-        blocks.push(await inlineFontUrls(rule.cssText, /url\(["']?([^)"']+)["']?\)/g, sheet.href))
+  }
+  const visit = async (sheet: CSSStyleSheet) => {
+    if (sheet.href && visited.has(sheet.href)) return
+    if (sheet.href) visited.add(sheet.href)
+    const rules = async (entries: CSSRuleList) => {
+      for (const rule of Array.from(entries)) {
+        if (rule instanceof CSSImportRule && rule.styleSheet) await visit(rule.styleSheet)
+        else if (rule instanceof CSSFontFaceRule) await add(rule.cssText, sheet.href || document.baseURI)
+        else if ('cssRules' in rule) await rules((rule as CSSGroupingRule).cssRules)
+      }
+    }
+    try {
+      await rules(sheet.cssRules)
+    } catch {
+      if (sheet.href) {
+        try { await add(await (await fetch(sheet.href)).text(), sheet.href) } catch { /* Match browser font fallback if unavailable. */ }
       }
     }
   }
+  for (const sheet of Array.from(document.styleSheets)) await visit(sheet)
   return blocks.join('\n')
 }
 
-// html-to-image rasterizes the card through an isolated SVG, so the document's
-// loaded web fonts do not carry over. Its built-in font scan can't read
-// cross-origin Google Fonts sheets, so we build the embed CSS ourselves: every
-// Google Fonts sheet (gstatic files inlined) plus our self-hosted @font-face rules.
-async function buildFontEmbedCss(): Promise<string> {
-  if (typeof document === 'undefined') return ''
-  const [googleSheets, localFaces] = await Promise.all([
-    Promise.all(
-      collectGoogleFontHrefs().map(async (href) => {
-        try {
-          const css = await (await fetch(href)).text()
-          return await inlineFontUrls(css, /url\(["']?(https:\/\/fonts\.gstatic\.com\/[^)"']+)["']?\)/g, href)
-        } catch {
-          return ''
-        }
-      }),
-    ),
-    collectLocalFontFaces(),
-  ])
-
-  return [...googleSheets, localFaces].filter(Boolean).join('\n')
-}
-
-async function inlineCardStyleAssets(card: HTMLElement): Promise<() => void> {
-  const styleNodes = Array.from(card.querySelectorAll<HTMLStyleElement>('style'))
-  if (styleNodes.length === 0) {
-    return () => {}
-  }
-
-  const originals = styleNodes.map((node) => node.textContent ?? '')
-  const nextCss = await Promise.all(originals.map((css) => inlineCssAssetUrls(css)))
-  for (let index = 0; index < styleNodes.length; index += 1) {
-    styleNodes[index].textContent = nextCss[index]
-  }
-
-  return () => {
-    for (let index = 0; index < styleNodes.length; index += 1) {
-      styleNodes[index].textContent = originals[index]
+// Freeze the live composition on a disposable clone. Only the host is moved
+// offscreen: moving the card itself would put its contents outside the PNG.
+function createCaptureClone(source: HTMLElement): { card: HTMLElement; fonts: FontUsage; text: string; dispose: () => void } {
+  const fonts: FontUsage = new Map()
+  let text = source.textContent || ''
+  const pseudos: string[] = []
+  const card = source.cloneNode(true) as HTMLElement
+  const originals = [source, ...source.querySelectorAll<HTMLElement | SVGElement>('*')]
+  const copies = [card, ...card.querySelectorAll<HTMLElement | SVGElement>('*')]
+  for (let index = 0; index < originals.length; index += 1) {
+    const original = originals[index]
+    const copy = copies[index]
+    if (!copy.style) continue
+    const computed = getComputedStyle(original)
+    recordFonts(fonts, computed)
+    // Computed declarations already resolve custom properties. Do not retain
+    // another copy of the original variable payload on every captured element.
+    copy.style.cssText = ''
+    copy.setAttribute('data-capture-node', String(index))
+    for (const pseudo of ['::before', '::after']) {
+      const style = getComputedStyle(original, pseudo)
+      if (!style.content || style.content === 'none' || style.content === 'normal') continue
+      recordFonts(fonts, style)
+      text += style.content
+      const declarations = Array.from(style).filter((key) => !key.startsWith('--')).map((key) => `${key}:${style.getPropertyValue(key)};`).join('')
+      pseudos.push(`[data-capture-node="${index}"]${pseudo}{${declarations}animation:none!important;transition:none!important;}`)
+    }
+    for (const property of Array.from(computed)) {
+      if (property.startsWith('--')) continue
+      copy.style.setProperty(property, computed.getPropertyValue(property))
+    }
+    copy.style.setProperty('animation', 'none', 'important')
+    copy.style.setProperty('transition', 'none', 'important')
+    if (original instanceof HTMLImageElement && copy instanceof HTMLImageElement) {
+      copy.src = original.currentSrc || original.src
+      copy.removeAttribute('srcset')
+      copy.removeAttribute('sizes')
+      copy.loading = 'eager'
+    }
+    if (original instanceof HTMLCanvasElement && copy instanceof HTMLCanvasElement
+      && !original.classList.contains('spine-animated')) {
+      const image = document.createElement('img')
+      image.src = original.toDataURL()
+      image.style.cssText = copy.style.cssText
+      copy.replaceWith(image)
     }
   }
-}
+  // The original custom stylesheet remains active. Duplicating style elements
+  // here would reapply their rules to the live card while preparing the export.
+  card.querySelectorAll('style, .spine-animated').forEach((node) => node.remove())
+  const pseudoStyle = document.createElement('style')
+  pseudoStyle.textContent = pseudos.join('\n')
+  card.appendChild(pseudoStyle)
+  card.querySelectorAll<HTMLElement>('.workspace-portrait-scrim, .workspace-portrait-cue')
+    .forEach((node) => { node.style.opacity = '0' })
+  card.querySelectorAll<HTMLElement>('.spine-setup, .stat-muted')
+    .forEach((node) => { node.style.opacity = '1' })
 
-function freezeVerdictFigureLayout(card: HTMLElement): () => void {
-  const figure = card.querySelector<HTMLElement>('.showcase-verdict-figure')
-  const grade = figure?.querySelector<HTMLElement>('.showcase-grade-mark')
-  const score = figure?.querySelector<HTMLElement>('.showcase-grade-score')
-  if (!figure || !grade || !score) {
-    return () => {}
-  }
-
-  const figureRect = figure.getBoundingClientRect()
-  const gradeRect = grade.getBoundingClientRect()
-  const scoreRect = score.getBoundingClientRect()
-  if (figureRect.width <= 0 || figureRect.height <= 0) {
-    return () => {}
-  }
-
-  const nodes = [figure, grade, score]
-  const originals = nodes.map((node) => node.getAttribute('style'))
-  const px = (value: number) => `${Math.round(value * 1000) / 1000}px`
-
-  figure.style.setProperty('display', 'block', 'important')
-  figure.style.setProperty('position', 'relative', 'important')
-  figure.style.setProperty('width', px(figureRect.width), 'important')
-  figure.style.setProperty('height', px(figureRect.height), 'important')
-  figure.style.setProperty('flex', 'none', 'important')
-
-  for (const [node, rect] of [[grade, gradeRect], [score, scoreRect]] as const) {
-    node.style.setProperty('position', 'absolute', 'important')
-    node.style.setProperty('inset', 'auto', 'important')
-    node.style.setProperty('left', px(rect.left - figureRect.left), 'important')
-    node.style.setProperty('top', px(rect.top - figureRect.top), 'important')
-    node.style.setProperty('width', px(rect.width), 'important')
-    node.style.setProperty('height', px(rect.height), 'important')
-    node.style.setProperty('white-space', 'nowrap', 'important')
-  }
-
-  return () => {
-    for (const [index, node] of nodes.entries()) {
-      const original = originals[index]
-      if (original == null) node.removeAttribute('style')
-      else node.setAttribute('style', original)
-    }
-  }
-}
-
-export async function renderBuildCardPng(card: HTMLElement): Promise<Blob> {
-  await document.fonts?.ready
-  const [{ toBlob }, fontEmbedCSS] = await Promise.all([import('html-to-image'), buildFontEmbedCss()])
-  const pixelRatio = Math.min(3, Math.max(2, window.devicePixelRatio || 1))
-
-  // Freeze measured figure geometry before the isolated SVG substitutes fonts.
-  const restoreVerdictLayout = freezeVerdictFigureLayout(card)
-  card.dataset.capturing = 'true'
-  try {
-    const restoreCardCss = await inlineCardStyleAssets(card)
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
-    try {
-      const blob = await toBlob(card, {
-        // cacheBust appends `?<timestamp>` to every resource URL, which breaks
-        // any non-http source the card carries and buys nothing here: all card
-        // assets are same-origin and already inlined by inlineCardStyleAssets.
-        cacheBust: false,
-        pixelRatio,
-        skipAutoScale: true,
-        // Supply the embed CSS ourselves (data-URI'd Google Fonts) so custom and
-        // app fonts render in the capture; this also skips html-to-image's
-        // redundant document-wide CSSOM scan.
-        fontEmbedCSS,
-        filter: (node) => !node.classList?.contains('spine-animated'),
+  // Keep the existing grade/score alignment protection, using live geometry
+  // but changing only the copy. Font embedding must not move this composition.
+  const figure = source.querySelector<HTMLElement>('.showcase-verdict-figure')
+  const figureCopy = card.querySelector<HTMLElement>('.showcase-verdict-figure')
+  if (figure && figureCopy) {
+    const bounds = figure.getBoundingClientRect()
+    if (bounds.width > 0 && bounds.height > 0) {
+      Object.assign(figureCopy.style, {
+        display: 'block', position: 'relative', flex: 'none',
+        width: `${bounds.width}px`, height: `${bounds.height}px`,
       })
-      if (!blob) throw new Error('Build card renderer returned no image')
-      return blob
-    } finally {
-      restoreCardCss()
+      for (const selector of ['.showcase-grade-mark', '.showcase-grade-score']) {
+        const original = figure.querySelector<HTMLElement>(selector)
+        const copy = figureCopy.querySelector<HTMLElement>(selector)
+        if (!original || !copy) continue
+        const rect = original.getBoundingClientRect()
+        Object.assign(copy.style, {
+          position: 'absolute', inset: 'auto', whiteSpace: 'nowrap',
+          left: `${rect.left - bounds.left}px`, top: `${rect.top - bounds.top}px`,
+          width: `${rect.width}px`, height: `${rect.height}px`,
+        })
+      }
     }
+  }
+
+  card.dataset.capturing = 'true'
+  Object.assign(card.style, {
+    position: 'relative', inset: 'auto', margin: '0', transform: 'none',
+  })
+  const host = document.createElement('div')
+  host.setAttribute('aria-hidden', 'true')
+  host.inert = true
+  Object.assign(host.style, {
+    position: 'fixed', left: '-100000px', top: '0', pointerEvents: 'none',
+    width: `${source.offsetWidth}px`, height: `${source.offsetHeight}px`,
+  })
+  host.appendChild(card)
+  document.body.appendChild(host)
+  return { card, fonts, text, dispose: () => host.remove() }
+}
+
+export async function loadCaptureArt(card: HTMLElement, loadResource?: (url: string) => Promise<string>): Promise<void> {
+  const assets = new Map<string, Promise<string>>()
+  const load = (url: string): Promise<string> => {
+    if (loadResource) return loadResource(url)
+    let asset = assets.get(url)
+    if (!asset) {
+      asset = fetch(url).then(async (response) => {
+        if (!response.ok) throw new Error('The full-quality portrait could not be loaded. Please retry capture.')
+        return blobToDataUrl(await response.blob())
+      })
+      assets.set(url, asset)
+    }
+    return asset
+  }
+  await Promise.all([
+    ...Array.from(card.querySelectorAll<HTMLImageElement>('img[data-capture-src]'), async (image) => {
+      image.removeAttribute('srcset')
+      image.removeAttribute('sizes')
+      image.src = await load(image.dataset.captureSrc!)
+      await image.decode()
+    }),
+    ...Array.from(card.querySelectorAll<HTMLElement>('[data-capture-background]'), async (layer) => {
+      const url = layer.dataset.captureBackground!
+      const displayed = /url\(["']?([^)"']+)["']?\)/.exec(layer.dataset.displayBackground ?? '')?.[1]
+      const displayUrl = new URL(displayed ?? url.replace('/setup/', '/setup/display/'), document.baseURI).href
+      // Custom CSS may override the default background without changing props.
+      if (!layer.style.backgroundImage.includes(displayUrl)) return
+      layer.style.backgroundImage = layer.style.backgroundImage.replace(displayUrl, await load(url))
+    }),
+  ])
+  await Promise.all(Array.from(card.querySelectorAll('img'), (image) => image.decode()))
+}
+
+let captureInProgress = false
+export async function renderBuildCardPng(source: HTMLElement): Promise<Blob> {
+  if (captureInProgress) throw new Error('A build card capture is already in progress.')
+  captureInProgress = true
+  let dispose: (() => void) | undefined
+  const resources = makeCaptureResources()
+  try {
+    await waitForFontStylesheets()
+    await document.fonts?.ready
+    const width = source.offsetWidth
+    const height = source.offsetHeight
+    if (!width || !height) throw new Error('The build card is not visible.')
+    const snapshot = createCaptureClone(source)
+    dispose = snapshot.dispose
+    const card = snapshot.card
+    await loadCaptureArt(card, resources.load)
+    const faces = await buildFontEmbedCss(snapshot.fonts, snapshot.text, resources.load)
+    // One frozen tree: inline its resources, then serialize it directly.
+    for (const node of [card, ...card.querySelectorAll<HTMLElement | SVGElement>('*')]) {
+      if (node.style?.cssText?.includes('url(')) node.style.cssText = await embedCaptureUrls(node.style.cssText, resources.load)
+      if (node instanceof HTMLImageElement) { node.src = await resources.load(node.src); await node.decode() }
+      if (node.tagName === 'STYLE' && node.textContent) node.textContent = await embedCaptureUrls(node.textContent, resources.load)
+    }
+    const fontStyle = document.createElement('style')
+    fontStyle.textContent = faces
+    card.insertBefore(fontStyle, card.firstChild)
+    return await rasterizeCard(card, { width, height, pixelRatio: 3 })
   } finally {
-    delete card.dataset.capturing
-    restoreVerdictLayout()
+    dispose?.(); resources.dispose(); captureInProgress = false
   }
 }
 

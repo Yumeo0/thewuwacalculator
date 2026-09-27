@@ -141,11 +141,12 @@ export function RotationSequenceEditor({
   const [entranceSettled, setEntranceSettled] = useState(false)
 
   useEffect(() => {
+    if (isRotationSequence(runtime.rotation.sequence, runtime.id)) return
     const migrations = migrateAdvancedRotations()
     if (migrations.length > 0) {
       showMigrationModal(migrations)
     }
-  }, [migrateAdvancedRotations, showMigrationModal])
+  }, [migrateAdvancedRotations, runtime.id, runtime.rotation.sequence, showMigrationModal])
 
   const authoredItems = runtime.rotation.sequence
   const supportsCompactEditor = useMemo(

@@ -3,24 +3,24 @@
   Description: Projects optimizer lifecycle, progress, candidate counts, and throughput from run state.
 */
 
+import { useOptimizerProgress, type OptimizerProgressSource } from '../lib/progressStore'
 import type { CSSProperties } from 'react'
-import type { OptPrgr } from '@/engine/optimizer/types'
 import { formatOptimizerTime, useOptimizerWave } from '../lib/progress.ts'
 
 export function OptStage({
   isLoading,
-  progress,
+  progressSource,
   cancelled,
   success,
   // theory mode has no permutation count of its own until the worker reports
   // one, so the headline slot stays empty rather than inventing a number.
-  permutations,
+  permutations: inventoryPermutations,
   batchSize,
   isTheory,
   resultCount,
 }: {
   isLoading: boolean
-  progress: OptPrgr
+  progressSource: OptimizerProgressSource
   cancelled: boolean
   success: boolean
   permutations: string | null
@@ -28,6 +28,8 @@ export function OptStage({
   isTheory: boolean
   resultCount: number
 }) {
+  const progress = useOptimizerProgress(progressSource)
+  const permutations = isTheory ? ((progress.total ?? 0) > 0 ? Math.floor(progress.total ?? 0).toLocaleString() : null) : inventoryPermutations
   const isDiscovering = isLoading && progress.phase === 'discovering'
   const pct = Math.floor(progress.progress * 100)
 

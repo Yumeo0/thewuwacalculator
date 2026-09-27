@@ -3,12 +3,13 @@
   Description: Exposes global Simulation inventory and enemy actions through persistent application chrome.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { FileImage, LibraryBig } from 'lucide-react'
 import { useRtChrmMen } from '@/application/context-menu/routeMenuContext'
 import { useAppStore } from '@/application/state'
 import { selEnemyProf } from '@/application/state'
 import { getEnemyIcon } from '@/domain/entities/enemy'
-import { openEchoImport, openEnemyCnsl } from '@/modules/simulation/api/chrome'
+import { openEchoImport, openEnemyCnsl } from '@/modules/simulation/api/chromeRequests'
 import { withDefIconM } from '@/shared/lib/imageFallback'
 import { Tooltip } from '@/shared/ui/Tooltip'
 
@@ -28,7 +29,7 @@ export function AppTools({ simulating = true }: { simulating?: boolean }) {
               aria-label={`Open the target console. ${target}`}
               onClick={openEnemyCnsl}
             >
-              <img className="ax-face" src={icon} alt="" onError={withDefIconM} />
+              <DisplayImage className="ax-face" src={icon} alt="" onError={withDefIconM} />
             </button>
           </Tooltip>
 

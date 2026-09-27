@@ -4,6 +4,7 @@
                and source-owner detail rendering for the current resonator.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useMemo } from 'react'
 import type { CSSProperties as CssProps } from 'react'
 import { Star, Zap } from 'lucide-react'
@@ -199,7 +200,7 @@ export function Weapon({ runtime, onRtPdt: onRtPdt }: WeaponPaneProps) {
           >
             <span className="resonator-avatar-button__frame" aria-hidden="true" />
             <span className="resonator-avatar-button__media">
-              <img
+              <DisplayImage
                 src={weaponIcon}
                 alt={weaponDef?.name ?? 'Weapon'} className="resonator-avatar weapon-avatar-icon"
                 style={{ objectFit: 'contain' }}
@@ -218,7 +219,7 @@ export function Weapon({ runtime, onRtPdt: onRtPdt }: WeaponPaneProps) {
             <h3 className="weapon-banner__name">{weaponDef?.name ?? 'No Weapon'}</h3>
             <div className="weapon-banner__meta">
               <span className="hero-chip">
-                <img
+                <DisplayImage
                   src={`/assets/game/weapons/types/${weaponKey}.webp`}
                   alt={toTitle(weaponKey)} className="weapon-icon"
                   onError={withDefWpnMg}

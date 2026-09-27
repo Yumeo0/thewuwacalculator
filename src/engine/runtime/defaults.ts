@@ -1206,34 +1206,36 @@ export function makeScenarioFromProfiles(
   }
 }
 
+function normalizeScenarioMember(member: ScenarioTeamMember): ScenarioTeamMember[] {
+  const seed = getResSeedBy(member.resonatorId)
+  if (!seed) return []
+  return [{
+    ...member,
+    id: teamMemberId(String(member.id || member.resonatorId)),
+    resonatorId: seed.id,
+    progression: {
+      ...member.progression,
+      skillLevels: cloneSkllLvl(member.progression.skillLevels),
+      traceNodes: cloneTrcNode(member.progression.traceNodes),
+    },
+    loadout: {
+      weapon: preserveWeaponForSeed(seed, member.loadout.weapon),
+      echoes: repairEchoLoadoutForCatalog(member.loadout.echoes),
+    },
+    local: {
+      controls: { ...member.local.controls },
+      setConditionals: cloneSntSet(member.local.setConditionals),
+      optimizerInventory: cloneOptInventorySelection(member.local.optimizerInventory),
+    },
+  } satisfies ScenarioTeamMember]
+}
+
 function normalizeScenario(
   scenario: CombatScenario,
   fallback: CombatScenario,
   revision: number,
 ): CombatScenario {
-  const members = scenario.team?.members?.flatMap((member) => {
-    const seed = getResSeedBy(member.resonatorId)
-    if (!seed) return []
-    return [{
-      ...member,
-      id: teamMemberId(String(member.id || member.resonatorId)),
-      resonatorId: seed.id,
-      progression: {
-        ...member.progression,
-        skillLevels: cloneSkllLvl(member.progression.skillLevels),
-        traceNodes: cloneTrcNode(member.progression.traceNodes),
-      },
-      loadout: {
-        weapon: preserveWeaponForSeed(seed, member.loadout.weapon),
-        echoes: repairEchoLoadoutForCatalog(member.loadout.echoes),
-      },
-      local: {
-        controls: { ...member.local.controls },
-        setConditionals: cloneSntSet(member.local.setConditionals),
-        optimizerInventory: cloneOptInventorySelection(member.local.optimizerInventory),
-      },
-    } satisfies ScenarioTeamMember]
-  }) ?? []
+  const members = scenario.team?.members?.flatMap(normalizeScenarioMember) ?? []
   if (members.length === 0) return fallback
 
   const team = makeScenarioTeam(members.slice(0, 3))
@@ -1250,6 +1252,22 @@ function normalizeScenario(
     id: combatScenarioId(String(scenario.id || 'workspace')),
     revision: Math.max(revision, Math.floor(scenario.revision ?? 0)),
     team,
+    ...(scenario.dormantMembersByResonatorId ? {
+      dormantMembersByResonatorId: Object.fromEntries(
+        Object.entries(scenario.dormantMembersByResonatorId).flatMap(([resonatorId, saved]) => {
+          if (saved.member.resonatorId !== resonatorId
+            || members.some((member) => member.resonatorId === resonatorId)) return []
+          const member = normalizeScenarioMember(saved.member)[0]
+          return member ? [[resonatorId, {
+            member,
+            ...(saved.manualEffect ? { manualEffect: {
+              ...saved.manualEffect,
+              buffs: cloneBuffs(saved.manualEffect.buffs),
+            } } : {}),
+          }]] : []
+        }),
+      ),
+    } : {}),
     contextMemberId: ids.has(scenario.contextMemberId)
       ? scenario.contextMemberId
       : team.members[0].id,

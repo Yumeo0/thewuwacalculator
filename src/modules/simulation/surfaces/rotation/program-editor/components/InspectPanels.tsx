@@ -3,6 +3,7 @@
   Description: Coordinates node, comparison, cleanup, state, and saved-rotation inspection channels.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import {
   ArrowRight,
   CheckCheck,
@@ -676,7 +677,7 @@ function NegEffectSeries({
 
         <div className="rte-neg__summary">
           {attributeIcon ? (
-            <img className="rte-neg__icon"
+            <DisplayImage className="rte-neg__icon"
               src={attributeIcon}
               alt=""
               aria-hidden="true"
@@ -1279,7 +1280,7 @@ function MemberFace({
   className: string
 }) {
   return (
-    <img
+    <DisplayImage
       className={className}
       src={member?.profile ?? ''}
       alt=""
@@ -1913,7 +1914,7 @@ function RankedBreakdown({
           const content = (
             <>
               {group.icon ? (
-                <img
+                <DisplayImage
                   className={`rte-rank__key ${group.iconKind === 'glyph' ? 'is-glyph' : 'is-art'}`}
                   src={group.icon}
                   alt=""
@@ -2106,7 +2107,7 @@ export function BuildBand({
       <div className="rte-bld__id">
         {identified ? (
           <>
-            <img className="rte-bld__face"
+            <DisplayImage className="rte-bld__face"
               src={member.profile}
               alt=""
               onError={withDefResMg}
@@ -2114,7 +2115,7 @@ export function BuildBand({
             />
             <span className="rte-bld__name" title={member.name}>{member.name}</span>
             {attribute ? (
-              <img className="rte-bld__attr"
+              <DisplayImage className="rte-bld__attr"
                 src={attribute}
                 alt={member.attribute}
                 onError={withDefIconM}
@@ -2151,7 +2152,7 @@ export function BuildBand({
             style={{ '--rte-bld-s': getSntSetClr(echo.setId) ?? 'var(--muted)' } as React.CSSProperties}
             title={`${echo.name} . cost ${echo.cost} . ${getSntSetNam(echo.setId)}`}
           >
-            <img
+            <DisplayImage
               src={echo.icon || `/assets/game/echoes/icons/${echo.id}.webp`}
               alt=""
               onError={withDefEchoMg}
@@ -2193,7 +2194,7 @@ export function BuildBand({
                 {run.live ? (
                   <span className="rte-bld__tag">
                     {icon ? (
-                      <img src={icon} alt="" onError={withDefIconM} loading="lazy" />
+                      <DisplayImage src={icon} alt="" onError={withDefIconM} loading="lazy" />
                     ) : null}
                     {/* a two-slot tie cannot hold a set name without shredding
                         it, and two sets share #FFFFFF, so the glyph is what
@@ -2216,7 +2217,7 @@ export function BuildBand({
         <div className="rte-bld__wpn"
           style={rarityVars(member.weapon.rarity, false, '--rte-bld-w') as React.CSSProperties}
         >
-          <img className="rte-bld__wart"
+          <DisplayImage className="rte-bld__wart"
             src={member.weapon.icon || `/assets/game/weapons/icons/${member.weapon.id}.webp`}
             alt=""
             onError={withDefWpnMg}
@@ -2883,7 +2884,7 @@ export function Inspector({
         */}
         {selection && !isTotals ? null : !isTotals && handoff ? (
           <div className="rte-inspector__top rte-hoff__top">
-            <img className="rte-hoff__top-out"
+            <DisplayImage className="rte-hoff__top-out"
               src={handoffFrom?.profile ?? ''}
               alt=""
               title={handoffFrom?.name}
@@ -2891,7 +2892,7 @@ export function Inspector({
               loading="lazy"
             />
             <ArrowRight className="rte-hoff__top-arw" size="0.85rem" aria-hidden="true" />
-            <img className="rte-hoff__top-in"
+            <DisplayImage className="rte-hoff__top-in"
               src={handoffTo?.profile ?? ''}
               alt=""
               title={handoffTo?.name}
@@ -2919,14 +2920,14 @@ export function Inspector({
             </span>
           ) : echoId ? (
             <span className="rte-inspector__mark">
-              <img className="rte-inspector__avatar"
+              <DisplayImage className="rte-inspector__avatar"
                 src={echo?.icon ?? `/assets/game/echoes/icons/${echoId}.webp`}
                 alt=""
                 title={echo?.name ?? 'Echo'}
                 onError={withDefEchoMg}
                 loading="lazy"
               />
-              <img className="rte-inspector__caster"
+              <DisplayImage className="rte-inspector__caster"
                 src={owner.profile}
                 alt=""
                 title={`Cast by ${owner.name}`}
@@ -2944,7 +2945,7 @@ export function Inspector({
               <Swords size="1rem" />
             </span>
           ) : (
-            <img
+            <DisplayImage
               className={`rte-inspector__avatar${isCond ? ' is-source' : ''}`}
               src={headIcon}
               alt=""
@@ -2996,7 +2997,7 @@ export function Inspector({
             </button>
           ) : null}
           {!isTotals && elementIcon ? (
-            <img className="rte-inspector__element"
+            <DisplayImage className="rte-inspector__element"
               src={elementIcon}
               alt={stepElement}
               onError={withDefIconM}

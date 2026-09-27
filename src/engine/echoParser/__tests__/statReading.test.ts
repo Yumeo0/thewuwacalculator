@@ -125,3 +125,14 @@ describe('substat lines read in two halves', () => {
     expect(readSubstat('Crit. DMG 21%', '')).toMatchObject({ key: 'critDmg', value: 21 })
   })
 })
+
+describe('a stray word from the row above', () => {
+  it('still reads the label it belongs to', () => {
+    expect(readSubstat('ATK Lad dh', '10.1%')).toMatchObject({ key: 'atkPercent', value: 10.1 })
+    expect(readSubstat('Bonus HP', '7.9%')).toMatchObject({ key: 'hpPercent', value: 7.9 })
+  })
+
+  it('does not invent a stat out of the stray word alone', () => {
+    expect(readSubstat('Lad dh', '10.1%')).toBeNull()
+  })
+})

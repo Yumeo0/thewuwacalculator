@@ -9,6 +9,7 @@ import type { OptSets } from '@/domain/entities/optimizer.ts'
 import type { ResRuntime } from '@/domain/entities/runtime.ts'
 import type { SkillDef } from '@/domain/entities/stats.ts'
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
+import { getDefaultRotation } from '@/data/catalog/gameDataService.ts'
 import { makeRuntimeMap } from '@/engine/runtime/runtimeAdapters.ts'
 import { makeStatWeights } from '@/engine/optimizer/search/filtering.ts'
 import { listOptTrgt } from '@/engine/optimizer/target/skills.ts'
@@ -94,7 +95,7 @@ function makeTargetSkill(params: {
 }
 
 // Carry execution/search preferences across resonator-specific reinitialization.
-// Target-mode eligibility is validated downstream against the new runtime.
+// Each new resonator derives its own target independently of search preferences.
 export function preserveToggles(existing?: OptSets | null): Partial<OptSets> {
   if (!existing) {
     return {}
@@ -107,8 +108,6 @@ export function preserveToggles(existing?: OptSets | null): Partial<OptSets> {
     resultsLimit: existing.resultsLimit,
     keepPercent: existing.keepPercent,
     excludeEquipped: existing.excludeEquipped,
-    targetMode: existing.targetMode,
-    rotationMode: existing.rotationMode,
   }
 }
 
@@ -119,9 +118,15 @@ export function deriveOptSets(params: {
   selectedTargets?: Record<string, string | null>
 }): Partial<OptSets> {
   const { runtime, runtimesById, enemy, selectedTargets } = params
+  const defaultRotation = getDefaultRotation(runtime.id)
+  const targetDefaults: Partial<OptSets> = {
+    targetMode: defaultRotation ? 'combo' : 'skill',
+    rotationMode: Boolean(defaultRotation),
+    targetComboSourceId: `${defaultRotation ? 'default' : 'live'}:${runtime.id}`,
+  }
   const targetSkill = listOptTrgt(runtime)[0] ?? null
   if (!targetSkill) {
-    return {}
+    return targetDefaults
   }
 
   const preparedSkill = makeTargetSkill({
@@ -132,6 +137,7 @@ export function deriveOptSets(params: {
   })
   if (!preparedSkill) {
     return {
+      ...targetDefaults,
       targetSkillId: targetSkill.id,
     }
   }
@@ -139,6 +145,7 @@ export function deriveOptSets(params: {
   const seed = getResSeedBy(runtime.id)
   if (!seed) {
     return {
+      ...targetDefaults,
       targetSkillId: targetSkill.id,
     }
   }
@@ -185,9 +192,8 @@ export function deriveOptSets(params: {
   }
 
   return {
+    ...targetDefaults,
     targetSkillId: targetSkill.id,
-    targetMode: 'skill',
-    targetComboSourceId: `live:${runtime.id}`,
     mainStatFilter: MAIN_STAT_IDS.filter((key) => filterSet.has(key)),
     selectedBonus,
   }

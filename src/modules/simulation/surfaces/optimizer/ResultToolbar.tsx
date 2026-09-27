@@ -32,7 +32,7 @@ import {
   type CmpOp,
   type NumCol,
   type Predicate,
-  type ResultFacet,
+  type ResultFacetTable,
   type ResultViewCriteria,
   type ViewSortKey,
 } from '@/modules/simulation/surfaces/optimizer/lib/results.ts'
@@ -85,7 +85,7 @@ interface ResultToolbarProps {
   onToggle: (open: boolean) => void
   mode: 'filter' | 'find'
   onMode: (mode: 'filter' | 'find') => void
-  facets: ResultFacet[] | null
+  facets: ResultFacetTable | null
   criteria: ResultViewCriteria
   onCriteria: (next: ResultViewCriteria) => void
   matchCount: number

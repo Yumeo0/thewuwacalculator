@@ -5,6 +5,7 @@
                both groups without collapsing its two runtimes together.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { CSSProperties } from 'react'
 import { Plus } from 'lucide-react'
 import type { ResSeed } from '@/domain/entities/runtime.ts'
@@ -60,7 +61,7 @@ export function EchoImportTargetBar({
                 title={label}
                 onClick={() => onSelectContext(member.id)}
               >
-                <img src={member.profile} alt="" onError={withDefResMg} />
+                <DisplayImage src={member.profile} alt="" onError={withDefResMg} />
               </button>
             )
           })}
@@ -95,7 +96,7 @@ export function EchoImportTargetBar({
                   title={label}
                   onClick={() => onSelectTeam(slotIndex, member.id)}
                 >
-                  <img src={member.profile} alt="" onError={withDefResMg} />
+                  <DisplayImage src={member.profile} alt="" onError={withDefResMg} />
                 </button>
               )
             })}

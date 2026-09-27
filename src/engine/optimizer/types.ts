@@ -73,6 +73,16 @@ export interface TheoryResult {
   weaponId?: string | null
 }
 
+/** A run shares candidates; only the selected loadout is copied for editing. */
+export interface CompactTheoryResult {
+  theory: { candidates: EchoInstance[] }
+  indices: number[]
+  mainSlot: number
+  damage: number
+  stats: OptResultStats | null
+  weaponId?: string | null
+}
+
 // bag-style result reference that stores indices instead of full echo payloads
 export interface OptBagResult {
   damage: number
@@ -99,6 +109,8 @@ export interface TheoryResultRow {
 export type OptRawResult =
     | OptBagResult
     | TheoryResultRow
+
+export type OptStoredResult = OptFinalResult | CompactTheoryResult
 
 export type OptFinalResult =
     | OptResultEntry
@@ -156,6 +168,8 @@ export interface OptStartPay {
   memberId: import('@/domain/entities/combatScenario').TeamMemberId
   resonatorId: string
   gameDataMode?: GameDataMode
+  /** Candidate catalog scope resolved before crossing the worker boundary. */
+  weaponDataIds?: string[]
   resSeed?: ResSeed
   staticData?: {
     gameDataReg: GameDataReg

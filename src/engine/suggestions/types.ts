@@ -15,6 +15,7 @@ import type { OptTargetSkill } from '@/engine/optimizer/target/selectedSkill'
 import type { OptStatWeight } from '@/engine/optimizer/search/filtering.ts'
 import type { GameDataMode } from '@/domain/entities/gameDataMode'
 import type { CombatScenarioId, TeamMemberId } from '@/domain/entities/combatScenario'
+import type { SimResult } from '@/engine/pipeline/types'
 
 interface SuggsWrkrBase {
   id: number
@@ -34,6 +35,21 @@ export interface SuggestInput {
   tgtFeatId: string | null
   rotationMode: boolean
   includeEchoAttacks?: boolean
+}
+
+/** The only simulation fields read while preparing Suggestions contexts. */
+export interface SuggestionSimulation {
+  finalStats: SimResult['finalStats']
+  allSkills: SimResult['allSkills']
+  rotation: { sequence: Pick<SimResult['rotation']['sequence'], 'entries'> }
+}
+
+export interface CompactSuggestionJob {
+  input: SuggestInput
+  simulation: SuggestionSimulation
+  weapon: WeaponPlanSet
+  resonatorIds: string[]
+  weaponIds: string[]
 }
 
 export interface DrctSuggCtx {
@@ -141,6 +157,8 @@ export interface SetPlanSuggest {
   echoes: Array<EchoInstance | null>
 }
 
+export type CompactSetPlanSuggest = Omit<SetPlanSuggest, 'echoes'>
+
 export interface WeaponEntry {
   damage: number
   weaponId: string
@@ -188,10 +206,16 @@ export interface SuggsWrkrWpn extends SuggsWrkrBase {
   payload: PrepWeaponPlan
 }
 
+export interface SuggsWrkrCompact extends SuggsWrkrBase {
+  type: 'compact'
+  mode: 'mainStats' | 'setPlans' | 'weapons'
+  payload: CompactSuggestionJob
+}
+
 export interface SuggsWrkrDon {
   id: number
   ok: true
-  result: MainStatSugg[] | SetPlanSuggest[] | WeaponEntry[]
+  result: MainStatSugg[] | SetPlanSuggest[] | CompactSetPlanSuggest[] | WeaponEntry[]
 }
 
 export interface SuggsWrkrRrr {
@@ -204,6 +228,7 @@ export type SuggsWrkrInM =
     | SuggsWrkrMai
     | SuggsWrkrSet
     | SuggsWrkrWpn
+    | SuggsWrkrCompact
 
 export type SuggsWrkrOut =
     | SuggsWrkrDon

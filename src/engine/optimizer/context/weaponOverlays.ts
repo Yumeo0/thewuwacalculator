@@ -9,6 +9,7 @@
                then scores each combo against every overlay and keeps the best.
 */
 
+import { optimizerFloats } from '@/engine/optimizer/workers/payloadBuffers'
 import type { OptStartPay } from '@/engine/optimizer/types.ts'
 import type { ResRuntime, WeaponState } from '@/domain/entities/runtime.ts'
 import type { GenWpn } from '@/domain/entities/weapon.ts'
@@ -235,7 +236,7 @@ export function buildWeaponOverlays(input: OptStartPay): WeaponOverlays | null {
   // its own max-mode passives, independent of what weapon is equipped).
   const baseRuntime = stripWeaponControls(stripEchoes(input.runtime))
 
-  const overlays = new Float32Array(candidates.length * WEAPON_OVERLAY_STRIDE)
+  const overlays = optimizerFloats(candidates.length * WEAPON_OVERLAY_STRIDE)
   const weaponIds: string[] = []
 
   for (let w = 0; w < candidates.length; w += 1) {

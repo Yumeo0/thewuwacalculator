@@ -3,6 +3,7 @@
   Description: Projects executed rotation rows into the shared register with structural ownership metadata.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { CSSProperties, MouseEvent } from 'react'
 import { useEffect, useMemo, useRef } from 'react'
 import type {
@@ -98,10 +99,10 @@ function StepGlyph({ step, roster }: { step: EditorStep; roster: TeamLookup }) {
   }
   const attribute = getAttributeIconSrc(step.element)
   if (attribute) {
-    return <img className="rtf-mark" src={attribute} alt="" loading="lazy" />
+    return <DisplayImage className="rtf-mark" src={attribute} alt="" loading="lazy" />
   }
   const art = roster.art(step.owner)
-  return <img className="rtf-mark" src={art.src} alt="" onError={art.onError} loading="lazy" />
+  return <DisplayImage className="rtf-mark" src={art.src} alt="" onError={art.onError} loading="lazy" />
 }
 
 function ConditionLine({
@@ -148,7 +149,7 @@ function ConditionLine({
       {/* the same count gutter the hits hold, so every mark lands on one edge */}
       <i className="rtf-ord" aria-hidden="true" />
       <i className="rte-cond__tick" aria-hidden="true">
-        {src ? <img className="rte-cond__art" src={src} alt="" onError={art?.onError} loading="lazy" /> : null}
+        {src ? <DisplayImage className="rte-cond__art" src={src} alt="" onError={art?.onError} loading="lazy" /> : null}
       </i>
       <em className="rte-cond__name">
         {formatEffectConditionName(write.effectName, write.label)}
@@ -405,7 +406,7 @@ export function FlatList({
                   {/* the holder is named where the wash starts and nowhere else */}
                   <span className="rte-step__owner rtf-rail is-held">
                     {face ? (
-                      <img className="rte-step__art"
+                      <DisplayImage className="rte-step__art"
                         src={holderArt.src}
                         alt={holderArt.alt}
                         onError={holderArt.onError}

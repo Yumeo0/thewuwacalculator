@@ -3,6 +3,7 @@
   Description: Builds packed per-target rotation contexts and display context for optimizer execution.
 */
 
+import { optimizerFloats } from '@/engine/optimizer/workers/payloadBuffers'
 /*
   Shared owner-context resolution and numeric packing for any evaluator that
   scores a materialized rotation as weighted skill targets.
@@ -92,8 +93,8 @@ export function packRotationTargetContexts<T extends RotationTargetContext>(opti
     prepareSkill,
   } = options
   const targets: T[] = []
-  const contexts = new Float32Array(sourceTargets.length * CTX_FLOATS)
-  const contextWeight = new Float32Array(sourceTargets.length)
+  const contexts = optimizerFloats(sourceTargets.length * CTX_FLOATS)
+  const contextWeight = optimizerFloats(sourceTargets.length)
   let displayContext: Float32Array | null = null
   let lowestPositive = Number.POSITIVE_INFINITY
   let lowestCrit = Number.POSITIVE_INFINITY
@@ -144,13 +145,13 @@ export function packRotationTargetContexts<T extends RotationTargetContext>(opti
     ) {
       lowestPositive = displayValue
       lowestCrit = critSum
-      displayContext = new Float32Array(packed)
+      displayContext = optimizerFloats(packed)
       continue
     }
 
     if (lowestPositive === Number.POSITIVE_INFINITY && displayValue === 0 && critSum < lowestZero) {
       lowestZero = critSum
-      displayContext = new Float32Array(packed)
+      displayContext = optimizerFloats(packed)
     }
   }
 

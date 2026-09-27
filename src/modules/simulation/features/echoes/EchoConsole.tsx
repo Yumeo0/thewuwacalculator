@@ -18,6 +18,7 @@ import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import { projectScenarioUiRuntimes } from '@/engine/runtime/scenarioRuntime.ts'
+import { holdResonatorData } from '@/data/gameData'
 
 // Load picker and editor modules only when a slot request needs them.
 const EchoPicker = lazy(async () => ({
@@ -60,6 +61,7 @@ function EchoConsole({
   slotIndex: number
   scenarioId?: CombatScenarioId | null
 }) {
+  useEffect(() => holdResonatorData([resonatorId]), [resonatorId])
   const closeRequest = useEchoCnsl((state) => state.close)
   const bumpPickerFreq = useAppStore((state) => state.bumpPickFr)
   const updResRt = useAppStore((state) => state.updResRt)

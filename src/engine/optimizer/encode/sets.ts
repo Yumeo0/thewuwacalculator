@@ -5,6 +5,7 @@
                optimizer evaluation.
 */
 
+import { optimizerFloats } from '@/engine/optimizer/workers/payloadBuffers'
 import { ECHO_SET_DEFS, getEchoSetCn } from '@/data/gameData/echoSets/effects'
 import {
   getSntSetOn,
@@ -531,7 +532,7 @@ export function buildSetRows(
 ): Float32Array {
   const rulesBySet = mkRlsBySet()
   const setDataLkp = mkSetDataLkp(setConds)
-  const lut = new Float32Array(SETCNSTLUTSI)
+  const lut = optimizerFloats(SETCNSTLUTSI)
   const dynamicParts = new Set(
       (options.dynamicStateParts ?? []).map((part) => `${part.setId}:${part.partKey}`),
   )

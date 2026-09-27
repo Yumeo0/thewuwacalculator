@@ -760,6 +760,13 @@ export function buildEvaluationAnchors(
   }
 }
 
+// Compute equipped damage without searching anchors or materializing report snapshots.
+export function evaluateEquippedDamage(ctx: SuggestContext, equipped: Array<EchoInstance | null>): number {
+  const echoes = equipped.filter((echo): echo is EchoInstance => echo != null)
+  const frame = makeEvaluationEchoFrame(ctx, echoes, echoes.length ? mkSuggMainEc(ctx, equipped) : new Float32Array(MAIN_BUFF_LEN))
+  return frame.score(frame.stats, frame.sets)
+}
+
 // Re-score the live build against precomputed anchors. This is the cheap path:
 // one active frame + one score + the active-build snapshot, no candidate search.
 export function assembleEvaluation(

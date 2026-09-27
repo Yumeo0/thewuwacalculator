@@ -7,9 +7,9 @@ import { useEffect, useId, useRef } from 'react'
 import type { CSSProperties as CssProps, ReactNode, RefObject } from 'react'
 import { AppModal } from '@/shared/ui/AppModal'
 import { ModalHeader } from '@/shared/ui/AppModalShell'
-import { useGridColumns } from '@/shared/lib/useGridColumns.ts'
 import { rarityVars } from '@/modules/simulation/model/display.ts'
 import { usePickerMotion } from '@/modules/simulation/ui/pickerMotion.ts'
+import { observeDisplayImage } from '@/shared/lib/displayImageSizing'
 
 export type PckrMdlRrty = 1 | 2 | 3 | 4 | 5
 
@@ -18,8 +18,6 @@ export interface PckrMdlItem {
   title: string
   subtitle?: string
   rarity?: PckrMdlRrty
-  // what the item is, in colour: its element, its sonata, its rarity. only thin
-  // marks and the tile's own glow wear it
   tone?: string
   leading?: ReactNode
   trailing?: ReactNode
@@ -68,10 +66,10 @@ export function PickerModal({
   onClose,
 }: PckrMdlPrps) {
   const titleId = useId()
-  const [gridRef, columns] = useGridColumns()
   const bodyRef = useRef<HTMLDivElement>(null)
 
   useDeferredImages(bodyRef, visible, items)
+  usePickerEntrance(bodyRef, visible)
   const capture = usePickerMotion(bodyRef)
 
   if (!visible || !portalTarget) {
@@ -110,9 +108,9 @@ export function PickerModal({
                 {emptyState ?? <p>No items available.</p>}
               </div>
             ) : (
-              <div className="picker-modal__grid picker-modal__grid--cards" ref={gridRef}>
-                {items.map((item, index) => (
-                  <PickerCard key={item.id} item={item} delay={Math.min(Math.floor(index / columns), 6) * 55} />
+              <div className="picker-modal__grid picker-modal__grid--cards">
+                {items.map((item) => (
+                  <PickerCard key={item.id} item={item} />
                 ))}
               </div>
             )}
@@ -123,6 +121,55 @@ export function PickerModal({
   )
 }
 
+// Measure mounted visible rows once and animate them directly. This avoids
+// registering CSS animation events for offscreen cards at the dialog root.
+const ENTER_ROW_STEP = 55
+const ENTER_MS = 350
+const ENTER_EASE = 'ease'
+
+function calmMotion() {
+  const flags = document.documentElement.classList
+  return flags.contains('reduce-animation') || flags.contains('no-entrance-anim')
+}
+
+export function usePickerEntrance(bodyRef: RefObject<HTMLElement | null>, visible: boolean) {
+  useEffect(() => {
+    const body = bodyRef.current
+    if (!visible || !body || calmMotion()) return
+
+    let frame: number | null = window.requestAnimationFrame(() => {
+      frame = null
+      // Layout-delta motion takes ownership after the first picker mutation.
+      if (body.closest('.picker-modal__frame')?.classList.contains('is-live')) return
+
+      const view = body.getBoundingClientRect()
+      const rows = new Map<number, HTMLElement[]>()
+      body.querySelectorAll<HTMLElement>('.picker-modal__grid > *').forEach((card) => {
+        const rect = card.getBoundingClientRect()
+        if (rect.top > view.bottom || rect.bottom < view.top) return
+        const row = Math.round(rect.top)
+        const seats = rows.get(row)
+        if (seats) seats.push(card)
+        else rows.set(row, [card])
+      })
+
+      const ordered = [...rows.keys()].sort((first, second) => first - second)
+      for (const [index, row] of ordered.entries()) {
+        for (const card of rows.get(row)!) {
+          card.animate(
+            [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }],
+            { duration: ENTER_MS, delay: index * ENTER_ROW_STEP, easing: ENTER_EASE, fill: 'backwards' },
+          )
+        }
+      }
+    })
+
+    return () => {
+      if (frame !== null) window.cancelAnimationFrame(frame)
+    }
+  }, [bodyRef, visible])
+}
+
 // Observe the modal scroll root rather than the viewport so deferred card images
 // are requested only when their card enters the active picker body.
 export function useDeferredImages(bodyRef: RefObject<HTMLElement | null>, visible: boolean, refreshKey: unknown) {
@@ -131,13 +178,16 @@ export function useDeferredImages(bodyRef: RefObject<HTMLElement | null>, visibl
     if (!visible || !body) return
     const images = body.querySelectorAll<HTMLImageElement>('img[data-deferred-src]')
     if (!images.length) return
+    const cleanups = new Map<HTMLImageElement, () => void>()
     const load = (image: HTMLImageElement) => {
       const source = image.dataset.deferredSrc
-      if (source && image.getAttribute('src') !== source) image.src = source
+      if (!source || cleanups.has(image)) return
+      image.decoding = 'async'
+      cleanups.set(image, observeDisplayImage(image, source))
     }
     if (typeof IntersectionObserver === 'undefined') {
       images.forEach(load)
-      return
+      return () => cleanups.forEach((cleanup) => cleanup())
     }
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
@@ -145,22 +195,25 @@ export function useDeferredImages(bodyRef: RefObject<HTMLElement | null>, visibl
         load(entry.target as HTMLImageElement)
         observer.unobserve(entry.target)
       }
-    }, { root: body })
+    // Begin loading one row before intersection to hide decode latency.
+    }, { root: body, rootMargin: '220px 0px' })
     images.forEach((image) => {
       if (!image.getAttribute('src')) observer.observe(image)
+      else load(image)
     })
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      cleanups.forEach((cleanup) => cleanup())
+    }
   }, [bodyRef, visible, refreshKey])
 }
 
 export function PickerCard({
   item,
-  delay,
   art,
   className = '',
 }: {
   item: PckrMdlItem
-  delay?: number
   art?: ReactNode
   className?: string
 }) {
@@ -171,7 +224,6 @@ export function PickerCard({
       style={{
         ...rarityVars(item.rarity, item.bis),
         ...(item.tone ? { '--picker-item-tone': item.tone } : null),
-        ...(delay != null ? { animationDelay: `${delay}ms` } : null),
       } as CssProps}
       aria-pressed={item.selected}
       data-bis={item.bis ? 'true' : undefined}

@@ -6,10 +6,10 @@
 
 import type { ResRuntime } from '@/domain/entities/runtime.ts'
 import { clrSrcCtrls } from '@/engine/runtime/sourceStateInit.ts'
-import type { SetPlanDisplayEntry, SetPlanSuggest, WeaponEntry } from '@/engine/suggestions/types.ts'
+import type { CompactSetPlanSuggest, SetPlanDisplayEntry, WeaponEntry } from '@/engine/suggestions/types.ts'
 import { setPlnsQl, type SetPlanSmmrE } from './suggestions.ts'
 
-export function getSetPlanDisplay(plan: SetPlanSuggest): SetPlanDisplayEntry[] {
+export function getSetPlanDisplay(plan: CompactSetPlanSuggest): SetPlanDisplayEntry[] {
   return plan.displayPlan?.length
     ? plan.displayPlan
     : plan.setPlan.map((entry) => ({ setIds: [entry.setId], pieces: entry.pieces }))
@@ -17,7 +17,7 @@ export function getSetPlanDisplay(plan: SetPlanSuggest): SetPlanDisplayEntry[] {
 
 /* Grouping can choose a concrete representative other than the worn plan.
    Match distinct worn bonuses to the displayed effect-equivalent slots. */
-export function sameSetPlanCandidate(result: SetPlanSuggest, worn: SetPlanSmmrE[], base: number): boolean {
+export function sameSetPlanCandidate(result: CompactSetPlanSuggest, worn: SetPlanSmmrE[], base: number): boolean {
   const tolerance = Math.max(1e-6, Math.abs(result.avgDamage) * 1e-6, Math.abs(base) * 1e-6)
   if (Math.abs(result.avgDamage - base) > tolerance) return false
   if (setPlnsQl(result.setPlan, worn)) return true

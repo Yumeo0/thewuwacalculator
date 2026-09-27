@@ -29,21 +29,45 @@ self.onmessage = async (event: MessageEvent<SuggsWrkrInM>) => {
   const scope = self as DedicatedWorkerGlobalScope
 
   try {
-    const input = message.type === 'weapons'
-      ? message.payload
-      : message.payload.scoringInput
+    const input = message.type === 'compact'
+      ? message.payload.input
+      : message.type === 'weapons' ? message.payload : message.payload.scoringInput
     await initGameData({
       mode: message.gameDataMode,
-      resonatorIds: [input.runtime.id, ...Object.keys(input.runtimesById)],
+      resonatorIds: message.type === 'compact'
+        ? message.payload.resonatorIds
+        : [input.runtime.id, ...Object.keys(input.runtimesById)],
+      ...(message.type === 'compact' ? {
+        calculationOnly: true,
+        weaponIds: message.payload.weaponIds,
+      } : {}),
     })
     const {
       runMainStats: mainRunner,
       runSetPlanqc: setRunner,
       runWpnSuggs: wpnRunner,
     } = await loadSuggsCor()
+    const { mkPrepMainSt, mkPrepSetPla, mkPrepWpnSu } = await import('@/engine/suggestions/shared')
 
-    const result =
-        message.type === 'mainStats'
+    const result = message.type === 'compact'
+      ? (() => {
+        const { input: compactInput, simulation, weapon } = message.payload
+        if (message.mode === 'mainStats') {
+          const prepared = mkPrepMainSt({ ...compactInput, setStateMode: 'resolved' }, simulation)
+          return prepared ? mainRunner(prepared) : []
+        }
+        if (message.mode === 'setPlans') {
+          const prepared = mkPrepSetPla({ ...compactInput, includeEchoAttacks: undefined }, simulation)
+          return prepared ? setRunner(prepared).map((plan) => ({
+            avgDamage: plan.avgDamage,
+            setPlan: plan.setPlan,
+            ...(plan.displayPlan ? { displayPlan: plan.displayPlan } : {}),
+          })) : []
+        }
+        const prepared = mkPrepWpnSu({ ...compactInput, includeEchoAttacks: true, weapon, topK: 30 }, simulation)
+        return prepared ? wpnRunner(prepared) : []
+      })()
+      : message.type === 'mainStats'
             ? mainRunner(message.payload)
             : message.type === 'setPlans'
                 ? setRunner(message.payload)

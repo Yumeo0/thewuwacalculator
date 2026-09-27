@@ -702,7 +702,7 @@ export function ShowcaseCustomizePanel({
             </>
           }
         >
-          <TuneAsset name="Main image" hint="Spine · 2048px" imageUrl={portraitImage} onPick={() => onPickImage('portrait')} />
+          <TuneAsset name="Main image" hint="Spine" imageUrl={portraitImage} onPick={() => onPickImage('portrait')} />
           {editMode === 'portrait' ? (
             <>
               <TuneSlider label="Offset X" min={-100} max={200} value={portraitX} onChange={(v) => onStyleChange({ portraitX: v })} />

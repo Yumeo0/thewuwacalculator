@@ -24,7 +24,7 @@ import type {
 } from '@/engine/optimizer/types.ts'
 import type { TgtCpuCmbBtc } from '@/engine/optimizer/target/batches.ts'
 
-type ThryPay = PrepTheoryTarget | PrepTheoryRot
+type ThryPay = Pick<PrepTheoryTarget | PrepTheoryRot, 'theoryRows' | 'profs'>
 
 interface ThryBtc extends TgtCpuCmbBtc {
   lockMainIdx: number
@@ -258,12 +258,12 @@ export function* gnrtThryCpuCm(options: {
   const slotReps = canon && payload.profs ? buildSlotReps(payload.profs) : null
   const plans = buildPlans(rows)
   const batchLength = Math.max(1, batchSize) * ECHOES_PER_SET
-  let scratch = options.borrowBuffer?.(batchLength) ?? new Int32Array(batchLength)
+  let scratch: Int32Array | null = null
   let cursor = 0
   let fillers = Array.from({ length: ECHOES_PER_SET }, () => [] as number[])
 
   function flush(): ThryBtc | null {
-    if (cursor <= 0) {
+    if (cursor <= 0 || !scratch) {
       return null
     }
 
@@ -273,7 +273,7 @@ export function* gnrtThryCpuCm(options: {
       lockMainIdx: MAIN_FIRST,
     }
 
-    scratch = options.borrowBuffer?.(batchLength) ?? new Int32Array(batchLength)
+    scratch = null
     cursor = 0
     return out
   }
@@ -506,6 +506,7 @@ export function* gnrtThryCpuCm(options: {
                 ) {
                   continue
                 }
+                scratch ??= options.borrowBuffer?.(batchLength) ?? new Int32Array(batchLength)
                 const base = cursor * ECHOES_PER_SET
                 scratch[base] = mainIndex
                 scratch[base + 1] = firstRowIndex

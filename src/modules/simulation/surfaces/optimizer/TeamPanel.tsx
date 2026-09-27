@@ -4,6 +4,7 @@
                runtime controls, and target-routing constraints.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useMemo } from 'react'
 import type { CSSProperties as CssProps } from 'react'
 import { Plus, X } from 'lucide-react'
@@ -272,7 +273,7 @@ function OptMainEchoC({
               onClick={onMainEchoCl}
               aria-label={`Select ${runtime.id} main echo`}
             >
-              <img
+              <DisplayImage
                 src={mainEchoDef.icon ?? '/assets/game/default.webp'}
                 alt={mainEchoDef.name}
                 className={`opt-team__set-icon${hasNvldMainE ? ' opt-team__set-icon--invalid' : ''}`}
@@ -282,7 +283,7 @@ function OptMainEchoC({
             </button>
           ) : (
             <div className="opt-team__set-icon-wrap">
-              <img
+              <DisplayImage
                 src={mainEchoDef.icon ?? '/assets/game/default.webp'}
                 alt={mainEchoDef.name} className="opt-team__set-icon"
                 loading="lazy"
@@ -546,13 +547,13 @@ function OptEchoSetCard({
                   triggerClass="co-set-dropdown__trigger--icon"
                   renderTrigger={() => (
                     <div className="opt-team__set-icon-wrap">
-                      {icon ? <img src={icon} alt={def.name} className="opt-team__set-icon" loading="lazy" onError={withDefIconM} /> : null}
+                      {icon ? <DisplayImage src={icon} alt={def.name} className="opt-team__set-icon" loading="lazy" onError={withDefIconM} /> : null}
                     </div>
                   )}
                 />
               ) : (
                 <div className="opt-team__set-icon-wrap">
-                  {icon ? <img src={icon} alt={def.name} className="opt-team__set-icon" loading="lazy" onError={withDefIconM} /> : null}
+                  {icon ? <DisplayImage src={icon} alt={def.name} className="opt-team__set-icon" loading="lazy" onError={withDefIconM} /> : null}
                 </div>
               )}
               <div className="opt-team__set-copy">
@@ -857,13 +858,13 @@ function OptRtCard({
             onClick={onPortraitClick}
             aria-label={`Change ${slotLabel.toLowerCase()}`}
           >
-            <img src={profileSrc} alt={displayName} className="opt-team__thumb" loading="eager" onError={withDefResMg} />
+            <DisplayImage src={profileSrc} alt={displayName} className="opt-team__thumb" loading="eager" onError={withDefResMg} />
           </button>
         ) : (
           <div className="opt-team__thumb-ring"
             style={rarityVars(rarity, false, '--avatar-rarity-color') as CssProps}
           >
-            <img src={profileSrc} alt={displayName} className="opt-team__thumb" loading="eager" onError={withDefResMg} />
+            <DisplayImage src={profileSrc} alt={displayName} className="opt-team__thumb" loading="eager" onError={withDefResMg} />
           </div>
         )}
         <div className="opt-team__identity">
@@ -950,7 +951,7 @@ function OptRtCard({
             onClick={onWpnClck}
             aria-label={`Change ${displayName} weapon`}
           >
-            <img
+            <DisplayImage
               src={weaponDef?.icon ?? '/assets/game/default.webp'}
               alt={weaponDef?.name ?? 'Weapon'} className="co-weapon-card__icon"
               loading="lazy"

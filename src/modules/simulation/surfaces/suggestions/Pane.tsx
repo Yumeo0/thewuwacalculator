@@ -4,6 +4,8 @@
                and preview materialization across main-stat, set, weapon, and random modes.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { useSuggestionTarget } from '@/modules/simulation/surfaces/suggestions/lib/useSuggestionTarget.ts'
 import { cloneElement, isValidElement as isVldElem, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties as CssProps, HTMLAttributes as HtmlAttrs } from 'react'
 import type { EnemyProfile, PickFreqWeapon } from '@/domain/entities/appState.ts'
@@ -56,7 +58,6 @@ import {
   DEFRANDSETS,
   DEFWPNSETS,
   DEFAULT_SUGG,
-  ROT_TGT_VL,
   mkEchoFullSi,
   mkGrpdSbst,
   recipeSig,
@@ -103,6 +104,8 @@ import { WpnCfgMdl } from '@/modules/simulation/surfaces/suggestions/WeaponConfi
 import { WeaponInspect } from '@/modules/simulation/surfaces/suggestions/WeaponInspect.tsx'
 import {
   targetOpts,
+  selectSuggestionTarget,
+  suggestionTargetValue,
   targetGroups,
   type SuggTgtPtn,
 } from '@/modules/simulation/surfaces/suggestions/lib/helpers.ts'
@@ -157,8 +160,8 @@ function randMainFitsPlan(
 }
 
 export function Suggestions({
-  runtime,
-  simulation,
+  runtime: liveRuntime,
+  simulation: liveSimulation,
   enemyProfile,
   prtcRntmById: partRntmById,
 }: SuggestionsPaneProps) {
@@ -204,12 +207,15 @@ export function Suggestions({
   const bumpPickerFreq = useAppStore((state) => state.bumpPickFr)
   const setConds = useAppStore((state) => (
     selectedCombatScenario(state.combat).team.members.find(
-      (member) => member.resonatorId === runtime.id,
+      (member) => member.resonatorId === liveRuntime.id,
     )?.local.setConditionals ?? DEF_SET_COND
   ))
   const showToast = useTstStr((state) => state.show)
 
-  const suggsStt = suggsMap[runtime.id] ?? DEFAULT_SUGG
+  const suggsStt = suggsMap[liveRuntime.id] ?? DEFAULT_SUGG
+  const { runtime, simulation } = useSuggestionTarget(
+    liveRuntime, liveSimulation, suggsStt.settings, enemyProfile, partRntmById, selTrgtByOwn,
+  )
   const wpnSets = useMemo<WeaponPlanSet>(() => ({
     ...DEFWPNSETS,
     ...(weaponSuggests ?? {}),
@@ -265,12 +271,12 @@ export function Suggestions({
   }, [updActResSug])
 
   const mutableTargetOptions = useMemo<SuggTgtPtn[]>(
-    () => targetOpts(runtime.id, simulation),
-    [runtime.id, simulation],
+    () => targetOpts(runtime.id, liveSimulation),
+    [runtime.id, liveSimulation],
   )
   const fixedTargetOptions = useMemo<SuggTgtPtn[]>(
-    () => targetOpts(runtime.id, simulation, { includeEchoAttacks: true }),
-    [runtime.id, simulation],
+    () => targetOpts(runtime.id, liveSimulation, { includeEchoAttacks: true }),
+    [runtime.id, liveSimulation],
   )
   const usesFixedTargets = viewMode === 'substats' || viewMode === 'weapons'
   const targetOptions = usesFixedTargets ? fixedTargetOptions : mutableTargetOptions
@@ -280,55 +286,17 @@ export function Suggestions({
     [targetOptions],
   )
 
-  const selTgtVl = suggsStt.settings.rotationMode
-    ? ROT_TGT_VL
-    : (suggsStt.settings.targetFeatureId ?? '')
-  const hasMutableTarget = suggsStt.settings.rotationMode
-    ? mutableTargetOptions.some((option) => option.value === ROT_TGT_VL)
-    : Boolean(
-      suggsStt.settings.targetFeatureId &&
-      mutableTargetOptions.some((option) => option.value === suggsStt.settings.targetFeatureId),
-    )
-  const hasFixedTarget = suggsStt.settings.rotationMode
-    ? fixedTargetOptions.some((option) => option.value === ROT_TGT_VL)
-    : Boolean(
-      suggsStt.settings.targetFeatureId &&
-      fixedTargetOptions.some((option) => option.value === suggsStt.settings.targetFeatureId),
-    )
+  const selTgtVl = suggestionTargetValue(suggsStt.settings)
+  const hasMutableTarget = mutableTargetOptions.some((option) => option.value === selTgtVl)
+  const hasFixedTarget = fixedTargetOptions.some((option) => option.value === selTgtVl)
 
   useEffect(() => {
-    // keep the selected target valid after feature lists change, preferring rotation mode when it is still available.
-    if (targetOptions.length === 0) {
-      return
-    }
-
-    if (suggsStt.settings.rotationMode) {
-      const hasRotPtn = targetOptions.some((option) => option.value === ROT_TGT_VL)
-      if (hasRotPtn) {
-        return
-      }
-    } else if (
-      suggsStt.settings.targetFeatureId &&
-      targetOptions.some((option) => option.value === suggsStt.settings.targetFeatureId)
-    ) {
-      return
-    }
-
-    const fallback = targetOptions[0]
+    if (targetOptions.length === 0 || targetOptions.some((option) => option.value === selTgtVl)) return
     updActResSug((state) => ({
       ...state,
-      settings: {
-        ...state.settings,
-        rotationMode: fallback.value === ROT_TGT_VL,
-        targetFeatureId: fallback.value === ROT_TGT_VL ? state.settings.targetFeatureId : fallback.value,
-      },
+      settings: selectSuggestionTarget(state.settings, targetOptions[0].value),
     }))
-  }, [
-    suggsStt.settings.rotationMode,
-    suggsStt.settings.targetFeatureId,
-    targetOptions,
-    updActResSug,
-  ])
+  }, [selTgtVl, targetOptions, updActResSug])
 
   const suggVltnCtx = useMemo(() => {
     // all suggestion modes score candidate echo loadouts through the same evaluation context so their damage deltas
@@ -925,11 +893,7 @@ export function Suggestions({
   const onTgtChng = useCallback((value: string) => {
     updActResSug((state) => ({
       ...state,
-      settings: {
-        ...state.settings,
-        rotationMode: value === ROT_TGT_VL,
-        targetFeatureId: value === ROT_TGT_VL ? state.settings.targetFeatureId : value,
-      },
+      settings: selectSuggestionTarget(state.settings, value),
     }))
   }, [updActResSug])
 
@@ -1352,7 +1316,7 @@ export function Suggestions({
                                 {entry.setIds.map((setId) => {
                                   const icon = getSntSetIco(setId)
                                   return icon ? (
-                                    <img key={setId} src={icon} alt="" className="spx-tray__coin" loading="lazy" onError={withDefIconM} />
+                                    <DisplayImage key={setId} src={icon} alt="" className="spx-tray__coin" loading="lazy" onError={withDefIconM} />
                                   ) : null
                                 })}
                               </span>
@@ -1424,7 +1388,7 @@ export function Suggestions({
                       {...selectableProps(selWpnNdx === index, () => setSelWpnNd(index))}
                     >
                       <div className="ws-art-slice">
-                        <img src={targetPlan.icon} alt={targetPlan.name} className="ws-art" loading="lazy" onError={withDefWpnMg} />
+                        <DisplayImage src={targetPlan.icon} alt={targetPlan.name} className="ws-art" loading="lazy" onError={withDefWpnMg} />
                         {typeMask ? <span className="ws-wm" style={typeMask} aria-hidden="true" /> : null}
                         <span className="ws-ref">R{targetPlan.rank}</span>
                       </div>
@@ -1707,7 +1671,7 @@ export function Suggestions({
                   <div className="echo-set-bonus-header">
                     <div className="echo-set-bonus-icon-wrap">
                       {icon ? (
-                        <img src={icon} alt={name} className="echo-set-bonus-icon" loading="lazy" onError={withDefIconM} />
+                        <DisplayImage src={icon} alt={name} className="echo-set-bonus-icon" loading="lazy" onError={withDefIconM} />
                       ) : (
                         <span className="echo-set-bonus-icon-fallback" />
                       )}
@@ -1787,7 +1751,7 @@ export function Suggestions({
                   title={randMainInvalid ? 'This echo cannot be generated with the selected Sonata plan.' : undefined}
                 >
                   {selRandMaiel?.icon ? (
-                    <img
+                    <DisplayImage
                       src={selRandMaiel.icon}
                       alt={selRandMaiel.name} className="rc-echo-img"
                       loading="lazy"
@@ -1909,7 +1873,7 @@ export function Suggestions({
                 return (
                   <div key={`rc-set-${entry.setId}`} className="rc-set-row">
                     {setIcon && (
-                      <img src={setIcon} alt={definition.name} className="rc-set-icon" loading="lazy" onError={withDefIconM} />
+                      <DisplayImage src={setIcon} alt={definition.name} className="rc-set-icon" loading="lazy" onError={withDefIconM} />
                     )}
                     <span className="rc-set-name">{definition.name}</span>
                     <div className="rc-set-counts">

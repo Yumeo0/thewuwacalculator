@@ -4,6 +4,7 @@
                effective search-pool counts from saved Echoes and usage filters.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useId, useMemo, useState } from 'react'
 import type { CSSProperties as CssProps, HTMLAttributes as HtmlAttrs, KeyboardEvent as KeyboardEvent, MouseEvent as RctMsVnt } from 'react'
 import { Ban, Check, RotateCcw, Search } from 'lucide-react'
@@ -160,7 +161,7 @@ function OptInvTile({
       onClick={onToggle}
       onKeyDown={onTileKeyDow}
     >
-      <img
+      <DisplayImage
         src={definition.icon}
         alt=""
         aria-hidden="true"
@@ -169,7 +170,7 @@ function OptInvTile({
         onError={hideBrknMg}
       />
       {setIcon ? (
-        <img
+        <DisplayImage
           src={setIcon}
           alt=""
           aria-hidden="true" className="inv-tile__coin"
@@ -179,7 +180,7 @@ function OptInvTile({
       ) : null}
       <span className="inv-tile__cost">{definition.cost}c</span>
       {wearer ? (
-        <img
+        <DisplayImage
           src={wearer.icon}
           alt=""
           aria-hidden="true"
@@ -227,7 +228,7 @@ function OptInvRdt({
       aria-label="Selected echo"
     >
       <div className="inv-rdt__art">
-        <img
+        <DisplayImage
           src={definition.icon}
           alt=""
           loading="lazy"
@@ -272,7 +273,7 @@ function OptInvRdt({
         <div className="inv-wear">
           <span className="inv-wear__lab">Worn by</span>
           {worn.map((equipped) => (
-            <img
+            <DisplayImage
               key={`${entry.id}-${equipped.resonatorId}-${equipped.slotIndex}`}
               src={equipped.icon}
               alt={`${equipped.resName} has it equipped`}
@@ -613,7 +614,7 @@ export function OptimizerInventoryModal({
                     aria-pressed={picked}
                     onClick={() => setSelSet(picked ? null : setId)}
                   >
-                    {setIcon ? <img src={setIcon} alt="" aria-hidden="true" onError={withDefIconM} /> : <span />}
+                    {setIcon ? <DisplayImage src={setIcon} alt="" aria-hidden="true" onError={withDefIconM} /> : <span />}
                     <span className="amdl__tab-label">{getSntSetNam(setId)}</span>
                     {picked ? <Check size="0.7rem" /> : <span className="amdl__tab-n">{count}</span>}
                   </button>

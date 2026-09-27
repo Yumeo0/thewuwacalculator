@@ -20,7 +20,7 @@ describe('configuration commit boundaries', () => {
     consumePersist()
   })
 
-  it('publishes a scenario configuration once without retaining app history', () => {
+  it('publishes a scenario configuration as one history transaction', () => {
     const before = selectedCombatScenario(useAppStore.getState().combat)
     const historyCount = useAppStore.getState().history.past.length
 
@@ -40,12 +40,12 @@ describe('configuration commit boundaries', () => {
     expect(after.revision).toBe(before.revision + 1)
     expect(after.target.level).toBe(before.target.level + 7)
     expect(after.environment.targetModifiers.defenseReduction).toBe(18)
-    expect(useAppStore.getState().history.past).toHaveLength(historyCount)
-    expect(useAppStore.getState().canUndo()).toBe(false)
+    expect(useAppStore.getState().history.past).toHaveLength(historyCount + 1)
+    expect(useAppStore.getState().canUndo()).toBe(true)
     expect(consumePersist()).toEqual(['combat.workspace'])
   })
 
-  it('publishes several appearance edits without retaining app history', () => {
+  it('publishes several appearance edits as one history transaction', () => {
     const before = useAppStore.getState()
     const historyCount = before.history.past.length
 
@@ -60,7 +60,7 @@ describe('configuration commit boundaries', () => {
     expect(after.ui.theme).toBe('background')
     expect(after.ui.themePreference).toBe('background')
     expect(after.ui.blurMode).toBe(!before.ui.blurMode)
-    expect(after.history.past).toHaveLength(historyCount)
+    expect(after.history.past).toHaveLength(historyCount + 1)
     expect(consumePersist()).toEqual(['ui.appearance'])
   })
 
@@ -130,7 +130,7 @@ describe('configuration commit boundaries', () => {
     expect(after.team.members[1]?.progression.level).toBe(42)
     expect(after.environment.routing.bySourceMemberId[initial.team.members[0].id].support).toBe(original.id)
     expect(after.revision).toBe(before.revision + 1)
-    expect(useAppStore.getState().history.past).toHaveLength(historyCount)
+    expect(useAppStore.getState().history.past).toHaveLength(historyCount + 1)
     expect(consumePersist()).toEqual(['combat.workspace'])
   })
 

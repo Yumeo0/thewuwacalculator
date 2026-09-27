@@ -4,6 +4,7 @@
                template for Simulation target configuration.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useMemo } from 'react'
 import type { ChangeEvent, CSSProperties as CssProps } from 'react'
 import { Search } from 'lucide-react'
@@ -78,7 +79,7 @@ function mkFltrNpt(
               aria-pressed={selected}
               onClick={() => onElemChng(selected ? null : elementId)}
             >
-              <img
+              <DisplayImage
                 src={`/assets/game/attributes/icons/${attributeKey}.webp`}
                 alt=""
                 aria-hidden="true"
@@ -158,7 +159,7 @@ export function EnemyPicker({
         onSelect: () => onSelect(entry.id),
         leading: (
           <div className="picker-modal__media-frame">
-            <img
+            <DisplayImage
               src={entry.icon ?? '/assets/game/default.webp'}
               alt={entry.name} className="picker-modal__media-image"
               onError={withDefIconM}
@@ -171,7 +172,7 @@ export function EnemyPicker({
           <>
             <span className="picker-modal__spec-item">{ENEMY_CLASS_TXT[entry.class]}</span>
             {attributeKey ? (
-              <img
+              <DisplayImage
                 src={`/assets/game/attributes/icons/${attributeKey}.webp`}
                 alt={ENEMY_ELEM_TXT[element!]}
                 title={ENEMY_ELEM_TXT[element!]} className="picker-modal__meta-icon picker-modal__spec-push"

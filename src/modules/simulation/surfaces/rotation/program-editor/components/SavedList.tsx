@@ -4,6 +4,7 @@
                team contributions, comparison data, and selection actions.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import {
   startTransition,
   type CSSProperties,
@@ -210,7 +211,7 @@ function Portrait({
 }) {
   return (
     <span className={className} title={member.name} style={style}>
-      <img src={member.profile} alt="" loading="lazy" onError={withDefResMg} />
+      <DisplayImage src={member.profile} alt="" loading="lazy" onError={withDefResMg} />
     </span>
   )
 }
@@ -333,7 +334,7 @@ function ResonanceCut({ members, out }: { members: SavedMember[]; out: boolean }
               waiting on is the load that would give it one. mounting the cut on
               at most two rows is the throttle here, not the loading hint */}
           <span className="rsl-cut__frame">
-            <img src={pane.member.sprite} alt="" onError={withBareCut} />
+            <DisplayImage src={pane.member.sprite} alt="" onError={withBareCut} />
             <i className="rsl-cut__scrim" />
           </span>
           <i className="rsl-cut__edge" />
@@ -539,7 +540,7 @@ function Beam({
               onPick(member.id)
             }}
           >
-            <img src={member.profile} alt="" loading="lazy" onError={withDefResMg} />
+            <DisplayImage src={member.profile} alt="" loading="lazy" onError={withDefResMg} />
             <span className="rsl-node__tag">
               <em>{member.name}</em>
               <samp>{(member.share * 100).toFixed(0)}%</samp>
@@ -755,7 +756,7 @@ function Row({
                 } as CSSProperties}
                 title={`${member.name} ${formatSavedFigure(member.figure ?? member.to - member.from, decimals)}`}
               >
-                <img src={member.profile} alt="" loading="lazy" onError={withDefResMg} />
+                <DisplayImage src={member.profile} alt="" loading="lazy" onError={withDefResMg} />
                 <samp>{(member.share * 100).toFixed(0)}%</samp>
               </span>
             ))}
@@ -1050,7 +1051,7 @@ function SavedTeamRoster({
               onClick={() => onSelect(candidate.id)}
             >
               <span className="rsl-team__portrait">
-                <img
+                <DisplayImage
                   src={candidate.profile}
                   alt=""
                   loading="lazy"
@@ -1117,7 +1118,7 @@ function SavedTeamLedger({
     <section className="rte-sect rsl-team__ledger">
       <div className="rsl-team__focus">
         <span className="rsl-team__focus-portrait">
-          <img src={member.profile} alt="" onError={withDefResMg} />
+          <DisplayImage src={member.profile} alt="" onError={withDefResMg} />
         </span>
         <span className="rsl-team__focus-name">
           <b>{member.name}</b>
@@ -1151,7 +1152,7 @@ function SavedTeamLedger({
               <div className="rsl-team__take-line">
                 <span className="rsl-team__take-name">
                   <ChevronDown className="rsl-team__take-chev" size="0.7rem" aria-hidden="true" />
-                  <img src={take.lead.profile} alt="" onError={withDefResMg} />
+                  <DisplayImage src={take.lead.profile} alt="" onError={withDefResMg} />
                   <b>{take.label}</b>
                 </span>
                 <strong>{formatSavedFigure(take.damage, decimals)}</strong>

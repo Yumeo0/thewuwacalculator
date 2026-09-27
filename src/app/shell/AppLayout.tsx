@@ -4,9 +4,8 @@
                global hosts, and the routed content aperture.
 */
 
-import { useCallback, useEffect, useLayoutEffect as useLytFfct, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect as useLytFfct, useMemo, useRef, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
-import { RosterColumn, SkllDataProv } from '@/modules/simulation/api/chrome'
 import { useSimulationSurface } from '@/modules/simulation/api/route'
 import { ChromeHeader } from '@/app/shell/ChromeHeader'
 import { AppTools } from '@/app/shell/AppTools'
@@ -20,10 +19,7 @@ import { useTstStr } from '@/shared/util/toastStore.ts'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
 import { useAppCtxMen } from '@/application/context-menu/AppContextMenu'
 import { SIMULATION_SURFACES, isSimulationRoute, isSimulationSurfaceRoute } from '@/shared/lib/appRoutes'
-import {
-  getCurChngTs,
-  ltstCurChngE,
-} from '@/data/content/changelogEntries'
+import { CURRENT_CHANGE_NOTICE, CURRENT_CHANGE_NOTICE_KEY } from '@/data/content/currentChangelogNotice'
 import { RtMenuProv } from '@/app/shell/context-menu/RouteMenuProvider'
 import { useRtChrmMen } from '@/application/context-menu/routeMenuContext'
 import { isDtblVntTgt } from '@/shared/lib/isEditableEventTarget'
@@ -34,6 +30,7 @@ import { useShellTheme } from '@/app/shell/useShellTheme'
 import { GlobalHosts } from '@/app/shell/GlobalHosts'
 
 const CHNGTSTSTORE = 'seen-changelog-version'
+const RosterColumn = lazy(async () => ({ default: (await import('@/modules/simulation/api/roster')).RosterColumn }))
 let chngTstShwn = false
 
 // Preserve the canonical simulation-route ordering used by chrome navigation.
@@ -76,11 +73,11 @@ function AppLayoutContent() {
   useLytFfct(() => setFrontDoor(location.pathname), [location.pathname])
 
   useEffect(() => {
-    if (!updateToast || chngTstShwn || !ltstCurChngE?.shortDesc) {
+    if (!updateToast || chngTstShwn) {
       return
     }
 
-    const ltstVrsn = getCurChngTs(ltstCurChngE)
+    const ltstVrsn = CURRENT_CHANGE_NOTICE_KEY
     if (localStorage.getItem(CHNGTSTSTORE) === ltstVrsn) {
       return
     }
@@ -88,7 +85,7 @@ function AppLayoutContent() {
     chngTstShwn = true
     showToast({
       content: (
-        <span dangerouslySetInnerHTML={{ __html: ltstCurChngE.shortDesc }} />
+        <span dangerouslySetInnerHTML={{ __html: CURRENT_CHANGE_NOTICE.shortDesc }} />
       ),
       variant: 'success',
       duration: 60000,
@@ -166,9 +163,6 @@ function AppLayoutContent() {
   }, [rtChrmMenu.actions])
 
   return (
-    /* One provider keeps skill-data modal state shared across chrome and routed
-       Simulation tools. */
-    <SkllDataProv>
       <ContextTrigger
         asChild
         ariaLabel="App actions"
@@ -188,7 +182,7 @@ function AppLayoutContent() {
               />
 
               {/* Keep the roster outside Outlet so route changes do not remount it. */}
-              {rosterUp ? <RosterColumn /> : null}
+              {rosterUp ? <Suspense fallback={null}><RosterColumn /></Suspense> : null}
 
               <main className="main-content" ref={aperture}>
                 <Outlet context={{ setStamp } satisfies ChromeIndexCtx} />
@@ -199,6 +193,5 @@ function AppLayoutContent() {
           <GlobalHosts simulating={simulating} />
         </div>
       </ContextTrigger>
-    </SkllDataProv>
   )
 }

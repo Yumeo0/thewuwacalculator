@@ -4,7 +4,8 @@
                normalizes retained stats when replacing a catalog piece.
 */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { CSSProperties as CssProps, KeyboardEvent as ReactKeyEvt, PointerEvent as ReactPtrEvt } from 'react'
 import { X } from 'lucide-react'
 import type { EchoDef } from '@/domain/entities/catalog.ts'
@@ -21,6 +22,7 @@ import {
 import { getSntSetNam, getSntSetIco, getSntSetClr } from '@/data/gameData/catalog/sonataSets.ts'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback'
 import { AppModal } from '@/shared/ui/AppModal'
+import { AnchoredAppPopup } from '@/shared/ui/AppPopup'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { EchoPicker } from '@/modules/simulation/features/echoes/Picker.tsx'
 import { StatGlyph } from '@/modules/simulation/workspace/ui.tsx'
@@ -108,6 +110,9 @@ interface StatFieldP {
 
 // Resolve typed labels and aliases to an available stat; Enter or Tab commits it.
 export function StatField({ statKey, options, usedKeys, placeholder, ariaLabel, onPick }: StatFieldP) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const listboxId = useId()
   const label = statKey ? fmtStatKey(statKey) : ''
   const [draft, setDraft] = useState<string | null>(null)
   const [typed, setTyped] = useState(false)
@@ -123,6 +128,13 @@ export function StatField({ statKey, options, usedKeys, placeholder, ariaLabel, 
 
   const open = draft !== null
   const current = matches[highlight]
+  const menuVisible = open && matches.length > 0
+
+  useEffect(() => {
+    if (!menuVisible) return
+    menuRef.current?.children[highlight]?.scrollIntoView({ block: 'nearest' })
+  }, [highlight, matches, menuVisible])
+
   const completion = !typed || !current || current.taken
     ? ''
     : fmtStatKey(current.key).toLowerCase().startsWith(query.toLowerCase())
@@ -173,8 +185,14 @@ export function StatField({ statKey, options, usedKeys, placeholder, ariaLabel, 
   return (
     <span className="eec-field">
       <input
+        ref={inputRef}
         className="eec-field-input"
         type="text"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded={menuVisible}
+        aria-controls={menuVisible ? listboxId : undefined}
+        aria-activedescendant={menuVisible && current ? `${listboxId}-${current.key}` : undefined}
         value={draft ?? label}
         placeholder={placeholder}
         aria-label={ariaLabel}
@@ -183,7 +201,7 @@ export function StatField({ statKey, options, usedKeys, placeholder, ariaLabel, 
         onFocus={(event) => {
           setDraft(label)
           setTyped(false)
-          setHighlight(Math.max(0, options.indexOf(statKey)))
+          setHighlight(Math.max(0, matches.findIndex((match) => match.key === statKey)))
           event.currentTarget.select()
         }}
         onChange={(event) => {
@@ -198,11 +216,22 @@ export function StatField({ statKey, options, usedKeys, placeholder, ariaLabel, 
         {completion ? <><i>{draft}</i>{completion}</> : null}
       </span>
 
-      {open && matches.length > 0 ? (
-        <span className="eec-sugg" role="listbox" aria-label={ariaLabel}>
+      <AnchoredAppPopup
+        visible={menuVisible}
+        open={menuVisible}
+        anchorRef={inputRef}
+        popupRef={menuRef}
+        anchorWidth="minimum"
+        offset={4}
+        id={listboxId}
+        className="eec-sugg"
+        role="listbox"
+        aria-label={ariaLabel}
+      >
           {matches.map((match, index) => (
             <button
               key={match.key}
+              id={`${listboxId}-${match.key}`}
               type="button" tabIndex={-1} role="option"
               className={`eec-sugg-opt${index === highlight ? ' is-hi' : ''}`}
               aria-selected={index === highlight}
@@ -217,8 +246,7 @@ export function StatField({ statKey, options, usedKeys, placeholder, ariaLabel, 
               <em>{match.taken ? 'in use' : STAT_ALIASES[match.key]?.[0] ?? ''}</em>
             </button>
           ))}
-        </span>
-      ) : null}
+      </AnchoredAppPopup>
     </span>
   )
 }
@@ -517,7 +545,7 @@ export function Edit({
               disabled={!canRecast}
             >
               <span className="eec-lead">
-                <img src={definition.icon} alt="" loading="lazy" onError={withDefEchoMg} />
+                <DisplayImage src={definition.icon} alt="" loading="lazy" onError={withDefEchoMg} />
                 {canRecast ? <em>Change</em> : null}
               </span>
               <span className="eec-plate">
@@ -527,7 +555,7 @@ export function Edit({
                   style={{ '--set-clr': getSntSetClr(selectedSet) ?? 'var(--amdl-accent)' } as CssProps}
                 >
                   {getSntSetIco(selectedSet) ? (
-                    <img
+                    <DisplayImage
                       src={getSntSetIco(selectedSet) ?? undefined}
                       alt=""
                       loading="lazy"
@@ -576,7 +604,7 @@ export function Edit({
                     onClick={() => setSelSet(setId)}
                   >
                     {getSntSetIco(setId) ? (
-                      <img src={getSntSetIco(setId) ?? undefined} alt="" loading="lazy" onError={withDefIconM} />
+                      <DisplayImage src={getSntSetIco(setId) ?? undefined} alt="" loading="lazy" onError={withDefIconM} />
                     ) : null}
                   </button>
                 ))}

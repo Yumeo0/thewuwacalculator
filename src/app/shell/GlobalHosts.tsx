@@ -4,7 +4,7 @@
                their state survives navigation.
 */
 
-import { EchoImportHost, EnemyConsoleHost, ImportStamp } from '@/modules/simulation/api/chrome'
+import { lazy, Suspense, useState } from 'react'
 import { NavHold } from '@/app/nav/NavHold'
 import { DlyNtc } from '@/app/shell/DailyNotice'
 import { NtfcTstCntn } from '@/shared/ui/NotificationToast'
@@ -12,14 +12,19 @@ import { CookieBanner } from '@/app/shell/CookieBanner'
 import { BetaNoticeModal } from '@/app/shell/BetaNoticeModal'
 import { useCkBnnr } from '@/app/hooks/useCookieBanner.ts'
 
+const EchoImportHost = lazy(async () => ({ default: (await import('@/modules/simulation/api/globalHosts')).EchoImportHost }))
+const ImportStamp = lazy(async () => ({ default: (await import('@/modules/simulation/api/globalHosts')).ImportStamp }))
+const EnemyConsoleHost = lazy(async () => ({ default: (await import('@/modules/simulation/api/globalHosts')).EnemyConsoleHost }))
+
 export function GlobalHosts({ simulating }: { simulating: boolean }) {
   const cookieBanner = useCkBnnr()
+  const [simulationVisited, setSimulationVisited] = useState(simulating)
+  if (simulating && !simulationVisited) setSimulationVisited(true)
 
   return (
     <>
-      <EchoImportHost />
-      <ImportStamp />
-      {simulating ? <EnemyConsoleHost /> : null}
+      {simulationVisited ? <Suspense fallback={null}><EchoImportHost /><ImportStamp />
+        {simulating ? <EnemyConsoleHost /> : null}</Suspense> : null}
       <NavHold />
       <DlyNtc />
       <NtfcTstCntn />

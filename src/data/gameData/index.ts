@@ -19,6 +19,8 @@ import type { SkillDamageEntry } from '@/domain/entities/stats'
 import { DEF_GAME_DATA_MODE, type GameDataMode } from '@/domain/entities/gameDataMode'
 import { getResCatByI, initResCat, initResDtls, initResKitSeeds } from '@/data/gameData/resonators/resonatorDataStore'
 import { initWpnData } from '@/data/gameData/weapons/weaponDataStore'
+import { decodeCoreWeaponCatalog, type CoreWeaponCatalog } from '@/data/gameData/weapons/coreCatalog'
+import { isSimulationRoute } from '@/shared/lib/appRoutes'
 
 const GAME_DATA_KEY = '__wuwaGameDataState__'
 const registryListeners = new Set<() => void>()
@@ -43,6 +45,7 @@ function makeDataUrls(mode: GameDataMode) {
     enemySources: `${root}/enemies/sources.json`,
     weaponSources: `${root}/weapons/sources.json`,
     weaponCatalog: `${root}/weapons/catalog.json`,
+    weaponCoreCatalog: `${root}/weapons/core-catalog.json`,
     resonatorCatalog: `${root}/resonators/catalog.json`,
     resonatorPickerCatalog: `${root}/resonators/picker-catalog.json`,
     resonatorDetails: `${root}/resonators/details.json`,
@@ -50,6 +53,7 @@ function makeDataUrls(mode: GameDataMode) {
     echoStats: `${root}/echoes/stats.json`,
     sonataSets: `${root}/sonata/sets.json`,
     sonataEffects: `${root}/sonata/effects.json`,
+    sourceManifest: `${root}/source-manifest.json`,
   } as const
 }
 
@@ -59,11 +63,15 @@ type GameDataGlbl = {
   mode: GameDataMode | null
   resonatorScope: string | null
   commonSources: SrcPkg[] | null
+  commonRegistry?: GameDataReg | null
+  coreCatalogs?: CoreCatalogs | null
   knownFeatureIds: Set<string> | null
   bundles: Map<string, ResonatorWorkerBundle>
   pendingBundles: Map<string, Promise<void>>
   retainedIds: Set<string>
   leases: Map<object, readonly string[]>
+  coreOnly?: boolean
+  releaseRequested?: boolean
 }
 
 function getGameDataG(): GameDataGlbl {
@@ -75,6 +83,8 @@ function getGameDataG(): GameDataGlbl {
   if (existing) {
     // Development hot reload can retain an older singleton shape.
     existing.commonSources ??= null
+    existing.commonRegistry ??= null
+    existing.coreCatalogs ??= null
     existing.knownFeatureIds ??= null
     existing.bundles ??= new Map()
     existing.pendingBundles ??= new Map()
@@ -89,6 +99,8 @@ function getGameDataG(): GameDataGlbl {
     mode: null,
     resonatorScope: null,
     commonSources: null,
+    commonRegistry: null,
+    coreCatalogs: null,
     knownFeatureIds: null,
     bundles: new Map(),
     pendingBundles: new Map(),
@@ -107,6 +119,9 @@ export function hydrGameData(registry: GameDataReg, mode: GameDataMode = DEF_GAM
   state.mode = mode
   state.resonatorScope = null
   state.commonSources = null
+  state.commonRegistry = null
+  state.coreCatalogs = null
+  state.releaseRequested = false
   state.knownFeatureIds = null
   state.bundles.clear()
   state.pendingBundles.clear()
@@ -139,6 +154,42 @@ interface ResonatorWorkerBundle {
   seed?: ResSeed
 }
 
+interface CoreCatalogs {
+  mode: GameDataMode
+  sourceStubs: SrcPkg[]
+  seeds: ResSeed[]
+  bundles: Map<string, ResonatorWorkerBundle>
+  weapons: GenWpn[]
+  echoes: EchoDef[]
+  echoStats: EchoSttsCatD
+  sonataSets: SntSetDef[]
+  echoSets: SetDef[]
+  featureIds: string[]
+}
+
+interface SourceManifest {
+  sources: Array<SrcPkg['source']>
+  featureIds: string[]
+}
+
+let nonSimulationReleaseTimer: ReturnType<typeof setTimeout> | null = null
+
+function cancelNonSimulationRelease(): void {
+  if (nonSimulationReleaseTimer !== null) clearTimeout(nonSimulationReleaseTimer)
+  nonSimulationReleaseTimer = null
+}
+
+function scheduleNonSimulationRelease(state: GameDataGlbl): void {
+  if (typeof window === 'undefined' || isSimulationRoute(window.location.pathname)) return
+  cancelNonSimulationRelease()
+  nonSimulationReleaseTimer = setTimeout(() => {
+    nonSimulationReleaseTimer = null
+    if (getGameDataG() === state && !isSimulationRoute(window.location.pathname)) {
+      releaseCalculationGameData()
+    }
+  }, 1_200)
+}
+
 // Omitted IDs preserve the full registry for offline tools and migrations.
 // Browser and worker entry points request only their current team.
 export async function initGameData(options: {
@@ -148,6 +199,8 @@ export async function initGameData(options: {
   weaponIds?: readonly string[]
 } = {}): Promise<void> {
   const state = getGameDataG()
+  cancelNonSimulationRelease()
+  state.releaseRequested = false
   const mode = options.mode ?? DEF_GAME_DATA_MODE
   const resonatorIds = options.resonatorIds
     ? Array.from(new Set(options.resonatorIds)).sort()
@@ -166,6 +219,9 @@ export async function initGameData(options: {
     await state.initializationPromise.catch(() => undefined)
   }
 
+  const fallbackCoreRegistry = state.coreOnly && state.mode === mode ? state.registry : null
+  const fallbackCoreScope = fallbackCoreRegistry ? state.resonatorScope : null
+
   if (state.registry && (state.mode !== mode || state.resonatorScope !== resonatorScope)) {
     state.registry = null
     state.initializationPromise = null
@@ -175,9 +231,11 @@ export async function initGameData(options: {
     state.mode = mode
     state.resonatorScope = resonatorScope
     const dataUrls = makeDataUrls(mode)
+    const core = state.coreCatalogs?.mode === mode ? state.coreCatalogs : null
     state.initializationPromise = (async () => {
       const featureIdsRequest = resonatorIds && !calculationOnly
-        ? fetch(gameDataUrl(mode, 'resonators/feature-ids.json')).then((r) => r.json() as Promise<string[]>)
+        ? core ? Promise.resolve(core.featureIds)
+          : fetch(gameDataUrl(mode, 'resonators/feature-ids.json')).then((r) => r.json() as Promise<string[]>)
         : Promise.resolve<string[]>([])
       const runtimeBundles = calculationOnly ? Promise.all(resonatorIds!.map(async (id) => {
         const response = await fetch(gameDataUrl(mode, `resonators/runtime-bundles/${encodeURIComponent(id)}.json`))
@@ -191,9 +249,12 @@ export async function initGameData(options: {
       })) : null
       const resCatRequest = runtimeBundles
         ? runtimeBundles.then((bundles) => bundles.flatMap((bundle) => bundle.seed ? [bundle.seed] : []))
-        : fetch(resonatorIds ? dataUrls.resonatorPickerCatalog : dataUrls.resonatorCatalog).then((r) => r.json() as Promise<ResSeed[]>)
+        : core && resonatorIds ? Promise.resolve(core.seeds)
+          : fetch(resonatorIds ? dataUrls.resonatorPickerCatalog : dataUrls.resonatorCatalog).then((r) => r.json() as Promise<ResSeed[]>)
       const resonatorData = resonatorIds
         ? (runtimeBundles ?? resCatRequest.then((catalog) => Promise.all(resonatorIds.filter((id) => catalog.some((seed) => seed.id === id)).map(async (id): Promise<ResonatorWorkerBundle> => {
+          const cached = core?.bundles.get(id)
+          if (cached) return cached
           const response = await fetch(`${dataUrls.resonatorSources.replace(/sources\.json$/, '')}worker-bundles/${encodeURIComponent(id)}.json`)
           if (!response.ok) throw new Error(`Resonator worker bundle unavailable: ${id}`)
           return response.json() as Promise<ResonatorWorkerBundle>
@@ -230,12 +291,14 @@ export async function initGameData(options: {
         enemySources,
         weaponSources,
         weaponData,
+        coreWeaponData,
         resCat,
         echoCatalog,
         echoStats,
         sonataSets,
         echoSetDefs,
         featureIds,
+        sourceManifest,
       ] =
         await Promise.all([
           resonatorData,
@@ -243,12 +306,17 @@ export async function initGameData(options: {
           fetch(dataUrls.enemySources).then((r) => r.json() as Promise<SrcPkg[]>),
           weaponBundles ? weaponBundles.then((bundles) => bundles.flatMap((bundle) => bundle.source ? [bundle.source] : [])) : fetch(dataUrls.weaponSources).then((r) => r.json() as Promise<SrcPkg[]>),
           weaponBundles ? weaponBundles.then((bundles) => bundles.map((bundle) => bundle.weapon)) : fetch(dataUrls.weaponCatalog).then((r) => r.json() as Promise<GenWpn[]>),
+          calculationOnly ? Promise.resolve<GenWpn[]>([])
+            : core ? Promise.resolve(core.weapons)
+              : fetch(dataUrls.weaponCoreCatalog).then((r) => r.json() as Promise<CoreWeaponCatalog>).then(decodeCoreWeaponCatalog),
           resCatRequest,
-          fetch(dataUrls.echoCatalog).then((r) => r.json() as Promise<EchoDef[]>),
-          fetch(dataUrls.echoStats).then((r) => r.json() as Promise<EchoSttsCatD>),
-          fetch(dataUrls.sonataSets).then((r) => r.json() as Promise<SntSetDef[]>),
-          fetch(dataUrls.sonataEffects).then((r) => r.json() as Promise<SetDef[]>),
+          core ? Promise.resolve(core.echoes) : fetch(dataUrls.echoCatalog).then((r) => r.json() as Promise<EchoDef[]>),
+          core ? Promise.resolve(core.echoStats) : fetch(dataUrls.echoStats).then((r) => r.json() as Promise<EchoSttsCatD>),
+          core ? Promise.resolve(core.sonataSets) : fetch(dataUrls.sonataSets).then((r) => r.json() as Promise<SntSetDef[]>),
+          core ? Promise.resolve(core.echoSets) : fetch(dataUrls.sonataEffects).then((r) => r.json() as Promise<SetDef[]>),
           featureIdsRequest,
+          core ? Promise.resolve({ sources: core.sourceStubs.map((stub) => stub.source), featureIds: core.featureIds })
+            : fetch(dataUrls.sourceManifest).then((r) => r.json() as Promise<SourceManifest>),
         ])
 
       initResCat(resCat)
@@ -273,6 +341,7 @@ export async function initGameData(options: {
         ...resonators.sources.flatMap((source) => (source.features ?? []).map((feature) => feature.id)),
       ])
       state.commonSources = resonatorIds ? commonSources : null
+      state.commonRegistry = resonatorIds ? mkGameDataRe(commonSources) : null
       state.retainedIds = new Set(resonatorIds ?? [])
       state.bundles.clear()
       if (resonatorIds) {
@@ -280,13 +349,32 @@ export async function initGameData(options: {
           state.bundles.set(source.source.id, { source, details: resonators.details[source.source.id] ?? null, seed: resonators.seeds[source.source.id] })
         }
       }
-      installRegistry(state, mkGameDataRe([...resonators.sources, ...commonSources], {
+      state.coreCatalogs = {
+        mode,
+        sourceStubs: sourceManifest.sources.map((source) => ({ source })),
+        seeds: resCat,
+        bundles: new Map([...state.bundles]),
+        weapons: coreWeaponData,
+        echoes: echoCatalog,
+        echoStats,
+        sonataSets,
+        echoSets: echoSetDefs,
+        featureIds: [...state.knownFeatureIds],
+      }
+      installRegistry(state, mkGameDataRe(resonatorIds ? resonators.sources : [...resonators.sources, ...commonSources], {
         resonatorStatesById: materializeResonatorStatesById(resonators.details),
+        base: state.commonRegistry ?? undefined,
       }))
+      state.coreOnly = false
     })().catch((error) => {
       const nextState = getGameDataG()
       nextState.initializationPromise = null
-      if (!nextState.registry) {
+      if (!nextState.registry && fallbackCoreRegistry) {
+        nextState.mode = mode
+        nextState.resonatorScope = fallbackCoreScope
+        nextState.coreOnly = true
+        installRegistry(nextState, fallbackCoreRegistry)
+      } else if (!nextState.registry) {
         nextState.mode = null
         nextState.resonatorScope = null
       }
@@ -294,6 +382,71 @@ export async function initGameData(options: {
     })
   }
 
+  await state.initializationPromise
+}
+
+/** Boot routes that only need catalogs and persisted-state validation without
+ * constructing the calculation registry and all of its derived indexes. */
+export async function initCoreGameData(options: { mode?: GameDataMode; resonatorIds?: readonly string[] } = {}): Promise<void> {
+  const state = getGameDataG()
+  const mode = options.mode ?? DEF_GAME_DATA_MODE
+  if (state.registry && state.mode === mode) return
+  if (state.initializationPromise) await state.initializationPromise.catch(() => undefined)
+  if (state.registry && state.mode === mode) return
+  const ids = [...new Set(options.resonatorIds ?? [])]
+  state.mode = mode
+  state.resonatorScope = `core:${ids.sort().join(',')}`
+  const urls = makeDataUrls(mode)
+  state.initializationPromise = (async () => {
+    const [seeds, bundles, weapons, echoes, echoStats, sonataSets, echoSets, manifest] = await Promise.all([
+      fetch(urls.resonatorPickerCatalog).then((response) => response.json() as Promise<ResSeed[]>),
+      Promise.all(ids.map(async (id) => {
+        const response = await fetch(gameDataUrl(mode, `resonators/worker-bundles/${encodeURIComponent(id)}.json`))
+        if (!response.ok) throw new Error(`Resonator data unavailable: ${id}`)
+        return response.json() as Promise<ResonatorWorkerBundle>
+      })),
+      fetch(urls.weaponCoreCatalog).then((response) => response.json() as Promise<CoreWeaponCatalog>).then(decodeCoreWeaponCatalog),
+      fetch(urls.echoCatalog).then((response) => response.json() as Promise<EchoDef[]>),
+      fetch(urls.echoStats).then((response) => response.json() as Promise<EchoSttsCatD>),
+      fetch(urls.sonataSets).then((response) => response.json() as Promise<SntSetDef[]>),
+      fetch(urls.sonataEffects).then((response) => response.json() as Promise<SetDef[]>),
+      fetch(urls.sourceManifest).then((response) => response.json() as Promise<SourceManifest>),
+    ])
+    const details = Object.fromEntries(bundles.flatMap((bundle) => bundle.details ? [[bundle.source.source.id, bundle.details]] : []))
+    initResCat(seeds)
+    initResKitSeeds(Object.fromEntries(bundles.flatMap((bundle) => bundle.seed ? [[bundle.seed.id, bundle.seed]] : [])))
+    initResDtls(details)
+    initWpnData(weapons)
+    initEchoCat(normEchoCat(echoes))
+    initEchoStts(echoStats)
+    initSntSets(sonataSets)
+    initEchoSetD(echoSets)
+    state.knownFeatureIds = new Set(manifest.featureIds)
+    state.retainedIds = new Set(ids)
+    state.bundles = new Map(bundles.map((bundle) => [bundle.source.source.id, bundle]))
+    state.commonSources = null
+    state.commonRegistry = null
+    state.coreCatalogs = {
+      mode,
+      sourceStubs: manifest.sources.map((source) => ({ source })),
+      seeds,
+      bundles: new Map(bundles.map((bundle) => [bundle.source.source.id, bundle])),
+      weapons,
+      echoes,
+      echoStats,
+      sonataSets,
+      echoSets,
+      featureIds: manifest.featureIds,
+    }
+    state.coreOnly = true
+    // Source identities are sufficient for persisted-state validation. The
+    // full source graph is rebuilt only when a calculation route is entered.
+    installRegistry(state, mkGameDataRe(state.coreCatalogs.sourceStubs))
+  })().catch((error) => {
+    state.initializationPromise = null
+    state.registry = null
+    throw error
+  })
   await state.initializationPromise
 }
 
@@ -313,14 +466,14 @@ const RECENT_RESONATOR_LIMIT = 3
 
 export function hasResonatorData(ids: readonly string[]): boolean {
   const state = getGameDataG()
-  return Boolean(state.registry && (state.commonSources === null || ids.every((id) => !getResCatByI()[id] || state.bundles.has(id))))
+  return Boolean(state.registry && !state.coreOnly && (state.commonSources === null || ids.every((id) => !getResCatByI()[id] || state.bundles.has(id))))
 }
 
 function rebuildScopedRegistry(state: GameDataGlbl): void {
-  if (!state.commonSources) return
+  if (!state.commonSources || !state.commonRegistry) return
   const details: Record<string, ResDtls> = {}
   const seeds: Record<string, ResSeed> = {}
-  const sources = [...state.commonSources]
+  const sources: SrcPkg[] = []
   for (const [id, bundle] of state.bundles) {
     sources.push(bundle.source)
     if (bundle.details) details[id] = bundle.details
@@ -330,6 +483,7 @@ function rebuildScopedRegistry(state: GameDataGlbl): void {
   initResDtls(details)
   installRegistry(state, mkGameDataRe(sources, {
     resonatorStatesById: materializeResonatorStatesById(details),
+    base: state.commonRegistry,
   }))
   state.resonatorScope = [...state.bundles.keys()].sort().join(',')
 }
@@ -337,6 +491,11 @@ function rebuildScopedRegistry(state: GameDataGlbl): void {
 export async function ensureResonatorData(ids: readonly string[]): Promise<void> {
   const state = getGameDataG()
   if (!state.registry) throw new Error('Game data is not initialized')
+  if (state.coreOnly) {
+    await initGameData({ mode: state.mode ?? DEF_GAME_DATA_MODE, resonatorIds: [...new Set([...state.retainedIds, ...ids])] })
+    scheduleNonSimulationRelease(state)
+    return
+  }
   if (state.commonSources === null) return
   const release = holdResonatorData(ids)
   let changed = false
@@ -365,6 +524,7 @@ export async function ensureResonatorData(ids: readonly string[]): Promise<void>
   // Callers normalize/commit their loaded data in the promise continuation.
   // Trim on the next task so canceled pickers and import reviews stay bounded too.
   setTimeout(release, 0)
+  scheduleNonSimulationRelease(state)
   const failed = results.find((result) => result.status === 'rejected')
   if (failed?.status === 'rejected') throw failed.reason
 }
@@ -376,8 +536,36 @@ export function holdResonatorData(ids: readonly string[]): () => void {
   state.leases.set(lease, ids)
   return () => {
     state.leases.delete(lease)
+    if (state.releaseRequested && state.leases.size === 0) {
+      releaseCalculationGameData()
+      return
+    }
     scheduleResonatorTrim(state)
   }
+}
+
+/** Return to the catalog-only registry after leaving Simulation. Detached
+ * modals can keep a kit lease and delay this release until they close. */
+export function releaseCalculationGameData(): void {
+  cancelNonSimulationRelease()
+  const state = getGameDataG()
+  if (state.coreOnly || !state.registry) return
+  state.releaseRequested = true
+  if (state.leases.size > 0) return
+  const sourceKeys = state.coreCatalogs?.sourceStubs
+    ?? Object.values(state.registry.sourcesByKey).map((source) => ({ source: source.source })) as SrcPkg[]
+  const retained = new Map([...state.bundles].filter(([id]) => state.retainedIds.has(id)))
+  state.bundles = retained
+  if (state.coreCatalogs) state.coreCatalogs.bundles = new Map(retained)
+  if (state.coreCatalogs) initWpnData(state.coreCatalogs.weapons)
+  initResKitSeeds(Object.fromEntries([...retained].flatMap(([id, bundle]) => bundle.seed ? [[id, bundle.seed]] : [])))
+  initResDtls(Object.fromEntries([...retained].flatMap(([id, bundle]) => bundle.details ? [[id, bundle.details]] : [])))
+  state.commonSources = null
+  state.commonRegistry = null
+  state.coreOnly = true
+  state.releaseRequested = false
+  state.resonatorScope = `core:${[...retained.keys()].sort().join(',')}`
+  installRegistry(state, mkGameDataRe(sourceKeys))
 }
 
 let trimTimer: ReturnType<typeof setTimeout> | null = null

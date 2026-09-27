@@ -91,7 +91,7 @@ const activeMainStatProfileByChar = new Map<string, string>()
 const mainStatProfileRevisionByChar = new Map<string, number>()
 const mainStatProfileListenersByChar = new Map<string, Set<() => void>>()
 
-function activeMainStatProfile(charId: string): EchoMainStatScoreProfile | undefined {
+export function activeMainStatProfile(charId: string): EchoMainStatScoreProfile | undefined {
   const activeKey = activeMainStatProfileByChar.get(charId)
   return activeKey ? mainStatProfiles.get(activeKey) : undefined
 }
@@ -479,8 +479,8 @@ interface EchoLoadoutScoreResult {
 }
 
 const REFERENCE_MAIN_SCORE = 44
-const REFERENCE_SUBSTAT_SCORE = SUBSTAT_RANGES.critDmg.max
-const FULL_REFERENCE_ECHO_SCORE = REFERENCE_MAIN_SCORE + (5 * REFERENCE_SUBSTAT_SCORE)
+const referenceSubstatScore = () => SUBSTAT_RANGES.critDmg.max
+const fullReferenceEchoScore = () => REFERENCE_MAIN_SCORE + (5 * referenceSubstatScore())
 
 function scoreEchoLoadoutReference(
     charId: string,
@@ -563,14 +563,14 @@ function scoreEchoLoadoutReference(
         || left.index - right.index
       ))
     const totalValue = candidates.reduce((sum, candidate) => sum + candidate.value, 0)
-    let remainingPoints = count * REFERENCE_SUBSTAT_SCORE
+    let remainingPoints = count * referenceSubstatScore()
       * Math.min(1, totalValue / targetValue)
     let active = candidates.map((candidate) => ({ ...candidate }))
     while (active.length > 0 && remainingPoints > 0) {
       const activeValue = active.reduce((sum, candidate) => sum + candidate.value, 0)
       if (activeValue <= 0) break
       const capped = active.filter((candidate) => (
-        (remainingPoints * candidate.value) / activeValue >= REFERENCE_SUBSTAT_SCORE
+        (remainingPoints * candidate.value) / activeValue >= referenceSubstatScore()
       ))
       if (capped.length === 0) {
         for (const candidate of active) {
@@ -579,8 +579,8 @@ function scoreEchoLoadoutReference(
         break
       }
       for (const candidate of capped) {
-        earned[candidate.index].sub += REFERENCE_SUBSTAT_SCORE
-        remainingPoints -= REFERENCE_SUBSTAT_SCORE
+        earned[candidate.index].sub += referenceSubstatScore()
+        remainingPoints -= referenceSubstatScore()
       }
       const cappedIndices = new Set(capped.map(({ index }) => index))
       active = active.filter(({ index }) => !cappedIndices.has(index))
@@ -591,14 +591,14 @@ function scoreEchoLoadoutReference(
   let maxScore = 0
   const scores = echoes.map((echo, index) => {
     if (!echo) {
-      maxScore += FULL_REFERENCE_ECHO_SCORE
+      maxScore += fullReferenceEchoScore()
       return null
     }
 
     const includeMain = !UTILITY_SCORE_STATS.has(echo.mainStats.primary.key)
     const subSlots = Math.max(0, 5 - utilitySubstatSlots(echo))
     const echoMax = (includeMain ? REFERENCE_MAIN_SCORE : 0)
-      + (subSlots * REFERENCE_SUBSTAT_SCORE)
+      + (subSlots * referenceSubstatScore())
     const echoScore = Math.min(echoMax, earned[index].main + earned[index].sub)
     totalScore += echoScore
     maxScore += echoMax

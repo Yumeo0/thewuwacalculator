@@ -5,7 +5,7 @@
                successful computation without re-dispatching worker jobs.
 */
 
-const SUGG_CACHE_MAX = 24
+const SUGG_CACHE_MAX = 1
 const suggestCache = new Map<string, unknown>()
 
 export function readSuggsSss<T>(key: string): T | null {
@@ -26,6 +26,10 @@ export function writeSuggsSs<T>(key: string, value: T): void {
 
   suggestCache.set(key, value)
 
+  const family = key.split(':', 1)[0]
+  const familyKeys = [...suggestCache.keys()].filter((entry) => entry.startsWith(`${family}:`))
+  for (const stale of familyKeys.slice(0, -2)) suggestCache.delete(stale)
+
   while (suggestCache.size > SUGG_CACHE_MAX) {
     const oldestKey = suggestCache.keys().next().value
     if (oldestKey == null) {
@@ -33,5 +37,11 @@ export function writeSuggsSs<T>(key: string, value: T): void {
     }
 
     suggestCache.delete(oldestKey)
+  }
+}
+
+export function clearSuggsSss(prefixes: string[]): void {
+  for (const key of suggestCache.keys()) {
+    if (prefixes.some((prefix) => key.startsWith(prefix))) suggestCache.delete(key)
   }
 }

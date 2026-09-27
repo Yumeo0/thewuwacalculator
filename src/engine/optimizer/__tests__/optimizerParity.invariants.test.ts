@@ -17,7 +17,7 @@ import { listChsByCos } from '@/data/catalog/echoCatalogService'
 import { listResSds } from '@/data/catalog/resonatorSeedService'
 import { makeEnemy, makeOptSets, makeResRuntime, mkMaxResRt } from '@/engine/runtime/defaults'
 import { makeRuntimeMap } from '@/engine/runtime/runtimeAdapters'
-import { compOptPay } from '@/engine/optimizer/compiler'
+import { compOptPay, compileBaseline } from '@/engine/optimizer/compiler'
 import { buildSetRows, listDynamicSetStateParts, makeSetMask } from '@/engine/optimizer/encode/sets'
 import { runOptSrch } from '@/engine/optimizer/engine'
 import { evalPrepOptB } from '@/engine/optimizer/results/materialize'
@@ -480,3 +480,49 @@ describe('optimizer parity invariants', () => {
     expect(packed.stats.atk).toBeCloseTo(truth.atk, 3)
   })
 })
+
+// Search controls never enter the equipped baseline's numeric result.
+it.each([false, true])('dedicated baseline preserves packed results (rotation %s)', (rotationMode) => {
+  const { seed, runtime } = makeShorekeeperRuntime()
+  const settings = { ...makeOptSets(), rotationMode, searchMode: 'inventory' as const, targetSkillId: '1505021' }
+  const input = {
+    scenarioId: combatScenarioId('optimizer:baseline'), memberId: teamMemberId(seed.id),
+    resonatorId: seed.id, resSeed: seed, runtime, settings,
+    invChs: makeHighErInventory(), enemyProfile: enemy,
+  }
+  const full = compOptPay(input)
+  const baseline = compileBaseline(input)
+  expect(evalPrepOptB(baseline, 0)).toEqual(evalPrepOptB(full, 0))
+  expect(baseline.comboBinom.length).toBe(0)
+  expect(baseline.comboIndexMap.length).toBe(0)
+  expect(baseline.constraints.length).toBe(0)
+})
+
+it.each([false, true])('compact theory finalization matches materialized results (rotation %s)', async (rotationMode) => {
+  const { seed, runtime } = makeShorekeeperRuntime()
+  runtime.build.echoes = makeHighErInventory()
+  const settings = { ...makeOptSets(), rotationMode, searchMode: 'theory' as const, targetSkillId: '1505021', includeWeapons: true, resultsLimit: 8,
+    allowedSets: { 1: [], 3: [], 5: [runtime.build.echoes[0]!.set] },
+    lockedMainEchoId: runtime.build.echoes[0]!.id, mainStatFilter: ['atk%'],
+  }
+  const payload = compOptPay({
+    scenarioId: combatScenarioId('optimizer:compact'), memberId: teamMemberId(seed.id),
+    resonatorId: seed.id, resSeed: seed, runtime, settings, invChs: [], enemyProfile: enemy,
+  })
+  if (payload.mode !== 'theoryTarget' && payload.mode !== 'theoryRotation') throw new Error('expected theory')
+  const { gnrtThryCpuCm } = await import('../target/theoryBatches')
+  const { compactTheoryResults, matThryRslts } = await import('../results/materialize')
+  const { compactTheoryEchoes } = await import('../results/theoryEchoes')
+  const batch = gnrtThryCpuCm({ payload, batchSize: 8 }).next().value
+  expect(batch).toBeTruthy()
+  const raw = Array.from({ length: batch!.comboCount }, (_, i) => ({
+    damage: 100 - i, i0: batch!.combos[i * 5]!, i1: batch!.combos[i * 5 + 1]!, i2: batch!.combos[i * 5 + 2]!,
+    i3: batch!.combos[i * 5 + 3]!, i4: batch!.combos[i * 5 + 4]!, weapon: 0,
+  }))
+  const compact = compactTheoryResults(payload, raw)
+  const materialized = matThryRslts(payload, raw)
+  expect(compact.length).toBeGreaterThan(0)
+  expect(compact.map((result) => { const echoes = compactTheoryEchoes(result); return {
+    damage: result.damage, stats: result.stats, weaponId: result.weaponId, echoes, uids: echoes.map((echo) => echo.uid),
+  } })).toEqual(materialized)
+}, 60_000)

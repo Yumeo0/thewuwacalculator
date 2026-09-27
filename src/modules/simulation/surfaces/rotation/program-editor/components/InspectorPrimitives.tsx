@@ -3,6 +3,7 @@
   Description: Provides shared inspector controls, value rows, section framing, and node identity helpers.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { ReactNode } from 'react'
 import { Expandable } from '@/shared/ui/Expandable.tsx'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
@@ -35,7 +36,7 @@ export function InspectorSection({
 export function BuffRows({ buffs }: { buffs: readonly BuffLine[] }) {
   return buffs.map((buff) => (
     <div key={buff.id} className="rte-buff" title={buff.name}>
-      <img className="rte-buff__art"
+      <DisplayImage className="rte-buff__art"
         src={buff.icon}
         alt={buff.name}
         onError={withDefIconM}

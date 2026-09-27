@@ -4,6 +4,7 @@
                and teammate summaries for the resonator pane.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type {CSSProperties as CssProps} from 'react'
 import {useEffect, useMemo, useState} from 'react'
 import {Star, UserPlus, Zap} from 'lucide-react'
@@ -555,7 +556,7 @@ export function Resonator({
         >
           <span className="resonator-avatar-button__frame" aria-hidden="true" />
           <span className="resonator-avatar-button__media">
-            <img
+            <DisplayImage
               src={activeSprite}
               alt={menu?.displayName ?? displayName} className="resonator-avatar resonator-avatar--sprite"
               onError={withDefIconM}
@@ -571,7 +572,7 @@ export function Resonator({
 
         <div className="res-card__identity">
           <h3 className="res-card__name">{menu?.displayName ?? displayName}
-            <img
+            <DisplayImage
               src={`/assets/game/attributes/icons/${curTtrb}.webp`}
               alt="" className="res-card__ident-ico"
               style={curTtrb === 'physical' ? { filter: 'grayscale(1) brightness(0.7)' } : undefined}
@@ -588,7 +589,7 @@ export function Resonator({
         <div className="res-card__loadout">
           <section className="res-load res-load--wpn">
             <span className="res-load__cap">
-              <img
+              <DisplayImage
                 src={`/assets/game/weapons/types/${curWpnKey}.webp`}
                 alt="" className="res-load__cap-ico"
                 onError={withDefIconM}
@@ -603,7 +604,7 @@ export function Resonator({
               <span className="res-wpn-thumb"
                 style={rarityVars(weaponRarity, false, '--picker-rarity-color') as CssProps}
               >
-                <img src={weaponIcon} alt="" onError={withDefWpnMg} />
+                <DisplayImage src={weaponIcon} alt="" onError={withDefWpnMg} />
               </span>
               <span className="res-wpn-text">
                 <span className="res-wpn-name" title={weaponDef?.name ?? 'No Weapon'}>
@@ -646,8 +647,8 @@ export function Resonator({
                         ))}
                       </span>
                       <span className="res-mate__pic">
-                        <img className="res-mate__portrait" src={mate.profile} alt="" onError={withDefIconM} />
-                        <img className="res-mate__badge"
+                        <DisplayImage className="res-mate__portrait" src={mate.profile} alt="" onError={withDefIconM} />
+                        <DisplayImage className="res-mate__badge"
                           src={`/assets/game/attributes/icons/${mate.attribute}.webp`}
                           alt=""
                           style={mate.attribute === 'physical' ? { filter: 'grayscale(1) brightness(0.7)' } : undefined}
@@ -660,7 +661,7 @@ export function Resonator({
                         </span>
                         {mate.weaponName ? (
                           <span className="res-mate__wpn">
-                            <img className="res-mate__wpn-ico" src={mate.weaponIcon ?? ''} alt="" onError={withDefWpnMg} />
+                            <DisplayImage className="res-mate__wpn-ico" src={mate.weaponIcon ?? ''} alt="" onError={withDefWpnMg} />
                             <span className="res-mate__wpn-name">{mate.weaponName}</span>
                             {mate.weaponRank ? <span className="res-mate__wpn-rank">R{mate.weaponRank}</span> : null}
                           </span>
@@ -967,7 +968,7 @@ export function Resonator({
                       className={active ? 'trace-icon active' : 'trace-icon'}
                       onClick={() => tglTrcNode(node.id)}
                     >
-                      {iconPath ? <img src={iconPath} alt={node.name} onError={withDefIconM} /> : <span>{node.name}</span>}
+                      {iconPath ? <DisplayImage src={iconPath} alt={node.name} onError={withDefIconM} /> : <span>{node.name}</span>}
                     </button>
                   </Tooltip>
                   {value ? <span className="trace-node__val">{value}</span> : null}

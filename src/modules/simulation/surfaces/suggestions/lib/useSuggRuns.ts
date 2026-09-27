@@ -1,55 +1,51 @@
 /*
   Author: Runor Ewhro
-  Description: Builds suggestion evaluation contexts, owns family-specific
-               worker caches, and coalesces invalidation-driven reruns.
+  Description: Schedules compact Suggestions jobs by selected mode and owns
+               current result keys, scoped worker inputs, and route cleanup.
 */
 
+import { useSuggestionTarget } from '@/modules/simulation/surfaces/suggestions/lib/useSuggestionTarget.ts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { EnemyProfile } from '@/domain/entities/appState.ts'
 import type { WeaponPlanSet } from '@/domain/entities/suggestions.ts'
-import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime.ts'
+import type { ResRuntime } from '@/domain/entities/runtime.ts'
 import type { SntSetConds } from '@/domain/entities/sonataSetConditionals.ts'
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
 import { selActTgtSlc } from '@/application/state'
 import { useAppStore } from '@/application/state'
 import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
-import { runMainStatS, runSetPlanSu, runWpnSuggs } from '@/engine/suggestions/client.ts'
-import { readSuggsSss, writeSuggsSs } from '@/engine/suggestions/sessionCache.ts'
-import {
-  evalSuggChs,
-  mkPrepMainSt,
-  mkPrepSetPla,
-  mkPrepWpnSu,
-  mkSuggVltnCt,
-  resSuggDmg,
-} from '@/engine/suggestions/shared.ts'
+import { cancelSuggestionsJobs, runCompactSuggestion } from '@/engine/suggestions/client.ts'
+import { clearSuggsSss, readSuggsSss, writeSuggsSs } from '@/engine/suggestions/sessionCache.ts'
+import { resSuggDmg } from '@/engine/suggestions/shared.ts'
+import { isOptRotTgt } from '@/engine/optimizer/rules/eligibility.ts'
 import type {
+  CompactSetPlanSuggest,
+  CompactSuggestionJob,
   MainStatSugg,
-  SetPlanSuggest,
-  SuggestContext,
+  SuggestionSimulation,
   WeaponEntry,
 } from '@/engine/suggestions/types.ts'
 import type { SimResult } from '@/engine/pipeline/types.ts'
-import { runCchdSuggJ } from '@/modules/simulation/surfaces/suggestions/lib/runs.ts'
+import { listWpnsByTy } from '@/data/catalog/weaponCatalogService.ts'
 import {
+  selectSuggestionTarget,
+  suggestionTargetValue,
   targetGroups,
   targetOpts,
-  type SuggTgtPtn,
 } from '@/modules/simulation/surfaces/suggestions/lib/helpers.ts'
 import {
   DEFAULT_SUGG,
   DEFWPNSETS,
-  ROT_TGT_VL,
   inputSig,
-  mkEchoFullSi,
   setsSig,
-  smmrCurSetPl,
   wpnSig,
 } from '@/modules/simulation/surfaces/suggestions/lib/suggestions.ts'
-import { mkEchoMainSt } from '@/engine/suggestions/mutate.ts'
 import type { SelectGroup } from '@/application/ui/LiquidSelect.tsx'
 
 const RERUN_MS = 300
+const EMPTY_MAIN_RESULTS: MainStatSugg[] = []
+const EMPTY_SET_RESULTS: CompactSetPlanSuggest[] = []
+const EMPTY_WEAPON_RESULTS: WeaponEntry[] = []
 
 export type SuggKind = 'mainStats' | 'setPlans' | 'weapons' | 'random' | 'substats'
 
@@ -64,43 +60,19 @@ export interface SuggRunsInput {
 
 export interface SuggRuns {
   mainStatRslt: MainStatSugg[]
-  setPlanRslt: SetPlanSuggest[]
+  setPlanRslt: CompactSetPlanSuggest[]
   wpnRslt: WeaponEntry[]
   rnnnMainStat: boolean
   rnnnSetPlns: boolean
   rnnnWpns: boolean
 
-  suggVltnCtx: SuggestContext | null
-  mainSuggVltnCtx: SuggestContext | null
-  fixedSuggVltnCtx: SuggestContext | null
-  mutableBaseDamage: number
-  mainBaseDamage: number
-  setPlanBaseDamage: number
-  fixedBaseDamage: number
   baseDamage: number
 
-  mutableTargetOptions: SuggTgtPtn[]
-  fixedTargetOptions: SuggTgtPtn[]
-  targetOptions: SuggTgtPtn[]
   targetSkillGroups: SelectGroup<string>[]
-  usesFixedTargets: boolean
   selTgtVl: string
-  hasMutableTarget: boolean
-  hasFixedTarget: boolean
 
   wpnSets: WeaponPlanSet
-  curMainStatS: ReturnType<typeof mkEchoMainSt>
-  curEchoSig: string
-  curSetPlan: ReturnType<typeof smmrCurSetPl>
-  canRunDrctSu: boolean
-  canRunFixedSu: boolean
-  baseSuggNptS: string
   activeSeed: ReturnType<typeof getResSeedBy>
-
-  runMainStats: (force?: boolean) => Promise<void>
-  runSetPlans: (force?: boolean) => Promise<void>
-  runWeapons: (force?: boolean) => Promise<void>
-  schedRerun: (force?: boolean) => void
   onSelectResults: (handler: (() => void) | null) => void
 }
 
@@ -110,19 +82,16 @@ interface KeyedResults<T> {
 }
 
 export function useSuggRuns({
-  runtime,
-  simulation,
+  runtime: liveRuntime,
+  simulation: liveSimulation,
   enemyProfile,
   prtcRntmById,
   setConds,
   mode,
 }: SuggRunsInput): SuggRuns {
   const [mainStatRun, setMainStatRun] = useState<KeyedResults<MainStatSugg>>({ key: null, results: [] })
-  const [setPlanRun, setSetPlanRun] = useState<KeyedResults<SetPlanSuggest>>({ key: null, results: [] })
+  const [setPlanRun, setSetPlanRun] = useState<KeyedResults<CompactSetPlanSuggest>>({ key: null, results: [] })
   const [wpnRun, setWpnRun] = useState<KeyedResults<WeaponEntry>>({ key: null, results: [] })
-  const [rnnnMainStat, setRnnnMainS] = useState(false)
-  const [rnnnSetPlns, setRnnnSetPl] = useState(false)
-  const [rnnnWpns, setRnnnWpns] = useState(false)
 
   const selTrgtByOwn = useAppStore(selActTgtSlc)
   const scenarioId = useAppStore((state) => selectedCombatScenario(state.combat).id)
@@ -132,9 +101,11 @@ export function useSuggRuns({
     [memberId, scenarioId],
   )
   const weaponSuggests = useAppStore((state) => state.simulation.weaponSuggests)
-  const suggsMap = useAppStore((state) => state.simulation.suggestionsByResonatorId)
+  const suggsStt = useAppStore((state) => state.simulation.suggestionsByResonatorId[liveRuntime.id]) ?? DEFAULT_SUGG
   const updActResSug = useAppStore((state) => state.updActSuggs)
-  const suggsStt = suggsMap[runtime.id] ?? DEFAULT_SUGG
+  const { runtime, simulation } = useSuggestionTarget(
+    liveRuntime, liveSimulation, suggsStt.settings, enemyProfile, prtcRntmById, selTrgtByOwn,
+  )
 
   const wpnSets = useMemo<WeaponPlanSet>(() => ({
     ...DEFWPNSETS,
@@ -147,9 +118,8 @@ export function useSuggRuns({
 
   const activeSeed = useMemo(() => getResSeedBy(runtime.id), [runtime.id])
   const setCondsSig = useMemo(() => setsSig(setConds), [setConds])
-  const tgtSqncRef = useRef({ main: 0, set: 0, weapon: 0 })
-  const rerunTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const rerunForce = useRef(false)
+  const [running, setRunning] = useState<'mainStats' | 'setPlans' | 'weapons' | null>(null)
+  const forceNext = useRef(false)
   const didHydrSetCo = useRef(false)
   const onResultsRef = useRef<(() => void) | null>(null)
 
@@ -157,11 +127,11 @@ export function useSuggRuns({
     onResultsRef.current = handler
   }, [])
 
-  const mutableTargetOptions = useMemo<SuggTgtPtn[]>(
+  const mutableTargetOptions = useMemo(
     () => targetOpts(runtime.id, simulation),
     [runtime.id, simulation],
   )
-  const fixedTargetOptions = useMemo<SuggTgtPtn[]>(
+  const fixedTargetOptions = useMemo(
     () => targetOpts(runtime.id, simulation, { includeEchoAttacks: true }),
     [runtime.id, simulation],
   )
@@ -169,387 +139,159 @@ export function useSuggRuns({
   const targetOptions = usesFixedTargets ? fixedTargetOptions : mutableTargetOptions
   const targetSkillGroups = useMemo(() => targetGroups(targetOptions), [targetOptions])
 
-  const selTgtVl = suggsStt.settings.rotationMode
-    ? ROT_TGT_VL
-    : (suggsStt.settings.targetFeatureId ?? '')
-  const hasMutableTarget = suggsStt.settings.rotationMode
-    ? mutableTargetOptions.some((option) => option.value === ROT_TGT_VL)
-    : Boolean(
-      suggsStt.settings.targetFeatureId &&
-      mutableTargetOptions.some((option) => option.value === suggsStt.settings.targetFeatureId),
-    )
-  const hasFixedTarget = suggsStt.settings.rotationMode
-    ? fixedTargetOptions.some((option) => option.value === ROT_TGT_VL)
-    : Boolean(
-      suggsStt.settings.targetFeatureId &&
-      fixedTargetOptions.some((option) => option.value === suggsStt.settings.targetFeatureId),
-    )
+  const selTgtVl = suggestionTargetValue(suggsStt.settings)
+  const hasMutableTarget = mutableTargetOptions.some((option) => option.value === selTgtVl)
+  const hasFixedTarget = fixedTargetOptions.some((option) => option.value === selTgtVl)
 
   useEffect(() => {
-    if (targetOptions.length === 0) return
-
-    if (suggsStt.settings.rotationMode) {
-      if (targetOptions.some((option) => option.value === ROT_TGT_VL)) return
-    } else if (
-      suggsStt.settings.targetFeatureId &&
-      targetOptions.some((option) => option.value === suggsStt.settings.targetFeatureId)
-    ) {
-      return
-    }
-
-    const fallback = targetOptions[0]
+    if (targetOptions.length === 0 || targetOptions.some((option) => option.value === selTgtVl)) return
     updActResSug((state) => ({
       ...state,
-      settings: {
-        ...state.settings,
-        rotationMode: fallback.value === ROT_TGT_VL,
-        targetFeatureId: fallback.value === ROT_TGT_VL ? state.settings.targetFeatureId : fallback.value,
-      },
+      settings: selectSuggestionTarget(state.settings, targetOptions[0].value),
     }))
-  }, [
-    suggsStt.settings.rotationMode,
-    suggsStt.settings.targetFeatureId,
-    targetOptions,
-    updActResSug,
-  ])
+  }, [selTgtVl, targetOptions, updActResSug])
 
-  const ctxBase = useMemo(() => ({
+  const ctxBase = useMemo(() => activeSeed ? ({
     ...scenarioIdentity,
-    runtime,
-    seed: activeSeed,
-    enemy: enemyProfile,
-    runtimesById: prtcRntmById,
-    selectedTargets: selTrgtByOwn,
-    setConds,
-    tgtFeatId: suggsStt.settings.targetFeatureId,
-    rotationMode: suggsStt.settings.rotationMode,
-  }), [
-    activeSeed,
-    enemyProfile,
-    prtcRntmById,
-    runtime,
-    scenarioIdentity,
-    selTrgtByOwn,
-    setConds,
-    suggsStt.settings.rotationMode,
-    suggsStt.settings.targetFeatureId,
-  ])
-
-  const suggVltnCtx = useMemo(() => {
-    if (!simulation || !activeSeed || !hasMutableTarget) return null
-    return mkSuggVltnCt({ ...ctxBase, seed: activeSeed }, simulation)
-  }, [activeSeed, ctxBase, hasMutableTarget, simulation])
-
-  const mainSuggVltnCtx = useMemo(() => {
-    if (!simulation || !activeSeed || !hasMutableTarget) return null
-    return mkSuggVltnCt({ ...ctxBase, seed: activeSeed, setStateMode: 'resolved' }, simulation)
-  }, [activeSeed, ctxBase, hasMutableTarget, simulation])
-
-  const fixedSuggVltnCtx = useMemo(() => {
-    if (!simulation || !activeSeed || !hasFixedTarget) return null
-    return mkSuggVltnCt({
-      ...ctxBase,
-      seed: activeSeed,
-      setStateMode: 'resolved',
-      includeEchoAttacks: true,
-    }, simulation)
-  }, [activeSeed, ctxBase, hasFixedTarget, simulation])
-
-  const echoes: Array<EchoInstance | null> = runtime.build.echoes
-
-  const mutableBaseDamage = useMemo(
-    () => (suggVltnCtx ? evalSuggChs(suggVltnCtx, echoes) : 0),
-    [echoes, suggVltnCtx],
-  )
-  const mainBaseDamage = useMemo(() => {
-    if (!simulation || !activeSeed || !hasMutableTarget) return 0
-    return resSuggDmg(simulation, { ...ctxBase, seed: activeSeed, includeEchoAttacks: true })
-  }, [activeSeed, ctxBase, hasMutableTarget, simulation])
-  const setPlanBaseDamage = mainBaseDamage
-
-  const fixedBaseDamage = useMemo(
-    () => (fixedSuggVltnCtx ? evalSuggChs(fixedSuggVltnCtx, echoes) : 0),
-    [echoes, fixedSuggVltnCtx],
-  )
-  const weaponBaseDamage = useMemo(() => {
-    if (!simulation || !activeSeed || !hasFixedTarget) return 0
-
-    return resSuggDmg(simulation, {
-      ...ctxBase,
-      seed: activeSeed,
-      setStateMode: 'resolved',
-      includeEchoAttacks: true,
-    })
-  }, [activeSeed, ctxBase, hasFixedTarget, simulation])
-
-  const baseDamage = mode === 'mainStats'
-    ? mainBaseDamage
-    : mode === 'setPlans'
-      ? setPlanBaseDamage
-      : mode === 'weapons'
-        ? weaponBaseDamage
-        : usesFixedTargets ? fixedBaseDamage : mutableBaseDamage
-
-  const curMainStatS = useMemo(() => mkEchoMainSt(echoes), [echoes])
-  const curEchoSig = useMemo(() => mkEchoFullSi(echoes), [echoes])
-  const curSetPlan = useMemo(() => smmrCurSetPl(echoes), [echoes])
-
-  const canRunDrctSu = Boolean(activeSeed) && hasMutableTarget
-  const canRunFixedSu = Boolean(activeSeed) && hasFixedTarget
-
-  const baseSuggNptS = useMemo(() => inputSig({
-    runtime,
-    enemyProfile,
-    prtcRntmById,
-    selectedTargets: selTrgtByOwn,
-    setConds,
-    tgtFeatId: suggsStt.settings.targetFeatureId,
-    rotationMode: suggsStt.settings.rotationMode,
-  }), [
-    enemyProfile,
-    prtcRntmById,
-    runtime,
-    selTrgtByOwn,
-    setConds,
-    suggsStt.settings.rotationMode,
-    suggsStt.settings.targetFeatureId,
-  ])
-  const mainSuggNptS = useMemo(() => inputSig({
-    runtime,
-    enemyProfile,
-    prtcRntmById,
-    selectedTargets: selTrgtByOwn,
-    setConds,
-    setStateMode: 'resolved',
-    includeEchoAttacks: true,
-    tgtFeatId: suggsStt.settings.targetFeatureId,
-    rotationMode: suggsStt.settings.rotationMode,
-  }), [
-    enemyProfile,
-    prtcRntmById,
-    runtime,
-    selTrgtByOwn,
-    setConds,
-    suggsStt.settings.rotationMode,
-    suggsStt.settings.targetFeatureId,
-  ])
-  const fixedSuggNptS = useMemo(() => inputSig({
-    runtime,
-    enemyProfile,
-    prtcRntmById,
-    selectedTargets: selTrgtByOwn,
-    setConds,
-    setStateMode: 'resolved',
+    runtime, seed: activeSeed, enemy: enemyProfile,
+    runtimesById: prtcRntmById, selectedTargets: selTrgtByOwn, setConds,
     tgtFeatId: suggsStt.settings.targetFeatureId,
     rotationMode: suggsStt.settings.rotationMode,
     includeEchoAttacks: true,
-  }), [
-    enemyProfile,
-    prtcRntmById,
-    runtime,
-    selTrgtByOwn,
-    setConds,
-    suggsStt.settings.rotationMode,
+  }) : null, [
+    activeSeed, enemyProfile, prtcRntmById, runtime, scenarioIdentity,
+    selTrgtByOwn, setConds, suggsStt.settings.rotationMode,
     suggsStt.settings.targetFeatureId,
   ])
 
-  const mainSttsCchK = useMemo(
-    () => `main:v2:${runtime.id}:${mainSuggNptS}`,
-    [mainSuggNptS, runtime.id],
-  )
-  const setPlnsCchKe = useMemo(
-    () => `sets:v3:${runtime.id}:${baseSuggNptS}`,
-    [baseSuggNptS, runtime.id],
-  )
+  // Only these fields are read to build packed search contexts. Finalists are
+  // still measured by the canonical simulation inside the worker.
+  const compactSimulation = useMemo<SuggestionSimulation | null>(() => simulation ? ({
+    finalStats: simulation.finalStats,
+    allSkills: simulation.allSkills.filter((entry) => isOptRotTgt(entry, runtime.id, { includeEchoAttacks: true })),
+    rotation: { sequence: { entries: simulation.rotation.sequence.entries.filter(
+      (entry) => isOptRotTgt(entry, runtime.id, { includeEchoAttacks: true }),
+    ) } },
+  }) : null, [runtime.id, simulation])
+
+  const scope = useMemo(() => {
+    const participants = [runtime, ...Object.values(prtcRntmById)]
+    const candidates = activeSeed ? listWpnsByTy(activeSeed.weaponType)
+      .filter((weapon) => wpnSets.visible[String(weapon.rarity)] ?? false)
+      .map((weapon) => weapon.id) : []
+    return {
+      resonatorIds: [...new Set(participants.map((participant) => participant.id))],
+      weaponIds: [...new Set([
+        ...participants.flatMap((participant) => participant.build.weapon.id ? [participant.build.weapon.id] : []),
+        ...candidates,
+      ])],
+    }
+  }, [activeSeed, prtcRntmById, runtime, wpnSets])
+
+  const baseDamage = useMemo(() => {
+    if (!simulation || !ctxBase || !(mode === 'weapons' ? hasFixedTarget : hasMutableTarget)) return 0
+    return resSuggDmg(simulation, mode === 'weapons'
+      ? { ...ctxBase, setStateMode: 'resolved' } : ctxBase)
+  }, [ctxBase, hasFixedTarget, hasMutableTarget, mode, simulation])
+
+  // The common input signature is serialized once. Mode-specific options are
+  // encoded in the versioned suffixes, preserving the old invalidation rules.
+  const sharedSig = useMemo(() => inputSig({
+    runtime, enemyProfile, prtcRntmById, selectedTargets: selTrgtByOwn,
+    setConds, tgtFeatId: suggsStt.settings.targetFeatureId,
+    rotationMode: suggsStt.settings.rotationMode, includeEchoAttacks: true,
+  }), [
+    enemyProfile, prtcRntmById, runtime, selTrgtByOwn, setConds,
+    suggsStt.settings.rotationMode, suggsStt.settings.targetFeatureId,
+  ])
+  const mainSttsCchK = `main:v3:${runtime.id}:${sharedSig}:resolved`
+  const setPlnsCchKe = `sets:v4:${runtime.id}:${sharedSig}:max`
   const wpnCchKey = useMemo(
-    () => `weapon:${runtime.id}:${fixedSuggNptS}:${wpnSig(wpnSets)}`,
-    [fixedSuggNptS, runtime.id, wpnSets],
+    () => `weapon:v2:${runtime.id}:${sharedSig}:resolved:${wpnSig(wpnSets)}`,
+    [runtime.id, sharedSig, wpnSets],
   )
 
   /* A baseline follows the live input immediately, while worker results arrive
      later. Only expose rows produced for the same signature so an old result
      can never be measured against a new base during that gap. */
-  const mainStatRslt = mainStatRun.key === mainSttsCchK ? mainStatRun.results : []
-  const setPlanRslt = setPlanRun.key === setPlnsCchKe ? setPlanRun.results : []
-  const wpnRslt = wpnRun.key === wpnCchKey ? wpnRun.results : []
+  const mainStatRslt = mainStatRun.key === mainSttsCchK ? mainStatRun.results : EMPTY_MAIN_RESULTS
+  const setPlanRslt = setPlanRun.key === setPlnsCchKe ? setPlanRun.results : EMPTY_SET_RESULTS
+  const wpnRslt = wpnRun.key === wpnCchKey ? wpnRun.results : EMPTY_WEAPON_RESULTS
 
-  const runMainStats = useCallback(async (force = false) => {
-    await runCchdSuggJ({
-      force,
-      canRun: canRunDrctSu,
-      enabled: Boolean(activeSeed),
-      cacheKey: mainSttsCchK,
-      logLabel: 'main stat',
-      readCached: (cacheKey) => readSuggsSss<MainStatSugg[]>(cacheKey),
-      writeCached: (cacheKey, results) => writeSuggsSs(cacheKey, results),
-      nextSequence: () => {
-        const seq = tgtSqncRef.current.main + 1
-        tgtSqncRef.current.main = seq
-        return seq
-      },
-      isCurSqnc: (seq) => tgtSqncRef.current.main === seq,
-      setRunning: setRnnnMainS,
-      resetResults: () => setMainStatRun({ key: mainSttsCchK, results: [] }),
-      applyResults: (results) => {
-        setMainStatRun({ key: mainSttsCchK, results })
-        onResultsRef.current?.()
-      },
-      prepare: () => (
-        simulation && activeSeed
-          ? mkPrepMainSt({ ...ctxBase, seed: activeSeed, setStateMode: 'resolved' }, simulation)
-          : null
-      ),
-      run: runMainStatS,
-    })
-  }, [activeSeed, canRunDrctSu, ctxBase, mainSttsCchK, simulation])
-
-  const runSetPlans = useCallback(async (force = false) => {
-    await runCchdSuggJ({
-      force,
-      canRun: canRunDrctSu,
-      enabled: Boolean(activeSeed),
-      cacheKey: setPlnsCchKe,
-      logLabel: 'set plan',
-      readCached: (cacheKey) => readSuggsSss<SetPlanSuggest[]>(cacheKey),
-      writeCached: (cacheKey, results) => writeSuggsSs(cacheKey, results),
-      nextSequence: () => {
-        const seq = tgtSqncRef.current.set + 1
-        tgtSqncRef.current.set = seq
-        return seq
-      },
-      isCurSqnc: (seq) => tgtSqncRef.current.set === seq,
-      setRunning: setRnnnSetPl,
-      resetResults: () => setSetPlanRun({ key: setPlnsCchKe, results: [] }),
-      applyResults: (results) => {
-        setSetPlanRun({ key: setPlnsCchKe, results })
-        onResultsRef.current?.()
-      },
-      prepare: () => (
-        simulation && activeSeed
-          ? mkPrepSetPla({ ...ctxBase, seed: activeSeed }, simulation)
-          : null
-      ),
-      run: runSetPlanSu,
-    })
-  }, [activeSeed, canRunDrctSu, ctxBase, setPlnsCchKe, simulation])
-
-  const runWeapons = useCallback(async (force = false) => {
-    await runCchdSuggJ({
-      force,
-      canRun: canRunFixedSu,
-      enabled: Boolean(activeSeed),
-      cacheKey: wpnCchKey,
-      logLabel: 'weapon',
-      readCached: (cacheKey) => readSuggsSss<WeaponEntry[]>(cacheKey),
-      writeCached: (cacheKey, results) => writeSuggsSs(cacheKey, results),
-      nextSequence: () => {
-        const seq = tgtSqncRef.current.weapon + 1
-        tgtSqncRef.current.weapon = seq
-        return seq
-      },
-      isCurSqnc: (seq) => tgtSqncRef.current.weapon === seq,
-      setRunning: setRnnnWpns,
-      resetResults: () => setWpnRun({ key: wpnCchKey, results: [] }),
-      applyResults: (results) => {
-        setWpnRun({ key: wpnCchKey, results })
-        onResultsRef.current?.()
-      },
-      prepare: () => (
-        simulation && activeSeed
-          ? mkPrepWpnSu({
-              ...ctxBase,
-              seed: activeSeed,
-              includeEchoAttacks: true,
-              weapon: wpnSets,
-              topK: 30,
-            }, simulation)
-          : null
-      ),
-      run: runWpnSuggs,
-    })
-  }, [activeSeed, canRunFixedSu, ctxBase, simulation, wpnCchKey, wpnSets])
-
-  const latestRuns = useRef({ runMainStats, runSetPlans, runWeapons })
   useEffect(() => {
-    latestRuns.current = { runMainStats, runSetPlans, runWeapons }
-  }, [runMainStats, runSetPlans, runWeapons])
+    if (!didHydrSetCo.current) { didHydrSetCo.current = true; return }
+    forceNext.current = true
+  }, [setCondsSig])
 
-  const schedRerun = useCallback((force = false) => {
-    rerunForce.current = rerunForce.current || force
-    if (rerunTimer.current) clearTimeout(rerunTimer.current)
-
-    rerunTimer.current = setTimeout(() => {
-      rerunTimer.current = null
-      const runForce = rerunForce.current
-      rerunForce.current = false
-
-      void latestRuns.current.runMainStats(runForce)
-      void latestRuns.current.runSetPlans(runForce)
-      void latestRuns.current.runWeapons(runForce)
+  useEffect(() => {
+    // A changed input or selected mode invalidates queued and synchronous work.
+    // Terminating the worker also works when SharedArrayBuffer is unavailable.
+    let valid = true
+    // Release stale result graphs before the next job allocates its finalists.
+    setMainStatRun((previous) => previous.key === mainSttsCchK || previous.results.length === 0 ? previous : { key: null, results: [] })
+    setSetPlanRun((previous) => previous.key === setPlnsCchKe || previous.results.length === 0 ? previous : { key: null, results: [] })
+    setWpnRun((previous) => previous.key === wpnCchKey || previous.results.length === 0 ? previous : { key: null, results: [] })
+    const selected: 'mainStats' | 'setPlans' | 'weapons' = mode === 'setPlans' || mode === 'weapons' ? mode : 'mainStats'
+    const order = [selected, ...(['mainStats', 'setPlans', 'weapons'] as const).filter((kind) => kind !== selected)]
+    const timer = setTimeout(() => {
+      const force = forceNext.current
+      forceNext.current = false
+      const payload: CompactSuggestionJob | null = ctxBase && compactSimulation
+        ? { input: ctxBase, simulation: compactSimulation, weapon: wpnSets, ...scope }
+        : null
+      const run = async () => {
+        for (const kind of order) {
+          if (!valid) return
+          const key = kind === 'mainStats' ? mainSttsCchK : kind === 'setPlans' ? setPlnsCchKe : wpnCchKey
+          const allowed = kind === 'weapons' ? hasFixedTarget : hasMutableTarget
+          const apply = (results: MainStatSugg[] | CompactSetPlanSuggest[] | WeaponEntry[]) => {
+            if (!valid) return
+            if (kind === 'mainStats') setMainStatRun({ key, results: results as MainStatSugg[] })
+            else if (kind === 'setPlans') setSetPlanRun({ key, results: results as CompactSetPlanSuggest[] })
+            else setWpnRun({ key, results: results as WeaponEntry[] })
+            if (kind === selected) onResultsRef.current?.()
+          }
+          if (!payload || !allowed) { apply([]); continue }
+          const cached = !force && readSuggsSss<MainStatSugg[] | CompactSetPlanSuggest[] | WeaponEntry[]>(key)
+          if (cached) { apply(cached); continue }
+          setRunning(kind)
+          try {
+            const results = await runCompactSuggestion(kind, payload)
+            if (!valid) return
+            writeSuggsSs(key, results)
+            apply(results)
+          } catch (error) {
+            if (valid) {
+              console.error(`[Suggestions] ${kind} search failed`, error)
+              apply([])
+            }
+          } finally {
+            if (valid) setRunning(null)
+          }
+        }
+      }
+      void run()
     }, RERUN_MS)
-  }, [])
+    return () => {
+      valid = false
+      clearTimeout(timer)
+      cancelSuggestionsJobs()
+    }
+  }, [
+    compactSimulation, ctxBase, hasFixedTarget, hasMutableTarget, mainSttsCchK,
+    mode, scope, setCondsSig, setPlnsCchKe, wpnCchKey, wpnSets,
+  ])
 
   useEffect(() => () => {
-    if (rerunTimer.current) {
-      clearTimeout(rerunTimer.current)
-      rerunTimer.current = null
-    }
+    cancelSuggestionsJobs()
+    clearSuggsSss(['main:v3:', 'sets:v4:', 'weapon:v2:'])
   }, [])
 
-  useEffect(() => {
-    schedRerun()
-  }, [mainSttsCchK, setPlnsCchKe, wpnCchKey, schedRerun])
-
-  useEffect(() => {
-    // conditionals hydrate from persisted state on mount, so the first pass is
-    // not a change and must not force past the cache
-    if (!didHydrSetCo.current) {
-      didHydrSetCo.current = true
-      return
-    }
-
-    schedRerun(true)
-  }, [setCondsSig, schedRerun])
-
   return {
-    mainStatRslt,
-    setPlanRslt,
-    wpnRslt,
-    rnnnMainStat,
-    rnnnSetPlns,
-    rnnnWpns,
-
-    suggVltnCtx,
-    mainSuggVltnCtx,
-    fixedSuggVltnCtx,
-    mutableBaseDamage,
-    mainBaseDamage,
-    setPlanBaseDamage,
-    fixedBaseDamage,
-    baseDamage,
-
-    mutableTargetOptions,
-    fixedTargetOptions,
-    targetOptions,
-    targetSkillGroups,
-    usesFixedTargets,
-    selTgtVl,
-    hasMutableTarget,
-    hasFixedTarget,
-
-    wpnSets,
-    curMainStatS,
-    curEchoSig,
-    curSetPlan,
-    canRunDrctSu,
-    canRunFixedSu,
-    baseSuggNptS,
-    activeSeed,
-
-    runMainStats,
-    runSetPlans,
-    runWeapons,
-    schedRerun,
-    onSelectResults,
+    mainStatRslt, setPlanRslt, wpnRslt,
+    rnnnMainStat: running === 'mainStats',
+    rnnnSetPlns: running === 'setPlans',
+    rnnnWpns: running === 'weapons',
+    baseDamage, targetSkillGroups, selTgtVl, wpnSets, activeSeed, onSelectResults,
   }
 }

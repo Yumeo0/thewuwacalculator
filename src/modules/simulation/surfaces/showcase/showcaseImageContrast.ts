@@ -7,7 +7,7 @@
                skew their contrast.
 */
 
-import { useEffect, useMemo, useState, type RefObject } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import type { CssVars } from '@/modules/simulation/workspace/ui.tsx'
 
 const SAMPLE_WIDTH = 96
@@ -246,19 +246,19 @@ function sampleTarget(
   return luminances
 }
 
-async function analyzeCardBackdrop(card: HTMLElement): Promise<CssVars> {
+async function analyzeCardBackdrop(card: HTMLElement, canvas: HTMLCanvasElement, load: typeof loadAnalysisImage, active: () => boolean): Promise<CssVars> {
   const backdrop = card.querySelector<HTMLElement>('.workspace-portrait-bg')
   if (!backdrop) return {}
   const backdropStyle = getComputedStyle(backdrop)
   const url = backgroundImageUrl(backdropStyle.backgroundImage)
   if (!url) return {}
 
-  const image = await loadAnalysisImage(url)
+  const image = await load(url)
+  if (!active()) return {}
   const cardRect = card.getBoundingClientRect()
   const backdropRect = backdrop.getBoundingClientRect()
   if (cardRect.width <= 0 || cardRect.height <= 0 || backdropRect.width <= 0 || backdropRect.height <= 0) return {}
 
-  const canvas = document.createElement('canvas')
   canvas.width = SAMPLE_WIDTH
   canvas.height = Math.max(1, Math.round(SAMPLE_WIDTH * cardRect.height / cardRect.width))
   const context = canvas.getContext('2d', { willReadFrequently: true })
@@ -302,63 +302,84 @@ async function analyzeCardBackdrop(card: HTMLElement): Promise<CssVars> {
   return vars
 }
 
-interface ContrastState {
-  key: string
-  vars: CssVars
-}
-
 const EMPTY_VARS: CssVars = {}
 
-export function useShowcaseImageContrast(
-  cardRef: RefObject<HTMLElement | null>,
-  enabled: boolean,
-  watchKey: string,
-): CssVars {
-  const [result, setResult] = useState<ContrastState>({ key: '', vars: EMPTY_VARS })
-
+export function useShowcaseImageContrast(cardRef: RefObject<HTMLElement | null>, enabled: boolean, watchKey: string): CssVars {
+  const [vars, setVars] = useState<CssVars>(EMPTY_VARS)
+  const scheduleRef = useRef<(() => void) | null>(null)
+  useEffect(() => { scheduleRef.current?.() }, [watchKey])
   useEffect(() => {
     const card = cardRef.current
-    if (!enabled || !card) return undefined
-
+    if (!enabled || !card) return
+    const canvas = document.createElement('canvas')
     let disposed = false
     let frame = 0
-    let run = 0
-    const analyze = () => {
-      const currentRun = ++run
-      void analyzeCardBackdrop(card).then((vars) => {
-        if (disposed || currentRun !== run) return
-        setResult({ key: watchKey, vars })
-      }).catch(() => {
-        if (disposed || currentRun !== run) return
-        setResult({ key: watchKey, vars: EMPTY_VARS })
-      })
+    let running = false
+    let pending = false
+    let imageSource = ''
+    let image: Promise<HTMLImageElement> | null = null
+    let lastSignature = ''
+    const load = (url: string) => {
+      if (!image || url !== imageSource) { imageSource = url; image = loadAnalysisImage(url) }
+      return image
     }
-    const schedule = () => {
-      cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(analyze)
+    const signature = () => {
+      const backdrop = card.querySelector<HTMLElement>('.workspace-portrait-bg')
+      if (!backdrop) return ''
+      const style = getComputedStyle(backdrop)
+      const rect = card.getBoundingClientRect()
+      return JSON.stringify([style.backgroundImage, style.backgroundSize, style.backgroundPosition, style.opacity, style.filter,
+        getComputedStyle(card).getPropertyValue('--bg'), rect.width, rect.height,
+        ...CONTRAST_TARGETS.map(({ selector }) => {
+          const r = card.querySelector(selector)?.getBoundingClientRect()
+          return r ? [r.x - rect.x, r.y - rect.y, r.width, r.height] : null
+        })])
     }
-
-    schedule()
-    const resizeObserver = new ResizeObserver(schedule)
-    resizeObserver.observe(card)
-    for (const target of CONTRAST_TARGETS) {
-      const element = card.querySelector<HTMLElement>(target.selector)
-      if (element) resizeObserver.observe(element)
+    const analyze = async () => {
+      frame = 0
+      if (disposed) return
+      if (running) { pending = true; return }
+      const next = signature()
+      if (next === lastSignature) return
+      running = true
+      pending = false
+      try {
+        const result = await analyzeCardBackdrop(card, canvas, load, () => !disposed)
+        if (!disposed && next === signature()) {
+          lastSignature = next
+          setVars((previous) => JSON.stringify(previous) === JSON.stringify(result) ? previous : result)
+        } else if (!disposed) pending = true
+      } catch { if (!disposed) setVars(EMPTY_VARS) }
+      finally {
+        running = false
+        if (disposed) { canvas.width = 0; canvas.height = 0; image = null }
+        else if (pending) schedule()
+      }
     }
-    const mutationObserver = new MutationObserver(schedule)
-    mutationObserver.observe(card, { childList: true, subtree: true })
-
+    const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => { void analyze() }) }
+    scheduleRef.current = schedule
+    const resize = new ResizeObserver(schedule)
+    resize.observe(card)
+    const targets = new MutationObserver(() => { observeTargets(); schedule() })
+    const observed = new Set<Element>()
+    const observeTargets = () => {
+      const next = new Set(CONTRAST_TARGETS.flatMap(({ selector }) => [...card.querySelectorAll(selector)]))
+      for (const old of observed) if (!next.has(old)) { resize.unobserve(old); observed.delete(old) }
+      for (const node of next) if (!observed.has(node)) { resize.observe(node); observed.add(node) }
+    }
+    // Only target insertion/removal needs a subtree observer. Geometry/signature
+    // checks prevent unrelated score changes from decoding or sampling artwork.
+    targets.observe(card, { childList: true, subtree: true })
+    card.addEventListener('showcase:typography', schedule)
+    card.addEventListener('showcase:appearance', schedule)
+    observeTargets(); schedule()
     return () => {
-      disposed = true
-      run += 1
-      cancelAnimationFrame(frame)
-      resizeObserver.disconnect()
-      mutationObserver.disconnect()
+      disposed = true; scheduleRef.current = null; cancelAnimationFrame(frame)
+      resize.disconnect(); targets.disconnect(); observed.clear()
+      card.removeEventListener('showcase:typography', schedule)
+      card.removeEventListener('showcase:appearance', schedule)
+      if (!running) { canvas.width = 0; canvas.height = 0; image = null }
     }
-  }, [cardRef, enabled, watchKey])
-
-  return useMemo(
-    () => enabled && result.key === watchKey ? result.vars : EMPTY_VARS,
-    [enabled, result, watchKey],
-  )
+  }, [cardRef, enabled])
+  return enabled ? vars : EMPTY_VARS
 }

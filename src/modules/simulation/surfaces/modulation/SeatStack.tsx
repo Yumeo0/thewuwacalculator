@@ -4,6 +4,7 @@
                a shared member-selection control for loadout and panel hosts.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display.ts'
 import { withDefResMg } from '@/shared/lib/imageFallback'
@@ -56,7 +57,7 @@ export function SeatStack({
             style={{ '--el': ATTR_COLORS[mate.attribute] } as CssVars}
             onClick={() => { if (!at) onMember(mate.id) }}
           >
-            <img src={mate.profile} alt="" loading="lazy" onError={withDefResMg} />
+            <DisplayImage src={mate.profile} alt="" loading="lazy" onError={withDefResMg} />
           </button>
         )
       })}

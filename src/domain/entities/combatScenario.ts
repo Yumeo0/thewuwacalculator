@@ -102,10 +102,17 @@ export interface CombatEnvironment {
   routing: ScenarioTargetRouting
 }
 
+export interface DormantScenarioMember {
+  member: ScenarioTeamMember
+  manualEffect?: Pick<EnvironmentManualEffect, 'enabled' | 'label' | 'buffs'>
+}
+
 export interface CombatScenario {
   id: CombatScenarioId
   revision: number
   team: ScenarioTeam
+  /** Off-team setups retained for rejoining resonators; never projected into combat. */
+  dormantMembersByResonatorId?: Record<ResonatorId, DormantScenarioMember>
   /** Persisted Simulation/editor subject; never an implicit effect destination. */
   contextMemberId: TeamMemberId
   /** The scenario target. EnemyProfile remains the current concrete target kind. */

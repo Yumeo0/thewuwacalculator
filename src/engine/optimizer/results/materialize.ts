@@ -5,7 +5,7 @@
 */
 
 import type { EchoInstance } from '@/domain/entities/runtime.ts'
-import { matThryRsltCh } from './theoryEchoes.ts'
+import { matThryRsltCh, theoryResultCompactor } from './theoryEchoes.ts'
 export { matThryEcho, matThryRsltCh } from './theoryEchoes.ts'
 import type {
   OptFinalResult,
@@ -418,4 +418,19 @@ export function evalPrepOptB(
         stats: evaluated.stats,
       }
     : null
+}
+
+export function compactTheoryResults(payload: ThryPay, results: readonly OptRawResult[], limit = payload.resultsLimit): import('../types').CompactTheoryResult[] {
+  const compact = theoryResultCompactor(payload)
+  const execution = getThryXct(payload)
+  const finalized: import('../types').CompactTheoryResult[] = []
+  for (const result of results) {
+    const entry = compact(result)
+    if (!entry) continue
+    const weapon = 'weapon' in result ? result.weapon ?? -1 : -1
+    finalized.push({ ...entry, stats: 'ids' in result ? result.stats : execution.mode === 'rotation'
+      ? evalRotRsltS(execution, result, rotWeaponDisplay(execution, result)) : evalOptBagRs(execution, result), weaponId: payload.weaponIds?.[weapon] ?? null })
+    if (finalized.length >= limit) break
+  }
+  return finalized
 }

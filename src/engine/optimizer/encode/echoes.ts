@@ -5,6 +5,7 @@
                a selected target skill or a generic skill-type/element map.
 */
 
+import { optimizerFloats } from '@/engine/optimizer/workers/payloadBuffers'
 import { getGameData } from '@/data/gameData'
 import { makeTeamComp } from '@/engine/gameData/teamComposition.ts'
 import { listEffects, listSrcStts } from '@/data/gameData/registry.ts'
@@ -617,7 +618,7 @@ export function encEchoRows(
     _slct: OptTargetSkill,
     mode: TgtScpMode = 'self',
 ): EncEchoRows {
-  const stats = new Float32Array(echoes.length * ECHO_STAT_STRIDE)
+  const stats = optimizerFloats(echoes.length * ECHO_STAT_STRIDE)
   const sets = new Uint8Array(echoes.length)
   const costs = new Uint8Array(echoes.length)
 
@@ -662,7 +663,7 @@ export function mkMainEchoRo(options: {
   mode?: TgtScpMode
 }): Float32Array {
   const { echoes, runtime, sourceBaseStats: srcBaseStats, sourceFinals: srcFnlStats, selectedSkill: selectedSkill, mode = 'self' } = options
-  const out = new Float32Array(echoes.length * MAIN_BUFF_LEN)
+  const out = optimizerFloats(echoes.length * MAIN_BUFF_LEN)
   const gameData = getGameData()
 
   // build team context once and reuse it for every echo row
@@ -745,7 +746,7 @@ export function mkGnrcMainEc(options: {
   mode?: TgtScpMode
 }): Float32Array {
   const { echoes, runtime, sourceBaseStats: srcBaseStats, sourceFinals: srcFnlStats, mode = 'self' } = options
-  const out = new Float32Array(echoes.length * MAIN_BUFF_LEN)
+  const out = optimizerFloats(echoes.length * MAIN_BUFF_LEN)
   const gameData = getGameData()
 
   // shared team metadata reused across all rows

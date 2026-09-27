@@ -4,6 +4,8 @@
                build saving, and evaluation scoring for the active runtime.
 */
 
+import { isEchoSaved, isBuildSaved, selectSavedEchoSignatures, selectSavedBuildSignatures } from '@/application/state/savedGearStatus'
+
 import { useCallback, useMemo, useState } from 'react'
 import type { CSSProperties as CssProps } from 'react'
 import { AnimatePresence as NmtPrsn, motion } from 'motion/react'
@@ -16,7 +18,7 @@ import {
   Wand2,
 } from 'lucide-react'
 import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime.ts'
-import { equalEchoes, equalBuildSnapshots, cloneEchoLoadout, sameEchoUid, saveEchoSlots } from '@/domain/entities/inventoryStorage.ts'
+import { cloneEchoLoadout, sameEchoUid, saveEchoSlots } from '@/domain/entities/inventoryStorage.ts'
 import { getEchoById, listEchoes } from '@/data/catalog/echoCatalogService.ts'
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
 import { listStatesFor } from '@/data/catalog/gameDataService.ts'
@@ -66,8 +68,9 @@ export function Echoes({
                          onRtPdt: onRtPdt,
                        }: EchoPaneProps) {
   const allEchoes = useMemo(() => listEchoes(), [])
+  const savedEchoes = useAppStore(selectSavedEchoSignatures)
+  const savedBuilds = useAppStore(selectSavedBuildSignatures)
   const invChs = useAppStore((state) => state.library.echoes)
-  const invBlds = useAppStore((state) => state.library.builds)
   const selTrgtByOwn = useAppStore(selActTgtSlc)
   const showToast = useTstStr((s) => s.show)
   const confirmation = useConfirm()
@@ -324,22 +327,16 @@ export function Echoes({
   const mdlPrtlTgt = mainPortal()
   const editEcho = editSlot !== null ? runtime.build.echoes[editSlot] : null
 
-  const currentSaved = useMemo(
-      () =>
-          invBlds.some((entry) =>
-              equalBuildSnapshots(entry.build, {
-                weapon: runtime.build.weapon,
-                echoes: runtime.build.echoes,
-              }),
-          ),
-      [invBlds, runtime.build.echoes, runtime.build.weapon],
-  )
+  const currentSaved = isBuildSaved(savedBuilds, {
+    weapon: runtime.build.weapon,
+    echoes: runtime.build.echoes,
+  })
 
   const mainEchoPnl = mkMainEchoPn(runtime, mainEchoDef, mainEchoStats, onRtPdt)
 
   const canSaveEcho = useCallback((echo: EchoInstance | null | undefined) => (
-      Boolean(echo) && !invChs.some((entry) => equalEchoes(entry.echo, echo))
-  ), [invChs])
+      Boolean(echo) && !isEchoSaved(savedEchoes, echo)
+  ), [savedEchoes])
 
   const svblQppdChs = useMemo(() => {
     return runtime.build.echoes.filter(

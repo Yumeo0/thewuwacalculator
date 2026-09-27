@@ -5,6 +5,7 @@
                overlays.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { HTMLAttributes as HtmlAttrs, MouseEventHandler as MsVntHnd, ReactNode } from 'react'
 import type { EchoInstance } from '@/domain/entities/runtime'
 import { getEchoById } from '@/data/catalog/echoCatalogService'
@@ -149,7 +150,7 @@ export function EchoCard({
       <div className="echo-card__top">
         {hasImage && (
           <div className="echo-card__icon">
-            <img
+            <DisplayImage
               src={definition!.icon}
               alt={definition!.name ?? 'Echo'} className="echo-card__icon-img"
               loading="lazy"
@@ -164,7 +165,7 @@ export function EchoCard({
           )}
           <div className="echo-card__meta">
             {setIcon && (
-              <img src={setIcon} alt={setName ?? ''} className="echo-card__set-icon" onError={withDefIconM} />
+              <DisplayImage src={setIcon} alt={setName ?? ''} className="echo-card__set-icon" onError={withDefIconM} />
             )}
             <span className="echo-card__cost-badge">{cost}C</span>
             {echo.mainEcho && (

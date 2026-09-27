@@ -3,6 +3,7 @@
   Description: Projects canonical profiles into ordered attribute groups and surface-specific roster metadata.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import {
   Fragment,
   useCallback,
@@ -365,7 +366,7 @@ export function BuildRoster({
                   >
                     <span className="blm-knot-mark" aria-hidden="true">
                       {attrIcon ? (
-                        <img src={attrIcon} alt="" loading="lazy" decoding="async" onError={withDefIconM} />
+                        <DisplayImage src={attrIcon} alt="" loading="lazy" decoding="async" onError={withDefIconM} />
                       ) : null}
                     </span>
                     <span className="blm-knot-n" aria-hidden="true">{group.items.length}</span>
@@ -415,8 +416,7 @@ export function BuildRoster({
                           onBlur={() => releasePreview(entry.id)}
                         >
                           <span className="blm-bead-pic">
-                            <img
-                              src={entry.profile}
+                            <DisplayImage src={entry.profile}
                               alt=""
                               loading="lazy"
                               decoding="async"

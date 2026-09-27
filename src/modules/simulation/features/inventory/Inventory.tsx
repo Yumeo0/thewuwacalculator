@@ -7,7 +7,6 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { useAppStore } from '@/application/state'
 import AppLdrVrly from '@/shared/ui/AppLoaderOverlay.tsx'
-import { useInventoryLease } from '@/application/hooks/useInventoryLease.ts'
 
 const LazyInventoryLayer = lazy(async () => ({
   default: (await import('@/modules/simulation/features/inventory/InventoryLayer.tsx')).InvLyr,
@@ -17,7 +16,6 @@ export function Inventory() {
   const invHasMntd = useAppStore((state) => state.invMounted)
   const invOpen = useAppStore((state) => state.invOpen)
   const [invReady, setInvReady] = useState(false)
-  useInventoryLease(invOpen)
 
   useEffect(() => {
     if (!invOpen) {

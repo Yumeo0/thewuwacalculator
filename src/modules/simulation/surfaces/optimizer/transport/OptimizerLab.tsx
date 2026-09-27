@@ -3,24 +3,18 @@
   Description: Coordinates optimizer compilation, execution, result selection, preview, and application.
 */
 
+import '@/styles/modules/simulation/surfaces/optimizer/optimizer-transport.css'
 import type { ReactNode, Ref } from 'react'
-import { useShallow } from 'zustand/react/shallow'
-import { useAppStore } from '@/application/state'
-import { selVrvwDrvd } from '@/application/state'
 import { ATTR_COLORS } from '@/modules/simulation/model/display'
 import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime'
 import { getResonator } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { EvaluationBand } from '@/modules/simulation/surfaces/modulation/EvaluationBand.tsx'
-import { useAsmEvaluationReport } from '@/modules/simulation/model/useBuildEvaluation.ts'
+import { useWorkspaceEvaluationSummary } from '@/modules/simulation/model/evaluationSummaryContext'
 import {
   getBuildEvaluationGrade,
   getBuildEvaluationTone,
 } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
 import { OptimizerEchoPreview } from '@/modules/simulation/surfaces/optimizer/transport/OptimizerEchoPreview.tsx'
-
-// The rail and band score only canonical state. Keep their assembly settled
-// while rail edits are arriving without involving the disposable Echo preview.
-const CANONICAL_SCORE_DEBOUNCE_MS = 320
 
 export function OptimizerLab({
   resonatorId,
@@ -46,15 +40,8 @@ export function OptimizerLab({
   onEquipPreview: (echoes: Array<EchoInstance | null>) => void
   children: ReactNode
 }) {
-  const { partRtsById, actTgtSels } = useAppStore(useShallow(selVrvwDrvd))
-
-  const { report } = useAsmEvaluationReport({
-    runtime,
-    runtimesById: partRtsById,
-    targetSelections: actTgtSels,
-    debounceMs: CANONICAL_SCORE_DEBOUNCE_MS,
-  })
-  const score = report ? report.evaluation.percent * 100 : null
+  const summary = useWorkspaceEvaluationSummary()
+  const score = summary?.percent != null ? summary.percent * 100 : null
   const grade = getBuildEvaluationGrade(score)
   const subject = getResonator(resonatorId)
   const tone = score != null
@@ -64,7 +51,7 @@ export function OptimizerLab({
   return (
     <main className="workspace-main" data-phase="idle">
       <div ref={bandRef} className="opt-lab-band" data-folded={bandFolded ? '' : undefined}>
-        <EvaluationBand report={report} score={score} grade={grade} tone={tone} />
+        <EvaluationBand report={summary ? { evaluation: summary } : null} score={score} grade={grade} tone={tone} />
       </div>
 
       {runtime ? (

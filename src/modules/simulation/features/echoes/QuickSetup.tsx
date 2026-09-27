@@ -4,6 +4,7 @@
                Sonata, and main-stat constraints before applying generated echoes.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import type { EchoInstance } from '@/domain/entities/runtime.ts'
 import { getEchoById, listEchoes } from '@/data/catalog/echoCatalogService.ts'
@@ -316,7 +317,7 @@ export function QuickSetup({
           >
             <span className="eqs-lead">
               {selMainEcho?.icon ? (
-                <img src={selMainEcho.icon} alt="" loading="lazy" onError={withDefEchoMg} />
+                <DisplayImage src={selMainEcho.icon} alt="" loading="lazy" onError={withDefEchoMg} />
               ) : (
                 <Plus size="0.9rem" aria-hidden />
               )}
@@ -349,7 +350,7 @@ export function QuickSetup({
                     aria-label={`${name}, ${pref.count} piece. Change piece count`}
                     onClick={() => cycleSet(pref.setId, pref.count)}
                   >
-                    <img src={getSntSetIco(pref.setId) ?? '/assets/game/default.webp'} alt="" loading="lazy" onError={withDefIconM} />
+                    <DisplayImage src={getSntSetIco(pref.setId) ?? '/assets/game/default.webp'} alt="" loading="lazy" onError={withDefIconM} />
                     <i>{pref.count}</i>
                   </button>
                   <button

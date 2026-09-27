@@ -5,6 +5,8 @@
 */
 
 import type {
+  CompactSetPlanSuggest,
+  CompactSuggestionJob,
   MainStatSugg,
   MainStatPrep,
   PrepSetPlanS,
@@ -18,7 +20,7 @@ import { getGameDataMode } from '@/data/gameData'
 
 let worker: Worker | null = null
 let idleTimer: ReturnType<typeof setTimeout> | null = null
-const IDLE_TEARDOWN_MS = 8_000
+const IDLE_TEARDOWN_MS = 1_200
 
 let nextJobId = 1
 
@@ -51,6 +53,30 @@ export function disposeSuggestionsWorker(): void {
   if (pendingJobs.size > 0) return
   worker?.terminate()
   worker = null
+}
+
+export function cancelSuggestionsJobs(): void {
+  clearIdleTeardown()
+  worker?.terminate()
+  worker = null
+  for (const pending of pendingJobs.values()) pending.reject(new Error('Suggestions cancelled'))
+  pendingJobs.clear()
+}
+
+export function runCompactSuggestion(
+  mode: 'mainStats' | 'setPlans' | 'weapons',
+  payload: CompactSuggestionJob,
+): Promise<MainStatSugg[] | CompactSetPlanSuggest[] | WeaponEntry[]> {
+  return new Promise((resolve, reject) => {
+    const id = nextJobId++
+    pendingJobs.set(id, {
+      resolve: (value) => resolve(value as MainStatSugg[] | CompactSetPlanSuggest[] | WeaponEntry[]),
+      reject,
+    })
+    ensureWorker().postMessage({
+      id, gameDataMode: getGameDataMode(), type: 'compact', mode, payload,
+    } satisfies SuggsWrkrInM)
+  })
 }
 
 function ensureWorker(): Worker {

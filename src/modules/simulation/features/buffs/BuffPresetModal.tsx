@@ -4,6 +4,7 @@
                into editable manual buff modifiers.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useMemo, useState } from 'react'
 import type {
   ComponentType,
@@ -602,7 +603,7 @@ export function BuffPresetModal({
                         <div className="bp-card__top">
                           <div className="bp-card__icon" aria-hidden="true">
                             {sourceIcon ? (
-                              <img
+                              <DisplayImage
                                 src={sourceIcon}
                                 alt=""
                                 loading="lazy"

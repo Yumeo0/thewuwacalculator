@@ -1,14 +1,14 @@
 /*
   Author: Runor Ewhro
   Description: Owns the optimizer's disposable Echo preview workspace. A
-               preview starts as a clone of the selected base/result loadout;
+               preview shares the selected loadout until an immutable edit replaces a slot;
                edits stay local until an Echo is explicitly saved or equipped.
 */
 
-import { useCallback, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { Copy, FileImage, Scissors, Trash2 } from 'lucide-react'
 import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime.ts'
-import { cloneEchoLoadout, sameEchoUid } from '@/domain/entities/inventoryStorage.ts'
+import { cloneEchoLoadout, sameEchoUid, equalEchoes } from '@/domain/entities/inventoryStorage.ts'
 import { getEchoById, listEchoes } from '@/data/catalog/echoCatalogService.ts'
 import { useAppStore } from '@/application/state'
 import { useEchoScores } from '@/engine/evaluation/useEchoScoringRevision.ts'
@@ -18,9 +18,9 @@ import { MAX_ECHO_COST } from '@/modules/simulation/features/echoes/lib/echoes.t
 import type { EvaluationEchoSelection } from '@/modules/simulation/workspace/ui.tsx'
 import { makeEchoSlot } from '@/modules/simulation/workspace/echoSlot.ts'
 import { useWorkspaceEchoActions } from '@/modules/simulation/workspace/useWorkspaceEchoActions.ts'
-import { Edit } from '@/modules/simulation/features/echoes/Edit.tsx'
-import { EchoPicker } from '@/modules/simulation/features/echoes/Picker.tsx'
-import { QuickSetup } from '@/modules/simulation/features/echoes/QuickSetup.tsx'
+
+
+
 import { mkDefEchoNst } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
 import { cmptTtlEchoC } from '@/modules/simulation/features/echoes/lib/echoes.ts'
 import { getEchoMptyC, getEchoSlotC } from '@/modules/simulation/features/echoes/lib/ctx.tsx'
@@ -48,7 +48,7 @@ export function useOptimizerPreviewForge({
   const showToast = useTstStr((state) => state.show)
   const openForge = useCallback(() => forge.show(), [forge])
   const portal = forge.visible ? (
-    <QuickSetup
+    <Suspense fallback={null}><QuickSetup
       visible={forge.visible}
       open={forge.open}
       closing={forge.closing}
@@ -64,7 +64,7 @@ export function useOptimizerPreviewForge({
         })
         forge.hide()
       }}
-    />
+    /></Suspense>
   ) : null
 
   return { openForge, portal }
@@ -98,16 +98,19 @@ export function OptimizerEchoPreview({
   onEquip: (echoes: Array<EchoInstance | null>) => void
 }) {
   const [echoes, setEchoes] = useState<Array<EchoInstance | null>>(
-    () => cloneEchoLoadout(sourceEchoes),
+    () => sourceEchoes.slice(),
   )
   // picking another row seeds the workspace again. it is the same five slots
   // taking new data, so the seed is swapped in during render rather than by
   // remounting the surface, which would replay every card's entrance and throw
   // away the selection, the menus and the modals with it.
-  const [seedKey, setSeedKey] = useState(previewKey)
-  if (seedKey !== previewKey) {
-    setSeedKey(previewKey)
-    setEchoes(cloneEchoLoadout(sourceEchoes))
+  const [seed, setSeed] = useState({ key: previewKey, echoes: sourceEchoes })
+  if (seed.key !== previewKey || (seed.echoes !== sourceEchoes && sourceEchoes.some((echo, index) => {
+    const previous = seed.echoes[index]
+    return echo !== previous && (!echo || !previous || echo.uid !== previous.uid || echo.mainEcho !== previous.mainEcho || !equalEchoes(echo, previous))
+  }))) {
+    setSeed({ key: previewKey, echoes: sourceEchoes })
+    setEchoes(sourceEchoes.slice())
   }
   const showToast = useTstStr((state) => state.show)
   const updateRuntime = useAppStore((state) => state.updResRt)
@@ -403,7 +406,7 @@ export function OptimizerEchoPreview({
           canSaveEcho={echoSurface.canSaveEcho}
           onEchoes={writeLoadout}
           onForge={openForge}
-          onEquip={loadoutCount > 0 ? () => onEquip(cloneEchoLoadout(echoes)) : undefined}
+          onEquip={loadoutCount > 0 ? () => onEquip(echoes) : undefined}
         />
         <div className="workspace-echoes" {...echoSelection.surfaceProps}>
           {Array.from({ length: 5 }, (_, index) => {
@@ -437,7 +440,7 @@ export function OptimizerEchoPreview({
       </section>
 
       {pickerSlot != null ? (
-        <EchoPicker
+        <Suspense fallback={null}><EchoPicker
           visible={picker.visible}
           open={picker.open}
           closing={picker.closing}
@@ -456,11 +459,11 @@ export function OptimizerEchoPreview({
           }}
           onClear={() => writeSlot(pickerSlot, null)}
           onClose={picker.hide}
-        />
+        /></Suspense>
       ) : null}
 
       {editSlot != null && editEcho ? (
-        <Edit
+        <Suspense fallback={null}><Edit
           visible={editor.visible}
           open={editor.open}
           closing={editor.closing}
@@ -478,10 +481,16 @@ export function OptimizerEchoPreview({
             editor.hide()
           }}
           onClose={editor.hide}
-        />
+        /></Suspense>
       ) : null}
 
       {forgePortal}
     </>
   )
 }
+
+const Edit = lazy(() => import('@/modules/simulation/features/echoes/Edit.tsx').then((module) => ({ default: module.Edit })))
+
+const EchoPicker = lazy(() => import('@/modules/simulation/features/echoes/Picker.tsx').then((module) => ({ default: module.EchoPicker })))
+
+const QuickSetup = lazy(() => import('@/modules/simulation/features/echoes/QuickSetup.tsx').then((module) => ({ default: module.QuickSetup })))

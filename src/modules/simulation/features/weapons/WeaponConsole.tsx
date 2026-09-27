@@ -4,6 +4,7 @@
                rank, and passive controls through a deferred configuration session.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import type { CSSProperties as CssProps } from 'react'
@@ -45,6 +46,7 @@ import {
 import { WeaponPicker } from '@/modules/simulation/features/weapons/Picker.tsx'
 import { useWpnCnsl } from '@/modules/simulation/features/weapons/lib/weaponConsoleStore.ts'
 import { projectScenarioUiRuntimes } from '@/engine/runtime/scenarioRuntime.ts'
+import { holdResonatorData } from '@/data/gameData'
 
 // Load the console only after a request and hold it until the close completes.
 export function WeaponConsoleHost() {
@@ -70,6 +72,7 @@ function WeaponConsole({
   resonatorId: string
   scenarioId?: CombatScenarioId | null
 }) {
+  useEffect(() => holdResonatorData([resonatorId]), [resonatorId])
   const closeRequest = useWpnCnsl((state) => state.close)
   const maxWpnOnInit = useAppStore((state) => state.ui.preferences.maxResOnInit)
   const bumpPickerFreq = useAppStore((state) => state.bumpPickFr)
@@ -212,7 +215,7 @@ function WeaponConsole({
                 onClick={() => picker.show()}
               >
                 <span className="wcon-icon">
-                  <img
+                  <DisplayImage
                     src={weapon?.icon ?? '/assets/game/default.webp'}
                     alt=""
                     loading="lazy"

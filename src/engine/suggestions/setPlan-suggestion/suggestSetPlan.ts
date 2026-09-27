@@ -437,14 +437,29 @@ function scorePreparedSetPlans(
 
   const feasible = prepSetPlanFsb(currentEchoes)
   const scores = new Map<string, DamageResult>()
+  const materializedScores = new Map<string, DamageResult>()
+  const candidateKey = (echoes: Array<EchoInstance | null>) => JSON.stringify(echoes.map((echo) => echo ? [
+    echo.id, echo.set, echo.mainEcho, echo.mainStats, echo.substats,
+  ] : null))
+  const baseAvg = resSuggDmg(runSuggSmlt(input.scoringInput), input.scoringInput)
+  materializedScores.set(candidateKey(currentEchoes), { avgDamage: baseAvg })
   const scorePlan = (setPlan: SetPlanEntry[]): DamageResult => {
     const key = JSON.stringify(setPlan)
     const cached = scores.get(key)
     if (cached) return cached
     const echoes = applySetPlan(setPlan, currentEchoes)
+    // Different concrete plans can produce the same slot bodies and active
+    // sets. UID changes on cloning, but never participates in damage scoring.
+    const keyForEchoes = candidateKey(echoes)
+    const equivalent = materializedScores.get(keyForEchoes)
+    if (equivalent) {
+      scores.set(key, equivalent)
+      return equivalent
+    }
     const runtime = { ...input.scoringInput.runtime, build: { ...input.scoringInput.runtime.build, echoes } }
     const scoring = { ...input.scoringInput, runtime }
     const result = { avgDamage: resSuggDmg(runSuggSmlt(scoring), scoring) }
+    materializedScores.set(keyForEchoes, result)
     scores.set(key, result)
     return result
   }
@@ -461,7 +476,6 @@ function scorePreparedSetPlans(
     isFeasible: (plan) => plan.reduce((sum, entry) => sum + entry.pieces, 0) <= nonNullCount && feasible(plan),
   })
 
-  const baseAvg = resSuggDmg(runSuggSmlt(input.scoringInput), input.scoringInput)
   return {
     baseAvg,
     results: groupEquivalentSetPlans(results, input.context, Math.max(1e-6, Math.abs(baseAvg) * 1e-6)),

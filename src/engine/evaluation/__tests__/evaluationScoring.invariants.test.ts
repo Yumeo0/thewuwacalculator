@@ -5,7 +5,7 @@
                characterization.
 */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { listChsByCos } from '@/data/catalog/echoCatalogService'
 import { getResSeedBy, listResSds } from '@/data/catalog/resonatorSeedService'
 import { makeEnemy, makeResRuntime, makeTeamMember, normProfTeam } from '@/engine/runtime/defaults'
@@ -24,7 +24,7 @@ import type { SuggestContext } from '@/engine/suggestions/types'
 import { ECHO_MAIN_STATS, ECHO_SIDE_STATS, getSbstStepP } from '@/data/gameData/catalog/echoStats'
 import { assembleEvaluation, buildEvaluation, buildEvaluationAnchors, evaluationErTarget } from '@/engine/evaluation/evaluation/search.ts'
 import { findUsefulStatImpacts, makeEvaluationEchoFrame, preservedMainEchoFor } from '@/engine/evaluation/evaluation/echoDiscovery.ts'
-import { evaluationAnchorCacheKey } from '@/engine/evaluation/evaluation/report.ts'
+import { prepareRotationBuildScore, rotationBuildEvaluationScore, evaluationAnchorCacheKey } from '@/engine/evaluation/evaluation/report.ts'
 import { makeEvaluationOverviewStats, sumEncodedEnergyRegen } from '@/engine/evaluation/evaluation/stats.ts'
 import { REFERENCE_STEP_MODEL, tierStepIncreases } from '@/engine/evaluation/evaluation/stepAllocation'
 import { resolveEvaluationStats, scoreStats } from '@/engine/evaluation/evaluation/scoring.ts'
@@ -43,6 +43,10 @@ import {
 import { getTuneStrainMaxForTeam } from '@/engine/gameData/tuneStrain'
 import { combatScenarioId, teamMemberId } from '@/domain/entities/combatScenario'
 import referenceCalibration from './fixtures/referenceCalibration.json?raw'
+import { computeShowcaseAnalysis, type ShowcaseAnalysisProgress } from '../showcaseAnalysis'
+import { computeShowcaseStats } from '../showcaseStats'
+import { makeEchoMainStatProfileKey } from '../echoMainStatProfile'
+import * as evaluationReport from '../evaluation/report'
 
 const prodAppLoaders = import.meta.glob('../../../../prod-app.json', {
   query: '?raw',
@@ -449,7 +453,76 @@ describe('evaluation scoring invariants', () => {
     })
 
     expect(compact).toEqual(complete)
+    const score = rotationBuildEvaluationScore({ ...input, simulation })
+    expect(score).toEqual(complete ? { userDamage: complete.evaluation.userDamage, percent: complete.evaluation.percent } : null)
+    expect(prepareRotationBuildScore(input)?.calculatePercent() ?? null).toBe(complete?.evaluation.percent ?? null)
+    expect(prepareRotationBuildScore(input)?.calculateSummary()).toEqual(complete ? {
+      percent: complete.evaluation.percent,
+      userDamage: complete.evaluation.userDamage,
+      baselineDamage: complete.evaluation.baselineDamage,
+      referenceDamage: complete.evaluation.referenceDamage,
+      maximumDamage: complete.evaluation.maximumDamage,
+    } : null)
   }, 60_000)
+
+  it('matches Showcase summary stats and score while keeping live Echo context separate', async () => {
+    const seed = getResSeedBy('1506')!
+    const live = makeResRuntime(seed)
+    live.base.level = 40
+    live.build.echoes = buildInvariantEchoes('critDmg')
+    const runtime = applyEvaluationAsm(live)
+    const enemy = EVALUATION_ENEMY
+    const runtimesById = makeRuntimeMap(runtime)
+    const simulation = runResSmlt(runtime, seed, enemy, runtimesById, {})
+    const identity = { scenarioId: combatScenarioId('showcase:parity'), memberId: teamMemberId(live.id) }
+    const expected = rotationBuildEvaluationReport({ ...identity, runtime, enemy, runtimesById, simulation })!
+    const liveContext = { runtime: live, runtimesById: makeRuntimeMap(live), enemy: makeEnemy(), selectedTargets: {} }
+    liveContext.enemy.level = 70
+    const evaluation = { runtime, enemy, runtimesById, selectedTargets: {} }
+    expect(computeShowcaseStats(evaluation)).toEqual(simulation.finalStats)
+    const progress: ShowcaseAnalysisProgress[] = []
+    const result = await computeShowcaseAnalysis({
+      ...identity,
+      evaluation,
+      live: liveContext,
+    }, undefined, (value) => progress.push(value))
+    expect(progress).toEqual([
+      { stage: 'damage', userDamage: expected.evaluation.userDamage },
+      { stage: 'score', percent: expected.evaluation.percent },
+    ])
+    expect(result.percent).toBe(expected.evaluation.percent)
+    expect(result.userDamage).toBe(expected.evaluation.userDamage)
+    expect(result.echoProfile?.cacheKey).toBe(makeEchoMainStatProfileKey({ ...identity, ...liveContext, seed }))
+    expect(Object.keys(result).sort()).toEqual(['echoProfile', 'percent', 'userDamage'])
+    expect(JSON.stringify(result).length).toBeLessThan(JSON.stringify(expected).length / 4)
+  }, 60_000)
+
+  it('publishes damage while anchor hydration is blocked and preserves it when scoring is cancelled', async () => {
+    const seed = getResSeedBy('1506')!
+    const runtime = applyEvaluationAsm(makeResRuntime(seed))
+    const context = { runtime, enemy: EVALUATION_ENEMY, runtimesById: makeRuntimeMap(runtime), selectedTargets: {} }
+    let release!: () => void
+    const hydration = vi.spyOn(evaluationReport, 'ensureAnchorStoreHydrated')
+      .mockImplementation(() => new Promise<void>((resolve) => { release = resolve }))
+    const progress: ShowcaseAnalysisProgress[] = []
+    let cancelled = false
+    try {
+      const pending = computeShowcaseAnalysis({
+        scenarioId: combatScenarioId('showcase:independent-damage'), memberId: teamMemberId(runtime.id),
+        evaluation: context, live: context,
+      }, () => { if (cancelled) throw new Error('cancelled after damage') }, (value) => progress.push(value))
+      expect(hydration).toHaveBeenCalledOnce()
+      expect(progress).toEqual([{ stage: 'damage', userDamage: expect.any(Number) }])
+      expect((progress[0] as { userDamage: number }).userDamage).toBeGreaterThan(0)
+      cancelled = true
+      release()
+      await expect(pending).rejects.toThrow('cancelled after damage')
+      expect(progress).toHaveLength(1)
+    } finally {
+      release?.()
+      hydration.mockRestore()
+    }
+  })
 
   it('keeps ordinary Echo stat edits out of the anchor cache key', () => {
     const seed = getResSeedBy('1212')

@@ -615,6 +615,7 @@ const teamMemRtSch = z.lazy(() => z.strictObject({
 const suggSetsSchm = z.lazy(() => z.strictObject({
   targetFeatureId: z._default(z.nullable(z.string()), null),
   rotationMode: z._default(z.boolean(), false),
+  rotationSource: z.optional(z.enum(['default', 'current'])),
 }))
 
 // random suggestion set preference
@@ -801,6 +802,49 @@ const scenarioMemberSchm = z.lazy(() => z.strictObject({
   }),
 }))
 
+const scenarioEnvironmentSchm = z.lazy(() => z.strictObject({
+  combatState: cmbtSttSchm,
+  manualEffects: z.array(z.strictObject({
+    id: z.string(),
+    enabled: z.boolean(),
+    label: z.optional(z.string()),
+    selector: z.discriminatedUnion('kind', [
+      z.strictObject({ kind: z.literal('all') }),
+      z.strictObject({ kind: z.literal('members'), memberIds: z.array(z.string()) }),
+      z.strictObject({ kind: z.literal('attribute'), attributes: z.array(ttrbSchm) }),
+      z.strictObject({ kind: z.literal('weaponType'), weaponTypes: z.array(z.number()) }),
+    ]),
+    buffs: mnlBffsSchm,
+  })).check(z.refine((effects) => new Set(effects.map((effect) => effect.id)).size === effects.length, 'Environment effect ids must be unique')),
+  targetModifiers: z.strictObject({
+    defenseReduction: z.number(),
+    resistanceReduction: z.partialRecord(ttrbSchm, z.number()),
+    damageTakenAmplification: z.number(),
+  }),
+  routing: z.strictObject({
+    bySourceMemberId: z.record(
+      z.string(),
+      z.record(z.string(), z.nullable(z.string())),
+    ),
+  }),
+}))
+
+const dormantScenarioMembersSchm = z.record(z.string(), z.strictObject({
+  member: scenarioMemberSchm,
+  manualEffect: z.optional(z.strictObject({
+    enabled: z.boolean(),
+    label: z.optional(z.string()),
+    buffs: mnlBffsSchm,
+  })),
+}))
+
+/** Incremental persistence reuses previously validated immutable sections. */
+export const parseScenarioMember = (value: unknown) => scenarioMemberSchm.safeParse(value)
+export const parseScenarioTarget = (value: unknown) => enemyProfSchm.safeParse(value)
+export const parseScenarioEnvironment = (value: unknown) => scenarioEnvironmentSchm.safeParse(value)
+export const parseScenarioProgram = (value: unknown) => rotSttSchm.safeParse(value)
+export const parseDormantScenarioMembers = (value: unknown) => dormantScenarioMembersSchm.safeParse(value)
+
 const combatScenarioSchm = z.lazy(() => z.pipe(z.transform((value) => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value
   const scenario = { ...value } as Record<string, unknown>
@@ -873,33 +917,9 @@ const combatScenarioSchm = z.lazy(() => z.pipe(z.transform((value) => {
     members: z.array(scenarioMemberSchm).check(z.minLength(1)).check(z.maxLength(3)).check(z.refine((members) => new Set(members.map((member) => member.id)).size === members.length, 'Scenario member ids must be unique')).check(z.refine((members) => new Set(members.map((member) => member.resonatorId)).size === members.length, 'Scenario resonators must be unique')),
   }),
   contextMemberId: z.string(),
+  dormantMembersByResonatorId: z.optional(dormantScenarioMembersSchm),
   target: enemyProfSchm,
-  environment: z.strictObject({
-    combatState: cmbtSttSchm,
-    manualEffects: z.array(z.strictObject({
-      id: z.string(),
-      enabled: z.boolean(),
-      label: z.optional(z.string()),
-      selector: z.discriminatedUnion('kind', [
-        z.strictObject({ kind: z.literal('all') }),
-        z.strictObject({ kind: z.literal('members'), memberIds: z.array(z.string()) }),
-        z.strictObject({ kind: z.literal('attribute'), attributes: z.array(ttrbSchm) }),
-        z.strictObject({ kind: z.literal('weaponType'), weaponTypes: z.array(z.number()) }),
-      ]),
-      buffs: mnlBffsSchm,
-    })).check(z.refine((effects) => new Set(effects.map((effect) => effect.id)).size === effects.length, 'Environment effect ids must be unique')),
-    targetModifiers: z.strictObject({
-      defenseReduction: z.number(),
-      resistanceReduction: z.partialRecord(ttrbSchm, z.number()),
-      damageTakenAmplification: z.number(),
-    }),
-    routing: z.strictObject({
-      bySourceMemberId: z.record(
-        z.string(),
-        z.record(z.string(), z.nullable(z.string())),
-      ),
-    }),
-  }),
+  environment: scenarioEnvironmentSchm,
   program: rotSttSchm,
   initialOnFieldMemberId: z.string(),
 }).check(z.superRefine((scenario, context) => {
@@ -1096,29 +1116,7 @@ function normalizeSimulationPrefs(value: unknown): unknown {
   return normalized
 }
 
-const uiPersistSchema = z.strictObject({
-  theme: z.enum(['light', 'dark', 'background']),
-  themePreference: z.optional(z.enum(['system', 'light', 'dark', 'background'])),
-  lightVariant: z.enum(LIGHT_THEMES),
-  darkVariant: z.enum(DARK_THEMES),
-  backgroundVariant: z.enum(BG_THEMES),
-  backgroundImageKey: z._default(z.string(), 'builtin:wallpaperflare1.jpg'),
-  backgroundTextMode: z._default(z.enum(['light', 'dark']), 'dark'),
-  bodyFontName: z._default(z.string(), DEFAULT_BODY_FONT),
-  bodyFontUrl: z._default(z.string(), getPresetFontUrl(DEFAULT_BODY_FONT)),
-  blurMode: uiBoolSchm(false),
-  entranceAnimations: uiBoolSchm(true),
-  preferences: z.pipe(z.transform(normalizeSimulationPrefs), z._default(z.object({
-    ctxMenu: z._default(z.boolean(), DEF_UI_PREFS.ctxMenu),
-    updateToast: z._default(z.boolean(), DEF_UI_PREFS.updateToast),
-    gameBetaData: z._default(z.boolean(), DEF_UI_PREFS.gameBetaData),
-    recommendedMenuItems: z._default(z.boolean(), DEF_UI_PREFS.recommendedMenuItems),
-    showEvaluationStates: z._default(z.boolean(), DEF_UI_PREFS.showEvaluationStates),
-    maxResOnInit: z._default(z.boolean(), DEF_UI_PREFS.maxResOnInit),
-    animatedRailPortraits: z._default(z.boolean(), DEF_UI_PREFS.animatedRailPortraits),
-    showcaseCards: z._default(z.record(
-      z.string(),
-      z.object({
+export const showcaseCardSchema = z.lazy(() => z.object({
         style: z.object({
           accent: z._default(z.nullable(z.string()), null),
           surface: z._default(z.nullable(z.string()), null),
@@ -1173,7 +1171,31 @@ const uiPersistSchema = z.strictObject({
           subColor: z._default(z.boolean(), false),
           relStats: z._default(z.boolean(), true),
         }),
-      }),
+      }))
+
+const uiPersistSchema = z.strictObject({
+  theme: z.enum(['light', 'dark', 'background']),
+  themePreference: z.optional(z.enum(['system', 'light', 'dark', 'background'])),
+  lightVariant: z.enum(LIGHT_THEMES),
+  darkVariant: z.enum(DARK_THEMES),
+  backgroundVariant: z.enum(BG_THEMES),
+  backgroundImageKey: z._default(z.string(), 'builtin:wallpaperflare1.jpg'),
+  backgroundTextMode: z._default(z.enum(['light', 'dark']), 'dark'),
+  bodyFontName: z._default(z.string(), DEFAULT_BODY_FONT),
+  bodyFontUrl: z._default(z.string(), getPresetFontUrl(DEFAULT_BODY_FONT)),
+  blurMode: uiBoolSchm(false),
+  entranceAnimations: uiBoolSchm(true),
+  preferences: z.pipe(z.transform(normalizeSimulationPrefs), z._default(z.object({
+    ctxMenu: z._default(z.boolean(), DEF_UI_PREFS.ctxMenu),
+    updateToast: z._default(z.boolean(), DEF_UI_PREFS.updateToast),
+    gameBetaData: z._default(z.boolean(), DEF_UI_PREFS.gameBetaData),
+    recommendedMenuItems: z._default(z.boolean(), DEF_UI_PREFS.recommendedMenuItems),
+    showEvaluationStates: z._default(z.boolean(), DEF_UI_PREFS.showEvaluationStates),
+    maxResOnInit: z._default(z.boolean(), DEF_UI_PREFS.maxResOnInit),
+    animatedRailPortraits: z._default(z.boolean(), DEF_UI_PREFS.animatedRailPortraits),
+    showcaseCards: z._default(z.record(
+      z.string(),
+      showcaseCardSchema,
     ), {}),
     showcaseLayout: z._default(z.enum(['classic', 'seal']), DEF_UI_PREFS.showcaseLayout),
     uploadPersist: z._default(z.nullable(z.enum(['indexeddb', 'imgbb'])), DEF_UI_PREFS.uploadPersist),

@@ -14,7 +14,6 @@ import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
 import { mkActTeamSlt } from '@/engine/runtime/runtimeAdapters'
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
 import type { SimulationPageId } from '@/application/navigation/appIndex'
-import { useInventoryLease } from '@/application/hooks/useInventoryLease.ts'
 
 export interface AppSnapshot {
   // who is set up right now
@@ -23,7 +22,6 @@ export interface AppSnapshot {
   equipped: number
   echoes: number
   builds: number
-  takes: number
   // what each surface has to work with right now, as a labelled measurement.
   // null until the inventory has been read off disk, because a count we do not
   // have yet must not be reported as zero
@@ -33,14 +31,12 @@ export interface AppSnapshot {
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
 
 export function useAppSnapshot(): AppSnapshot {
-  useInventoryLease()
   const scenario = useAppStore((state) => selectedCombatScenario(state.combat))
   const profiles = useAppStore(selScenarioProfiles)
   const invHydrated = useAppStore((state) => state.invHydr)
   const activeId = scenario.team.members[0]?.resonatorId ?? null
   const echoes = useAppStore((state) => state.library.echoes.length)
   const builds = useAppStore((state) => state.library.builds.length)
-  const takes = useAppStore((state) => state.library.rotations.length)
   // showcase cards are a preference, held per resonator on the holding profile
   const cards = useAppStore(
       (state) => Object.keys(state.ui.preferences.showcaseCards ?? {}).length,
@@ -73,11 +69,8 @@ export function useAppSnapshot(): AppSnapshot {
       equipped,
       echoes,
       builds,
-      takes,
       reading: {
-        rotation: invHydrated
-          ? { label: 'try it now!', value: takes > 0 ? plural(takes, 'take') : 'no takes yet' }
-          : null,
+        rotation: { label: 'try it now!', value: plural(scenario.program.program.length, 'node') },
         modulation: {
           label: 'tune it now!',
           value: active ? `Lv ${active.level} · S${active.sequence} · ${equipped}/5 echoes` : 'nobody yet',
@@ -95,5 +88,5 @@ export function useAppSnapshot(): AppSnapshot {
         },
       },
     }
-  }, [activeId, builds, cards, echoes, invHydrated, profiles, scenario, takes])
+  }, [activeId, builds, cards, echoes, invHydrated, profiles, scenario])
 }

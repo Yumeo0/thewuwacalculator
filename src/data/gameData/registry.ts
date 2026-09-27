@@ -43,29 +43,30 @@ export function makeSourceKey(source: DataSrcRef): string {
 // build the full game data registry from source packages
 export function mkGameDataRe(
   sources: SrcPkg[],
-  options: { resonatorStatesById?: Record<string, SourceState[]> } = {},
+  options: { resonatorStatesById?: Record<string, SourceState[]>; base?: GameDataReg } = {},
 ): GameDataReg {
   const resonatorStatesById = options.resonatorStatesById ?? {}
-  const sourcesByKey: Record<string, SrcPkg> = {}
-  const wnrsBySrcKey: Record<string, SrcOwnDef[]> = {}
-  const ownersByKey: Record<string, SrcOwnDef> = {}
-  const ffctBySrcKey: Record<string, EffectDef[]> = {}
-  const ffctBktsBySr: Record<string, EffectBuckets> = {}
-  const ffctByOwnKey: Record<string, EffectDef[]> = {}
-  const sttsBySrcKey: Record<string, SourceState[]> = {}
-  const sttsByOwnKey: Record<string, SourceState[]> = {}
-  const sttsByCntrKe: Record<string, SourceState> = {}
-  const condsBySrcKe: Record<string, CondDef[]> = {}
-  const condsByOwnKe: Record<string, CondDef[]> = {}
-  const featsBySrcKe: Record<string, FeatDef[]> = {}
-  const rttnBySrcKey: Record<string, RotDef[]> = {}
-  const skllBySrcKey: Record<string, SkillDef[]> = {}
-  const dmgEntBySrcK: Record<string, SkillDamageEntry[]> = {}
-  const dmgEntByKey: Record<string, SkillDamageEntry> = {}
-  const resSkllById: Record<string, SkillDef[]> = {}
-  const resDmgEntById: Record<string, SkillDamageEntry[]> = {}
-  const resFeatsById: Record<string, FeatDef[]> = {}
-  const resRttnById: Record<string, RotDef[]> = {}
+  const base = options.base
+  const sourcesByKey: Record<string, SrcPkg> = { ...base?.sourcesByKey }
+  const wnrsBySrcKey: Record<string, SrcOwnDef[]> = { ...base?.ownersBySourceKey }
+  const ownersByKey: Record<string, SrcOwnDef> = { ...base?.ownersByKey }
+  const ffctBySrcKey: Record<string, EffectDef[]> = { ...base?.effectsBySourceKey }
+  const ffctBktsBySr: Record<string, EffectBuckets> = { ...base?.effectBucketsBySourceKey }
+  const ffctByOwnKey: Record<string, EffectDef[]> = { ...base?.effectsByOwnerKey }
+  const sttsBySrcKey: Record<string, SourceState[]> = { ...base?.statesBySourceKey }
+  const sttsByOwnKey: Record<string, SourceState[]> = { ...base?.statesByOwnerKey }
+  const sttsByCntrKe: Record<string, SourceState> = { ...base?.statesByControlKey }
+  const condsBySrcKe: Record<string, CondDef[]> = { ...base?.conditionsBySourceKey }
+  const condsByOwnKe: Record<string, CondDef[]> = { ...base?.conditionsByOwnerKey }
+  const featsBySrcKe: Record<string, FeatDef[]> = { ...base?.featuresBySourceKey }
+  const rttnBySrcKey: Record<string, RotDef[]> = { ...base?.rotationsBySourceKey }
+  const skllBySrcKey: Record<string, SkillDef[]> = { ...base?.skillsBySourceKey }
+  const dmgEntBySrcK: Record<string, SkillDamageEntry[]> = { ...base?.damageEntriesBySourceKey }
+  const dmgEntByKey: Record<string, SkillDamageEntry> = { ...base?.damageEntriesByKey }
+  const resSkllById: Record<string, SkillDef[]> = { ...base?.resonatorSkillsById }
+  const resDmgEntById: Record<string, SkillDamageEntry[]> = { ...base?.resonatorDamageEntriesById }
+  const resFeatsById: Record<string, FeatDef[]> = { ...base?.resonatorFeaturesById }
+  const resRttnById: Record<string, RotDef[]> = { ...base?.resonatorRotationsById }
 
   for (const source of sources) {
     const key = makeSourceKey(source.source)
@@ -191,6 +192,8 @@ export function mkGameDataRe(
       }
 
       sttsByCntrKe[state.controlKey] = state
+      const entries = sttsByOwnKey[state.ownerKey]
+      if (entries && entries === base?.statesByOwnerKey[state.ownerKey]) sttsByOwnKey[state.ownerKey] = [...entries]
       ;(sttsByOwnKey[state.ownerKey] ??= []).push(state)
     }
 
@@ -203,6 +206,8 @@ export function mkGameDataRe(
         throw new Error(`unknown condition owner key: ${condition.ownerKey}`)
       }
 
+      const entries = condsByOwnKe[condition.ownerKey]
+      if (entries && entries === base?.conditionsByOwnerKey[condition.ownerKey]) condsByOwnKe[condition.ownerKey] = [...entries]
       ;(condsByOwnKe[condition.ownerKey] ??= []).push(condition)
     }
 
@@ -215,6 +220,8 @@ export function mkGameDataRe(
         throw new Error(`unknown effect owner key: ${effect.ownerKey}`)
       }
 
+      const entries = ffctByOwnKey[effect.ownerKey]
+      if (entries && entries === base?.effectsByOwnerKey[effect.ownerKey]) ffctByOwnKey[effect.ownerKey] = [...entries]
       ;(ffctByOwnKey[effect.ownerKey] ??= []).push(effect)
     }
   }

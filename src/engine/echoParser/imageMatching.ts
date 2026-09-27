@@ -692,35 +692,32 @@ export function mtchSetFrst(
 // echo matching
 
 // match an echo icon against a filtered set of candidate names
-export function mtchEchoFrom(
+export interface EchoMatch {
+  key: string
+  score: number
+}
+
+// every candidate scored against the panel art, closest first
+export function rnkEchoFrom(
     srcCanvas: HTMLCanvasElement,
     echoRegion: ImageRegion,
     fltrEchoNms: string[],
     echoCache: Record<string, CanvasRenderingContext2D>,
-): string | null {
-  // extract, mask, and preprocess the source region
+): EchoMatch[] {
   const srcCtx = xtrcMgRgn(srcCanvas, echoRegion)
   normBrgh(srcCtx, ECHO_W, ECHO_H)
   ncrsCntr(srcCtx, ECHO_W, ECHO_H, 2.5)
   const srcHist = clclClrHstg(srcCtx, ECHO_W, ECHO_H)
 
-  let bestMatch: string | null = null
-  let lowestDiff = Infinity
-
-  for (const name of fltrEchoNms) {
-    const refCtx = echoCache[name]
+  const scored: EchoMatch[] = []
+  for (const key of fltrEchoNms) {
+    const refCtx = echoCache[key]
     if (!refCtx) continue
-
     const refHist = clclClrHstg(refCtx, ECHO_W, ECHO_H)
     const structural = cmprMgs(srcCtx, refCtx, ECHO_W, ECHO_H)
     const hist = cmprClrHstg(srcHist, refHist)
-    const combined = structural * 0.5 + hist * 1000 * 0.5
-
-    if (combined < lowestDiff) {
-      lowestDiff = combined
-      bestMatch = name
-    }
+    scored.push({ key, score: structural * 0.5 + hist * 1000 * 0.5 })
   }
 
-  return bestMatch
+  return scored.sort((left, right) => left.score - right.score)
 }

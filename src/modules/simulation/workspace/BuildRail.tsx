@@ -4,7 +4,8 @@
                stat-family focus, sequence changes, and scenario member edits.
 */
 
-import { useCallback, useMemo, type CSSProperties, type MouseEvent as ReactMouseEvent, type RefObject } from 'react'
+import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { memo, useCallback, useMemo, type CSSProperties, type MouseEvent as ReactMouseEvent, type RefObject } from 'react'
 import type { ResRuntime, ResSeed, WeaponState } from '@/domain/entities/runtime'
 import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
 import type { GenWpn } from '@/domain/entities/weapon'
@@ -27,7 +28,7 @@ import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import { SpinePortrait, SpineSetupBackground } from '@/shared/spine/SpinePortrait.tsx'
 import type { SpinePlacement } from '@/shared/spine/SpinePortrait.tsx'
 import type { ShowcaseCardHidden, ShowcaseLayout } from '@/domain/entities/preferences'
-import { StatGlyph, EvaluationSeqRail, statFamily, type EvaluationEchoSelection, type CssVars } from '@/modules/simulation/workspace/ui.tsx'
+import { StatGlyph, EvaluationSeqRail, ResonatorName, statFamily, type EvaluationEchoSelection, type CssVars } from '@/modules/simulation/workspace/ui.tsx'
 import { ShowcaseBuild } from '@/modules/simulation/surfaces/showcase/Showcase.tsx'
 import { SealShowcase, rarityVars } from '@/modules/simulation/surfaces/showcase/SealShowcase.tsx'
 import { getRarityColor } from '@/modules/simulation/model/display.ts'
@@ -106,8 +107,13 @@ function handleStatFocusOver(event: ReactMouseEvent<HTMLElement>): void {
   applyStatFocus(event.currentTarget, keyed?.dataset.statFamily ?? '')
 }
 
-export function BuildRail({
+const RAIL_OWN_CONTROLS = 'button, a, input, select, textarea, label, [role="button"], [role="radio"], [role="switch"], [role="menuitem"]'
+
+export const BuildRail = memo(function BuildRail({
   buildCardRef,
+  onPortraitReady,
+  capturePortrait,
+  captureBackdrop,
   isShowcase,
   customCss,
   railPhase,
@@ -139,6 +145,9 @@ export function BuildRail({
   autoImageContrast,
   layout = 'classic',
 }: {
+  capturePortrait?: string
+  captureBackdrop?: string
+  onPortraitReady?: (source: string) => void
   buildCardRef: RefObject<HTMLElement | null>
   isShowcase: boolean
   customCss: string | null
@@ -183,7 +192,7 @@ export function BuildRail({
   const seqRailHidden = isShowcase && cardHidden.seqRail
   // Layout preference is showcase-only; shared workspace rails remain classic.
   const seal = isShowcase && layout === 'seal'
-  const contrastWatchKey = `${railResId ?? ''}:${JSON.stringify(backdropStyle)}`
+  const contrastWatchKey = `${railResId ?? ''}:${JSON.stringify(backdropStyle)}:${railStyle['--bg']}:${layout}:${customCss ?? ''}`
   const imageContrastVars = useShowcaseImageContrast(
     buildCardRef,
     isShowcase && autoImageContrast,
@@ -206,11 +215,22 @@ export function BuildRail({
     ))
   }, [editable, onRuntimeUpdate, railResId, updResRt])
 
+  const editWeapon = useCallback(() => { if (railResId) openWpnCnsl(railResId, scenarioId) }, [railResId, scenarioId])
+  const openMember = useCallback(() => { if (railResId) openTeamCnsl(railResId, 'loadout', scenarioId) }, [railResId, scenarioId])
+  const canOpenMember = editable && !!railResId && !!railModel.runtime
+  const railOpensMember = !isShowcase && canOpenMember
+  const openMemberFromRail = useCallback((event: ReactMouseEvent<HTMLElement>) => {
+    if ((event.target as HTMLElement).closest(RAIL_OWN_CONTROLS)) return
+    openMember()
+  }, [openMember])
+  const sealTeam = useMemo(() => <TeamBlock variant="seal" teamSupports={railModel.teamSupports}
+    ownerResId={railResId} team={railModel.runtime?.build.team ?? null} editable={editable} scenarioId={scenarioId} />,
+  [editable, railModel.runtime?.build.team, railModel.teamSupports, railResId, scenarioId])
   const weaponBlock = (
     <>
       <span className="workspace-weapon-frame" data-rarity={railModel.weaponRarity ?? undefined}>
         {railModel.weaponIcon ? (
-          <img
+          <DisplayImage
             src={railModel.weaponIcon}
             alt={railModel.weaponName} className="workspace-weapon-icon"
             loading="lazy"
@@ -262,7 +282,9 @@ export function BuildRail({
       data-phase={railPhase}
       data-layout={seal ? 'seal' : undefined}
       data-edit={isShowcase ? editMode ?? undefined : undefined}
+      data-opens-member={railOpensMember ? 'true' : undefined}
       style={resolvedRailStyle}
+      onClick={railOpensMember ? openMemberFromRail : undefined}
       onMouseOver={isShowcase ? handleStatFocusOver : undefined}
       onMouseLeave={isShowcase ? (event) => applyStatFocus(event.currentTarget, '') : undefined}
     >
@@ -271,6 +293,7 @@ export function BuildRail({
         resId={railResId}
         fallbackUrl={railModel.portraitSrc} className="workspace-portrait-bg"
         style={backdropStyle}
+        captureUrl={captureBackdrop}
       />
 
       {onAnimatedPortraitsChange ? (
@@ -306,17 +329,20 @@ export function BuildRail({
         >
           <SpinePortrait
             resId={railResId}
+            onImageReady={onPortraitReady}
             animated={animatedPortraits}
             playing={surfacePhase === 'idle' && railPhase === 'idle'}
             spineClassName="workspace-portrait-spine"
             placement={showcasePlacement}
             overrideImageUrl={resolvedPortrait}
+            captureImageUrl={capturePortrait}
             fallback={
-              <img
-                src={railModel.portraitSrc}
+              <DisplayImage src={railModel.portraitSrc}
+                onLoad={() => onPortraitReady?.(railModel.portraitSrc)}
+                fetchPriority="high"
                 alt={railModel.seed?.name ?? 'Resonator'} className="workspace-portrait-img"
                 style={railModel.spriteCss}
-                loading="lazy"
+                loading="eager"
                 decoding="async"
                 onError={withDefIconM}
               />
@@ -341,14 +367,14 @@ export function BuildRail({
           <div className="workspace-rail-body">
             <div className="workspace-portrait-meta" data-rarity={railModel.rarity}>
               <span className="workspace-portrait-name"> {railModel.attrIcon ? (
-                <img
+                <DisplayImage
                   src={railModel.attrIcon}
                   alt="" className="workspace-portrait-elem"
                   loading="lazy"
                   decoding="async"
                   onError={withDefIconM}
                 />
-              ) : null} {railModel.seed?.name ?? 'Resonator'}</span>
+              ) : null} <ResonatorName name={railModel.seed?.name ?? 'Resonator'} onOpen={canOpenMember ? openMember : undefined} /></span>
               <div className="workspace-portrait-tags">
                 <span className="workspace-rarity" role="img" aria-label={`${railModel.rarity}-star resonator`}>
                   {Array.from({ length: railModel.rarity }, (_, star) => (
@@ -402,17 +428,9 @@ export function BuildRail({
             backdropCredit={backdropCredit}
             resId={railResId}
             onSequence={editable && railModel.runtime ? setSequence : undefined}
-            onEditWeapon={editable && railResId && railModel.runtime ? () => openWpnCnsl(railResId, scenarioId) : undefined}
-            team={(
-              <TeamBlock
-                variant="seal"
-                teamSupports={railModel.teamSupports}
-                ownerResId={railResId}
-                team={railModel.runtime?.build.team ?? null}
-                editable={editable}
-                scenarioId={scenarioId}
-              />
-            )}
+            onEditWeapon={editable && railResId && railModel.runtime ? editWeapon : undefined}
+            onOpenMember={canOpenMember ? openMember : undefined}
+            team={sealTeam}
             onEchoOpen={editable && railResId && railModel.runtime ? onEchoOpen : undefined}
             echoSelection={echoSelection}
             blank={blank}
@@ -466,7 +484,7 @@ export function BuildRail({
       ) : null}
     </aside>
   )
-}
+})
 
 function TeamBlock({
   teamSupports,
@@ -537,7 +555,6 @@ function TeamBlock({
 function EmptyTeamMate({ onPick }: { onPick?: () => void }) {
   const body = (
     <>
-      <span className="workspace-mate-edge" aria-hidden="true" />
       <strong className="workspace-mate-name">No resonator</strong>
       <span className="workspace-mate-meta" aria-hidden="true">
         <span className="workspace-mate-seq">
@@ -578,9 +595,10 @@ function TeamMate({
   editable: boolean
   scenarioId?: CombatScenarioId | null
 }) {
+  const Tile = editable ? 'button' : 'span'
+  const mateSets = mate.sets.filter((set) => set.icon).slice(0, 3)
   const body = (
     <>
-      <span className="workspace-mate-edge" aria-hidden="true" />
       <strong className="workspace-mate-name">{mate.name}</strong>
       <span className="workspace-mate-meta">
         <span className="workspace-mate-seq" aria-label={`Sequence ${mate.sequence} of 6`}>
@@ -589,26 +607,6 @@ function TeamMate({
           ))}
         </span>
         <span className="workspace-mate-lv">Lv.<b>{mate.level ?? 1}</b></span>
-      </span>
-      <span className="workspace-mate-kit">
-        <span
-          className="workspace-mate-tile" data-kind="weapon"
-          title={mate.weaponName ?? undefined}
-          style={rarityVars(mate.weaponRarity)}
-        >
-          {mate.weaponIcon ? (
-            <img src={mate.weaponIcon} alt={mate.weaponName ?? 'Weapon'} loading="lazy" onError={withDefIconM} />
-          ) : null}
-          {mate.weaponRank != null ? <b>R{mate.weaponRank}</b> : null}
-        </span>
-        {mate.sets.slice(0, 2).map((set, index) => (
-          set.icon ? (
-            <span key={set.id ?? set.setId ?? index} className="workspace-mate-tile" data-kind="set" title={set.name}>
-              <img src={set.icon} alt={set.name} loading="lazy" onError={withDefIconM} />
-              <b>{set.count ?? set.pieces}</b>
-            </span>
-          ) : null
-        ))}
       </span>
     </>
   )
@@ -619,8 +617,7 @@ function TeamMate({
       style={{ '--browser-accent': mate.accent, '--mate-rar': getRarityColor(mate.rarity) } as CssVars}
     >
       <span className="workspace-mate-frame" aria-hidden="true">
-        <img
-          src={mate.sprite}
+        <DisplayImage src={mate.sprite}
           alt="" className="workspace-mate-portrait"
           style={mate.spriteCss}
           loading="lazy"
@@ -639,6 +636,39 @@ function TeamMate({
       ) : (
         <div className="workspace-mate-content">{body}</div>
       )}
+      <span className="workspace-mate-kit">
+        <span className="workspace-mate-kit-row" data-row="weapon">
+          <Tile
+            type={editable ? 'button' : undefined}
+            className="workspace-mate-tile" data-kind="weapon"
+            aria-label={editable ? `Configure ${mate.name}'s weapon: ${mate.weaponName ?? 'Weapon'}` : undefined}
+            onClick={editable ? () => openWpnCnsl(mate.id, scenarioId) : undefined}
+            title={mate.weaponName ?? undefined}
+            style={rarityVars(mate.weaponRarity)}
+          >
+            {mate.weaponIcon ? (
+              <DisplayImage src={mate.weaponIcon} alt={mate.weaponName ?? 'Weapon'} loading="lazy" onError={withDefIconM} />
+            ) : null}
+            {mate.weaponRank != null ? <b>R{mate.weaponRank}</b> : null}
+          </Tile>
+        </span>
+        {mateSets.length ? (
+          <span className="workspace-mate-kit-row" data-row="sonata">
+            {mateSets.map((set, index) => (
+              <Tile
+                key={set.id ?? set.setId ?? index}
+                type={editable ? 'button' : undefined}
+                className="workspace-mate-tile" data-kind="set" title={`${set.name} · ${set.count ?? set.pieces}pc`}
+                aria-label={editable ? `Configure ${mate.name}'s Echoes: ${set.name}` : undefined}
+                onClick={editable ? () => openTeamCnsl(mate.id, 'echoes', scenarioId) : undefined}
+              >
+                <DisplayImage src={set.icon ?? ''} alt={set.name} loading="lazy" onError={withDefIconM} />
+                <b>{set.count ?? set.pieces}</b>
+              </Tile>
+            ))}
+          </span>
+        ) : null}
+      </span>
     </article>
   )
 }
@@ -653,24 +683,47 @@ function SealMate({
   scenarioId?: CombatScenarioId | null
 }) {
   const attrIcon = getAttributeIconSrc(mate.attribute)
-  const set = mate.sets[0] ?? null
+  const setRows = mate.sets
+    .filter((entry) => entry.icon)
+    .slice(0, 3)
+    .reduce<Array<{ pieces: number, sets: SonataToken[] }>>((rows, set) => {
+      const pieces = set.count ?? set.pieces ?? 0
+      const row = rows.find((entry) => entry.pieces === pieces)
+      if (row) row.sets.push(set)
+      else rows.push({ pieces, sets: [set] })
+      return rows
+    }, [])
   const body = (
     <>
       <span className="seal-mate-art">
-        <img src={mate.sprite} alt="" style={mate.spriteCss} decoding="async" onError={withDefIconM} />
+        <DisplayImage src={mate.sprite} alt="" style={mate.spriteCss} decoding="async" onError={withDefIconM} />
       </span>
       <i className="seal-spark seal-mate-mark" aria-hidden="true" />
-      {attrIcon ? <img className="seal-mate-elem" src={attrIcon} alt="" onError={withDefIconM} /> : null}
+      {attrIcon ? <DisplayImage className="seal-mate-elem" src={attrIcon} alt="" onError={withDefIconM} /> : null}
       <span className="seal-mate-weapon" style={rarityVars(mate.weaponRarity)}>
         {mate.weaponIcon ? (
-          <img src={mate.weaponIcon} alt={mate.weaponName ?? 'Weapon'} onError={withDefIconM} />
+          <DisplayImage src={mate.weaponIcon} alt={mate.weaponName ?? 'Weapon'} onError={withDefIconM} />
         ) : null}
         {mate.weaponRank != null ? <b>R{mate.weaponRank}</b> : null}
       </span>
-      {set?.icon ? (
-        <span className="seal-mate-set" title={set.name}>
-          <img src={set.icon} alt={set.name} onError={withDefIconM} />
-          <b>{set.count ?? set.pieces}</b>
+      {setRows.length ? (
+        <span className="seal-mate-sets">
+          {setRows.map((row) => (
+            <span
+              key={row.pieces}
+              className="seal-mate-set"
+              title={`${row.sets.map((set) => set.name).join(' + ')} · ${row.pieces}pc`}
+            >
+              {row.sets.map((set, index) => (
+                <DisplayImage
+                  key={set.id ?? set.setId ?? index}
+                  src={set.icon ?? ''} alt={set.name}
+                  onError={withDefIconM}
+                />
+              ))}
+              <b>{row.pieces}</b>
+            </span>
+          ))}
         </span>
       ) : null}
       <span className="seal-mate-rule" aria-hidden="true"><i /><i /></span>

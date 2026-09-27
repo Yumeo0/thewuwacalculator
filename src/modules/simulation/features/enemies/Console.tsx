@@ -6,6 +6,7 @@
                one, so an unauthored target renders a short panel.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useMemo, useState } from 'react'
 import type { CSSProperties as CssProps, ReactNode } from 'react'
 import { ChevronDown } from 'lucide-react'
@@ -165,7 +166,7 @@ function Row({
   return (
     <div className={dim ? 'enc-rw is-off' : 'enc-rw'}>
       <span className="enc-rw__k">
-        {glyph ? <img src={glyph} alt="" aria-hidden="true" onError={withDefIconM} /> : null}
+        {glyph ? <DisplayImage src={glyph} alt="" aria-hidden="true" onError={withDefIconM} /> : null}
         <span className="enc-rw__nm">{name}</span>
       </span>
       {worth ?? <span />}
@@ -462,7 +463,7 @@ export function EnemyConsole({
               aria-label="Change target"
               onClick={() => setPicking(true)}
             >
-              <img src={icon} alt="" onError={withDefIconM} />
+              <DisplayImage src={icon} alt="" onError={withDefIconM} />
             </button>
           )}
           onClose={onClose}

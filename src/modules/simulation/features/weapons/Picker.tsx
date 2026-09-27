@@ -4,6 +4,7 @@
                state before returning a selected weapon id.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useMemo, useState } from 'react'
 import type { CSSProperties as CssProps } from 'react'
 import { ThumbsUp } from 'lucide-react'
@@ -164,7 +165,7 @@ export function WeaponPicker({
                   aria-pressed={selected}
                   onClick={() => setStatFilter((prev) => (prev === statKey ? null : statKey))}
                 >
-                  {icon ? <img src={icon} alt="" aria-hidden="true" onError={withDefIconM} /> : null}
+                  {icon ? <DisplayImage src={icon} alt="" aria-hidden="true" onError={withDefIconM} /> : null}
                 </button>
               )
             })}
@@ -193,7 +194,7 @@ export function WeaponPicker({
         <div className="picker-modal__media-frame picker-modal__media-frame--inset"
           style={rarityVars(entry.rarity) as CssProps}
         >
-          <img
+          <DisplayImage
             src={entry.icon}
             alt={entry.name} className="picker-modal__media-image"
             onError={withDefWpnMg}
@@ -214,7 +215,7 @@ export function WeaponPicker({
         <>
           <span className="picker-modal__spec-item picker-modal__spec-item--rarity">{entry.rarity}★</span>
           <span className="picker-modal__spec-item" title="Base ATK" aria-label={`ATK ${formatTruncCompact(entry.baseAtk, 1)}`}>
-            <img
+            <DisplayImage
               src={WPN_STAT_CNS.atk}
               alt=""
               aria-hidden="true" className="picker-modal__meta-icon picker-modal__meta-icon--theme-contrast"
@@ -223,7 +224,7 @@ export function WeaponPicker({
           </span>
           <span className="picker-modal__spec-item picker-modal__spec-push" title={statLabel} aria-label={`${statLabel} ${statDisplay}`}>
             {statIcon ? (
-              <img
+              <DisplayImage
                 src={statIcon}
                 alt=""
                 aria-hidden="true" className="picker-modal__meta-icon picker-modal__meta-icon--theme-contrast"

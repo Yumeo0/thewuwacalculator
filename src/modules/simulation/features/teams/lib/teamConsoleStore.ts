@@ -6,7 +6,6 @@
 
 import { create } from 'zustand'
 import type { ChannelId } from '@/modules/simulation/features/teams/stage/MemberStage.tsx'
-import { useAppStore } from '@/application/state'
 import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
 
 interface ConsoleTarget {
@@ -28,10 +27,6 @@ interface TeamConsoleStore {
 export const useTeamCnsl = create<TeamConsoleStore>((set) => ({
   target: null,
   open: (resonatorId, channel = 'loadout', scenarioId) => {
-    // The console reads saved builds immediately, while that persistence slice
-    // stays unloaded until a consumer asks for it. Hydrate before publishing
-    // the target so the first console render has the actual inventory.
-    useAppStore.getState().ensInvHydr()
     set({ target: { resonatorId, channel, scenarioId } })
   },
   switchMember: (resonatorId) => set((state) => (

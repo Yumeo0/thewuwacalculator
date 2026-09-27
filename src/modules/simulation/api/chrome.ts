@@ -5,7 +5,8 @@
 
 export { SkllDataProv } from '../features/resonator/SkillDataHost'
 export { RosterColumn } from '../workspace/RosterColumn'
-export { EnemyConsoleHost, openEnemyCnsl } from '../features/enemies/ConsoleHost'
+export { EnemyConsoleHost } from '../features/enemies/ConsoleHost'
+export { openEnemyCnsl } from '../features/enemies/consoleRequest'
 export { EchoImportHost } from '../features/echoes/EchoImportHost'
 export { ImportStamp } from '../features/echoes/ImportStamp'
 export { openEchoImport } from '../features/echoes/lib/echoImportStore'

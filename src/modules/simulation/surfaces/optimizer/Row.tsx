@@ -4,6 +4,8 @@
                rows without re-validating optimizer search output.
 */
 
+import { memo } from 'react'
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { formatTruncCompact } from '@/shared/lib/number.ts'
 import { SonataTokens } from '@/modules/simulation/workspace/ui.tsx'
@@ -80,7 +82,7 @@ function formatEfficiency(damage: number, baseDamage: number | undefined, base: 
   return formatTruncCompact((damage / baseDamage) * 100, 2)
 }
 
-export function Row({
+export const Row = memo(function Row({
   result,
   baseDamage,
   base = false,
@@ -154,7 +156,7 @@ export function Row({
       <div className="opt-result-row__col opt-result-row__col--sets">{viewSetBdgs()}</div>
       <div className="opt-result-row__col">
         {mainEchoIcon ? (
-          <img src={mainEchoIcon} alt="main echo" className="opt-result-row__echo-icon" loading="lazy" onError={withDefEchoMg} />
+          <DisplayImage src={mainEchoIcon} alt="main echo" className="opt-result-row__echo-icon" loading="lazy" onError={withDefEchoMg} />
         ) : (
           <span className="opt-result-row__placeholder">...</span>
         )}
@@ -162,7 +164,7 @@ export function Row({
       {showWeapon ? (
         <div className="opt-result-row__col">
           {weaponIcon ? (
-            <img
+            <DisplayImage
               src={weaponIcon}
               alt={weaponName ?? 'weapon'}
               title={weaponName ?? undefined} className="opt-result-row__weapon-icon"
@@ -191,4 +193,13 @@ export function Row({
       <div className="opt-result-row__col opt-result-row__col--eff">{diff}%</div>
     </div>
   )
-}
+})
+
+export const OptimizerResultRows = memo(function OptimizerResultRows({ rows, indices, selected, onSelect, ...shared }: {
+  rows: OptDisplayRow[]
+  indices: number[]
+  selected: number | null
+  onSelect: (index: number) => void
+} & Pick<OptRowPrps, 'baseDamage' | 'rotationMode' | 'showWeapon'>) {
+  return rows.map((result, index) => <Row key={indices[index]} result={result} {...shared} selected={selected === index} onClick={() => onSelect(index)} />)
+})

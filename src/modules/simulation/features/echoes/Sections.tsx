@@ -4,6 +4,7 @@
                and main-echo runtime controls from the current loadout.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import {useMemo, type HTMLAttributes as HtmlAttrs, type CSSProperties as CssProps} from 'react'
 import { ChevronDown, Plus } from 'lucide-react'
 import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime.ts'
@@ -125,7 +126,7 @@ export function EchoSlot({
         <div className="echo-slot-card">
           <div className="echo-slot-left">
             <button type="button" className="echo-slot-icon" onClick={onOpenPicker}>
-              <img
+              <DisplayImage
                 src={definition.icon}
                 alt={definition.name} className="echo-slot-icon-img"
                 loading="lazy"
@@ -140,7 +141,7 @@ export function EchoSlot({
               </div>
               <div className="echo-slot-meta">
                 {setIcon ? (
-                  <img src={setIcon} alt={getSntSetNam(echo.set)} className="echo-slot-set-icon" loading="lazy" onError={withDefIconM} />
+                  <DisplayImage src={setIcon} alt={getSntSetNam(echo.set)} className="echo-slot-set-icon" loading="lazy" onError={withDefIconM} />
                 ) : null}
                 <span className="echo-slot-cost echo-score-badge">{cost}C</span>
                 {echo.mainEcho ? <span className="echo-slot-badge echo-slot-badge--main">Main</span> : null}
@@ -482,7 +483,7 @@ export function EchoSetBonus({
       <div className="echo-set-bonus-header">
         <div className="echo-set-bonus-icon-wrap">
           {icon ? (
-            <img src={icon} alt={def.name} className="echo-set-bonus-icon" loading="lazy" onError={withDefIconM} />
+            <DisplayImage src={icon} alt={def.name} className="echo-set-bonus-icon" loading="lazy" onError={withDefIconM} />
           ) : (
             <span className="echo-set-bonus-icon-fallback" />
           )}

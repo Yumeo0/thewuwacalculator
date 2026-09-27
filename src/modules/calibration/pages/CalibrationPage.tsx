@@ -9,11 +9,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, CSSProperties as CssProps, ReactNode } from 'react'
 import { hasWwcbMgc, readAppFile, xprtAppFile } from '@/application/persistence/fileCodec'
 import { useAppStore, type AppStore } from '@/application/state'
-import { useInventoryLease } from '@/application/hooks/useInventoryLease.ts'
+import { useSavedRotationsLease } from '@/application/hooks/useSavedRotationsLease.ts'
 import { ConfirmHost } from '@/shared/ui/ConfirmationModal'
 import { useConfirm } from '@/shared/hooks/useConfirmation.ts'
 import { mainPortal } from '@/shared/lib/portalTarget'
-import { clrPrssAppSt, saveAppState, APP_STORAGE_KEY } from '@/application/persistence/appStorage'
+import { clrPrssAppSt, saveAppState } from '@/application/persistence/appStorage'
 import { rstrLtstSnap, pldSnapToDrv } from '@/application/backup/driveSync'
 import { selectPersisted } from '@/application/state/serialization'
 import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
@@ -279,8 +279,8 @@ const SLOTS: { id: SlotId; kind: string }[] = [
 
 const SLICE_NOTES: Record<string, string> = {
   'current-resonator': 'the build you have open, with its team and echoes',
-  profiles: 'every resonator and the build on it',
-  inventory: 'your echo bag and saved builds',
+  profiles: 'working resonator setups, including their teams',
+  inventory: 'echoes, builds and full scenarios',
   settings: 'preferences, theme and font',
   session: 'what is open right now',
 }
@@ -470,7 +470,7 @@ export function CalibrationPage() {
 }
 
 function CalibrationContent() {
-  useInventoryLease()
+  useSavedRotationsLease()
   const ui = useAppStore((state) => state.ui)
   const setTheme = useAppStore((state) => state.setTheme)
   const setThemePref = useAppStore((state) => state.setThemePref)
@@ -498,7 +498,7 @@ function CalibrationContent() {
 
   const hydrate = useAppStore((state) => state.hydrate)
   const resetState = useAppStore((state) => state.resetState)
-  const ensInvHydr = useAppStore((state) => state.ensInvHydr)
+  const ensureFullLibrary = useAppStore((state) => state.ensureFullLibrary)
   const showToast = useTstStr((state) => state.show)
 
   const confirmation = useConfirm()
@@ -636,25 +636,33 @@ function CalibrationContent() {
   const mkCurSnapJso = useCallback(() => {
     // hydrate inventory first so exports always capture the fully realized
     // persisted snapshot instead of a lazily trimmed view.
-    useAppStore.getState().ensInvHydr()
+    useAppStore.getState().ensureFullLibrary()
     const snapshot = selectPersisted(useAppStore.getState())
-    return JSON.stringify(snapshot, null, 2)
+    return JSON.stringify(snapshot)
   }, [])
 
-  // Storage accounting walks the persisted snapshot once on mount; imports
-  // explicitly refresh the resulting domain sizes.
-  const [weights, setWeights] = useState<{ parts: { name: string; bytes: number }[]; total: number; slices: Record<string, number> } | null>(null)
+  // Measure compact JSON data and standalone export payloads before compression.
+  const [weights, setWeights] = useState<{
+    parts: { name: string; bytes: number }[]
+    total: number
+    snapshotBytes: number
+    slices: Record<string, number>
+  } | null>(null)
 
   const measure = useCallback(() => {
     try {
-      ensInvHydr()
+      ensureFullLibrary()
       const snapshot = selectPersisted(useAppStore.getState())
-      const size = (value: unknown) => JSON.stringify(value ?? null).length
+      const encoder = new TextEncoder()
+      const textSize = (text: string) => encoder.encode(text).byteLength
+      const size = (value: unknown) => textSize(JSON.stringify(value ?? null))
       const parts = [
         { name: 'Echoes', bytes: size(snapshot.library.echoes) },
-        { name: 'Resonators', bytes: size(snapshot.combat) },
+        { name: 'Working scenarios', bytes: size(snapshot.combat) },
         { name: 'Builds', bytes: size(snapshot.library.builds) },
-        { name: 'Rotations', bytes: size(snapshot.library.rotations) + size(snapshot.library.scenarios) },
+        // Saved rotations already contain complete scenarios. Include
+        // standalone scenario snapshots in this same group, counted once.
+        { name: 'Saved rotations', bytes: size([...snapshot.library.rotations, ...snapshot.library.scenarios]) },
         { name: 'Simulation', bytes: size(snapshot.simulation) },
         { name: 'Settings', bytes: size(snapshot.ui) },
       ].filter((part) => part.bytes > 2)
@@ -662,7 +670,7 @@ function CalibrationContent() {
       const slices: Record<string, number> = {}
       for (const action of DATAXPRTCTNS) {
         try {
-          slices[action.kind] = mkDataXprtFi(useAppStore.getState(), action.kind).raw.length
+          slices[action.kind] = textSize(mkDataXprtFi(useAppStore.getState(), action.kind).raw)
         } catch {
           slices[action.kind] = 0
         }
@@ -671,12 +679,13 @@ function CalibrationContent() {
       setWeights({
         parts: parts.sort((a, b) => b.bytes - a.bytes),
         total: parts.reduce((sum, part) => sum + part.bytes, 0),
+        snapshotBytes: textSize(JSON.stringify(snapshot)),
         slices,
       })
     } catch {
       setWeights(null)
     }
-  }, [ensInvHydr])
+  }, [ensureFullLibrary])
 
   const scheduleMeasure = useCallback(() => {
     runWhenIdle(measure)
@@ -796,7 +805,7 @@ function CalibrationContent() {
   }
 
   const onXprtSnap = async () => {
-    ensInvHydr()
+    ensureFullLibrary()
     const raw = mkCurSnapJso()
     const filename = `wwcalc-backup-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.json`
     const written = await dwnlJsonFile(raw, filename)
@@ -807,7 +816,7 @@ function CalibrationContent() {
 
   const onXprtDataBn = async (kind: typeof DATAXPRTCTNS[number]['kind']) => {
     try {
-      ensInvHydr()
+      ensureFullLibrary()
       const result = mkDataXprtFi(useAppStore.getState(), kind)
       const written = await dwnlJsonFile(result.raw, result.fileName)
       setSnpsRrr(null)
@@ -972,7 +981,7 @@ function CalibrationContent() {
 
       // validate and persist the restored snapshot before reporting success so
       // the drive restore message always reflects the actual live app state.
-      ensInvHydr()
+      ensureFullLibrary()
       const resolved = await runDataImport(
         'snapshot',
         result.raw,
@@ -1003,7 +1012,7 @@ function CalibrationContent() {
       setSnpsStts(null)
       setSnpsRrr(null)
       await waitForNextP()
-      ensInvHydr()
+      ensureFullLibrary()
       const resolved = await runDataImport(
         'snapshot',
         source,
@@ -1135,7 +1144,7 @@ function CalibrationContent() {
   const railNote = (id: SectionId): string => {
     if (id === 'look') return THEME_LABELS[pickOf[liveSlot]]
     if (id === 'behavior') return `${switchedOn} of ${switchable.length} on`
-    if (id === 'data') return weights ? formatBytes(weights.total) : APP_STORAGE_KEY
+    if (id === 'data') return weights ? `${formatBytes(weights.total)} JSON data` : 'Local data'
     return isGglDrvCnnc ? 'Drive on' : 'Drive off'
   }
 
@@ -1503,8 +1512,8 @@ function CalibrationContent() {
                     ))}
                   </div>
                   <p className="cal-meter__foot">
-                    <span className="cal-num">{formatBytes(weights.total)}</span> in{' '}
-                    <span className="cal-num">{APP_STORAGE_KEY}</span>, all of it in this browser.
+                    <span className="cal-num">{formatBytes(weights.total)}</span> of compact JSON data,
+                    before compression.
                   </p>
                 </div>
               ) : null}
@@ -1621,8 +1630,8 @@ function CalibrationContent() {
                         ) : null}
                         {weights ? (
                           <div className="cal-drive__line">
-                            <span>Snapshot size</span>
-                            <b>{formatBytes(weights.total)}</b>
+                            <span>Snapshot JSON size</span>
+                            <b>{formatBytes(weights.snapshotBytes)}</b>
                           </div>
                         ) : null}
                       </div>

@@ -8,11 +8,32 @@ import {
   makeScenarioTeam,
   reviseCombatScenario,
   type CombatScenario,
+  type DormantScenarioMember,
   type ScenarioTeamMember,
   type TeamMemberId,
 } from '@/domain/entities/combatScenario.ts'
 import { makeCustomBuff } from '@/engine/runtime/defaults.ts'
-import { makeMemberManualEffect, removeMemberEnvironmentState } from '@/engine/runtime/scenarioEnvironment.ts'
+import { makeMemberManualEffect, memberManualEffectId, removeMemberEnvironmentState } from '@/engine/runtime/scenarioEnvironment.ts'
+
+function retainMember(scenario: CombatScenario, member: ScenarioTeamMember): DormantScenarioMember {
+  const effect = scenario.environment.manualEffects.find((effect) => effect.id === memberManualEffectId(member.id))
+  return structuredClone({
+    member,
+    ...(effect ? { manualEffect: { enabled: effect.enabled, label: effect.label, buffs: effect.buffs } } : {}),
+  })
+}
+
+function restoreMember(scenario: CombatScenario, member: ScenarioTeamMember): ScenarioTeamMember {
+  const saved = scenario.dormantMembersByResonatorId?.[member.resonatorId]?.member
+  // Seat identities belong to the current team; saved settings belong to the resonator.
+  return structuredClone(saved ? { ...saved, id: member.id } : member)
+}
+
+function restoreManualEffect(scenario: CombatScenario, member: ScenarioTeamMember) {
+  const saved = scenario.dormantMembersByResonatorId?.[member.resonatorId]?.manualEffect
+  const effect = makeMemberManualEffect(member.id, saved?.buffs ?? makeCustomBuff())
+  return saved ? { ...effect, enabled: saved.enabled, label: saved.label } : effect
+}
 
 export function replaceScenarioTeamMember(
   scenario: CombatScenario,
@@ -22,10 +43,32 @@ export function replaceScenarioTeamMember(
   const index = scenario.team.members.findIndex((candidate) => candidate.id === memberId)
   if (index < 0) return scenario
   const members = [...scenario.team.members]
+  const previous = members[index]
+  const changedResonator = previous.resonatorId !== member.resonatorId
+  const dormantMembersByResonatorId = { ...scenario.dormantMembersByResonatorId }
+  if (changedResonator) {
+    dormantMembersByResonatorId[previous.resonatorId] = retainMember(scenario, previous)
+    delete dormantMembersByResonatorId[member.resonatorId]
+  }
   // Replacement changes member data, not the seat identity referenced by routing.
-  members[index] = { ...structuredClone(member), id: memberId }
+  members[index] = {
+    ...(changedResonator ? restoreMember(scenario, member) : structuredClone(member)),
+    id: memberId,
+  }
   try {
-    return reviseCombatScenario(scenario, { team: makeScenarioTeam(members) })
+    return reviseCombatScenario(scenario, {
+      team: makeScenarioTeam(members),
+      ...(changedResonator ? {
+        dormantMembersByResonatorId,
+        environment: {
+          ...scenario.environment,
+          manualEffects: [
+            ...scenario.environment.manualEffects.filter((effect) => effect.id !== memberManualEffectId(memberId)),
+            restoreManualEffect(scenario, members[index]),
+          ],
+        },
+      } : {}),
+    })
   } catch {
     // Reject invalid team revisions without partially updating the scenario.
     return scenario
@@ -39,16 +82,19 @@ export function insertScenarioTeamMember(
 ): CombatScenario {
   if (scenario.team.members.length >= 3) return scenario
   const members = [...scenario.team.members]
-  members.splice(Math.max(0, Math.min(index, members.length)), 0, structuredClone(member))
+  members.splice(Math.max(0, Math.min(index, members.length)), 0, restoreMember(scenario, member))
+  const dormantMembersByResonatorId = { ...scenario.dormantMembersByResonatorId }
+  delete dormantMembersByResonatorId[member.resonatorId]
   try {
     return reviseCombatScenario(scenario, {
       team: makeScenarioTeam(members),
-      // A new seat starts with its own manual effects and no outgoing routing.
+      dormantMembersByResonatorId,
+      // Restore only the member's own manual effect, never shared encounter buffs.
       environment: {
         ...scenario.environment,
         manualEffects: [
           ...scenario.environment.manualEffects,
-          makeMemberManualEffect(member.id, makeCustomBuff()),
+          restoreManualEffect(scenario, member),
         ],
         routing: {
           bySourceMemberId: { ...scenario.environment.routing.bySourceMemberId, [member.id]: {} },
@@ -67,6 +113,7 @@ export function removeScenarioTeamMember(
   if (scenario.team.members.length === 1) return scenario
   const members = scenario.team.members.filter((member) => member.id !== memberId)
   if (members.length === scenario.team.members.length) return scenario
+  const removed = scenario.team.members.find((member) => member.id === memberId)!
   const team = makeScenarioTeam(members)
   const ids = new Set(team.members.map((member) => member.id))
   // Remove the departed source and incoming routes to it; null targets remain valid.
@@ -78,6 +125,10 @@ export function removeScenarioTeamMember(
   // Subject and initial on-field references must resolve to a surviving member.
   return reviseCombatScenario(scenario, {
     team,
+    dormantMembersByResonatorId: {
+      ...scenario.dormantMembersByResonatorId,
+      [removed.resonatorId]: retainMember(scenario, removed),
+    },
     contextMemberId: ids.has(scenario.contextMemberId) ? scenario.contextMemberId : team.members[0].id,
     environment: {
       ...removeMemberEnvironmentState(scenario.environment, memberId),

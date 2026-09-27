@@ -13,10 +13,7 @@ import {
 } from '@/engine/runtime/defaults'
 import { loadPrssAppS } from '@/application/persistence/storage'
 import type { HydratedAppState } from '@/domain/entities/appState'
-import { isSimulationSurfaceRoute } from '@/shared/lib/appRoutes'
 import type { AppStore } from './store'
-
-const INV_LEFT_PANES = new Set(['echoes', 'teams', 'rotations'])
 
 export function mkDefMkName(resName: string, xstnCnt: number): string {
   return `${resName} Build ${xstnCnt + 1}`
@@ -29,21 +26,10 @@ export function mkDefRotName(
   return `${resName} Rotation ${xstnCnt + 1}`
 }
 
-// load the lightest persisted snapshot we can until inventory-backed screens need more.
+// Gear is shared by every equipped-status surface. Saved scenarios stay on disk.
 export function mkNtlAppStt(): HydratedAppState {
-  if (typeof window === 'undefined') {
-    return makeAppState()
-  }
-
-  const baseState = loadPrssAppS({ includeInventory: false }) ?? makeAppState()
-  if (
-    isSimulationSurfaceRoute(window.location.pathname, 'optimizer')
-    || INV_LEFT_PANES.has(baseState.ui.leftPaneView)
-  ) {
-    return loadPrssAppS({ includeInventory: true }) ?? baseState
-  }
-
-  return baseState
+  if (typeof window === 'undefined') return makeAppState()
+  return loadPrssAppS({ includeInventory: 'gear' }) ?? makeAppState()
 }
 
 export function getSuggsSttF(

@@ -14,6 +14,55 @@ import {
   type ResolvedBodyFont,
 } from '@/domain/entities/appearance.ts'
 
+// Families used by shared chrome stay together; customization-only families
+// are requested when Showcase actually needs its typography controls.
+const APP_FONT_URL = 'https://fonts.googleapis.com/css2?family=Sen:wght@400..800&family=Chakra+Petch:wght@500;600;700&family=DM+Mono:wght@400;500&family=Rubik+Glitch&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Indie+Flower&display=swap'
+const SHOWCASE_FONT_URL = 'https://fonts.googleapis.com/css2?family=Keania+One&family=Righteous&family=Montserrat+Alternates:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap'
+const GAME_FONT_URL = 'https://hw-media-cdn-mingchao.kurogame.com/font/LaguSansBold.otf'
+
+const pendingStylesheets = new Map<string, Promise<void>>()
+
+function ensureLink(href: string, rel: string, configure?: (link: HTMLLinkElement) => void) {
+  if (typeof document === 'undefined') return
+  const exists = Array.from(document.querySelectorAll<HTMLLinkElement>('link')).some((link) => link.href === href && link.rel === rel)
+  if (exists) return
+  const link = document.createElement('link')
+  link.rel = rel
+  link.href = href
+  configure?.(link)
+  if (rel === 'stylesheet') {
+    pendingStylesheets.set(href, new Promise<void>((resolve) => {
+      const finish = () => {
+        window.clearTimeout(timeout)
+        link.removeEventListener('load', finish)
+        link.removeEventListener('error', finish)
+        pendingStylesheets.delete(href)
+        resolve()
+      }
+      const timeout = window.setTimeout(finish, 8000)
+      link.addEventListener('load', finish, { once: true })
+      link.addEventListener('error', finish, { once: true })
+    }))
+  }
+  document.head.appendChild(link)
+}
+
+// Capture must wait for stylesheet discovery before document.fonts.ready:
+// a newly inserted sheet may not have registered any font faces yet.
+export async function waitForFontStylesheets(): Promise<void> {
+  await Promise.all(pendingStylesheets.values())
+}
+
+export function ensureAppFonts() {
+  ensureLink('https://fonts.googleapis.com/', 'preconnect')
+  ensureLink('https://fonts.gstatic.com/', 'preconnect', (link) => { link.crossOrigin = 'anonymous' })
+  ensureLink(APP_FONT_URL, 'stylesheet')
+}
+
+export function ensureShowcaseFonts() {
+  ensureLink(SHOWCASE_FONT_URL, 'stylesheet')
+}
+
 function getRootElem(): HTMLElement {
   return document.documentElement
 }
@@ -41,13 +90,8 @@ async function ensGglFontSt(url: string): Promise<void> {
     return
   }
 
-  const existing = document.querySelector(`link[href="${url}"]`)
-  if (!existing) {
-    const link = document.createElement('link')
-    link.rel = 'stylesheet'
-    link.href = url
-    document.head.appendChild(link)
-  }
+  ensureLink(url, 'stylesheet')
+  await pendingStylesheets.get(url)
 
   const family = extractGoogleFamily(url)
   if (family && 'fonts' in document) {
@@ -114,15 +158,29 @@ export async function applyPrvwBod(
   return resolved
 }
 
+let bodyFontRevision = 0
+
 export async function applyBodyFon(
   fontName: string,
   fontUrl: string,
 ): Promise<ResolvedBodyFont> {
+  const revision = ++bodyFontRevision
   const resolved = resolveBodyFont(fontName, fontUrl)
+  ensureAppFonts()
+  if (resolved.fontName === WUWA_FONT_NAME && !fontUrl.trim()) {
+    ensureLink('https://hw-media-cdn-mingchao.kurogame.com/', 'preconnect', (link) => { link.crossOrigin = 'anonymous' })
+    ensureLink(GAME_FONT_URL, 'preload', (link) => {
+      link.as = 'font'
+      link.type = 'font/otf'
+      link.crossOrigin = 'anonymous'
+    })
+  }
+
   if (resolved.validLink && fontUrl.trim()) {
     await ensGglFontSt(fontUrl)
   }
 
+  if (revision !== bodyFontRevision) return resolved
   getRootElem().style.setProperty('--body-font', resolved.fontStack)
   getRootElem().style.setProperty('--preview-font', resolved.fontStack)
   return resolved
@@ -149,15 +207,18 @@ export function ensureGoogleFamily(family: string): void {
   if (!family.trim() || typeof document === 'undefined') {
     return
   }
-  const slug = family.trim().replace(/\s+/g, '+')
-  if (document.querySelector(`link[data-ggl-family="${family}"]`)) {
+  if (['Sen', 'Chakra Petch', 'DM Mono', 'Rubik Glitch', 'Roboto Mono', 'Indie Flower'].includes(family.trim())) {
+    ensureAppFonts()
     return
   }
-  const link = document.createElement('link')
-  link.rel = 'stylesheet'
-  link.href = `https://fonts.googleapis.com/css?family=${slug}:400,500,600,700,800&display=swap`
-  link.dataset.gglFamily = family
-  document.head.appendChild(link)
+  if (['Keania One', 'Righteous', 'Montserrat Alternates'].includes(family.trim())) {
+    ensureShowcaseFonts()
+    return
+  }
+  const slug = encodeURIComponent(family.trim()).replace(/%20/g, '+')
+  ensureLink(`https://fonts.googleapis.com/css?family=${slug}:400,500,600,700,800&display=swap`, 'stylesheet', (link) => {
+    link.dataset.gglFamily = family
+  })
 }
 
 export function getCurrentBodyFont(): string {

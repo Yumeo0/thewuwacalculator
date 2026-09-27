@@ -71,13 +71,30 @@ interface LabelMatch {
   distance: number
 }
 
+// a neighbouring row's wrapped tail can clip into this row's box, so the label is
+// also tried without the stray words: every run of whole words, longest first
+function wordRuns(text: string): string[] {
+  const words = text.split(/\s+/).filter(Boolean)
+  const runs: string[] = []
+  for (let from = 0; from < words.length; from += 1) {
+    for (let to = words.length; to > from; to -= 1) {
+      runs.push(normLetters(words.slice(from, to).join('')))
+    }
+  }
+  return [...new Set(runs)].filter(Boolean)
+}
+
 // every candidate within tolerance, closest first
 function matchLabels(observed: string, keys: string[]): LabelMatch[] {
-  if (!observed) return []
+  const runs = wordRuns(observed)
+  if (runs.length === 0) return []
   return keys
       .map((key) => {
         const label = STAT_LABELS[familyOf(key)]
-        return { key, label, distance: label ? labelDistance(observed, label) : Infinity }
+        const distance = label
+          ? Math.min(...runs.map((run) => labelDistance(run, label)))
+          : Infinity
+        return { key, distance }
       })
       .filter((entry) => Number.isFinite(entry.distance))
       .sort((left, right) => left.distance - right.distance)
@@ -88,12 +105,12 @@ function matchLabels(observed: string, keys: string[]): LabelMatch[] {
 
 export function resolveMainKey(rawLabel: string, cost: number): string | null {
   const keys = Object.keys(ECHO_MAIN_STATS[cost] ?? {})
-  return matchLabels(normLetters(rawLabel), keys)[0]?.key ?? null
+  return matchLabels(rawLabel, keys)[0]?.key ?? null
 }
 
 // the one cost whose main stats hold this label, for a cost digit that did not read
 export function costForMain(rawLabel: string): number | null {
-  const observed = normLetters(rawLabel)
+  const observed = rawLabel
   const costs = Object.keys(ECHO_MAIN_STATS).map(Number)
   const best = costs
       .map((cost) => ({ cost, match: matchLabels(observed, Object.keys(ECHO_MAIN_STATS[cost]))[0] }))
@@ -180,8 +197,8 @@ export function readSubstat(row: string, value = ''): SubstatReading | null {
   const valueText = number[1].replace(',', '.')
   const hasPercent = number[2] === '%'
   const observed = own
-    ? normLetters(row)
-    : normLetters(row.slice(0, number.index) + ' ' + row.slice(number.index! + number[0].length))
+    ? row
+    : `${row.slice(0, number.index)} ${row.slice(number.index! + number[0].length)}`
 
   const families = [...new Set(SUBSTAT_KEYS.map(familyOf))]
   const labelled = matchLabels(observed, families.flatMap(keysForFamily))

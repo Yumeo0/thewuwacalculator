@@ -68,6 +68,7 @@ export function useMemberModel(
 ): MemberModel {
   const { setMember: setTeamMember, setTeam } = useTeamSlots({
     scenarioId,
+    scenario: draft?.scenario,
     updateScenario: draft?.updateScenario,
   })
   const { actRt: selectedRuntime, partRtsById: selectedPartRtsById } = useAppStore(useShallow(selWorkDrvd))

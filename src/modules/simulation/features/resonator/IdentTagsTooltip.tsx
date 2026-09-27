@@ -4,6 +4,7 @@
                keeping tag lookup and fallback labeling local to resonators.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { CSSProperties as CssProps, SyntheticEvent } from 'react'
 import { HoverCard } from '@/shared/ui/Tooltip'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
@@ -59,7 +60,7 @@ export function IdentTagsTooltip({
                 style={{ '--res-tag-color': `#${tag.color}` } as CssProps}
               >
                 <span className="res-tag-tooltip__icon">
-                  <img
+                  <DisplayImage
                     src={`/assets/game/resonators/tags/${tag.id}.webp`}
                     alt=""
                     aria-hidden="true"

@@ -8,7 +8,8 @@ import { useAnimatedModalValue, useAnimatedVisibility } from '@/shared/hooks/use
 import type { AppModalState } from '@/shared/ui/AppModal'
 
 export const MODAL_EXIT_MS = 320
-const MODAL_OPEN_DELAY = 2
+// Publish the open phase after mount so dialog refs exist before focus handling.
+const MODAL_OPEN_DELAY = 1
 
 function getDialogProps(state: AppModalState): AppModalState {
   return {

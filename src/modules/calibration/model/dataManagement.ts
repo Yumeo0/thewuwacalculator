@@ -235,8 +235,6 @@ export function mkDataXprtFi(state: AppStore, kind: DataXprtKind): XprtDataFile 
           profile: structuredClone(profile),
           suggestions: structuredClone(state.simulation.suggestionsByResonatorId[actResId] ?? null),
         }),
-        null,
-        2,
       )
 
       return {
@@ -254,8 +252,6 @@ export function mkDataXprtFi(state: AppStore, kind: DataXprtKind): XprtDataFile 
           suggestionsByResonatorId: structuredClone(persistedState.simulation.suggestionsByResonatorId),
           optimizerSettings: structuredClone(persistedState.simulation.optimizerSettings),
         }),
-        null,
-        2,
       )
 
       return {
@@ -272,8 +268,6 @@ export function mkDataXprtFi(state: AppStore, kind: DataXprtKind): XprtDataFile 
           inventoryRotations: structuredClone(persistedState.library.rotations),
           savedScenarios: structuredClone(persistedState.library.scenarios),
         }),
-        null,
-        2,
       )
 
       return {
@@ -287,8 +281,6 @@ export function mkDataXprtFi(state: AppStore, kind: DataXprtKind): XprtDataFile 
         buildBundle('settings', {
           ui: structuredClone(persistedState.ui),
         }),
-        null,
-        2,
       )
 
       return {
@@ -306,8 +298,6 @@ export function mkDataXprtFi(state: AppStore, kind: DataXprtKind): XprtDataFile 
             enemyProfile: structuredClone(scenario.target),
           },
         }),
-        null,
-        2,
       )
 
       return {

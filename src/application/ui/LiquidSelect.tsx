@@ -4,6 +4,7 @@
                keyboard navigation, and grouped option support.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent as KeyboardEvent, ReactNode } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
@@ -282,7 +283,7 @@ export function LiquidSelect<T extends SelectValue>({
                         renderOptionContent(option)
                       ) : (
                         <>
-                          {option.icon ? <img src={option.icon} alt="" className={`${b}__option-icon`} onError={withDefIconM} /> : null}
+                          {option.icon ? <DisplayImage src={option.icon} alt="" className={`${b}__option-icon`} onError={withDefIconM} /> : null}
                           <span className={`${b}__option-text`}>{option.label}</span>
                         </>
                       )}
@@ -347,7 +348,7 @@ export function LiquidSelect<T extends SelectValue>({
         ) : (
           <>
             <span className={selPtn ? `${b}__value` : `${b}__value ${b}__value--placeholder`}>
-              {selPtn?.icon ? <img src={selPtn.icon} alt="" className={`${b}__option-icon`} onError={withDefIconM} /> : null}
+              {selPtn?.icon ? <DisplayImage src={selPtn.icon} alt="" className={`${b}__option-icon`} onError={withDefIconM} /> : null}
               <span className={`${b}__value-text`}>{selPtn?.label ?? placeholder}</span>
             </span>
             <span className={`${b}__icon`} aria-hidden="true">

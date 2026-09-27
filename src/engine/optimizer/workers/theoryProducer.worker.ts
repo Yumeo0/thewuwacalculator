@@ -7,14 +7,7 @@
 
 /// <reference lib="webworker" />
 
-import { gnrtThryCpuCm } from '@/engine/optimizer/target/theoryBatches.ts'
-import { hydrGameData, initGameData } from '@/data/gameData'
-import { initEchoCat } from '@/data/gameData/catalog/echoes'
-import { initEchoStts } from '@/data/gameData/catalog/echoStats'
-import { initResCat, initResDtls } from '@/data/gameData/resonators/resonatorDataStore'
-import { initWpnData } from '@/data/gameData/weapons/weaponDataStore'
 import { initEchoSetD } from '@/data/gameData/echoSets/effects'
-import type { OptStartPay } from '@/engine/optimizer/types.ts'
 import type {
   OptThryProdIn,
   OptThryProdBt,
@@ -27,22 +20,11 @@ const scope = self as DedicatedWorkerGlobalScope
 
 let activeRunId: number | null = null
 let cancelled = false
-let gameDataReady = false
+let credit = true
+let wakeCredit: (() => void) | null = null
 
 // returned batch buffers waiting to be reused by the next emit.
 const freeBuffers: Int32Array[] = []
-
-function hydrFromSnpsh(snapshot: NonNullable<OptStartPay['staticData']>): void {
-  hydrGameData(snapshot.gameDataReg)
-  initResCat(Object.values(snapshot.resCatById))
-  initResDtls(snapshot.resDtlsById)
-  initWpnData(Object.values(snapshot.weaponsById))
-  initEchoCat(Object.values(snapshot.echoCatById))
-  initEchoSetD(snapshot.echoSetDefs)
-  if (snapshot.echoStats) {
-    initEchoStts(snapshot.echoStats)
-  }
-}
 
 function postError(runId: number, error: unknown): void {
   const message: OptThryProdRr = {
@@ -62,7 +44,7 @@ function yieldToLoop(): Promise<void> {
 
 async function runProducer(
     runId: number,
-    payload: import('@/engine/optimizer/types.ts').PrepTheoryTarget | import('@/engine/optimizer/types.ts').PrepTheoryRot,
+    payload: Extract<OptThryProdIn, { type: 'startTheoryProducer' }>['payload'],
     batchSize: number,
     shard?: { index: number; count: number },
 ): Promise<void> {
@@ -70,6 +52,7 @@ async function runProducer(
   let generated = 0
   let batchesEmitted = 0
 
+  const { gnrtThryCpuCm } = await import('@/engine/optimizer/target/theoryBatches.ts')
   const iterator = gnrtThryCpuCm({
     payload,
     batchSize,
@@ -90,6 +73,9 @@ async function runProducer(
       break
     }
 
+    if (!credit) await new Promise<void>((resolve) => { wakeCredit = resolve })
+    if (activeRunId !== runId || cancelled) break
+    credit = false
     const next = iterator.next()
     if (next.done) {
       break
@@ -133,41 +119,15 @@ async function runProducer(
   scope.postMessage(done)
 }
 
-async function startRun(
-    runId: number,
-    payload: import('@/engine/optimizer/types.ts').PrepTheoryTarget | import('@/engine/optimizer/types.ts').PrepTheoryRot,
-    batchSize: number,
-    shard?: { index: number; count: number },
-): Promise<void> {
-  if (payload.staticData) {
-    if (!gameDataReady) {
-      hydrFromSnpsh(payload.staticData)
-    }
-    gameDataReady = true
-  } else {
-    await initGameData({
-      mode: payload.gameDataMode,
-      resonatorIds: [payload.runtime.id],
-    })
-    gameDataReady = true
-  }
-
-  await runProducer(runId, payload, batchSize, shard)
-}
-
 scope.onmessage = (event: MessageEvent<OptThryProdIn>) => {
   const message = event.data
 
   if (message.type === 'returnTheoryBuffer') {
-    if (activeRunId === message.runId) {
-      // in low-memory mode we only need one buffer parked in the pool at a
-      // time (max-in-flight is also 1), so drop any returned buffer past
-      // that. otherwise allow one extra cushion so the producer can yield
-      // without immediately starving on its next batch allocation.
-      const cap = message.lowMem ? 1 : 2
-      if (freeBuffers.length < cap) {
-        freeBuffers.push(message.buffer)
-      }
+    if (activeRunId === message.runId && !cancelled && !credit) {
+      if (message.buffer) freeBuffers.push(message.buffer)
+      credit = true
+      wakeCredit?.()
+      wakeCredit = null
     }
     return
   }
@@ -175,25 +135,30 @@ scope.onmessage = (event: MessageEvent<OptThryProdIn>) => {
   if (message.type === 'cancelTheoryProducer') {
     if (activeRunId === message.runId) {
       cancelled = true
+      freeBuffers.length = 0
+      wakeCredit?.()
+      wakeCredit = null
     }
     return
   }
 
   // start
+  wakeCredit?.()
+  wakeCredit = null
+  credit = true
   activeRunId = message.runId
   cancelled = false
   freeBuffers.length = 0
 
   logOptimizer('[optimizer:theory-producer] run start', {
     runId: message.runId,
-    mode: message.payload.mode,
-    theoryTotal: message.payload.theoryTotal,
+    theoryRows: message.payload.theoryRows.length,
     batchSize: message.batchSize,
     shard: message.shard,
-    gameDataReady,
   })
 
-  void startRun(message.runId, message.payload, message.batchSize, message.shard).catch((error) => {
+  initEchoSetD(message.echoSetDefs)
+  void runProducer(message.runId, message.payload, message.batchSize, message.shard).catch((error) => {
     errorOpt('[optimizer:theory-producer] error', {
       runId: message.runId,
       error: error instanceof Error ? error.message : String(error),

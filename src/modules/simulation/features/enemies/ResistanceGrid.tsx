@@ -15,6 +15,7 @@
                pane has it.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { CSSProperties as CssProps } from 'react'
 import type { EnemyProfile } from '@/domain/entities/appState.ts'
 import type { EnemyElemId } from '@/domain/entities/enemy.ts'
@@ -70,7 +71,7 @@ export function ResistanceGrid({
 
         const body = (
           <>
-            <img
+            <DisplayImage
               src={iconSrc}
               alt=""
               aria-hidden="true"
@@ -78,7 +79,7 @@ export function ResistanceGrid({
               onError={withDefIconM}
             />
             <div className="enemy-res-cell__head">
-              <img
+              <DisplayImage
                 src={iconSrc}
                 alt={label}
                 className={isPhys ? 'enemy-res-cell__icon is-phys' : 'enemy-res-cell__icon'}

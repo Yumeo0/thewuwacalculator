@@ -179,6 +179,7 @@
 .rte-bar.opb-bar {
   flex: none;
   height: 2.6rem;
+  justify-content: space-between;
   border: 1px solid var(--rte-line);
   border-radius: 0.7rem;
   background: color-mix(in srgb, var(--text) 2%, var(--bg));
@@ -221,21 +222,6 @@
   background: color-mix(in srgb, var(--danger) 20%, var(--c-transparent));
 }
 
-.opb-read {
-  flex: 1 1 auto;
-  font: 500 0.68rem/1 var(--mono-font);
-}
-
-.opb-read .rte-read__face {
-  cursor: default;
-}
-
-.opb-read b {
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
-
 .opb-host {
   position: relative;
   display: inline-flex;
@@ -260,6 +246,27 @@
   white-space: nowrap;
   cursor: pointer;
   transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+
+.opb-host:has(> .opb-tag__target) {
+  flex: 1;
+  min-width: 0;
+}
+
+.opb-tag__target {
+  width: 100%;
+  max-width: 24rem;
+  min-width: 0;
+}
+
+.opb-tag__target i {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.opb-tag__target .opb-tag__car {
+  flex-shrink: 0;
 }
 
 .opb-tag:hover:not(.is-on, :disabled) {
@@ -580,8 +587,7 @@
 }
 
 .opb-lim input {
-  width: 100%;
-  min-width: 0;
+  min-width: 80px;
   padding: 0.26rem 0.4rem;
   border: 0;
   border-radius: 0.32rem;

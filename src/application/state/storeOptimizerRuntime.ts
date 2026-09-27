@@ -5,9 +5,10 @@
                request plumbing.
 */
 
+import { payloadTransfers } from '@/engine/optimizer/workers/payloadBuffers'
 import type {
   OptBckn,
-  OptFinalResult,
+  OptStoredResult,
   OptRawResult,
   OptStartPay,
   PrepOptPay,
@@ -24,6 +25,7 @@ import { errorOpt, logOptimizer } from '@/engine/optimizer/config/log.ts'
 
 let optRunTkn = 0
 let optCompWrkr: Worker | null = null
+const pendingCompiles = new Map<Worker, Set<(error: Error) => void>>()
 
 export function bgnOptRun(): number {
   // each new run gets a strictly newer token so stale async work can be ignored.
@@ -65,8 +67,13 @@ export function ensOptCompWr(): Worker {
 }
 
 export function stopOptCompW(): void {
-  optCompWrkr?.terminate()
+  const worker = optCompWrkr
   optCompWrkr = null
+  if (!worker) return
+  for (const cancel of pendingCompiles.get(worker) ?? []) {
+    cancel(new DOMException('Optimizer request cancelled', 'AbortError'))
+  }
+  worker.terminate()
 }
 
 export function stopOptComhl(worker: Worker): void {
@@ -77,44 +84,6 @@ export function stopOptComhl(worker: Worker): void {
   stopOptCompW()
 }
 
-function cllcPrepPayT(payload: PrepOptPay): Transferable[] {
-  const maybePush = (items: Transferable[], buffer: ArrayBufferLike) => {
-    // shared buffers cannot be transferred away from the sending thread.
-    if (typeof SharedArrayBuffer !== 'undefined' && buffer instanceof SharedArrayBuffer) {
-      return
-    }
-    items.push(buffer)
-  }
-
-  const out: Transferable[] = []
-  maybePush(out, payload.constraints.buffer)
-  maybePush(out, payload.costs.buffer)
-  maybePush(out, payload.sets.buffer)
-  maybePush(out, payload.kinds.buffer)
-  maybePush(out, payload.comboIndexMap.buffer)
-  maybePush(out, payload.comboBinom.buffer)
-  maybePush(out, payload.lockMainCands.buffer)
-
-  if (payload.mode === 'theoryTarget' || payload.mode === 'theoryRotation') {
-    return out
-  }
-
-  if (payload.mode === 'rotation') {
-    maybePush(out, payload.contexts.buffer)
-    maybePush(out, payload.contextWeight.buffer)
-    maybePush(out, payload.displayContext.buffer)
-    maybePush(out, payload.stats.buffer)
-    maybePush(out, payload.setConstLut.buffer)
-    maybePush(out, payload.mainEchoBuffs.buffer)
-    return out
-  }
-
-  maybePush(out, payload.stats.buffer)
-  maybePush(out, payload.setConstLut.buffer)
-  maybePush(out, payload.mainEchoBuffs.buffer)
-  return out
-}
-
 async function waitForCompW<T extends OptCompOutMs['type']>(
   worker: Worker,
   runId: number,
@@ -122,6 +91,15 @@ async function waitForCompW<T extends OptCompOutMs['type']>(
   dispatch: () => void,
 ): Promise<Extract<OptCompOutMs, { type: T }>> {
   return await new Promise((resolve, reject) => {
+    const pending = pendingCompiles.get(worker) ?? new Set<(error: Error) => void>()
+    pendingCompiles.set(worker, pending)
+    const cleanup = () => {
+      worker.removeEventListener('message', onMsg)
+      worker.removeEventListener('error', handleError)
+      pending.delete(fail)
+      if (!pending.size) pendingCompiles.delete(worker)
+    }
+    const fail = (error: Error) => { cleanup(); reject(error) }
     const onMsg = (event: MessageEvent<OptCompOutMs>) => {
       const message = event.data
       // multiple runs may reuse the same worker, so ignore out-of-date replies.
@@ -129,8 +107,7 @@ async function waitForCompW<T extends OptCompOutMs['type']>(
         return
       }
 
-      worker.removeEventListener('message', onMsg)
-      worker.removeEventListener('error', handleError)
+      cleanup()
 
       if (message.type === 'error') {
         reject(new Error(message.message))
@@ -146,14 +123,15 @@ async function waitForCompW<T extends OptCompOutMs['type']>(
     }
 
     const handleError = (event: ErrorEvent) => {
-      worker.removeEventListener('message', onMsg)
-      worker.removeEventListener('error', handleError)
-      reject(new Error(event.message || 'Optimizer compile worker failed unexpectedly'))
+      fail(new Error(event.message || 'Optimizer compile worker failed unexpectedly'))
     }
 
     worker.addEventListener('message', onMsg)
     worker.addEventListener('error', handleError)
-    dispatch()
+    pending.add(fail)
+    try { dispatch() } catch (error) {
+      fail(error instanceof Error ? error : new Error(String(error)))
+    }
   })
 }
 
@@ -170,12 +148,16 @@ export async function compOptPayIn(
     hasStaticData: !!input.staticData,
   })
 
+  const weaponDataIds = input.settings.includeWeapons
+    ? (await import('@/engine/optimizer/context/weaponOverlays')).resolveWeaponCandidates(input)?.candidates.map((weapon) => weapon.id)
+    : undefined
+  if (worker !== optCompWrkr) throw new DOMException('Optimizer request cancelled', 'AbortError')
   const t0 = performance.now()
   const message = await waitForCompW(worker, runId, 'done', () => {
     worker.postMessage({
       type: 'start',
       runId,
-      payload: input,
+      payload: weaponDataIds ? { ...input, weaponDataIds } : input,
     })
   })
 
@@ -199,7 +181,7 @@ export async function matOptRsltsI(
   results: OptRawResult[],
   uidByIndex: string[],
   limit: number,
-): Promise<OptFinalResult[]> {
+): Promise<OptStoredResult[]> {
   logOptimizer('[optimizer:store] dispatching materialize job to worker', {
     runId,
     resultCount: results.length,
@@ -216,7 +198,7 @@ export async function matOptRsltsI(
       results,
       uidByIndex,
       limit,
-    }, cllcPrepPayT(payload))
+    }, payloadTransfers(payload))
   })
 
   logOptimizer('[optimizer:store] materialize complete', {

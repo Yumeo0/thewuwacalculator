@@ -10,9 +10,8 @@ import type { ResRuntime } from '@/domain/entities/runtime.ts'
 import type { CombatScenario, CombatScenarioId } from '@/domain/entities/combatScenario.ts'
 import { makeScenarioTeam, reviseCombatScenario } from '@/domain/entities/combatScenario.ts'
 import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
-import { makeResProfile, makeScenarioMemberFromProfile } from '@/engine/runtime/defaults.ts'
 import { useAppStore } from '@/application/state'
+import { makeInitialTeammate } from '@/application/state/teammateInitialization'
 import { insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember } from '@/engine/runtime/scenarioMembers.ts'
 import { RES_MENU } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 
@@ -22,9 +21,9 @@ export const TEAM_SUPPORT_SLOTS = [1, 2] as const
 
 export function useTeamSlots(configuration?: {
   scenarioId?: CombatScenarioId | null
+  scenario?: CombatScenario
   updateScenario?: (updater: (scenario: CombatScenario) => CombatScenario) => void
 }) {
-  const maxResOnInit = useAppStore((state) => state.ui.preferences.maxResOnInit)
   const insertScenarioMember = useAppStore((state) => state.insertScenarioMember)
   const replaceScenarioMember = useAppStore((state) => state.replaceScenarioMember)
   const removeScenarioMember = useAppStore((state) => state.removeScenarioMember)
@@ -46,14 +45,23 @@ export function useTeamSlots(configuration?: {
   const setMember = useCallback((slotIndex: number, nextMemberId: string | null) => {
     if (slotIndex < 1 || slotIndex > 2) return
 
-    const seed = nextMemberId ? getResSeedBy(nextMemberId) : null
-    if (nextMemberId && !seed) return
-    const next = seed
-      ? makeScenarioMemberFromProfile(makeResProfile(seed, { maxed: maxResOnInit }))
-      : null
+    const { combat } = useAppStore.getState()
+    const scenario = configuration?.scenario ?? (configuration?.scenarioId
+      ? combat.scenariosById[configuration.scenarioId]
+      : selectedCombatScenario(combat))
+    if (!scenario) return
+    const current = scenario.team.members[slotIndex] ?? null
+    if (current?.resonatorId === nextMemberId) return
+    if (nextMemberId && scenario.team.members.some((member, index) => (
+      index !== slotIndex && member.resonatorId === nextMemberId
+    ))) return
+
+    const next = nextMemberId ? makeInitialTeammate(nextMemberId, scenario) : null
+    if (nextMemberId && !next) return
     if (configuration?.updateScenario) {
       configuration.updateScenario((scenario) => {
         const current = scenario.team.members[slotIndex] ?? null
+        if (current?.resonatorId === nextMemberId) return scenario
         if (!next) return current ? removeScenarioTeamMember(scenario, current.id) : scenario
         if (scenario.team.members.some((member, index) => (
           index !== slotIndex && member.resonatorId === next.resonatorId
@@ -66,20 +74,12 @@ export function useTeamSlots(configuration?: {
       return
     }
 
-    const { combat } = useAppStore.getState()
-    const scenario = configuration?.scenarioId
-      ? combat.scenariosById[configuration.scenarioId]
-      : selectedCombatScenario(combat)
-    if (!scenario) return
-    const current = scenario.team.members[slotIndex] ?? null
     if (!nextMemberId) {
       if (current) removeScenarioMember(scenario.id, current.id)
       return
     }
 
-    if (!next || scenario.team.members.some((member, index) => (
-      index !== slotIndex && member.resonatorId === nextMemberId
-    ))) return
+    if (!next) return
 
     if (current) replaceScenarioMember(scenario.id, current.id, next)
     else insertScenarioMember(scenario.id, slotIndex, next)
@@ -88,7 +88,6 @@ export function useTeamSlots(configuration?: {
     afterAssign,
     configuration,
     insertScenarioMember,
-    maxResOnInit,
     removeScenarioMember,
     replaceScenarioMember,
   ])
@@ -96,10 +95,14 @@ export function useTeamSlots(configuration?: {
   // Apply both support slots through one scenario update so undo history never
   // observes a partially changed team.
   const setTeam = useCallback((supportIds: readonly (string | null)[]) => {
-    const makeMember = (resonatorId: string) => {
-      const seed = getResSeedBy(resonatorId)
-      return seed ? makeScenarioMemberFromProfile(makeResProfile(seed, { maxed: maxResOnInit })) : null
-    }
+    const { combat } = useAppStore.getState()
+    const scenario = configuration?.scenario ?? (configuration?.scenarioId
+      ? combat.scenariosById[configuration.scenarioId]
+      : selectedCombatScenario(combat))
+    if (!scenario) return
+    const initialMembers = new Map([...new Set(supportIds.filter((id): id is string => Boolean(id)))]
+      .map((id) => [id, makeInitialTeammate(id, scenario)]))
+    const makeMember = (resonatorId: string) => initialMembers.get(resonatorId) ?? null
     const update = (scenario: CombatScenario) => withSupports(scenario, supportIds, makeMember)
     let added: string[] = []
     const track = (scenario: CombatScenario) => {
@@ -112,18 +115,13 @@ export function useTeamSlots(configuration?: {
     if (configuration?.updateScenario) {
       configuration.updateScenario(track)
     } else {
-      const { combat } = useAppStore.getState()
-      const scenario = configuration?.scenarioId
-        ? combat.scenariosById[configuration.scenarioId]
-        : selectedCombatScenario(combat)
-      if (!scenario) return
       commitScenarioConfig(scenario.id, track, 'Set Team')
     }
     for (const id of added) {
       const seat = supportIds.indexOf(id) + 1
       if (seat > 0) afterAssign(seat, id)
     }
-  }, [afterAssign, commitScenarioConfig, configuration, maxResOnInit])
+  }, [afterAssign, commitScenarioConfig, configuration])
 
   return useMemo(() => ({ setMember, setTeam }), [setMember, setTeam])
 }

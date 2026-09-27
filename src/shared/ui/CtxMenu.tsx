@@ -3,6 +3,7 @@
   Description: Hosts nested context-menu state, keyboard navigation, dismissal, and submenu placement.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type {
   CSSProperties as CssProps,
   KeyboardEvent as RctKbdVnt,
@@ -444,7 +445,7 @@ function CtxRail({
                     >
                       {item.art ? (
                         <span className="floating-context-menu__art" aria-hidden="true">
-                          <img src={item.art} alt="" loading="lazy" />
+                          <DisplayImage src={item.art} alt="" loading="lazy" />
                         </span>
                       ) : null}
 

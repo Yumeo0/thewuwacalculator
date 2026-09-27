@@ -31,3 +31,5 @@ prod-app.json
 /eng.traineddata
 /text-sample.png
 /*.wwcalc
+
+/public/assets/display/

@@ -6,6 +6,7 @@
                segment decrements (clamped to min).
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { CSSProperties as CssProps } from 'react'
 import { clampNumber } from '@/shared/lib/number.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
@@ -39,7 +40,7 @@ export function StackGauge({
     >
       <div className="stack-gauge__head">
         {icon ? (
-          <img className="stack-gauge__icon" src={icon} alt="" aria-hidden="true" onError={withDefIconM} />
+          <DisplayImage className="stack-gauge__icon" src={icon} alt="" aria-hidden="true" onError={withDefIconM} />
         ) : (
           <span className="stack-gauge__pip" aria-hidden="true" />
         )}

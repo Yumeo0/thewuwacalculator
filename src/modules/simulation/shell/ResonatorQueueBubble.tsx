@@ -3,6 +3,7 @@
   Description: Maintains queued resonator selection and commits the chosen catalog entry to its owner.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
@@ -196,7 +197,7 @@ export function ResQBbbl() {
 
   return createPortal(
     <div ref={bubbleRef} className="resonator-queue-bubble" style={style}>
-      <img
+      <DisplayImage
         src={queue[0].icon}
         alt={queue[0].name} className="resonator-queue-bubble__icon"
         draggable={false}
@@ -213,7 +214,7 @@ export function ResQBbbl() {
         <GrDrag size="0.875rem" />
       </div>
       {queue.length > 1 && (
-        <img
+        <DisplayImage
           src={queue[1].icon}
           alt={queue[1].name} className="resonator-queue-bubble__icon"
           draggable={false}

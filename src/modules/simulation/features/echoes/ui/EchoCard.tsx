@@ -6,6 +6,7 @@
                bench slot can wear the same face with their own chrome on it.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { CSSProperties as CssProps, ReactNode } from 'react'
 import { EchoStatGlyph } from '@/modules/simulation/features/echoes/lib/statGlyph.tsx'
 import {
@@ -75,10 +76,10 @@ export function EchoCardBand({
   return (
     <div className="ecr-card__band">
       <span className="ecr-card__disc">
-        {icon && <img src={icon} alt={name} loading="lazy" decoding="async" onError={withDefEchoMg} />}
+        {icon && <DisplayImage src={icon} alt={name} loading="lazy" decoding="async" onError={withDefEchoMg} />}
       </span>
       {setIcon && (
-        <img
+        <DisplayImage
           src={setIcon}
           alt={setName ?? ''} className="ecr-card__coin"
           loading="lazy"

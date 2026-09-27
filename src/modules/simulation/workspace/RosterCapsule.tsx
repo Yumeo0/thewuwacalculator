@@ -13,6 +13,7 @@
                as it moves between beads.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
@@ -89,7 +90,7 @@ function CapsuleBody({
                 tabIndex={leaving ? -1 : 0}
                 onClick={() => onMate(mate.id)}
               >
-                <img src={mate.profile} alt="" decoding="async" onError={withDefIconM} />
+                <DisplayImage src={mate.profile} alt="" decoding="async" onError={withDefIconM} />
               </button>
             ))}
           </span>
@@ -208,7 +209,7 @@ export function RosterCapsule({
         onClick={() => onFace(entry)}
         onContextMenu={(event) => onFaceMenu(entry, event)}
       >
-        <img key={entry.id} src={entry.profile} alt="" decoding="async" onError={withDefIconM} />
+        <DisplayImage key={entry.id} src={entry.profile} alt="" decoding="async" onError={withDefIconM} />
       </button>
       <div className="blm-capsule-bodies" ref={bodiesRef}>
         {leaving ? (

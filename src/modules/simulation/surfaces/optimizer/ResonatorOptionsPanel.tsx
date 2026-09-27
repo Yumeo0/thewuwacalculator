@@ -4,6 +4,7 @@
                rotation target state, and target-facing runtime controls.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useMemo } from 'react'
 import type { CSSProperties as CssProps } from 'react'
 import { ChevronDown, Crosshair, Cpu, Image, Info, Lock, Sword, X, Gpu } from 'lucide-react'
@@ -204,7 +205,7 @@ export function CharPtnsPnl({
             onClick={onOpenResPck}
             aria-label="Open resonator picker"
           >
-            <img
+            <DisplayImage
               src={imageSrc}
               alt={displayName} className="co-portrait__img"
               loading="eager"
@@ -345,7 +346,7 @@ export function CharPtnsPnl({
                   {mainEcho ? (
                     <>
                       <Lock size="0.625rem" strokeWidth={3} className="co-chip__lock-glyph" aria-hidden="true" />
-                      <img src={mainEcho.icon} alt="" className="co-trigger__ico" loading="lazy" onError={withDefEchoMg} />
+                      <DisplayImage src={mainEcho.icon} alt="" className="co-trigger__ico" loading="lazy" onError={withDefEchoMg} />
                       <span className="co-chip__label">{mainEcho.name}</span>
                       <span className="co-trigger__x"
                         role="button"

@@ -26,13 +26,6 @@ export const SIMULATION_PAGES: SimulationPage[] = [
     says: 'Should i pull S2 or just save?? is R5 on the 4 star Arbiter\'s Back Scrubber Pro Max (ABSPM) actually fine??" No, that weapon is yet to exist, but you can check other weapons out!',
   },
   {
-    id: 'rotation',
-    ...APP_NAVIGATION.rotation,
-    scope: 'one sequence',
-    art: '/assets/home/sc-rotation.webp',
-    says: 'Using the power of node types, trees and other computer terms you probably don\'t care about, you can create a pretty super realistic rotation scenario and even compare it against others! The UI for it rocks, i promise.',
-  },
-  {
     id: 'showcase',
     ...APP_NAVIGATION.showcase,
     scope: 'one build',
@@ -52,6 +45,13 @@ export const SIMULATION_PAGES: SimulationPage[] = [
     scope: 'every build',
     art: '/assets/home/sc-optimizer.webp',
     says: 'Erm is this piece with double crit better than my other piece with no crit at all?" Well.. yeah, probably (shocker) but you can\'t be too sure right??',
+  },
+  {
+    id: 'rotation',
+    ...APP_NAVIGATION.rotation,
+    scope: 'one sequence',
+    art: '/assets/home/sc-rotation.webp',
+    says: 'Using the power of node types, trees and other computer terms you probably don\'t care about, you can create a pretty super realistic rotation scenario and even compare it against others! The UI for it rocks, i promise.',
   },
 ]
 

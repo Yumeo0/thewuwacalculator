@@ -4,6 +4,7 @@
                context, Modulation seat state, timeout control, and navigation.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties, KeyboardEvent } from 'react'
 import { createPortal } from 'react-dom'
@@ -179,7 +180,7 @@ function StampFace({ landing, box, pathname }: { landing: ImportLanding; box: Ta
   } as CSSProperties
 
   const face = seed?.profile
-    ? <img className="is-face" src={seed.profile} alt="" onError={withDefResMg} />
+    ? <DisplayImage className="is-face" src={seed.profile} alt="" onError={withDefResMg} />
     : <span className="is-face" aria-hidden="true" />
 
   const linked = landing.linked

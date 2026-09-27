@@ -3,13 +3,14 @@
   Description: Coordinates loadout summary, bulk actions, and inventory or parser entry points.
 */
 
-import { useCallback, useMemo } from 'react'
+import { isBuildSaved, selectSavedBuildSignatures } from '@/application/state/savedGearStatus'
+
+import { useCallback, useMemo, useRef } from 'react'
 import type { ReactNode, RefObject } from 'react'
 import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime'
 import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
 import {
   cloneEchoLoadout,
-  equalBuildSnapshots,
   saveEchoSlots,
 } from '@/domain/entities/inventoryStorage.ts'
 import { useAppStore } from '@/application/state'
@@ -22,6 +23,8 @@ import { useConfirm } from '@/shared/hooks/useConfirmation.ts'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import { useTstStr } from '@/shared/util/toastStore.ts'
+import { AnchoredAppPopup, useAppPopup, useAppPopupDismiss } from '@/shared/ui/AppPopup.tsx'
+import { LoadoutEffects, hasLoadoutEffects } from '@/modules/simulation/workspace/LoadoutEffects.tsx'
 
 interface HeadTool {
   key: string
@@ -68,11 +71,22 @@ export function LoadoutHead({
   headRef?: RefObject<HTMLElement | null>
 }) {
   const showToast = useTstStr((state) => state.show)
-  const savedBuilds = useAppStore((state) => state.library.builds)
+  const savedBuilds = useAppStore(selectSavedBuildSignatures)
   const addBuildToInv = useAppStore((state) => state.addInvBuild)
   const addEchoesToInv = useAppStore((state) => state.addInvEchoes)
   const confirmation = useConfirm()
   const forgeModal = useAppModal()
+  const effects = useAppPopup()
+  const effectsTriggerRef = useRef<HTMLButtonElement>(null)
+  const effectsRef = useRef<HTMLDivElement>(null)
+  const canReadEffects = hasLoadoutEffects(echoes)
+  useAppPopupDismiss({
+    open: effects.visible,
+    onDismiss: effects.hide,
+    hostRef: effectsTriggerRef,
+    popupRef: effectsRef,
+    returnFocusRef: effectsTriggerRef,
+  })
 
   const cost = useMemo(() => cmptTtlEchoC(echoes), [echoes])
   const over = cost > MAX_ECHO_COST
@@ -86,10 +100,10 @@ export function LoadoutHead({
   // a build is only "saved" while the bag holds this exact weapon and loadout
   const alreadySaved = useMemo(() => {
     if (!runtime) return false
-    return savedBuilds.some((entry) => equalBuildSnapshots(entry.build, {
+    return isBuildSaved(savedBuilds, {
       weapon: runtime.build.weapon,
       echoes,
-    }))
+    })
   }, [echoes, runtime, savedBuilds])
 
   const onSaveBuild = useCallback(() => {
@@ -195,7 +209,21 @@ export function LoadoutHead({
   return (
     <header className="lho" ref={headRef}>
       <div className="lho-line">
-        <h3 className="lho-title">{title}</h3>
+        <h3 className="lho-title">
+          {canReadEffects ? (
+            <button
+              ref={effectsTriggerRef}
+              type="button"
+              className="lho-title-link"
+              aria-haspopup="dialog"
+              aria-expanded={effects.visible}
+              title="Show echo skill and Sonata effects"
+              onClick={effects.toggle}
+            >
+              {title}
+            </button>
+          ) : title}
+        </h3>
         <span className="lho-read"
           data-over={over ? 'true' : undefined}
           title={over ? `${cost} cost, ${cost - MAX_ECHO_COST} over the cap` : `${cost} of ${MAX_ECHO_COST} cost spent`}
@@ -253,6 +281,24 @@ export function LoadoutHead({
             forgeModal.hide()
           }}
         />
+      ) : null}
+
+      {canReadEffects ? (
+        <AnchoredAppPopup
+          visible={effects.visible}
+          open={effects.open}
+          closing={effects.closing}
+          anchorRef={effectsTriggerRef}
+          popupRef={effectsRef}
+          preferredPlacement="down"
+          maxHeight={560}
+          offset={10}
+          className="lho-fx"
+          role="dialog"
+          aria-label="Echo skill and Sonata effects"
+        >
+          <LoadoutEffects echoes={echoes} />
+        </AnchoredAppPopup>
       ) : null}
 
       <ConfirmHost control={confirmation} portalTarget={mainPortal()} />

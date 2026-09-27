@@ -4,16 +4,13 @@
                filtering, preview state, and build application.
 */
 
-import {type ReactNode, useCallback, useRef} from 'react'
+import { createOptimizerProgress } from './lib/progressStore'
+import {type ReactNode, lazy, Suspense, useCallback, useRef} from 'react'
 import {useEffect, useLayoutEffect as useLytFfct, useMemo, useState} from 'react'
-import { useInventoryLease } from '@/application/hooks/useInventoryLease.ts'
 import { useNavX } from '@/shared/navigation/useNavX'
 import type {RotationNode} from '@/domain/gameData/contracts'
-import { isRotationSequence } from '@/domain/gameData/rotationSequence.ts'
 import {
   cloneEchoLoadout,
-  savedRotationItems,
-  savedRotationResonatorId,
 } from '@/domain/entities/inventoryStorage.ts'
 import { OptimizerLab } from './transport/OptimizerLab.tsx'
 import { OptStage } from './transport/OptStage.tsx'
@@ -43,39 +40,40 @@ import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
 import { contextScenarioMember } from '@/domain/entities/combatScenario.ts'
 import { indexEquippedEchoes } from '@/engine/runtime/inventoryUsage.ts'
 import {deriveOptSets, preserveToggles} from '@/engine/optimizer/config/defaultSettings.ts'
+import { getDefaultRotation } from '@/data/catalog/gameDataService.ts'
 import {applyKeepPrc, makeStatWeights} from '@/engine/optimizer/search/filtering.ts'
 import {compOptTgtCt} from '@/engine/optimizer/target/context'
 import {listOptTrgt} from '@/engine/optimizer/target/skills'
 import {countOptCombos, countTheory} from '@/engine/optimizer/search/counting'
 import { optSetIdSet } from '@/engine/optimizer/config/allowedSets.ts'
-import type {OptBagResult, OptPrgr, OptResultStats, OptStartPay, TheoryResult, TheoryResultRow} from '@/engine/optimizer/types'
-import type { OptCompOutMs } from '@/engine/optimizer/compiler/compileWorker.types.ts'
+import type {CompactTheoryResult, OptBagResult, OptResultStats, TheoryResult, TheoryResultRow} from '@/engine/optimizer/types'
+import type { OptBaselineInput, OptCompOutMs } from '@/engine/optimizer/compiler/compileWorker.types.ts'
 import {seedRsntById} from '@/modules/simulation/features/resonator/lib/seedData.ts'
 import {Expandable} from '@/shared/ui/Expandable'
 import AppLdrVrly from '@/shared/ui/AppLoaderOverlay'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
-import { EchoPicker as EchoPckrMdl } from '@/modules/simulation/features/echoes/Picker.tsx'
-import { WeaponPicker as WpnPckrMdl } from '@/modules/simulation/features/weapons/Picker.tsx'
+
+
 import {
   SetCond
 } from '@/modules/simulation/features/controls/SetConditional.tsx'
-import {ResPckr as ResPckrMdl} from '@/modules/simulation/features/resonator/Picker.tsx'
-import {CharPtnsPnl} from '@/modules/simulation/surfaces/optimizer/ResonatorOptionsPanel.tsx'
-import {WpnCfgMdl} from '@/modules/simulation/surfaces/suggestions/WeaponConfig.tsx'
-import { TeamPanel } from '@/modules/simulation/surfaces/optimizer/TeamPanel.tsx'
-import {ControlBox} from '@/modules/simulation/surfaces/optimizer/ControlBox.tsx'
+
+
+
+
+
 import {
   type OptDisplayRow,
-  Row
+  Row, OptimizerResultRows
 } from '@/modules/simulation/surfaces/optimizer/Row.tsx'
-import {Rules} from '@/modules/simulation/surfaces/optimizer/Rules.tsx'
+
 import {HEADER_TITLES} from '@/modules/simulation/surfaces/optimizer/lib/mockData.ts'
 import { OPT_SKILL_TABS, getSkillTabLabel } from '@/modules/simulation/model/skillTabs'
 import { skillDisplayColor } from '@/modules/simulation/surfaces/rotation/shared/skillDisplay.ts'
 import {modalContent} from '@/modules/simulation/surfaces/optimizer/Modals.tsx'
 import { OptPrvwEchoT } from '@/modules/simulation/surfaces/optimizer/lib/parts.tsx'
 import { ResultToolbar } from '@/modules/simulation/surfaces/optimizer/ResultToolbar.tsx'
-import { OptimizerInventoryModal } from '@/modules/simulation/surfaces/optimizer/OptimizerInventoryModal.tsx'
+
 import {
   plchRslt,
   vsblRsltsAt as getRowsAt,
@@ -88,7 +86,7 @@ import {
   isDefaultViewCriteria,
   DEFAULT_VIEW_CRITERIA,
   type ResultViewCriteria,
-  type ResultFacet,
+  ResultFacetTable,
   type Predicate,
 } from '@/modules/simulation/surfaces/optimizer/lib/results.ts'
 import { RES_MENU } from '@/modules/simulation/features/resonator/lib/resonator.ts'
@@ -160,7 +158,6 @@ function settleBand(band: HTMLElement | null): Promise<unknown> {
 }
 
 export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant }) {
-  useInventoryLease()
   const showToast = useTstStr((state) => state.show)
   const navigate = useNavX()
   const menu = useCtxBuilder()
@@ -175,8 +172,11 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
   const optSetsResonatorId = useAppStore(
     (state) => state.simulation.optimizerSettingsResonatorId,
   )
+  const needsTargetDefaults = optSetsResonatorId !== optResId || (
+    !storedOptSets.targetSkillId && !storedOptSets.targetComboSourceId
+  )
   const optSets = useMemo(() => {
-    if (!optRt || optSetsResonatorId === optResId) {
+    if (!optRt || !needsTargetDefaults) {
       return storedOptSets
     }
 
@@ -189,13 +189,13 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       }),
       ...preserveToggles(storedOptSets),
     })
-  }, [activeTarget, enemyProfile, optResId, optRt, optRuntimesById, optSetsResonatorId, storedOptSets])
+  }, [activeTarget, enemyProfile, needsTargetDefaults, optRt, optRuntimesById, storedOptSets])
   const optStts = useAppStore((state) => state.optimizer.status)
   const optResults = useAppStore((state) => (
     Array.isArray(state.optimizer.results)
       ? state.optimizer.results
       : []
-  ) as Array<OptBagResult | LegOptRsltEn | TheoryResult | TheoryResultRow>)
+  ) as Array<OptBagResult | LegOptRsltEn | TheoryResult | CompactTheoryResult | TheoryResultRow>)
   const optRrr = useAppStore((state) => state.optimizer.error)
   const optBtchSize = useAppStore((state) => state.optimizer.batchSize)
   const optResultData = useAppStore((state) => state.optimizer.resPay)
@@ -205,9 +205,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       : []
   ))
   const invEchoEnts = useAppStore((state) => state.library.echoes)
-  const optProfiles = useAppStore(selScenarioProfiles)
-  const optInvEchoSg = useMemo(() => indexEquippedEchoes(optProfiles), [optProfiles])
-  const invRttn = useAppStore((state) => state.library.rotations)
   const optCpuHintSe = useAppStore((state) => state.ui.optimizerCpuHintSeen)
   const maxResOnInit = useAppStore((state) => state.ui.preferences.maxResOnInit)
   const setOptCpuHin = useAppStore((state) => state.setOptHint)
@@ -235,6 +232,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
   const updResOptInv = useAppStore((state) => state.updResOptInv)
   const optSetConds = optimizerMember.local.setConditionals
   const activeSeed = seedRsntById[optResId] ?? null
+  const defaultRotation = getDefaultRotation(optResId)
   const displayName = activeSeed?.name ?? 'Unknown'
   const rotationMode = optSets.rotationMode
   const targetMode: 'skill' | 'combo' = rotationMode ? 'combo' : 'skill'
@@ -253,7 +251,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
   // whether the filter/sort controls are expanded; opening them arms the facet
   // pass so the dropdowns can list the echoes/sets/plans present.
   const [optToolsOpen, setOptToolsOpen] = useState(false)
-  const [facetTable, setFacetTable] = useState<ResultFacet[] | null>(null)
+  const [facetTable, setFacetTable] = useState<ResultFacetTable | null>(null)
   // which console mode the body shows: filter (WHERE, subsets) or find (jump).
   const [consoleMode, setConsoleMode] = useState<'filter' | 'find'>('filter')
   // Find predicates navigate within the filtered view without removing rows.
@@ -274,7 +272,8 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     resonatorId: null,
     plans: mkMptyEchoPl(),
   }))
-  const [progress, setProgress] = useState<OptPrgr>(() => mkMptyPrgr())
+  const [progressSource] = useState(() => createOptimizerProgress(mkMptyPrgr()))
+  const setProgress = progressSource.update
   const uiModal = useAppModalValue<ReactNode>()
   const rulesModal = useAppModal()
   const setCondsMdl = useAppModal()
@@ -394,14 +393,14 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     setActiveIndex(0)
     setPrvwTrgt({ kind: 'base' })
     setProgress(mkMptyPrgr())
-  }, [clrOptRslts])
+  }, [clrOptRslts, setProgress])
 
   useEffect(() => () => {
     disposeOptResources()
   }, [disposeOptResources])
 
   useLytFfct(() => {
-    if (!optRt || optSetsResonatorId === optResId) {
+    if (!optRt || !needsTargetDefaults) {
       return
     }
 
@@ -410,7 +409,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     updOptSets(() => optSets, optResId)
     setEchoPlanS({ resonatorId: optResId, plans: mkMptyEchoPl() })
     clearRun()
-  }, [clearRun, optResId, optRt, optSets, optSetsResonatorId, updOptSets])
+  }, [clearRun, needsTargetDefaults, optResId, optRt, optSets, updOptSets])
 
   const openUiModal = useCallback((content: ReactNode) => {
     uiModal.show(content)
@@ -488,44 +487,23 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       return []
     }
 
-    const options: SelectOption[] = [{
+    const options: SelectOption[] = defaultRotation ? [{
+      value: `default:${optResId}`,
+      label: `${displayName} · Default Rotation`,
+    }] : []
+    options.push({
       value: `live:${optResId}`,
       label: `${displayName} · Current Rotation · Live`,
-    }]
-
-    for (const entry of invRttn) {
-      const resonatorId = savedRotationResonatorId(entry)
-      const items = savedRotationItems(entry)
-      if (!isRotationSequence(items, resonatorId) || resonatorId !== optResId) {
-        continue
-      }
-
-      options.push({
-        value: `saved:${entry.id}`,
-        label: `${seedRsntById[resonatorId]?.name ?? resonatorId} · ${entry.name} · Saved`,
-      })
-    }
+    })
 
     return options
   })()
 
-  // combo (rotation) optimizer mode only makes sense when there is a rotation
-  // with at least one damage feature node, either the live compact rotation
-  // or a compatible saved rotation for this resonator. with none, combo mode is
-  // hidden and forced back to skill mode below.
-  const comboAvailable = useMemo(() => {
-    if (!effectRuntime) {
-      return false
-    }
-    if (rotHasFeats(effectRuntime.rotation.sequence)) {
-      return true
-    }
-    return invRttn.some((entry) => (
-      savedRotationResonatorId(entry) === optResId &&
-      isRotationSequence(savedRotationItems(entry), savedRotationResonatorId(entry)) &&
-      rotHasFeats(savedRotationItems(entry))
-    ))
-  }, [effectRuntime, optResId, invRttn])
+  // Optimizer evaluates the current scenario or its catalog default. Saved
+  // scenarios are loaded into the workspace from the rotation page.
+  const comboAvailable = Boolean(effectRuntime && (
+    defaultRotation || rotHasFeats(effectRuntime.rotation.sequence)
+  ))
 
   useEffect(() => {
     if (rotationMode && !comboAvailable) {
@@ -543,22 +521,15 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     }
 
     const selSrcId = optSets.targetComboSourceId
+    if (selSrcId === `default:${optResId}` && defaultRotation) {
+      return defaultRotation.items
+    }
     if (!selSrcId) {
       return effectRuntime.rotation.sequence
     }
 
     if (selSrcId === `live:${optResId}`) {
       return effectRuntime.rotation.sequence
-    }
-
-    if (selSrcId.startsWith('saved:')) {
-      const rotationId = selSrcId.slice('saved:'.length)
-      const saved = invRttn.find((entry) => (
-        entry.id === rotationId &&
-        savedRotationResonatorId(entry) === optResId &&
-        isRotationSequence(savedRotationItems(entry), savedRotationResonatorId(entry))
-      ))
-      return saved ? savedRotationItems(saved) : null
     }
 
     return effectRuntime.rotation.sequence
@@ -588,10 +559,11 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     }))
   }, [comboOptions, optSets, updOptSets])
 
+  const needsInventory = !isThryMode || optInvMdl.visible
+  const optProfiles = useAppStore((state) => needsInventory && optSets.excludeEquipped ? selScenarioProfiles(state) : null)
+  const optInvEchoSg = useMemo(() => optProfiles ? indexEquippedEchoes(optProfiles) : {}, [optProfiles])
   const optBaseInvEchoE = useMemo(() => {
-    if (isThryMode) {
-      return invEchoEnts
-    }
+    if (!needsInventory) return []
 
     if (!optSets.excludeEquipped) {
       return invEchoEnts
@@ -601,7 +573,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       const owners = optInvEchoSg[echo.uid] ?? []
       return !owners.some((owner) => owner.resonatorId !== optResId)
     })
-  }, [invEchoEnts, isThryMode, optInvEchoSg, optResId, optSets.excludeEquipped])
+  }, [invEchoEnts, needsInventory, optInvEchoSg, optResId, optSets.excludeEquipped])
 
   const fltrRuleEcho = useMemo(() => {
     const llwdSetIds = optSetIdSet(optSets.allowedSets)
@@ -617,12 +589,12 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       }
       return !(llwdMainStat.size > 0 && !llwdMainStat.has(echo.mainStats.primary.key));
     })
-  }, [optBaseInvEchoE, optSets])
+  }, [optBaseInvEchoE, optSets.allowedSets, optSets.mainStatFilter, optSets.selectedBonus])
 
   const allEchoes = useMemo(() => listEchoes(), [])
 
   const thryMFltr = useMemo(() => {
-    if (!effectRuntime) {
+    if (!isThryMode || !effectRuntime) {
       return {
         mainStatFilter: [],
         selectedBonus: null,
@@ -640,7 +612,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       mainStatFilter: [...(ntlSets.mainStatFilter ?? [])],
       selectedBonus: ntlSets.selectedBonus ?? null,
     }
-  }, [activeTarget, effectRuntime, effectRuntimesById, enemyProfile])
+  }, [isThryMode, activeTarget, effectRuntime, effectRuntimesById, enemyProfile])
 
   const runOptSets = useMemo(() => {
     if (!isThryMode && targetSkillId === optSets.targetSkillId) {
@@ -663,6 +635,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     const resonatorId = optResId
     const tgtSkllId = targetSkillId
     if (
+      !needsInventory || optSets.keepPercent <= 0 ||
       !resonatorId ||
       !effectRuntime ||
       !tgtSkllId ||
@@ -680,6 +653,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       selectedTargets: activeTarget,
     })
   }, [
+    needsInventory, optSets.keepPercent,
     activeTarget,
     effectRuntime,
     effectRuntimesById,
@@ -710,6 +684,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
   }, [effectRuntime, enemyProfile, prepTgtSkll, rotationMode])
 
   const optEligibleInvEchoE = useMemo(() => {
+    if (!needsInventory || optSets.keepPercent <= 0 || optSets.rotationMode || !optWghtMap) return fltrRuleEcho
     const fltrChs = applyKeepPrc(
       fltrRuleEcho.map((entry) => entry.echo),
       {
@@ -727,7 +702,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     return fltrChs
       .map((echo) => entriesByUid.get(echo.uid) ?? null)
       .filter((entry): entry is (typeof fltrRuleEcho)[number] => Boolean(entry))
-  }, [fltrRuleEcho, optSets, optWghtMap])
+  }, [needsInventory, fltrRuleEcho, optSets.keepPercent, optSets.rotationMode, optSets.lockedMainEchoId, optWghtMap])
 
   const fltrInvEchoE = useMemo(() => {
     if (isThryMode) {
@@ -793,11 +768,10 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     shldCntCombo,
   ])
 
-  const bslnInput = useMemo<OptStartPay | null>(() => {
+  const bslnInput = useMemo<OptBaselineInput | null>(() => {
     if (
       !effectRuntime ||
-      !runOptSets ||
-      (!rotationMode && !runOptSets.targetSkillId) ||
+      (!rotationMode && !targetSkillId) ||
       qppdChs.length === 0
     ) {
       return null
@@ -812,8 +786,8 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       runtime: effectRuntime,
       runtimesById: effectRuntimesById,
       settings: {
-        ...runOptSets,
-        searchMode: 'inventory',
+        rotationMode,
+        targetSkillId,
       },
       invChs: qppdChs,
       enemyProfile,
@@ -831,13 +805,13 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     effectRuntime,
     effectRuntimesById,
     optSetConds,
-    runOptSets,
+    targetSkillId,
     rotationMode,
     selRotTms,
   ])
 
   const [baselineEvaluation, setBaselineEvaluation] = useState<{
-    input: OptStartPay
+    input: WeakRef<OptBaselineInput>
     result: { damage: number; stats: OptResultStats | null } | null
   } | null>(null)
 
@@ -855,7 +829,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       worker.onmessage = (event: MessageEvent<OptCompOutMs>) => {
         const message = event.data
         if (message.type !== 'baselineDone' || disposed) return
-        setBaselineEvaluation({ input: bslnInput, result: message.result })
+        setBaselineEvaluation({ input: new WeakRef(bslnInput), result: message.result })
         worker?.terminate()
         worker = null
       }
@@ -879,11 +853,11 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     }
   }, [bslnInput, optSetConds, qppdChs])
 
-  const bslnVltn = baselineEvaluation?.input === bslnInput
+  const bslnVltn = baselineEvaluation?.input.deref() === bslnInput
     ? baselineEvaluation.result
     : null
 
-  const baseResult: OptDisplayRow = (() => {
+  const baseResult = useMemo<OptDisplayRow>(() => {
     if (!effectRuntime) {
       return plchRslt()
     }
@@ -902,17 +876,18 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       weaponName: baseWeapon?.name ?? null,
       stats: bslnVltn?.stats ?? null,
     }
-  })()
+  }, [effectRuntime, bslnVltn])
 
   const invChsByUid = useMemo(
-    () => new Map(invEchoEnts.map((entry) => [entry.echo.uid, entry.echo] as const)),
-    [invEchoEnts],
+    () => new Map(optResults.some((result) => 'uids' in result && !('echoes' in result)) ? invEchoEnts.map((entry) => [entry.echo.uid, entry.echo] as const) : []),
+    [invEchoEnts, optResults],
   )
 
   const rsltsPerPage = 32
 
+  const needsFacets = optToolsOpen || !isDefaultViewCriteria(viewCriteria) || findPreds.length > 0
   useEffect(() => {
-    if (optResults.length === 0) {
+    if (!needsFacets || optResults.length === 0) {
       setFacetTable(null)
       return
     }
@@ -921,7 +896,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
 
     let cncl = false
     const total = optResults.length
-    const next = new Array<ResultFacet>(total)
+    const next = new ResultFacetTable(total)
     const chunkSize = 768
     let start = 0
     let tid: ReturnType<typeof setTimeout> | null = null
@@ -942,7 +917,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       })
 
       for (let index = 0; index < slice.length; index += 1) {
-        next[start + index] = slice[index]
+        next.set(start + index, slice[index]!)
       }
 
       start = end
@@ -962,7 +937,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
         clearTimeout(tid)
       }
     }
-  }, [optResults, invChsByUid, optResultEchoes, optResultData])
+  }, [needsFacets, optResults, invChsByUid, optResultEchoes, optResultData])
 
   const viewIndices = useMemo<number[] | null>(() => {
     if (!facetTable || isDefaultViewCriteria(viewCriteria)) {
@@ -973,21 +948,10 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
 
   // reverse lookup (original index -> display position) so the selected/preview
   // row can be located within the current view.
-  const dispPosByOrig = useMemo<Map<number, number> | null>(() => {
-    if (!viewIndices) {
-      return null
-    }
-    const map = new Map<number, number>()
-    for (let i = 0; i < viewIndices.length; i += 1) {
-      map.set(viewIndices[i], i)
-    }
-    return map
-  }, [viewIndices])
-
   const origAt = (displayPos: number): number =>
     viewIndices ? (viewIndices[displayPos] ?? -1) : displayPos
   const dispPosOf = (origIndex: number): number =>
-    dispPosByOrig ? (dispPosByOrig.get(origIndex) ?? -1) : origIndex
+    viewIndices ? viewIndices.indexOf(origIndex) : origIndex
 
   const resultLength = viewIndices ? viewIndices.length : optResults.length
   const totalPages = Math.max(1, Math.ceil(resultLength / rsltsPerPage))
@@ -1027,7 +991,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     const out: number[] = []
     for (let pos = 0; pos < len; pos += 1) {
       const orig = viewIndices ? viewIndices[pos] : pos
-      const facet = orig != null ? facetTable[orig] : undefined
+      const facet = orig != null ? facetTable.get(orig) : undefined
       if (facet && facetMatches(facet, findPreds)) {
         out.push(pos)
       }
@@ -1263,13 +1227,11 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     equipPreviewLoadout(nextEchoes, index)
   }
 
-  const showRsltPrvw = (index: number) => {
+  const showRsltPrvw = useCallback((index: number) => {
     setActiveIndex(index)
-    const orig = origAt(pageStart + index)
-    if (orig >= 0) {
-      setPrvwTrgt({ kind: 'result', index: orig })
-    }
-  }
+    const orig = viewIndices ? viewIndices[pageStart + index] ?? -1 : pageStart + index
+    if (orig >= 0) setPrvwTrgt({ kind: 'result', index: orig })
+  }, [pageStart, viewIndices])
 
   const showWeapon = isThryMode && optSets.includeWeapons
 
@@ -1667,6 +1629,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     scenario.id,
     selRotTms,
     setOptCpuHin,
+    setProgress,
     showBasePrvw,
     startOpt,
     weaponSuggests,
@@ -1755,7 +1718,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
 
   const controlProps = {
     isLoading,
-    progress,
+    progressSource,
     success,
     cancelled,
     resultLength,
@@ -1763,9 +1726,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     cmbnLbl: isThryMode
       // theory mode reports the exact compiled emit count once the worker
       // has prepared the search payload.
-      ? ((progress.total ?? 0) > 0
-        ? Math.floor(progress.total ?? 0).toLocaleString()
-        : '...')
+      ? '...'
       : shldCntCombo
       ? rslvComboCnt.toLocaleString()
       : '0',
@@ -1863,17 +1824,8 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
             <AppLdrVrly text="Optimizing..." />
           ) : (
             <>
-              {rows.map((result, index) => (
-                <Row
-                  key={pageOrigIndices[index] ?? pageStart + index}
-                  result={result}
-                  baseDamage={baseResult.damage}
-                  rotationMode={rotationMode}
-                  showWeapon={showWeapon}
-                  selected={selPrvwNdx === index}
-                  onClick={() => showRsltPrvw(index)}
-                />
-              ))}
+              <OptimizerResultRows rows={rows} indices={pageOrigIndices} selected={selPrvwNdx}
+                baseDamage={baseResult.damage} rotationMode={rotationMode} showWeapon={showWeapon} onSelect={showRsltPrvw} />
 
               {optRrr ? (
                 <div className="opt-result-row is-base">
@@ -2027,7 +1979,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
   // Theory search obtains its exact candidate count from worker progress,
   // unlike inventory mode's precomputed combination count.
   const stagePermutations = isThryMode
-    ? ((progress.total ?? 0) > 0 ? Math.floor(progress.total ?? 0).toLocaleString() : null)
+    ? null
     : shldCntCombo
       ? rslvComboCnt.toLocaleString()
       : '0'
@@ -2058,7 +2010,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
         ) : (
           <OptStage
             isLoading={isLoading}
-            progress={progress}
+            progressSource={progressSource}
             cancelled={cancelled}
             success={success}
             permutations={stagePermutations}
@@ -2070,7 +2022,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
 
         <OptTransport
           isLoading={isLoading}
-          progress={progress}
+          progressSource={progressSource}
           cancelled={cancelled}
           success={success}
           echoCount={isThryMode ? qppdChs.length : fltrInvEchoE.length}
@@ -2142,7 +2094,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
         ariaLabel="Optimizer rules"
         onClose={clsRlsMdl}
       >
-        <Rules onClose={clsRlsMdl} />
+        {rulesModal.visible ? <Suspense fallback={null}><Rules onClose={clsRlsMdl} /></Suspense> : null}
       </AppModal>
 
       <SetCond
@@ -2154,6 +2106,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
         onSetCondsrx={(updater) => updResSetCon(optResId, updater)}
       />
 
+      {wpnCondMdl.visible ? <Suspense fallback={null}>
       <WpnCfgMdl
         {...wpnCondMdl}
         title="Config - Weapon Search"
@@ -2162,9 +2115,10 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
         seed={activeSeed}
         lockMaxMode
       />
+      </Suspense> : null}
 
       {variant === 'embedded' ? labSurface : (
-        <ContextTrigger
+        <Suspense fallback={null}><ContextTrigger
           asChild
           ariaLabel="Optimizer actions"
           items={optCtxMenuTm}
@@ -2326,9 +2280,10 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
               {!isWide ? <ControlBox isWide={false} {...controlProps} /> : null}
             </div>
           </div>
-        </ContextTrigger>
+        </ContextTrigger></Suspense>
       )}
 
+      {mainEchoPckr.visible ? <Suspense fallback={null}>
       <EchoPckrMdl
         visible={mainEchoPckr.visible}
         open={mainEchoPckr.open}
@@ -2394,7 +2349,9 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
         }}
         onClose={clsMainEchoP}
       />
+      </Suspense> : null}
 
+      {optInvMdl.visible ? <Suspense fallback={null}>
       <OptimizerInventoryModal
         visible={optInvMdl.visible}
         open={optInvMdl.open}
@@ -2405,7 +2362,9 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
         onSelectionChange={(updater) => updResOptInv(optResId, updater)}
         onClose={optInvMdl.hide}
       />
+      </Suspense> : null}
 
+      {resPckr.visible ? <Suspense fallback={null}>
       <ResPckrMdl
         visible={resPckr.visible}
         open={resPckr.open}
@@ -2443,7 +2402,9 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
         }}
         onClose={clsResPckr}
       />
+      </Suspense> : null}
 
+      {weaponPicker.visible ? <Suspense fallback={null}>
       <WpnPckrMdl
         visible={weaponPicker.visible}
         open={weaponPicker.open}
@@ -2464,6 +2425,25 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
         }}
         onClose={clsWpnPckr}
       />
+      </Suspense> : null}
     </div>
   )
 }
+
+const EchoPckrMdl = lazy(() => import('@/modules/simulation/features/echoes/Picker.tsx').then((module) => ({ default: module.EchoPicker })))
+
+const WpnPckrMdl = lazy(() => import('@/modules/simulation/features/weapons/Picker.tsx').then((module) => ({ default: module.WeaponPicker })))
+
+const ResPckrMdl = lazy(() => import('@/modules/simulation/features/resonator/Picker.tsx').then((module) => ({ default: module.ResPckr })))
+
+const CharPtnsPnl = lazy(() => import('@/modules/simulation/surfaces/optimizer/ResonatorOptionsPanel.tsx').then((module) => ({ default: module.CharPtnsPnl })))
+
+const WpnCfgMdl = lazy(() => import('@/modules/simulation/surfaces/suggestions/WeaponConfig.tsx').then((module) => ({ default: module.WpnCfgMdl })))
+
+const TeamPanel = lazy(() => import('@/modules/simulation/surfaces/optimizer/TeamPanel.tsx').then((module) => ({ default: module.TeamPanel })))
+
+const ControlBox = lazy(() => import('@/modules/simulation/surfaces/optimizer/ControlBox.tsx').then((module) => ({ default: module.ProgressControlBox })))
+
+const Rules = lazy(() => import('@/modules/simulation/surfaces/optimizer/Rules.tsx').then((module) => ({ default: module.Rules })))
+
+const OptimizerInventoryModal = lazy(() => import('@/modules/simulation/surfaces/optimizer/OptimizerInventoryModal.tsx').then((module) => ({ default: module.OptimizerInventoryModal })))

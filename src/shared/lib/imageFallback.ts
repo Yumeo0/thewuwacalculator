@@ -19,6 +19,7 @@ export function swapMgToFllb(
     return
   }
 
+  image.removeAttribute('srcset')
   image.src = fallbackSrc
 }
 
@@ -34,6 +35,19 @@ export function withDefWpnMg(event: SyntVnt<HTMLImageElement>) {
 
 // img onerror handler for echo icons
 export function withDefEchoMg(event: SyntVnt<HTMLImageElement>) {
+  swapMgToFllb(event, DEF_ICON_SRC)
+}
+
+// Picker grids use shared display variants, with canonical art as their first fallback.
+export function withPickerImageFallback(event: SyntVnt<HTMLImageElement>) {
+  const image = event.currentTarget
+  const authored = image.dataset.fullSrc
+  if (authored && !image.src.endsWith(authored)) {
+    image.removeAttribute('srcset')
+    image.src = authored
+    return
+  }
+
   swapMgToFllb(event, DEF_ICON_SRC)
 }
 

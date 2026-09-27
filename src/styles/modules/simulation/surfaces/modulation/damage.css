@@ -24,8 +24,9 @@
   position: absolute;
   z-index: 4;
   pointer-events: none;
-  left: var(--pgd-pip-x, 0);
-  top: var(--pgd-pip-top, 0);
+  left: 0;
+  top: 0;
+  transform: translate(var(--pgd-pip-x, 0), var(--pgd-pip-top, 0));
   margin-left: -0.095rem;
   width: 0.19rem;
   height: 1.45rem;
@@ -38,7 +39,7 @@
     opacity 220ms ease,
     background 260ms ease,
     box-shadow 260ms ease,
-    top 320ms cubic-bezier(0.4, 0.05, 0.2, 1);
+    transform 320ms cubic-bezier(0.4, 0.05, 0.2, 1);
 }
 
 .pgd-pip.is-on {

@@ -6,6 +6,7 @@
                encoded echo/set data required by the optimizer runtime.
 */
 
+import { optimizerFloats } from '@/engine/optimizer/workers/payloadBuffers'
 import type { ResRuntime } from '@/domain/entities/runtime.ts'
 import type { RotationNode } from '@/domain/gameData/contracts.ts'
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
@@ -113,8 +114,8 @@ export function buildRotWeaponContexts(options: {
   // candidate. echoes are already stripped on rotRt.
   const baseRuntime = stripWeaponControls(rotRt)
 
-  const weaponContexts = new Float32Array(candidates.length * contextCount * CTX_FLOATS)
-  const weaponDisplayContexts = new Float32Array(candidates.length * CTX_FLOATS)
+  const weaponContexts = optimizerFloats(candidates.length * contextCount * CTX_FLOATS)
+  const weaponDisplayContexts = optimizerFloats(candidates.length * CTX_FLOATS)
   const weaponIds: string[] = []
   let weaponCursor = 0
 
@@ -166,8 +167,8 @@ export function buildRotWeaponContexts(options: {
   }
 
   return {
-    weaponContexts: weaponContexts.slice(0, weaponCursor * contextCount * CTX_FLOATS),
-    weaponDisplayContexts: weaponDisplayContexts.slice(0, weaponCursor * CTX_FLOATS),
+    weaponContexts: weaponCursor === candidates.length ? weaponContexts : optimizerFloats(weaponContexts.subarray(0, weaponCursor * contextCount * CTX_FLOATS)),
+    weaponDisplayContexts: weaponCursor === candidates.length ? weaponDisplayContexts : optimizerFloats(weaponDisplayContexts.subarray(0, weaponCursor * CTX_FLOATS)),
     weaponIds,
     count: weaponCursor,
   }
@@ -184,7 +185,7 @@ export function buildRotWeaponContexts(options: {
 // - set LUT and main-echo buff rows
 export function compRotRun(
     input: OptStartPay,
-    opts: { weaponSearch?: boolean } = {},
+    opts: { weaponSearch?: boolean; baseline?: boolean } = {},
 ): PrepRotRun {
   const seed = input.resSeed ?? getResSeedBy(input.resonatorId)
   if (!seed) {
@@ -216,7 +217,7 @@ export function compRotRun(
 
   // Simulation is the source of optimizer targets because authored rotation
   // nodes can expand, skip, or reroute before producing damage rows.
-  const constraints = encStatCstrs(input.settings)
+  const constraints = opts.baseline ? new Float32Array(0) : encStatCstrs(input.settings)
 
   // Use the first real target if available. Otherwise synthesize a fallback
   // target so the generic echo encoders still have a stable skill shape to use.
@@ -228,7 +229,7 @@ export function compRotRun(
   // The actual per-target differences are handled later in packed contexts.
   const encoded = encEchoRows(input.invChs, fllbTgt, 'self')
 
-  const shared = mkShrdPay(encoded, input, constraints)
+  const shared = mkShrdPay(encoded, input, constraints, opts.baseline)
 
   const setRtMask = makeSetMask(rotRt, input.setConds)
 

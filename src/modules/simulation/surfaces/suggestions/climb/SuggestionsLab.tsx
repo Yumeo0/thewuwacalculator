@@ -4,7 +4,10 @@
                application of selected Echo, set-plan, or weapon results.
 */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import '@/styles/modules/simulation/surfaces/suggestions/suggestions-climb.css'
+import { selectSuggestionTarget } from '@/modules/simulation/surfaces/suggestions/lib/helpers.ts'
+
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/application/state'
 import { selEnemyProf, selVrvwDrvd, selWorkDrvd } from '@/application/state'
@@ -13,6 +16,7 @@ import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
 import { DEF_SET_COND } from '@/domain/entities/sonataSetConditionals.ts'
 import { cloneEchoLoadout } from '@/domain/entities/inventoryStorage.ts'
 import type { EchoInstance } from '@/domain/entities/runtime.ts'
+import type { CompactSetPlanSuggest, MainStatSugg, WeaponEntry } from '@/engine/suggestions/types.ts'
 import type { PickFreqWeapon } from '@/domain/entities/appState.ts'
 import { getResonator, WPNTYPETOKEY } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { LoadoutHead } from '@/modules/simulation/workspace/LoadoutHead.tsx'
@@ -26,17 +30,18 @@ import { Climb } from '@/modules/simulation/surfaces/suggestions/climb/Climb.tsx
 import {
   climbRows,
   isClimbKind,
+  materializeRowEchoes,
   materializeWeaponSuggestion,
   wornMainStats,
   type ClimbKind,
   type ClimbRow,
 } from '@/modules/simulation/surfaces/suggestions/climb/model.ts'
-import { WpnCfgMdl } from '@/modules/simulation/surfaces/suggestions/WeaponConfig.tsx'
 import { SetCond } from '@/modules/simulation/features/controls/SetConditional.tsx'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
 
 const EMPTY_ECHOES: Array<EchoInstance | null> = []
+const WpnCfgMdl = lazy(() => import('@/modules/simulation/surfaces/suggestions/WeaponConfig.tsx').then((module) => ({ default: module.WpnCfgMdl })))
 
 export function SuggestionsLab() {
   const enemyProfile = useAppStore(selEnemyProf)
@@ -82,11 +87,13 @@ export function SuggestionsLab() {
   const echoes = runtime?.build.echoes ?? EMPTY_ECHOES
   const worn = useMemo(() => wornMainStats(echoes), [echoes])
   const wornSetPlan = useMemo(() => smmrCurSetPl(echoes), [echoes])
+  const activeResults = kind === 'mainStats' ? search.mainStatRslt
+    : kind === 'setPlans' ? search.setPlanRslt : search.wpnRslt
   const rows = useMemo<ClimbRow[]>(() => climbRows({
     kind,
-    mainStatRslt: search.mainStatRslt,
-    setPlanRslt: search.setPlanRslt,
-    wpnRslt: search.wpnRslt,
+    mainStatRslt: kind === 'mainStats' ? activeResults as MainStatSugg[] : [],
+    setPlanRslt: kind === 'setPlans' ? activeResults as CompactSetPlanSuggest[] : [],
+    wpnRslt: kind === 'weapons' ? activeResults as WeaponEntry[] : [],
     base: search.baseDamage,
     echoes,
     worn,
@@ -97,15 +104,16 @@ export function SuggestionsLab() {
     kind,
     runtime,
     search.baseDamage,
-    search.mainStatRslt,
-    search.setPlanRslt,
-    search.wpnRslt,
+    activeResults,
     worn,
     wornSetPlan,
   ])
 
   const heldRow = rows[held] ?? null
-  const preview = heldRow && !heldRow.now ? heldRow.echoes : null
+  const preview = useMemo(
+    () => heldRow && !heldRow.now ? materializeRowEchoes(heldRow, echoes) : null,
+    [echoes, heldRow],
+  )
   const stripEchoes = preview ?? echoes
   const echoScores = useEchoScores(runtime?.id ?? null, stripEchoes)
   const loadoutSlots = useMemo(
@@ -126,13 +134,14 @@ export function SuggestionsLab() {
       return
     }
 
-    if (!row.echoes) return
-    const next: Array<EchoInstance | null> = cloneEchoLoadout(row.echoes)
+    const materialized = materializeRowEchoes(row, echoes)
+    if (!materialized) return
+    const next: Array<EchoInstance | null> = cloneEchoLoadout(materialized)
     updActResRt((curRt) => ({
       ...curRt,
       build: { ...curRt.build, echoes: next },
     }))
-  }, [bumpPickerFreq, subject?.weaponType, updActResRt])
+  }, [bumpPickerFreq, echoes, subject?.weaponType, updActResRt])
 
   const writeEchoes = useCallback((next: Array<EchoInstance | null>) => {
     updActResRt((curRt) => ({
@@ -151,11 +160,7 @@ export function SuggestionsLab() {
   const onTarget = useCallback((value: string) => {
     updActResSug((state) => ({
       ...state,
-      settings: {
-        ...state.settings,
-        rotationMode: value === 'rotation',
-        targetFeatureId: value === 'rotation' ? state.settings.targetFeatureId : value,
-      },
+      settings: selectSuggestionTarget(state.settings, value),
     }))
   }, [updActResSug])
 
@@ -243,13 +248,15 @@ export function SuggestionsLab() {
         onSetCondsrx={updResSetCon}
       />
 
-      <WpnCfgMdl
-        {...wpnCondMdl}
-        title="Config - Weapon Search"
-        onClose={wpnCondMdl.hide}
-        runtime={runtime}
-        seed={search.activeSeed}
-      />
+      {wpnCondMdl.visible ? <Suspense fallback={null}>
+        <WpnCfgMdl
+          {...wpnCondMdl}
+          title="Config - Weapon Search"
+          onClose={wpnCondMdl.hide}
+          runtime={runtime}
+          seed={search.activeSeed}
+        />
+      </Suspense> : null}
     </main>
   )
 }

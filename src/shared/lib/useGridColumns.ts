@@ -26,7 +26,8 @@ export function useGridColumns(): [RefCallback<HTMLElement>, number] {
       setColumns(trackCount > 0 ? trackCount : 1)
     }
 
-    measure()
+    // The observer delivers a first reading of its own, so the count never costs
+    // a computed-style read inside the commit that mounted the grid.
     const observer = new ResizeObserver(measure)
     observer.observe(el)
     observerRef.current = observer

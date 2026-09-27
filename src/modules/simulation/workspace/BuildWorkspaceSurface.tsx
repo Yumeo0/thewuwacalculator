@@ -5,7 +5,13 @@
                legacy Evaluation view.
 */
 
-import { lazy, Suspense, startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { EvaluationSummaryContext } from '@/modules/simulation/model/evaluationSummaryContext'
+import { useEvaluationSummary } from '@/modules/simulation/model/useBuildEvaluation'
+import { Suspense, startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { BuildWorkspacePresentation } from './BuildWorkspacePresentation'
+import { useShowcaseAnalysis } from '@/modules/simulation/surfaces/showcase/useShowcaseAnalysis'
+import type { ShowcaseAnalysisInput } from '@/engine/evaluation/showcaseAnalysis'
+import { computeShowcaseStats } from '@/engine/evaluation/showcaseStats'
 import { useAppStore } from '@/application/state'
 import {
   selActResId,
@@ -25,12 +31,12 @@ import { qpEchoAtSlot } from '@/modules/simulation/features/echoes/lib/equip.ts'
 import { openEchoCnsl } from '@/modules/simulation/features/echoes/lib/echoConsoleStore.ts'
 
 import { ATTR_COLORS } from '@/modules/simulation/model/display'
-import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE, type ShowcaseCardStyle } from '@/domain/entities/preferences'
 import {
   FULL_EVALUATION_REPORT_OPTIONS,
   MODULATION_SUMMARY_REPORT_OPTIONS,
   SCORE_ONLY_EVALUATION_REPORT_OPTIONS,
   useEvaluationReport,
+  useSuggestionsRailScore,
 } from '@/modules/simulation/model/useBuildEvaluation.ts'
 import { useEvaluationTarget } from '@/modules/simulation/model/useEvaluationTarget.ts'
 import { useStableEvaluationInputs } from '@/modules/simulation/model/useStableEvaluationInputs.ts'
@@ -57,44 +63,30 @@ import {
   prepareEchoMainStatScoring,
 } from '@/engine/evaluation/echoMainStatProfile.ts'
 import { resResBaseSt } from '@/data/catalog/resonatorSeedService.ts'
-import { useAppModal } from '@/shared/ui/useAppModal'
 import { useMediaQuery } from '@/shared/hooks/useMediaQuery'
 
-import { resolveImageRef } from '@/application/media/imageUpload.ts'
-import type { StoredImage } from '@/application/media/imageUpload.ts'
 import { useTstStr } from '@/shared/util/toastStore.ts'
 import { useImportLanding } from '@/modules/simulation/features/echoes/lib/importLanding.ts'
 import { useConfirm } from '@/shared/hooks/useConfirmation.ts'
 import { mainPortal } from '@/shared/lib/portalTarget'
 import { ConfirmHost } from '@/shared/ui/ConfirmationModal'
 import type { EvaluationBuildSnapshot } from '@/engine/evaluation/buildEvaluation.ts'
-import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
 import { Copy } from 'lucide-react'
 import { useSel } from '@/modules/simulation/lib/sel.tsx'
 import {
   EVALUATION_RAIL_ENTER_MS, EVALUATION_RAIL_EXIT_MS,
   type EvaluationEchoSelection, type CssVars, type DetailBuildKey,
-  buildSonataPlan, getEvaluationSpinePlacement,
+  buildSonataPlan,
   preloadEvaluationRailImages, scheduleEvaluationTargetWork,
 } from '@/modules/simulation/workspace/ui.tsx'
-import { buildTextSlotVars, collectCardFontFamilies, splitHoistedCss } from '@/modules/simulation/surfaces/showcase/cardStyleVars.ts'
-import { DEFAULT_PORTRAIT_SURFACE, getPortraitSource, readPortraitSurface } from '@/modules/simulation/surfaces/showcase/portraitSurface.ts'
-import type { CardExportTarget } from '@/modules/simulation/surfaces/showcase/cardTransfer.ts'
 
-import { ensureGoogleFamily } from '@/application/theme/typography.ts'
 import {
   type BuildRosterEntry,
 } from '@/modules/simulation/workspace/BuildRoster.tsx'
-import { BuildRail, type BuildRailModel } from '@/modules/simulation/workspace/BuildRail.tsx'
-import { RailDock } from '@/modules/simulation/workspace/RailDock.tsx'
+import { type BuildRailModel } from '@/modules/simulation/workspace/BuildRail.tsx'
 import { makeRailModel as buildRailModel } from '@/modules/simulation/workspace/railModel.ts'
 import { makeRosterEntries } from '@/modules/simulation/workspace/rosterModel.ts'
 import { useResonatorProfileOps } from '@/modules/simulation/workspace/useResonatorProfileOps.ts'
-import {
-  BuildWorkspaceBoard,
-  BuildWorkspaceRailSlot,
-  BuildWorkspaceWorkspace,
-} from '@/modules/simulation/workspace/BuildWorkspaceLayout.tsx'
 import { ModulationReport } from '@/modules/simulation/surfaces/modulation/ModulationReport.tsx'
 import type { MemberAnalysisSource } from '@/modules/simulation/surfaces/modulation/lib/memberSim.ts'
 import { NarrowEvaluationBanner } from '@/modules/simulation/workspace/NarrowEvaluationBanner.tsx'
@@ -104,22 +96,15 @@ import { useWorkspaceEchoActions } from '@/modules/simulation/workspace/useWorks
 import { optimizerPane, suggestionsPane } from '@/modules/simulation/shell/surfaceChunks.ts'
 import AppLdrVrly from '@/shared/ui/AppLoaderOverlay.tsx'
 
-const ImageUploadModal = lazy(async () => ({ default: (await import('@/application/media/ImageUploadModal')).ImageUploadModal }))
 const EMPTY_ECHO_LOADOUT: Array<EchoInstance | null> = []
 const EMPTY_RUNTIME_MAP: Record<string, ResRuntime> = Object.freeze({})
+const EMPTY_TARGETS: Record<string, string | null> = Object.freeze({})
 // Defer report construction beyond the 460ms drawer transition so its worker
 // and lazy module work do not contend with the transition.
 const REPORT_ASIDE_WORK_DELAY_MS = 500
 
 const EmbeddedOptimizer = optimizerPane.Mount
 const EmbeddedSuggestions = suggestionsPane.Mount
-const ShowcaseCustomizePanel = lazy(async () => ({
-  default: (await import('@/modules/simulation/surfaces/showcase/Customize.tsx')).ShowcaseCustomizePanel,
-}))
-const ShowcaseCssEditorDock = lazy(async () => ({
-  default: (await import('@/modules/simulation/surfaces/showcase/CssEditorDock.tsx')).ShowcaseCssEditorDock,
-}))
-
 function useSettledLiveRun(work: PrepWork | null, ownerKey: string): {
   simulation: SimResult | null
   ready: boolean
@@ -132,7 +117,7 @@ function useSettledLiveRun(work: PrepWork | null, ownerKey: string): {
 
   /* eslint-disable react-hooks/set-state-in-effect -- releases a different member's result at the idle-work boundary. */
   useEffect(() => {
-    setCompleted((previous) => previous?.ownerKey === ownerKey ? previous : null)
+    setCompleted((previous) => work && previous?.ownerKey === ownerKey ? previous : null)
     if (!work) return undefined
     return scheduleAfterSettled(() => {
       setCompleted({ ownerKey, work, simulation: selLiveRun(work) })
@@ -144,35 +129,6 @@ function useSettledLiveRun(work: PrepWork | null, ownerKey: string): {
     simulation: completed?.ownerKey === ownerKey ? completed.simulation : null,
     ready: Boolean(work && completed?.ownerKey === ownerKey && completed.work === work),
   }
-}
-
-function useResolvedImageRef(ref: string | null): string | null {
-  const [resolved, setResolved] = useState<{ ref: string, url: string } | null>(null)
-
-  useEffect(() => {
-    if (!ref?.startsWith('upload:')) return undefined
-    let disposed = false
-    let release: (() => void) | undefined
-
-    void resolveImageRef(ref).then((image) => {
-      if (!image) return
-      if (disposed) {
-        image.revoke?.()
-        return
-      }
-      release = image.revoke
-      setResolved({ ref, url: image.url })
-    })
-
-    return () => {
-      disposed = true
-      release?.()
-    }
-  }, [ref])
-
-  if (!ref) return null
-  if (!ref.startsWith('upload:')) return ref
-  return resolved?.ref === ref ? resolved.url : null
 }
 
 export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
@@ -237,13 +193,6 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   const analysisActive = surfacePhase === 'idle' && !inventoryOpen
   const [captureAction, setCaptureAction] = useState<'download' | 'clipboard' | null>(null)
 
-  // Showcase customization persists independently for each resonator.
-  const patchShowcaseCardStyle = useAppStore((state) => state.patchShowcaseCardStyle)
-  const toggleShowcaseHide = useAppStore((state) => state.toggleShowcaseHide)
-  const patchShowcaseCardHidden = useAppStore((state) => state.patchShowcaseCardHidden)
-  const resetShowcaseCard = useAppStore((state) => state.resetShowcaseCard)
-  const showcaseLayout = useAppStore((state) => state.ui.preferences.showcaseLayout)
-  const setShowcaseLayout = useAppStore((state) => state.setShowcaseLayout)
   const railScenario = scenarioLibrary.scenariosById[railScenarioId] ?? null
   const railProjection = useMemo(() => {
     if (!railScenario) return null
@@ -255,256 +204,6 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   const railRuntime = railProjection?.subjectRuntime ?? null
   const railPartRtsById = railProjection?.runtimesById ?? EMPTY_RUNTIME_MAP
   const railResId = railRuntime?.id ?? null
-  const buildCardRef = useRef<HTMLElement | null>(null)
-  const [sampledSurface, setSampledSurface] = useState<{
-    resonatorId: string
-    color: string
-  } | null>(null)
-  const derivedSurfaceColor = sampledSurface?.resonatorId === railResId
-    ? sampledSurface.color
-    : DEFAULT_PORTRAIT_SURFACE
-  useEffect(() => {
-    const card = buildCardRef.current
-    if (!isShowcase || !railResId || !card) return undefined
-
-    let active = true
-    let request = 0
-    let lastSource: string | null = null
-    const inspect = () => {
-      const source = getPortraitSource(card)
-      if (!source || source === lastSource) return
-      lastSource = source
-      const currentRequest = ++request
-      setSampledSurface({ resonatorId: railResId, color: DEFAULT_PORTRAIT_SURFACE })
-      void readPortraitSurface(source).then((color) => {
-        if (active && currentRequest === request) setSampledSurface({ resonatorId: railResId, color })
-      }).catch(() => {
-        if (active && currentRequest === request) setSampledSurface({ resonatorId: railResId, color: DEFAULT_PORTRAIT_SURFACE })
-      })
-    }
-
-    const frame = requestAnimationFrame(inspect)
-    const observer = new MutationObserver(inspect)
-    observer.observe(card, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] })
-    card.addEventListener('load', inspect, true)
-    card.addEventListener('error', inspect, true)
-    return () => {
-      active = false
-      request += 1
-      cancelAnimationFrame(frame)
-      observer.disconnect()
-      card.removeEventListener('load', inspect, true)
-      card.removeEventListener('error', inspect, true)
-    }
-  }, [isShowcase, railResId])
-  const cardConfig = useAppStore((state) => (
-    railResId ? state.ui.preferences.showcaseCards[railResId] ?? null : null
-  ))
-  const persistedCardStyle = cardConfig?.style ?? DEF_SHOWCASE_CARD_STYLE
-  const persistedCardStyleRef = useRef(persistedCardStyle)
-  persistedCardStyleRef.current = persistedCardStyle
-  const [cardStyleDraft, setCardStyleDraft] = useState<{
-    resonatorId: string | null
-    style: ShowcaseCardStyle
-  }>(() => ({ resonatorId: railResId, style: persistedCardStyle }))
-  const pendingStylePatch = useRef<{
-    resonatorId: string
-    patch: Partial<ShowcaseCardStyle>
-  } | null>(null)
-  const styleCommitTimer = useRef<number | null>(null)
-  const flushShowcaseStyle = useCallback(() => {
-    if (styleCommitTimer.current != null) {
-      window.clearTimeout(styleCommitTimer.current)
-      styleCommitTimer.current = null
-    }
-    const pending = pendingStylePatch.current
-    pendingStylePatch.current = null
-    if (pending) patchShowcaseCardStyle(pending.resonatorId, pending.patch)
-  }, [patchShowcaseCardStyle])
-  const discardPendingShowcaseStyle = useCallback(() => {
-    if (styleCommitTimer.current != null) window.clearTimeout(styleCommitTimer.current)
-    styleCommitTimer.current = null
-    pendingStylePatch.current = null
-  }, [])
-  const updateShowcaseStyle = useCallback((patch: Partial<ShowcaseCardStyle>) => {
-    if (!railResId) return
-    setCardStyleDraft((current) => ({
-      resonatorId: railResId,
-      style: {
-        ...(current.resonatorId === railResId ? current.style : persistedCardStyleRef.current),
-        ...patch,
-      },
-    }))
-    const pending = pendingStylePatch.current
-    if (pending && pending.resonatorId !== railResId) flushShowcaseStyle()
-    pendingStylePatch.current = {
-      resonatorId: railResId,
-      patch: pending?.resonatorId === railResId ? { ...pending.patch, ...patch } : patch,
-    }
-    if (styleCommitTimer.current != null) window.clearTimeout(styleCommitTimer.current)
-    styleCommitTimer.current = window.setTimeout(flushShowcaseStyle, 320)
-  }, [flushShowcaseStyle, railResId])
-  const cardStyle = cardStyleDraft.resonatorId === railResId
-    ? cardStyleDraft.style
-    : persistedCardStyle
-  const surfaceColor = cardStyle.surface ?? derivedSurfaceColor
-  const cardHidden = cardConfig?.hidden ?? DEF_SHOWCASE_HIDE
-  const [tuneResetKey, setTuneResetKey] = useState(0)
-  const [editMode, setEditMode] = useState<'portrait' | 'backdrop' | null>(null)
-
-  useEffect(() => {
-    flushShowcaseStyle()
-    setCardStyleDraft({ resonatorId: railResId, style: persistedCardStyleRef.current })
-  }, [flushShowcaseStyle, railResId])
-
-  useEffect(() => flushShowcaseStyle, [flushShowcaseStyle])
-
-  const [cssExpanded, setCssExpanded] = useState(false)
-  const [tuneDrawerOpen, setTuneDrawerOpen] = useState(false)
-  // Session uploads are deliberately kept outside persisted preferences.
-  const [sessionImages, setSessionImages] = useState<Record<string, { portrait?: string; backdrop?: string }>>({})
-  const sessionImagesRef = useRef(sessionImages)
-  sessionImagesRef.current = sessionImages
-  const [uploadTarget, setUploadTarget] = useState<'portrait' | 'backdrop'>('portrait')
-  const uploadModal = useAppModal()
-  // Session images override persisted refs; IndexedDB refs resolve only while active.
-  const sessionForRail = railResId ? sessionImages[railResId] : undefined
-  const portraitRef = sessionForRail?.portrait ?? cardStyle.portraitImage
-  const backdropRef = sessionForRail?.backdrop ?? cardStyle.backdropImage
-  const resolvedPortrait = useResolvedImageRef(portraitRef)
-  const resolvedBackdrop = useResolvedImageRef(backdropRef)
-
-  useEffect(() => () => {
-    for (const images of Object.values(sessionImagesRef.current)) {
-      if (images.portrait?.startsWith('blob:')) URL.revokeObjectURL(images.portrait)
-      if (images.backdrop?.startsWith('blob:')) URL.revokeObjectURL(images.backdrop)
-    }
-  }, [])
-
-  const handlePickImage = useCallback((target: 'portrait' | 'backdrop') => {
-    setUploadTarget(target)
-    uploadModal.show()
-  }, [uploadModal])
-
-  const handleApplyImage = useCallback((result: StoredImage, credit: string) => {
-    if (!railResId) return
-    const creditValue = credit.trim() || null
-    const creditPatch = uploadTarget === 'portrait'
-      ? { portraitCredit: creditValue }
-      : { backdropCredit: creditValue }
-    if (result.persisted) {
-      updateShowcaseStyle(uploadTarget === 'portrait'
-        ? { portraitImage: result.ref, ...creditPatch }
-        : { backdropImage: result.ref, ...creditPatch })
-      setSessionImages((prev) => {
-        const current = prev[railResId]
-        if (!current) return prev
-        const previousRef = current[uploadTarget]
-        if (previousRef?.startsWith('blob:')) URL.revokeObjectURL(previousRef)
-        return { ...prev, [railResId]: { ...current, [uploadTarget]: undefined } }
-      })
-    } else {
-      // Credits remain persisted even when the selected image is session-only.
-      updateShowcaseStyle(creditPatch)
-      setSessionImages((prev) => {
-        const previousRef = prev[railResId]?.[uploadTarget]
-        if (previousRef?.startsWith('blob:')) URL.revokeObjectURL(previousRef)
-        return {
-          ...prev,
-          [railResId]: { ...prev[railResId], [uploadTarget]: result.ref },
-        }
-      })
-    }
-    setEditMode(uploadTarget)
-  }, [railResId, updateShowcaseStyle, uploadTarget])
-
-  // Reset all persisted and session fields owned by one image group.
-  const handleResetGroup = useCallback((group: 'portrait' | 'backdrop') => {
-    if (!railResId) return
-    if (group === 'portrait') {
-      updateShowcaseStyle({
-        portraitImage: null,
-        portraitCredit: null,
-        portraitX: null,
-        portraitY: null,
-        portraitScale: null,
-        maskTop: null,
-        maskRight: null,
-        maskBottom: null,
-        maskLeft: null,
-        maskTopSharp: null,
-        maskRightSharp: null,
-        maskBottomSharp: null,
-        maskLeftSharp: null,
-      })
-      patchShowcaseCardHidden(railResId, { portraitCredit: false })
-    } else {
-      updateShowcaseStyle({
-        backdropImage: null,
-        backdropCredit: null,
-        backdropX: null,
-        backdropY: null,
-        backdropScale: null,
-        backdropBlur: null,
-        backdropOpacity: null,
-      })
-      patchShowcaseCardHidden(railResId, { backdropCredit: false })
-    }
-    setSessionImages((prev) => {
-      const current = prev[railResId]
-      if (!current) return prev
-      const previousRef = current[group]
-      if (previousRef?.startsWith('blob:')) URL.revokeObjectURL(previousRef)
-      return { ...prev, [railResId]: { ...current, [group]: undefined } }
-    })
-    setEditMode(null)
-  }, [railResId, patchShowcaseCardHidden, updateShowcaseStyle])
-
-  const handleResetTuneSection = useCallback((section: 'show' | 'color' | 'type') => {
-    if (!railResId) return
-    if (section === 'show') {
-      updateShowcaseStyle({ statsColumn: null, portraitCredit: null, backdropCredit: null })
-      patchShowcaseCardHidden(railResId, DEF_SHOWCASE_HIDE)
-    } else if (section === 'color') {
-      updateShowcaseStyle({ accent: null, surface: null, opacity: null })
-    } else {
-      updateShowcaseStyle({ displayFont: null, monoFont: null, text: null })
-    }
-  }, [patchShowcaseCardHidden, railResId, updateShowcaseStyle])
-
-  const handleExportTarget = useCallback(async (target: CardExportTarget) => {
-    const { buildCardExport } = await import('@/modules/simulation/surfaces/showcase/cardTransfer.ts')
-    const { raw, filename, mime } = buildCardExport(target, cardStyle, cardHidden)
-
-    if (mime === 'application/json') {
-      const { xprtAppFile } = await import('@/application/persistence/fileCodec.ts')
-      await xprtAppFile(filename, raw)
-      return
-    }
-    const blob = new Blob([raw], { type: mime })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    link.click()
-    URL.revokeObjectURL(url)
-  }, [cardStyle, cardHidden])
-
-  const handleImportFile = useCallback(async (file: File) => {
-    if (!railResId) return
-    try {
-      const [{ parseCardImport }, { readAppFile }] = await Promise.all([
-        import('@/modules/simulation/surfaces/showcase/cardTransfer.ts'),
-        import('@/application/persistence/fileCodec.ts'),
-      ])
-      const result = parseCardImport(file.name, await readAppFile(file))
-      if (result.stylePatch) updateShowcaseStyle(result.stylePatch)
-      if (result.hiddenPatch) patchShowcaseCardHidden(railResId, result.hiddenPatch)
-      showToast({ content: `Imported ${result.label}.`, variant: 'success' })
-    } catch (error) {
-      showToast({ content: error instanceof Error ? error.message : 'That card file could not be imported.', variant: 'error' })
-    }
-  }, [railResId, patchShowcaseCardHidden, showToast, updateShowcaseStyle])
   const railScenarioIdRef = useRef(selectedScenarioId)
   const boardRef = useRef<HTMLDivElement | null>(null)
   const mainStackRef = useRef<HTMLDivElement | null>(null)
@@ -567,6 +266,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   )
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a scenario change invalidates the previous member selection.
     setModulationMemberId(null)
   }, [railScenarioId])
 
@@ -576,6 +276,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   useEffect(() => {
     if (!isModulation || !seatAsk || railResId !== seatAsk.contextId) return
     if (!modulationRoster.some((mate) => mate.id === seatAsk.memberId)) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- consume the external import landing request in this workspace.
     setModulationMemberId(seatAsk.memberId)
     useImportLanding.getState().takeSeat()
   }, [isModulation, modulationRoster, railResId, seatAsk])
@@ -607,17 +308,22 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     }
     return projectScenarioUiRuntimes(reportScenario)
   }, [partRtsById, reportScenario, reportTargetScenarioId, runtime, selectedScenarioId])
-  const reportRuntime = reportProjection?.subjectRuntime ?? null
+  // Showcase owns its displayed member immediately; deferred report selection
+  // must not hold back the stat sheet or its independent damage request.
+  const reportRuntime = isShowcase ? railRuntime : reportProjection?.subjectRuntime ?? null
+  const reportParticipants = isShowcase ? railPartRtsById : reportProjection?.runtimesById ?? EMPTY_RUNTIME_MAP
   const reportTargetResId = reportRuntime?.id ?? null
   const nextEvaluationInputs = useMemo(() => ({
     runtime: reportRuntime ? applyEvaluationAsm(reportRuntime) : null,
-    runtimesById: applyEvaluationMapAsm(reportProjection?.runtimesById ?? {}),
-    targetSelections: reportTargetScenarioId === selectedScenarioId
+    runtimesById: applyEvaluationMapAsm(reportParticipants),
+    targetSelections: isShowcase ? railTargets : reportTargetScenarioId === selectedScenarioId
       ? actTgtSels
       : reportScenario ? flattenScenarioRouting(reportScenario) : {},
   }), [
     actTgtSels,
-    reportProjection?.runtimesById,
+    isShowcase,
+    railTargets,
+    reportParticipants,
     reportRuntime,
     reportScenario,
     reportTargetScenarioId,
@@ -639,19 +345,43 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     [evaluationTuneStrain],
   )
   const reportTargets = evaluationInputs.targetSelections
+  const showcaseStats = useMemo(() => isShowcase && evaluationRuntime
+    ? computeShowcaseStats({ runtime: evaluationRuntime, runtimesById: evaluationReportRuntimesById, enemy: evaluationEnemy, selectedTargets: reportTargets })
+    : null, [evaluationEnemy, evaluationReportRuntimesById, evaluationRuntime, isShowcase, reportTargets])
   const reportTarget = useEvaluationTarget({
-    targetRuntime: analysisActive ? evaluationRuntime : null,
-    targetSeed: analysisActive ? reportSeed : null,
-    targetSelections: reportTargets,
+    targetRuntime: analysisActive && !isShowcase && !isSuggestions && !isOptimizer ? evaluationRuntime : null,
+    targetSeed: analysisActive && !isShowcase && !isSuggestions && !isOptimizer ? reportSeed : null,
+    targetSelections: isSuggestions ? EMPTY_TARGETS : reportTargets,
     // Evaluation scoring has its own normalized runtime/enemy assumptions, so
     // it must not reuse the live active prep even when evaluating the active resonator.
     activeResId: null,
-    activeRuntimesById: evaluationReportRuntimesById,
-    initializedRuntimesById: evaluationReportRuntimesById,
+    activeRuntimesById: isSuggestions ? EMPTY_RUNTIME_MAP : evaluationReportRuntimesById,
+    initializedRuntimesById: isSuggestions ? EMPTY_RUNTIME_MAP : evaluationReportRuntimesById,
     enemy: evaluationEnemy,
-    showAllStates,
+    showAllStates: isSuggestions ? false : showAllStates,
     deferHeavyWork: true,
   })
+  const showcaseInput = useMemo<ShowcaseAnalysisInput | null>(() => {
+    if (!isShowcase || !evaluationRuntime || !railRuntime || !railScenario) return null
+    const member = railScenario.team.members.find((entry) => entry.resonatorId === railRuntime.id)
+    if (!member) return null
+    const graph = railScenarioId === selectedScenarioId ? prepWork.combatGraph : null
+    const participants = graph ? Object.values(graph.participants) : []
+    return {
+      scenarioId: railScenario.id, memberId: member.id,
+      evaluation: { runtime: evaluationRuntime, runtimesById: evaluationReportRuntimesById, enemy: evaluationEnemy, selectedTargets: reportTargets },
+      live: { runtime: railRuntime, runtimesById: railPartRtsById, enemy: railScenario.target, selectedTargets: railTargets,
+        graph: graph ? {
+          memberIdByResonatorId: Object.fromEntries(participants.map((entry) => [entry.resonatorId, entry.memberId])),
+          targetsByRes: Object.fromEntries(participants.map((entry) => [entry.resonatorId, entry.slot.routing.selectedTargetsByOwnerKey])),
+          environmentBuffsByMemberId: graph.environmentBuffsByMemberId,
+          environmentTargetModifiers: graph.environmentTargetModifiers,
+        } : undefined,
+      },
+      setConds: member.local.setConditionals,
+    }
+  }, [evaluationEnemy, evaluationReportRuntimesById, evaluationRuntime, isShowcase, railPartRtsById, railRuntime, railScenario, railScenarioId, railTargets, reportTargets, prepWork.combatGraph, selectedScenarioId])
+  const showcaseAnalysis = useShowcaseAnalysis(showcaseInput, analysisActive)
   const reportRuntimesById = reportTarget.runtimesById
   const simulation = reportTarget.simulation
   const reportStateGroups = reportTarget.stateGroups
@@ -660,7 +390,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     ?? railSeed
   const echoLoadout = echoRuntime?.build.echoes ?? EMPTY_ECHO_LOADOUT
   const echoScoringWork = useMemo(() => {
-    if (!echoRuntime || !echoSeed || !railScenario) return null
+    if (isShowcase || !echoRuntime || !echoSeed || !railScenario) return null
     if (echoRuntime.id === railRuntime?.id && railScenarioId === selectedScenarioId) {
       return prepWork
     }
@@ -674,6 +404,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
       combatGraph: railScenarioId === selectedScenarioId ? prepWork.combatGraph : null,
     })
   }, [
+    isShowcase,
     echoRuntime,
     echoSeed,
     prepWork,
@@ -712,7 +443,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   )
   // a resonator with no substat weights has nothing to score against, so the
   // slots fall back to the crit value they rolled
-  const echoScores = useEchoScores(echoRuntime?.id, echoLoadout)
+  const echoScores = useEchoScores(isShowcase ? null : echoRuntime?.id, echoLoadout)
   const equipEvaluationEcho = useCallback((echo: EchoInstance, slotIndex: number) => {
     const resonatorId = echoRuntime?.id
     if (!resonatorId) return
@@ -833,7 +564,8 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     simulation,
     enemy: evaluationEnemy,
     runtimesById: reportRuntimesById,
-    enabled: analysisActive,
+    enabled: analysisActive && !isShowcase && !isSuggestions && !isOptimizer,
+    clearOnDisable: isShowcase || isSuggestions || isOptimizer,
     identityKey: reportTargetScenarioId,
     reportOptions,
   })
@@ -849,12 +581,27 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     cacheResult: false,
     clearOnDisable: true,
   })
+  const optimizerSummary = useEvaluationSummary({
+    runtime: evaluationRuntime, enemy: evaluationEnemy,
+    runtimesById: evaluationReportRuntimesById,
+    identityKey: reportTargetScenarioId,
+    enabled: analysisActive && isOptimizer,
+  })
+  const suggestionsPercent = useSuggestionsRailScore({
+    runtime: evaluationRuntime,
+    enemy: evaluationEnemy,
+    runtimesById: evaluationReportRuntimesById,
+    identityKey: reportTargetScenarioId,
+    enabled: analysisActive && isSuggestions,
+  })
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- cancel the old scenario report at the ownership boundary.
     closeEvaluationReport()
   }, [closeEvaluationReport, reportTargetScenarioId, evaluationRuntime?.id])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opening Inventory cancels the report drawer and its deferred work.
     if (inventoryOpen) closeEvaluationReport()
   }, [closeEvaluationReport, inventoryOpen])
 
@@ -910,8 +657,8 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   ])
 
   const overviewStatsTree = useMemo(
-    () => simulation?.finalStats ? makeStatsTree(simulation.finalStats) : [],
-    [simulation],
+    () => !isShowcase && simulation?.finalStats ? makeStatsTree(simulation.finalStats) : [],
+    [isShowcase, simulation],
   )
 
   useLayoutEffect(() => {
@@ -948,10 +695,12 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   // Keep completed readings visible while this scenario is being reevaluated.
   // A cache hit retains the same report; a fresh result replaces it together.
   const visibleReport = reportMatchesRail ? report : null
-  const scoreMatchesRail = reportMatchesRail
-  const score = visibleReport ? visibleReport.evaluation.percent * 100 : null
-  const showcaseAvgDamage = isShowcase && scoreMatchesRail
-    ? visibleReport?.evaluation.userDamage ?? null
+  const score = isShowcase ? (showcaseAnalysis?.percent != null ? showcaseAnalysis.percent * 100 : null)
+    : isOptimizer ? (optimizerSummary?.percent != null && reportMatchesRail ? optimizerSummary.percent * 100 : null)
+    : isSuggestions ? (suggestionsPercent != null && reportMatchesRail ? suggestionsPercent * 100 : null)
+      : visibleReport ? visibleReport.evaluation.percent * 100 : null
+  const showcaseAvgDamage = isShowcase
+    ? showcaseAnalysis?.userDamage ?? null
     : null
   const grade = getBuildEvaluationGrade(score)
   const tone = score != null ? getBuildEvaluationTone(score).color : accent
@@ -961,13 +710,14 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   const maximumBuild: EvaluationBuildSnapshot | null = visibleReport?.evaluation.builds.maximumBuild ?? null
 
   const showcaseBuild = useMemo(() => {
-    if (!railRuntime) return null
+    if (!isShowcase || !railRuntime) return null
     const buildSeed = seedRsntById[railRuntime.id] ?? null
     const buildStats = buildSeed ? getBuildStats(railRuntime, resResBaseSt(buildSeed, railRuntime.base.level)) : null
     const buildStatsView = buildStats ? makeStatsView(railRuntime, buildStats) : null
+    const finalStats = isShowcase ? showcaseStats : simulation?.finalStats
     const combatStatsView =
-      evaluationRuntime?.id === railRuntime.id && simulation?.finalStats
-        ? makeStatsView(evaluationRuntime, simulation.finalStats)
+      evaluationRuntime?.id === railRuntime.id && finalStats
+        ? makeStatsView(evaluationRuntime, finalStats)
         : null
     return {
       combatStatsView,
@@ -982,7 +732,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
         name: getSntSetNam(entry.id),
       })),
     }
-  }, [evaluationRuntime, railRuntime, simulation])
+  }, [evaluationRuntime, isShowcase, railRuntime, showcaseStats, simulation])
 
   const railModel = useMemo<BuildRailModel>(() => buildRailModel(railResId, {
     actResId: railResId,
@@ -991,62 +741,6 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     initRtsById: railPartRtsById,
   }), [railPartRtsById, railResId, railRuntime])
 
-  // Convert neutral-at-50 controls into offsets around canonical spine placement.
-  const showcasePlacement = useMemo(() => {
-    const base = getEvaluationSpinePlacement(railResId)
-    return {
-      x: base.x - (((cardStyle.portraitX ?? 50) - 50) / 50) * 800,
-      y: base.y - (((cardStyle.portraitY ?? 50) - 50) / 50) * 800,
-      scale: base.scale * (0.5 + (cardStyle.portraitScale ?? 50) / 100),
-    }
-  }, [railResId, cardStyle.portraitX, cardStyle.portraitY, cardStyle.portraitScale])
-
-  const backdropStyle = useMemo<CssVars>(() => {
-    return {
-      ...(cardStyle.backdropOpacity != null ? { '--asset-base-opacity': cardStyle.backdropOpacity / 100 } : {}),
-      ...(cardStyle.backdropBlur != null
-        ? { '--asset-base-filter': `blur(${((cardStyle.backdropBlur / 100) * 20).toFixed(1)}px) saturate(1.3)` }
-        : {}),
-      ...(resolvedBackdrop ? { backgroundImage: `url("${resolvedBackdrop}")` } : {}),
-      ...(cardStyle.backdropScale != null ? { backgroundSize: `${cardStyle.backdropScale * 3}%` } : {}),
-      ...(cardStyle.backdropX != null || cardStyle.backdropY != null
-        ? { backgroundPosition: `${cardStyle.backdropX ?? 50}% ${cardStyle.backdropY ?? 28}%` }
-        : {}),
-    }
-  }, [
-    cardStyle.backdropOpacity,
-    cardStyle.backdropBlur,
-    resolvedBackdrop,
-    cardStyle.backdropScale,
-    cardStyle.backdropX,
-    cardStyle.backdropY,
-  ])
-  const captureBuildCard = useCallback(async (action: 'download' | 'clipboard') => {
-    const card = buildCardRef.current
-    if (!card || !isShowcase || captureAction) return
-
-    setCaptureAction(action)
-    try {
-      const capture = import('@/modules/simulation/surfaces/showcase/captureBuildCard.ts')
-      const png = capture.then(({ renderBuildCardPng }) => renderBuildCardPng(card))
-      if (action === 'clipboard') {
-        if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') throw new Error('Image clipboard is unavailable in this browser.')
-        await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })])
-        showToast({ content: 'Build card copied to clipboard.', variant: 'success' })
-      } else {
-        const { downloadBuildCard } = await capture
-        downloadBuildCard(await png, railModel.seed?.name ?? 'build')
-        showToast({ content: 'Build card captured.', variant: 'success' })
-      }
-    } catch (error) {
-      showToast({
-        content: error instanceof Error ? error.message : 'Build card capture failed.',
-        variant: 'error',
-      })
-    } finally {
-      setCaptureAction(null)
-    }
-  }, [captureAction, isShowcase, railModel.seed?.name, showToast])
   const incomingRailModel = useMemo(() => buildRailModel(actResId, {
     actResId,
     runtime,
@@ -1055,10 +749,10 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   }), [actResId, partRtsById, runtime])
   const incomingRailAssetUrls = useMemo(() => {
     return [
-      incomingRailModel.portraitSrc,
-      incomingRailModel.attrIcon,
-      incomingRailModel.weaponIcon,
-    ].filter((url): url is string => Boolean(url))
+      { src: incomingRailModel.portraitSrc, selector: '.workspace-portrait-img' },
+      { src: incomingRailModel.attrIcon, selector: '.workspace-portrait-elem, .seal-id-attr' },
+      { src: incomingRailModel.weaponIcon, selector: '.workspace-weapon-icon, .seal-bloom-gun' },
+    ].filter((asset): asset is { src: string; selector: string } => Boolean(asset.src))
   }, [incomingRailModel])
 
   useEffect(() => {
@@ -1088,7 +782,10 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
       setRailPhase('out')
     }, 0)
     const exitHandle = window.setTimeout(() => {
-      void preloadEvaluationRailImages(incomingRailAssetUrls).then(commitRail)
+      const assets = incomingRailAssetUrls.map(({ src, selector }) => ({
+        src, width: boardRef.current?.querySelector(selector)?.getBoundingClientRect().width ?? 0,
+      }))
+      void preloadEvaluationRailImages(assets).then(commitRail)
     }, EVALUATION_RAIL_EXIT_MS)
 
     return () => {
@@ -1108,77 +805,11 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     return () => window.clearTimeout(handle)
   }, [railPhase, railScenarioId])
 
-  const maskVars = useMemo<CssVars>(() => ({
-    ...(cardStyle.maskTop != null ? { '--mask-top': `${cardStyle.maskTop}%` } : {}),
-    ...(cardStyle.maskRight != null ? { '--mask-right': `${cardStyle.maskRight}%` } : {}),
-    ...(cardStyle.maskBottom != null ? { '--mask-bottom': `${cardStyle.maskBottom}%` } : {}),
-    ...(cardStyle.maskLeft != null ? { '--mask-left': `${cardStyle.maskLeft}%` } : {}),
-    ...(cardStyle.maskTopSharp != null ? { '--mask-top-sharp': cardStyle.maskTopSharp / 100 } : {}),
-    ...(cardStyle.maskRightSharp != null ? { '--mask-right-sharp': cardStyle.maskRightSharp / 100 } : {}),
-    ...(cardStyle.maskBottomSharp != null ? { '--mask-bottom-sharp': cardStyle.maskBottomSharp / 100 } : {}),
-    ...(cardStyle.maskLeftSharp != null ? { '--mask-left-sharp': cardStyle.maskLeftSharp / 100 } : {}),
-  }), [
-    cardStyle.maskTop, cardStyle.maskRight, cardStyle.maskBottom, cardStyle.maskLeft,
-    cardStyle.maskTopSharp, cardStyle.maskRightSharp, cardStyle.maskBottomSharp, cardStyle.maskLeftSharp,
-  ])
-
-  // Convert semantic text-role overrides into the CSS-variable contract.
-  const textSlotVars = useMemo(() => buildTextSlotVars(cardStyle.textSlots ?? {}), [cardStyle.textSlots])
-
-  // Hoist at-rules that are invalid inside @scope and scope the remaining declarations.
-  const customCssParts = useMemo(
-    () => (cardStyle.customCss ? splitHoistedCss(cardStyle.customCss) : null),
-    [cardStyle.customCss],
-  )
-  const scopedCustomCss = useMemo(
-    () => isShowcase && customCssParts
-      ? `${customCssParts.hoisted}\n@scope (.workspace-rail-wrapper, .workspace-rail) to (.workspace-tune) {\n${customCssParts.scoped}\n}`
-      : null,
-    [customCssParts, isShowcase],
-  )
-  const railStyle = useMemo<CssVars>(() => ({
-    '--resonator-accent': isShowcase ? cardStyle.accent ?? railModel.accent : railModel.accent,
-    ...(isShowcase ? { '--bg': surfaceColor } : {}),
-    ...(isShowcase && cardStyle.text ? { '--text': cardStyle.text } : {}),
-    ...(isShowcase
-      ? {
-          '--rail-glass': `color-mix(in srgb, var(--bg) ${cardStyle.opacity ?? 82}%, transparent)`,
-          '--rail-glass-2': `color-mix(in srgb, var(--bg) ${Math.round((cardStyle.opacity ?? 82) * 0.67)}%, transparent)`,
-        }
-      : {}),
-    ...(isShowcase && cardStyle.displayFont ? { '--display-font': cardStyle.displayFont } : {}),
-    ...(isShowcase && cardStyle.monoFont ? { '--mono-font': cardStyle.monoFont } : {}),
-    ...maskVars,
-    ...(isShowcase ? textSlotVars : {}),
-  }), [
-    cardStyle.accent,
-    cardStyle.displayFont,
-    cardStyle.monoFont,
-    cardStyle.opacity,
-    cardStyle.text,
-    isShowcase,
-    maskVars,
-    railModel.accent,
-    surfaceColor,
-    textSlotVars,
-  ])
-
-  // Persisted font stacks require their external family stylesheets to be rehydrated.
-  useEffect(() => {
-    if (!isShowcase) return
-    const families = collectCardFontFamilies({
-      displayFont: cardStyle.displayFont,
-      monoFont: cardStyle.monoFont,
-      textSlots: cardStyle.textSlots ?? {},
-    })
-    for (const family of families) ensureGoogleFamily(family)
-  }, [isShowcase, cardStyle.displayFont, cardStyle.monoFont, cardStyle.textSlots])
-
   const evaluationBanner = !isShowcase && isNarrow ? (
     <NarrowEvaluationBanner
       portraitSrc={railModel.portraitSrc}
       spriteCss={railModel.spriteCss}
-      backdropSrc={resolvedBackdrop ?? railModel.portraitSrc}
+      backdropSrc={railModel.portraitSrc}
     />
   ) : null
 
@@ -1189,153 +820,18 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
         {!isShowcase && error ? <div className="workspace-notice workspace-notice--error">{error.message}</div> : null}
 
         {runtime ? (
-          <ContextTrigger
-            asChild
-            ariaLabel="Build Lab stage actions"
-            items={stageContextItems}
-          >
-            <BuildWorkspaceBoard
-              ref={boardRef}
-              page={page}
-              data-css-expanded={isShowcase && cssExpanded ? 'true' : undefined}
+            <BuildWorkspacePresentation
+              boardRef={boardRef} page={page} isDarkTheme={isDarkTheme}
+              stageContextItems={stageContextItems} onCaptureChange={setCaptureAction}
+              railProps={{ isShowcase, railPhase, railResId, scenarioId: railScenarioId, railModel,
+                animatedPortraits: animatedPortraits && !pauseRailPortrait,
+                onAnimatedPortraitsChange: pauseRailPortrait ? undefined : setAnimatedPortraits,
+                editable: true, onRuntimeUpdate: updateRailRuntime, surfacePhase,
+                score, grade, tone, showcaseBuild, showcaseAvgDamage,
+                onEchoOpen: openEchoSlot, echoSelection,
+              }}
+              dockProps={{ resId: dockResId, runtime: dockRuntime, scenarioId: railScenarioId, page, accent: dockAccent, onRuntimeUpdate: updateRailRuntime }}
             >
-            {isShowcase && cssExpanded ? (
-              <Suspense fallback={<div className="workspace-css-dock"><AppLdrVrly mode="centered" text="Loading CSS editor..." /></div>}>
-              <ShowcaseCssEditorDock
-                value={cardStyle.customCss ?? ''}
-                isDark={isDarkTheme}
-                onChange={(value) => {
-                  updateShowcaseStyle({ customCss: value || null })
-                }}
-                onClose={() => {
-                  setCssExpanded(false)
-                  setTuneDrawerOpen(false)
-                }}
-              />
-              </Suspense>
-            ) : null}
-            <BuildWorkspaceWorkspace>
-              <BuildWorkspaceRailSlot>
-                <BuildRail
-                  buildCardRef={buildCardRef}
-                  isShowcase={isShowcase}
-                  customCss={scopedCustomCss}
-                  railPhase={railPhase}
-                  editMode={editMode}
-                  railResId={railResId}
-                  scenarioId={railScenarioId}
-                  railModel={railModel}
-                  cardHidden={cardHidden}
-                  railStyle={railStyle}
-                  backdropStyle={backdropStyle}
-                  statsColumn={cardStyle.statsColumn ?? 'build'}
-                  portraitCredit={cardStyle.portraitCredit}
-                  backdropCredit={cardStyle.backdropCredit}
-                  resolvedPortrait={resolvedPortrait}
-                  animatedPortraits={animatedPortraits && !pauseRailPortrait}
-                  onAnimatedPortraitsChange={pauseRailPortrait ? undefined : setAnimatedPortraits}
-                  editable
-                  onRuntimeUpdate={updateRailRuntime}
-                  surfacePhase={surfacePhase}
-                  showcasePlacement={showcasePlacement}
-                  score={score}
-                  grade={grade}
-                  tone={tone}
-                  showcaseBuild={showcaseBuild}
-                  showcaseAvgDamage={showcaseAvgDamage}
-                  onEchoOpen={openEchoSlot}
-                  echoSelection={echoSelection}
-                  autoImageContrast={cardStyle.text == null}
-                  layout={showcaseLayout}
-                />
-                <RailDock
-                  resId={dockResId}
-                  runtime={dockRuntime}
-                  scenarioId={railScenarioId}
-                  page={page}
-                  accent={dockAccent}
-                  onRuntimeUpdate={updateRailRuntime}
-                />
-                {isShowcase && (
-                  <Suspense fallback={null}>
-                  <ShowcaseCustomizePanel
-                    key={tuneResetKey}
-                    layout={showcaseLayout}
-                    onLayoutChange={setShowcaseLayout}
-                    accent={cardStyle.accent ?? railModel.accent}
-                    surface={surfaceColor}
-                    text={cardStyle.text ?? '#eef2f7'}
-                    cardOpacity={cardStyle.opacity ?? 82}
-                    portraitX={cardStyle.portraitX ?? 50}
-                    portraitY={cardStyle.portraitY ?? 50}
-                    portraitScale={cardStyle.portraitScale ?? 50}
-                    maskTop={cardStyle.maskTop ?? 0}
-                    maskRight={cardStyle.maskRight ?? 0}
-                    maskBottom={cardStyle.maskBottom ?? 45}
-                    maskLeft={cardStyle.maskLeft ?? 0}
-                    maskTopSharp={cardStyle.maskTopSharp ?? 0}
-                    maskRightSharp={cardStyle.maskRightSharp ?? 0}
-                    maskBottomSharp={cardStyle.maskBottomSharp ?? 0}
-                    maskLeftSharp={cardStyle.maskLeftSharp ?? 0}
-                    portraitImage={resolvedPortrait}
-                    backdropImage={resolvedBackdrop}
-                    backdropX={cardStyle.backdropX ?? 50}
-                    backdropY={cardStyle.backdropY ?? 28}
-                    backdropScale={cardStyle.backdropScale ?? 50}
-                    backdropBlur={cardStyle.backdropBlur ?? 30}
-                    backdropOpacity={cardStyle.backdropOpacity ?? 67}
-                    statsColumn={cardStyle.statsColumn ?? 'build'}
-                    portraitCredit={cardStyle.portraitCredit ?? ''}
-                    backdropCredit={cardStyle.backdropCredit ?? ''}
-                    textSlots={cardStyle.textSlots ?? {}}
-                    customCss={cardStyle.customCss ?? ''}
-                    editMode={editMode}
-                    onEdit={(group) => setEditMode((prev) => (prev === group ? null : group))}
-                    hidden={cardHidden}
-                    onToggleHidden={(key) => {
-                      if (railResId) toggleShowcaseHide(railResId, key)
-                    }}
-                    onStyleChange={(patch) => {
-                      updateShowcaseStyle(patch)
-                    }}
-                    onResetSection={handleResetTuneSection}
-                    onPickImage={handlePickImage}
-                    onResetGroup={handleResetGroup}
-                    onReset={() => {
-                      if (railResId) {
-                        discardPendingShowcaseStyle()
-                        resetShowcaseCard(railResId)
-                        setCardStyleDraft({ resonatorId: railResId, style: DEF_SHOWCASE_CARD_STYLE })
-                      }
-                      setEditMode(null)
-                      setTuneResetKey((key) => key + 1)
-                    }}
-                    onCapture={captureBuildCard}
-                    captureAction={captureAction}
-                    capturing={captureAction != null || surfacePhase !== 'idle'}
-                    onExport={handleExportTarget}
-                    onImportFile={handleImportFile}
-                    docked={cssExpanded}
-                    drawerOpen={tuneDrawerOpen}
-                    onToggleDrawer={() => setTuneDrawerOpen((open) => !open)}
-                    onExpandCss={() => {
-                      setCssExpanded((on) => !on)
-                      setTuneDrawerOpen(false)
-                    }}
-                    surfacePhase={surfacePhase}
-                  />
-                  </Suspense>
-                )}
-                {isShowcase && uploadModal.visible && (
-                  <Suspense fallback={<AppLdrVrly mode="centered" text="Loading image upload..." />}><ImageUploadModal
-                    state={uploadModal.dialogProps}
-                    title={uploadTarget === 'portrait' ? 'Portrait image' : 'Backdrop image'}
-                    initialCredit={(uploadTarget === 'portrait' ? cardStyle.portraitCredit : cardStyle.backdropCredit) ?? ''}
-                    onClose={uploadModal.hide}
-                    onApply={handleApplyImage}
-                  /></Suspense>
-                )}
-              </BuildWorkspaceRailSlot>
 
               {isOptimizer ? (
                 <Suspense fallback={(
@@ -1344,7 +840,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
                     text="Loading optimizer..."
                   />
                 )}>
-                  <EmbeddedOptimizer variant="embedded" />
+                  <EvaluationSummaryContext value={optimizerSummary}><EmbeddedOptimizer variant="embedded" /></EvaluationSummaryContext>
                 </Suspense>
               ) : null}
 
@@ -1408,9 +904,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
                   onEchoLoadout={setEchoLoadout}
                 />
               ) : null}
-            </BuildWorkspaceWorkspace>
-            </BuildWorkspaceBoard>
-          </ContextTrigger>
+            </BuildWorkspacePresentation>
         ) : null}
       </div>
       </div>

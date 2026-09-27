@@ -16,7 +16,7 @@ import { mkShrdPay, stripEchoes } from '@/engine/optimizer/compiler/shared.ts'
 // compile the optimizer for a single selected target skill
 // this is the main bridge from editable runtime state into the packed payload
 // that later cpu and gpu execution paths consume
-export function compTgtRun(input: OptStartPay): PrepTargetSkill {
+export function compTgtRun(input: OptStartPay, baseline = false): PrepTargetSkill {
   // remove currently equipped echoes so the optimizer evaluates only inventory echoes
   const runtime = stripEchoes(input.runtime)
 
@@ -36,13 +36,13 @@ export function compTgtRun(input: OptStartPay): PrepTargetSkill {
   })
 
   // encode stat-floor and stat-cap style optimizer constraints from settings
-  const constraints = encStatCstrs(input.settings)
+  const constraints = baseline ? new Float32Array(0) : encStatCstrs(input.settings)
 
   // encode the inventory echoes using the selected target skill shape
   const encoded = encEchoRows(input.invChs, target.selectedSkill, 'self')
 
   // build the shared payload used by both target and rotation optimizer modes
-  const shared = mkShrdPay(encoded, input, constraints)
+  const shared = mkShrdPay(encoded, input, constraints, baseline)
 
   // capture the current runtime set state so evaluation can merge runtime sets correctly
   const setRtMask = makeSetMask(runtime, input.setConds)

@@ -15,7 +15,6 @@ import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
 import type { CombatScenario } from '@/domain/entities/combatScenario.ts'
 import { useAppStore } from '@/application/state'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
-import { useInventoryLease } from '@/application/hooks/useInventoryLease.ts'
 import { holdResonatorData } from '@/data/gameData'
 import { useResonatorData } from '@/application/hooks/useResonatorData'
 
@@ -27,7 +26,6 @@ const MemberStage = lazy(async () => ({
 // Load the console only after a request and retain it until close completion.
 export function TeamConsoleHost() {
   const target = useTeamCnsl((state) => state.target)
-  useInventoryLease(Boolean(target))
   const scenario = useAppStore((state) => target
     ? state.combat.scenariosById[target.scenarioId ?? state.combat.selectedScenarioId]
     : null)

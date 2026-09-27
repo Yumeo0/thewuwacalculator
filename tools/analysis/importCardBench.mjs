@@ -167,6 +167,8 @@ function scoreCard(expected, got) {
     }
     check(`${slot}.cost`, echo.cost, got.raw[index].cost)
     check(`${slot}.main`, echo.main, built?.main ?? 'no echo')
+    if (echo.echo) check(`${slot}.echo`, echo.echo, got.raw[index].echoName ?? 'no echo')
+    if (echo.set) check(`${slot}.set`, echo.set, got.raw[index].setName ?? 'no set')
     for (const [key, value] of Object.entries(echo.substats)) {
       check(`${slot}.${key}`, value, built?.substats[key] ?? 'missing')
     }
@@ -184,6 +186,8 @@ function groupOf(field) {
   if (field.startsWith('skill.')) return 'skill levels'
   if (/^slot\d\.(cost)$/.test(field)) return 'echo cost'
   if (/^slot\d\.(main)$/.test(field)) return 'echo main stat'
+  if (/^slot\d\.echo$/.test(field)) return 'echo identity'
+  if (/^slot\d\.set$/.test(field)) return 'sonata set'
   if (/^slot\d\.empty$/.test(field)) return 'empty slot'
   if (field.startsWith('slot')) return 'substats'
   return field

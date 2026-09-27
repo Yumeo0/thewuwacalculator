@@ -4,6 +4,7 @@
                measures result connectors, and delegates candidate application.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties as CssProps, KeyboardEvent as ReactKeyEvt } from 'react'
 import type { WeaponPlanSet } from '@/domain/entities/suggestions.ts'
@@ -54,7 +55,7 @@ function Tray({ tray, ink }: { tray: ClimbTray, ink: string }) {
       {tray.coins.length > 0 ? (
         <span className="spx-tray__coins">
           {tray.coins.map((coin, index) => (
-            <img key={index} src={coin ?? undefined} alt="" className="spx-tray__coin" onError={withDefIconM} />
+            <DisplayImage key={index} src={coin ?? undefined} alt="" className="spx-tray__coin" loading="lazy" decoding="async" onError={withDefIconM} />
           ))}
         </span>
       ) : null}
@@ -84,7 +85,7 @@ function Build({ kind, row }: { kind: ClimbKind, row: ClimbRow }) {
     return (
       <span className="clb__build clb__build--wpn">
         <span className="clb__wicon">
-          <img src={weapon.icon} alt="" onError={withDefIconM} />
+          <DisplayImage src={weapon.icon} alt="" loading="lazy" decoding="async" onError={withDefIconM} />
         </span>
         <span className="clb__wtxt">
           <b>{weapon.name}</b>
@@ -184,6 +185,7 @@ export function Climb({
   useLayoutEffect(() => {
     const sheet = sheetRef.current
     if (!sheet) return
+    let frame = 0
 
     const measure = () => {
       // Convert viewport rectangles to content coordinates using both scroll offsets.
@@ -231,13 +233,23 @@ export function Climb({
         height = Math.max(height, rect.y + rect.h)
       }
 
-      setRopes({ width: sheet.clientWidth, height, list })
+      const width = sheet.clientWidth
+      setRopes((previous) => previous.width === width && previous.height === height
+        && previous.list.length === list.length
+        && previous.list.every((entry, index) => entry.index === list[index].index
+          && entry.d === list[index].d && entry.gain === list[index].gain
+          && entry.width === list[index].width)
+        ? previous : { width, height, list })
     }
 
-    measure()
-    const observer = new ResizeObserver(measure)
+    const scheduleMeasure = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(measure)
+    }
+    scheduleMeasure()
+    const observer = new ResizeObserver(scheduleMeasure)
     observer.observe(sheet)
-    return () => observer.disconnect()
+    return () => { cancelAnimationFrame(frame); observer.disconnect() }
   }, [originIndex, rows])
 
   /* each channel opens at its top */
@@ -418,7 +430,7 @@ export function Climb({
           {heldRow.weapon ? (
             <div className="clb__f clb__bar-wpn">
               <span className="clb__wicon">
-                <img src={heldRow.weapon.icon} alt="" onError={withDefIconM} />
+                <DisplayImage src={heldRow.weapon.icon} alt="" decoding="async" onError={withDefIconM} />
               </span>
               <b>{heldRow.weapon.name}</b>
               <em>{heldRow.weapon.rarity}★ · R{heldRow.weapon.rank}</em>

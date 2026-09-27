@@ -6,6 +6,7 @@
 
 import * as Dialog from '@radix-ui/react-dialog'
 import { VisuallyHidden as VsllHddn } from '@radix-ui/react-visually-hidden'
+import { useLayoutEffect, useRef } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 
 interface AppDlgPrps {
@@ -31,6 +32,54 @@ function isAppPopup(target: EventTarget | null) {
   return target instanceof Element && Boolean(target.closest('.app-popup'))
 }
 
+// Preserve the primitive's focus-candidate order while deferring the layout read.
+const FOCUS_CANDIDATES = [
+  'input:not([type="hidden"])',
+  'select',
+  'textarea',
+  'button',
+  'a[href]',
+  '[tabindex]',
+].map((selector) => `${selector}:not([disabled]):not([tabindex="-1"]):not([aria-hidden="true"])`).join(',')
+
+function focusFirst(content: HTMLElement) {
+  const candidates = content.querySelectorAll<HTMLElement>(FOCUS_CANDIDATES)
+  for (const candidate of candidates) {
+    if (candidate.offsetWidth || candidate.offsetHeight || candidate.getClientRects().length) {
+      candidate.focus({ preventScroll: true })
+      if (document.activeElement === candidate) return
+    }
+  }
+
+  content.focus({ preventScroll: true })
+}
+
+// Restrict layout invalidation during the opening transition, then remove
+// containment before descendants can position anchored popups against the page.
+const ARRIVAL_MS = 760
+
+function useArrival(open: boolean) {
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const content = contentRef.current
+    if (!content || !open) return
+
+    content.dataset.arriving = 'true'
+    const land = () => content.removeAttribute('data-arriving')
+    const timer = window.setTimeout(land, ARRIVAL_MS)
+    // Pointer interaction may open an anchored popup before the timer settles.
+    content.addEventListener('pointerdown', land, { once: true })
+    return () => {
+      window.clearTimeout(timer)
+      content.removeEventListener('pointerdown', land)
+      land()
+    }
+  }, [open])
+
+  return contentRef
+}
+
 export function AppDialog({
   visible,
   open,
@@ -45,6 +94,8 @@ export function AppDialog({
   onClose,
   children,
 }: AppDlgPrps) {
+  const contentRef = useArrival(open)
+
   if (!visible || !portalTarget) {
     return null
   }
@@ -75,10 +126,20 @@ export function AppDialog({
         >
           <Dialog.Content
             forceMount
+            ref={contentRef}
             className={cntnClssNms}
             style={contentStyle}
             data-app-modal-content="true"
             aria-label={ariaLabel}
+            onOpenAutoFocus={(event) => {
+              // Defer focus until the mounted dialog has its own layout boundary.
+              event.preventDefault()
+              const content = event.currentTarget ?? event.target
+              if (!(content instanceof HTMLElement)) return
+              window.requestAnimationFrame(() => {
+                if (content.isConnected) focusFirst(content)
+              })
+            }}
             aria-labelledby={ariaLabelBy}
             aria-describedby={ariaDscrBy}
             onEscapeKeyDown={(event) => {

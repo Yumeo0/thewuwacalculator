@@ -96,8 +96,10 @@ export const FILLED_PANEL_MIN_INK = 80
 // substat rows sit on a fixed pitch, measured from their bullets
 export const SUBSTAT_ROW_CENTERS = [892, 926, 960, 994, 1028] as const
 
-// a row keeps its own wrapped second line and stops short of the next row's caps
-const SUBSTAT_ROW = { above: 10, height: 35 } as const
+// measured over the bench cards: a row's own line runs from 6 above its centre to
+// 13 below, and its wrapped second line from 10 to 27 below. So the row above ends
+// 7 above this centre and the row below starts 28 under it, and the box sits between
+const SUBSTAT_ROW = { above: 6, height: 34 } as const
 
 // labels end by x 282 and values start at 319 on every card, so the two are read
 // apart: letters for the name, digits for the number

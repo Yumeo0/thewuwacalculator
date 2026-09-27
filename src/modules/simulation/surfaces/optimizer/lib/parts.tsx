@@ -3,6 +3,7 @@
   Description: Provides shared optimizer control, result, and preview primitives.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { HTMLAttributes as HtmlAttrs } from 'react'
 import { Plus } from 'lucide-react'
 import type { EchoInstance } from '@/domain/entities/runtime.ts'
@@ -50,7 +51,7 @@ export function OptPrvwEchoT(props: {
       <div className="opt-echo-preview__slot-body">
         <div className="opt-echo-preview__glyph-frame">
           {definition.icon ? (
-            <img
+            <DisplayImage
               src={definition.icon}
               alt={definition.name} className="opt-echo-preview__glyph"
               loading="lazy"
@@ -66,7 +67,7 @@ export function OptPrvwEchoT(props: {
           <strong className="opt-echo-preview__name">{definition.name ?? toTitle(echo.id)}</strong>
           <div className="opt-echo-preview__set-line">
             {setIcon ? (
-              <img
+              <DisplayImage
                 src={setIcon}
                 alt={getSntSetNam(echo.set)} className="opt-echo-preview__set-icon"
                 loading="lazy"

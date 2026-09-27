@@ -3,6 +3,8 @@
   Description: Groups the selected member's skill and hit damage and coordinates formula inspection.
 */
 
+import { observeSelectionPip } from '@/shared/lib/observeSelectionPip'
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import type { EnemyProfile } from '@/domain/entities/appState'
@@ -236,7 +238,7 @@ function FormulaCard({
       <div className="pgd-card">
         <header className="pgd-card-head">
           <span className="pgd-card-eyebrow">
-            {icon ? <img src={icon} alt="" loading="lazy" onError={withDefIconM} /> : null}
+            {icon ? <DisplayImage src={icon} alt="" loading="lazy" onError={withDefIconM} /> : null}
             {support ? support.label : element}
           </span>
           <b className="pgd-card-name">{trimLabel(entry.skill.label)}</b>
@@ -322,32 +324,7 @@ export function ModulationDamage({
     const rows = list.current
     if (!wrap || !mark || !rows) return
 
-    const place = () => {
-      const row = at ? wrap.querySelector<HTMLElement>(`[data-row="${CSS.escape(at)}"]`) : null
-      if (!row) {
-        mark.classList.remove('is-on')
-        return
-      }
-
-      const wrapBox = wrap.getBoundingClientRect()
-      const rowBox = row.getBoundingClientRect()
-      /* the channel is measured rather than restated from the grid's own
-         numbers, so the pip keeps the middle of it whatever the split does */
-      const card = wrap.querySelector<HTMLElement>('.pgd-aside')
-      const channel = card
-        ? (rows.getBoundingClientRect().right + card.getBoundingClientRect().left) / 2
-        : rows.getBoundingClientRect().right
-
-      mark.style.setProperty('--pgd-pip-top', `${Math.round(rowBox.top + rowBox.height / 2 - wrapBox.top)}px`)
-      mark.style.setProperty('--pgd-pip-x', `${Math.round(channel - wrapBox.left)}px`)
-      mark.style.setProperty('--pgd-pip-e', getComputedStyle(row).getPropertyValue('--pgd-ink'))
-      mark.classList.add('is-on')
-    }
-
-    place()
-    const watch = new ResizeObserver(place)
-    watch.observe(rows)
-    return () => watch.disconnect()
+    return observeSelectionPip(wrap, rows, mark, at)
     /* the list is watched as well as the pick: pointing the column at another
        member re-lists the kit under a leader that was never unmounted, and a
        kit of the same height would otherwise leave it standing on the row it

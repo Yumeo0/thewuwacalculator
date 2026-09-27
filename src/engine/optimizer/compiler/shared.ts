@@ -64,9 +64,10 @@ export function mkShrdPay(
     encoded: Pick<EncEchoRows, 'costs' | 'sets' | 'kinds' | 'count'>,
     input: OptStartPay,
     constraints: Float32Array,
+    baseline = false,
 ) {
   // Resolve which inventory indices can act as the main echo.
-  const lckdMainNdcs = cllcLckdMain(input)
+  const lckdMainNdcs = baseline ? new Int32Array(0) : cllcLckdMain(input)
 
   // Whether the user explicitly requested a locked main echo.
   const locked = Boolean(input.settings.lockedMainEchoId)
@@ -76,7 +77,7 @@ export function mkShrdPay(
   // When a main echo is locked, the combinadic builder receives one concrete
   // locked index seed so it can derive the correct combination dimensions.
   // The full candidate list is still preserved separately in lockedMainIndices.
-  const comboIndex = mkOptCmbnNdx({
+  const comboIndex = baseline ? { comboN: 0, comboK: 0, totalCombos: 0, indexMap: new Int32Array(0), binom: new Uint32Array(0) } : mkOptCmbnNdx({
     echoCount: encoded.count,
     lockEchoIdx: locked ? (lckdMainNdcs[0] ?? null) : null,
   })

@@ -3,6 +3,7 @@
   Description: Provides shared suggestion target, result, summary, and configuration primitives.
 */
 
+import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { ComponentType, CSSProperties as CssProps, KeyboardEvent, ReactNode } from 'react'
 import { BsCrosshair } from 'react-icons/bs'
 import { getSntSetIco, getSntSetNam } from '@/data/gameData/catalog/sonataSets.ts'
@@ -68,7 +69,7 @@ export function SetBadge({
   return (
     <span className={className}>
       {icon ? (
-        <img
+        <DisplayImage
           src={icon}
           alt={label}
           loading="lazy"

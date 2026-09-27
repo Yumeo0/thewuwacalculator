@@ -6,6 +6,7 @@
 */
 
 import { useCallback, useLayoutEffect, useRef, type RefObject } from 'react'
+import { loadDisplayImage } from '@/shared/lib/displayImageSizing'
 
 const SETTLE_EASE = 'cubic-bezier(.2, .8, .2, 1)'
 // A snapshot is valid only for the immediate commit that follows capture().
@@ -30,7 +31,7 @@ const calm = () => document.documentElement.classList.contains('reduce-animation
 
 function loadArt(el: HTMLElement) {
   el.querySelectorAll<HTMLImageElement>('img[data-deferred-src]').forEach((image) => {
-    if (!image.getAttribute('src')) image.src = image.dataset.deferredSrc!
+    if (!image.getAttribute('src')) loadDisplayImage(image, image.dataset.deferredSrc!)
   })
 }
 
