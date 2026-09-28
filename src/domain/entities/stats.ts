@@ -197,6 +197,8 @@ export interface SkillDef {
   flatValues?: number[]
   fixedDmg?: number
   fixedDmgValues?: number[]
+  /** Fixed Off-Tune contribution carried by a skill effect. */
+  directOffTune?: number
   scaling: ScalingStats
   skillBuffs?: Partial<ModBuff>
   skillHealingBonus?: number

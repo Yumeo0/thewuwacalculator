@@ -892,6 +892,19 @@ export const curChngEnts: ChngRcrd[] = [
     ],
     shortDesc: `3.7.1 beta update`,
   },
+  {
+    date: '28/09/2026',
+    patchVersion: '3.7 live',
+    entries: [
+      {
+        type: 'paragraph',
+        content: `
+          <strong>3.7 patch</strong> stuff.
+        `,
+      }
+    ],
+    shortDesc: `Live 3.7 update`,
+  },
 ]
 
 export const ltstCurChngE =

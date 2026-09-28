@@ -637,6 +637,10 @@ export function presetToManualModifiers(
     }
 
     if (operation.type === 'add_skill_scalar') {
+      const field = operation.field
+      if (field === 'directOffTune') {
+        return []
+      }
       return skillTargetBase(operation.match, runtime).map((target) => withLabel({
         id: makeModId(),
         enabled: true,
@@ -644,7 +648,7 @@ export function presetToManualModifiers(
         scope: 'skill',
         ...target,
         effect: 'scalar',
-        field: operation.field,
+        field,
         value,
       }, entry.label))
     }

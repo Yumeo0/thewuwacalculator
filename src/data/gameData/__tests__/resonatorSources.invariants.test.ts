@@ -5,7 +5,9 @@
 */
 
 import { describe, expect, it } from 'vitest'
+import type { SkillDef } from '@/domain/entities/stats'
 import type { EffectScope, FormExpr, SrcPkg } from '@/domain/gameData/contracts'
+import { applySkllOp } from '@/engine/effects/dataEffects'
 import { evalForm } from '@/engine/effects/evaluator'
 import resonatorSourcesRaw from '../../../../public/data/beta/resonators/sources.json?raw'
 
@@ -13,7 +15,7 @@ const TUNE_STRAIN_RESPONSE_EFFECTS = [
   ['1209', '1209:decoupling', 1],
   ['1211', '1211:shattered-hours', 1],
   ['1413', '1413:draw-and-sunder', 1],
-  ['1413', '1413:s6:tune-strain-extra', 0.4],
+  ['1413', '1413:s6:tune-strain-extra', 0.2],
   ['1509', '1509:spectral-analysis', 1],
   ['1510', '1510:silent-debate', 1],
 ] as const
@@ -131,6 +133,27 @@ describe('resonator source invariants', () => {
 
       expect(evalForm(operation.value, makeTuneStrainScope(100, 2))).toBeCloseTo(24 * responseScale)
     }
+  })
+
+  it('applies Denia Tune Strain - Shifting as fixed Off-Tune on the triggering skill', () => {
+    const sources = JSON.parse(resonatorSourcesRaw) as SrcPkg[]
+    const denia = sources.find((source) => source.source.id === '1211')
+    const effect = denia?.effects?.find((candidate) => candidate.id === '1211:tune-strain:direct-off-tune')
+    const operation = effect?.operations[0]
+
+    expect(effect).toMatchObject({
+      trigger: 'skill',
+      targetScope: 'teamWide',
+      operations: [{
+        type: 'add_skill_scalar',
+        field: 'directOffTune',
+        value: { type: 'const', value: 19.2 },
+      }],
+    })
+    if (!operation) throw new Error('Missing Tune Strain - Shifting operation')
+
+    const skill = { id: 'test:hit', label: 'Hit' } as SkillDef
+    expect(applySkllOp(skill, operation, makeTuneStrainScope(100, 2)).directOffTune).toBe(19.2)
   })
 
   it('caps Xuanling Unbroken Vow at 66 amplify across six Havoc Bane stacks', () => {

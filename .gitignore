@@ -4,6 +4,7 @@ ideas
 
 .claude
 .idea
+/.idea-backup/
 .DS_Store
 .dev.vars
 .dev.vars.*
@@ -20,3 +21,15 @@ prod-app.json
 
 /public/card-presets
 /public/assets/game/resonators/spine/portrait/
+
+/rotation-language-examples
+/ref
+
+/home
+
+/dev-app-state-test.json
+/eng.traineddata
+/text-sample.png
+/*.wwcalc
+
+/public/assets/display/

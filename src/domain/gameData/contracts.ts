@@ -299,6 +299,7 @@ export type EffectOp =
   type: 'add_skill_scalar'
   field:
       | 'fixedDmg'
+      | 'directOffTune'
       | 'skillHealingBonus'
       | 'skillShieldBonus'
       | 'tuneRuptureCritRate'
