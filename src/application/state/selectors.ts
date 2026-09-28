@@ -14,14 +14,11 @@ import {
 } from '@/domain/entities/combatScenario'
 import type { CombatGraph } from '@/domain/entities/combatGraph'
 import type { ResRuntime } from '@/domain/entities/runtime'
-import {
-  mkInitRtLkp,
-} from '@/engine/runtime/runtimeAdapters'
 import type { PrepWork } from '@/engine/pipeline/preparedWorkspace'
 import { mkInvSgDrvd, type InvSgDrvd } from '@/engine/runtime/inventoryUsage'
 import { prepareCombatScenarioForUi } from '@/engine/pipeline/combatScenario'
 import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
-import { projectScenarioWorkspaceProfiles } from '@/engine/runtime/scenarioRuntime'
+import { projectScenarioProfiles, projectScenarioUiRuntimes } from '@/engine/runtime/scenarioRuntime'
 
 export interface WorkDrvdStt {
   scenario: CombatScenario | null
@@ -44,6 +41,7 @@ interface PrepWorkCchE {
 interface InitRtLkpCch {
   workspace: AppStore['combat']
   value: Record<string, ResRuntime>
+  projections: Map<string, { scenario: CombatScenario; runtime: ResRuntime | null }>
 }
 
 let workDrvdCch: PrepWorkCchE | null = null
@@ -56,6 +54,7 @@ let initRtLkpCch: InitRtLkpCch | null = null
 let profilesCch: {
   workspace: AppStore['combat']
   value: LegacyProfileMap
+  projections: Map<string, { scenario: CombatScenario; profiles: LegacyProfileMap }>
 } | null = null
 let invSgCch: {
   profiles: LegacyProfileMap
@@ -167,10 +166,23 @@ export function selInitRtLkp(state: AppStore): Record<string, ResRuntime> {
     return cached.value
   }
 
-  const value = mkInitRtLkp(state.combat)
+  const projections = new Map<string, { scenario: CombatScenario; runtime: ResRuntime | null }>()
+  const value: Record<string, ResRuntime> = {}
+  for (const scenarioId of state.combat.order) {
+    const scenario = state.combat.scenariosById[scenarioId]
+    if (!scenario) continue
+    const previous = cached?.projections.get(scenarioId)
+    const contextResonatorId = contextScenarioMember(scenario).resonatorId
+    const runtime = previous && previous.scenario === scenario
+      ? previous.runtime
+      : projectScenarioUiRuntimes(scenario).runtimesById[contextResonatorId] ?? null
+    projections.set(scenarioId, { scenario, runtime })
+    if (runtime) value[contextResonatorId] = runtime
+  }
   initRtLkpCch = {
     workspace: state.combat,
     value,
+    projections,
   }
 
   return value
@@ -179,8 +191,22 @@ export function selInitRtLkp(state: AppStore): Record<string, ResRuntime> {
 export function selScenarioProfiles(state: AppStore): LegacyProfileMap {
   const cached = profilesCch
   if (cached?.workspace === state.combat) return cached.value
-  const value = projectScenarioWorkspaceProfiles(state.combat)
-  profilesCch = { workspace: state.combat, value }
+  const projections = new Map<string, { scenario: CombatScenario; profiles: LegacyProfileMap }>()
+  const value: LegacyProfileMap = {}
+  const addScenarioProfiles = (scenarioId: AppStore['combat']['selectedScenarioId']) => {
+    const scenario = state.combat.scenariosById[scenarioId]
+    if (!scenario) return
+    const previous = cached?.projections.get(scenarioId)
+    const profiles = previous && previous.scenario === scenario
+      ? previous.profiles : projectScenarioProfiles(scenario)
+    projections.set(scenarioId, { scenario, profiles })
+    Object.assign(value, profiles)
+  }
+  for (const scenarioId of state.combat.order) {
+    if (scenarioId !== state.combat.selectedScenarioId) addScenarioProfiles(scenarioId)
+  }
+  addScenarioProfiles(state.combat.selectedScenarioId)
+  profilesCch = { workspace: state.combat, value, projections }
   return value
 }
 

@@ -7,6 +7,8 @@
 
 import type { ResProf } from '@/domain/entities/profile.ts'
 import type { ResRuntime } from '@/domain/entities/runtime.ts'
+import { maxRuntimeEffects } from '@/engine/runtime/maxRuntime.ts'
+import { maxEchoIfChg } from '@/engine/runtime/sourceStateInit.ts'
 
 export type EchoImportDestination =
   | { kind: 'context'; resonatorId: string }
@@ -27,24 +29,30 @@ export function resolveEchoImportRuntime(
 export function mergeEchoImportIntoProfile(
   profile: ResProf,
   runtime: ResRuntime,
+  options: { maxEffectsOnInit?: boolean } = {},
 ): ResProf {
+  // A first import supplies progression and equipment, but the card has no
+  // effect toggles. Initialize those from the resulting build when requested.
+  const normalizedRuntime = options.maxEffectsOnInit
+    ? maxRuntimeEffects(runtime)
+    : maxEchoIfChg(runtime, profile.runtime.build.echoes)
   return {
     ...profile,
     runtime: {
       ...profile.runtime,
       progression: {
         ...profile.runtime.progression,
-        level: runtime.base.level,
-        sequence: runtime.base.sequence,
-        skillLevels: { ...runtime.base.skillLevels },
+        level: normalizedRuntime.base.level,
+        sequence: normalizedRuntime.base.sequence,
+        skillLevels: { ...normalizedRuntime.base.skillLevels },
       },
       build: {
-        weapon: { ...runtime.build.weapon },
-        echoes: [...runtime.build.echoes],
+        weapon: { ...normalizedRuntime.build.weapon },
+        echoes: [...normalizedRuntime.build.echoes],
       },
       local: {
         ...profile.runtime.local,
-        controls: { ...runtime.state.controls },
+        controls: { ...normalizedRuntime.state.controls },
       },
     },
   }

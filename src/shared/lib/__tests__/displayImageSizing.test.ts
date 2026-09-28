@@ -9,13 +9,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const source = '/assets/game/attributes/icons/glacio.webp'
 class FakeImage {
   width = 26
+  reads = 0
   attributes = new Map<string, string>()
   writes: string[] = []
   get src() { return this.attributes.get('src') ?? '' }
   set src(value: string) { this.attributes.set('src', value); this.writes.push(value) }
   getAttribute(name: string) { return this.attributes.get(name) ?? null }
   removeAttribute(name: string) { this.attributes.delete(name) }
-  getBoundingClientRect() { return { width: this.width } }
+  getBoundingClientRect() { this.reads += 1; return { width: this.width } }
   element() { return this as unknown as HTMLImageElement }
 }
 
@@ -87,9 +88,17 @@ describe('measured display images', () => {
     expect(image.src).toMatch(/-128.webp$/)
     expect(densityQueries).toHaveLength(2)
     image.width = 12
-    documentEvents.dispatchEvent(new Event('transitionend'))
+    const transition = new Event('transitionend')
+    Object.defineProperty(transition, 'propertyName', { value: 'transform' })
+    documentEvents.dispatchEvent(transition)
     vi.runAllTimers()
     expect(image.src).toMatch(/-64.webp$/)
+    const reads = image.reads
+    const opacity = new Event('transitionend')
+    Object.defineProperty(opacity, 'propertyName', { value: 'opacity' })
+    documentEvents.dispatchEvent(opacity)
+    vi.runAllTimers()
+    expect(image.reads).toBe(reads)
   })
 
   it('waits for hidden images to have a size and preserves fallback URLs', async () => {

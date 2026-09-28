@@ -23,7 +23,7 @@ import { AppModal } from '@/shared/ui/AppModal.tsx'
 import { useAppModal, useAppModalValue } from '@/shared/ui/useAppModal.ts'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
-import type {SelectOption, SelectGroup} from '@/application/ui/LiquidSelect'
+import type {SelectOption, SelectGroup} from '@/application/ui/Select'
 import {getGameDataMode} from '@/data/gameData'
 import {getEchoById, listEchoes} from '@/data/catalog/echoCatalogService'
 import {weaponEquipState} from '@/engine/optimizer/context/weaponOverlays.ts'
@@ -109,7 +109,6 @@ import {
   mapMainStatF,
   makeOpSlot,
   normEchoLdt,
-  rotHasFeats,
   type OpEchoTarget,
   type OpSlot,
   type PrvwTgt,
@@ -487,23 +486,13 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       return []
     }
 
-    const options: SelectOption[] = defaultRotation ? [{
+    return defaultRotation ? [{
       value: `default:${optResId}`,
       label: `${displayName} · Default Rotation`,
     }] : []
-    options.push({
-      value: `live:${optResId}`,
-      label: `${displayName} · Current Rotation · Live`,
-    })
-
-    return options
   })()
 
-  // Optimizer evaluates the current scenario or its catalog default. Saved
-  // scenarios are loaded into the workspace from the rotation page.
-  const comboAvailable = Boolean(effectRuntime && (
-    defaultRotation || rotHasFeats(effectRuntime.rotation.sequence)
-  ))
+  const comboAvailable = Boolean(effectRuntime && defaultRotation)
 
   useEffect(() => {
     if (rotationMode && !comboAvailable) {
@@ -515,31 +504,9 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     }
   }, [rotationMode, comboAvailable, updOptSets])
 
-  const selRotTms: RotationNode[] | null = (() => {
-    if (!effectRuntime) {
-      return null
-    }
-
-    const selSrcId = optSets.targetComboSourceId
-    if (selSrcId === `default:${optResId}` && defaultRotation) {
-      return defaultRotation.items
-    }
-    if (!selSrcId) {
-      return effectRuntime.rotation.sequence
-    }
-
-    if (selSrcId === `live:${optResId}`) {
-      return effectRuntime.rotation.sequence
-    }
-
-    return effectRuntime.rotation.sequence
-  })()
+  const selRotTms: RotationNode[] | null = defaultRotation?.items ?? null
 
   useEffect(() => {
-    if (comboOptions.length === 0) {
-      return
-    }
-
     const hasSelCmb = optSets.targetComboSourceId
       ? comboOptions.some((option) => option.value === optSets.targetComboSourceId)
       : false

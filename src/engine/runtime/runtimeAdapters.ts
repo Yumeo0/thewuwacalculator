@@ -29,6 +29,7 @@ import type {
 } from '@/domain/entities/runtime'
 import { makeCustomBuff, normProfTeam } from '@/engine/runtime/defaults'
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
+import { getDefaultRotation } from '@/data/catalog/gameDataService.ts'
 import { repairEchoLoadoutForCatalog } from '@/engine/runtime/echoCatalogRepair'
 import {
   cloneSlotLuo,
@@ -209,7 +210,10 @@ export function runtimeFromSnapshot(
       profile.resonatorId,
       options.teamSlots ?? profile.runtime.team,
     ),
-    rotation: options.rotation ?? profile.runtime.rotation,
+    rotation: {
+      ...(options.rotation ?? profile.runtime.rotation),
+      sequence: getDefaultRotation(profile.resonatorId)?.items ?? [],
+    },
   }))
 }
 
@@ -413,13 +417,14 @@ function applyMemberRuntimeDelta(
   const baseChanged = runtime.base !== previousRuntime.base
   const weaponChanged = runtime.build.weapon !== previousRuntime.build.weapon
   const echoesChanged = runtime.build.echoes !== previousRuntime.build.echoes
-  const controlsChanged = runtime.state.controls !== previousRuntime.state.controls
-  if (!baseChanged && !weaponChanged && !echoesChanged && !controlsChanged) return null
+  const inputControlsChanged = runtime.state.controls !== previousRuntime.state.controls
+  if (!baseChanged && !weaponChanged && !echoesChanged && !inputControlsChanged) return null
 
   const previousMember = scenario.team.members[memberIndex]
   const normalizedRuntime = echoesChanged
     ? maxEchoIfChg(runtime, previousMember.loadout.echoes)
     : runtime
+  const controlsChanged = normalizedRuntime.state.controls !== previousRuntime.state.controls
   const nextMember: ScenarioTeamMember = {
     ...previousMember,
     progression: baseChanged ? {
@@ -523,7 +528,10 @@ export function applyRuntimeToSimulation(
       combatState: { ...runtime.state.combat },
       routing: { bySourceMemberId },
     },
-    program: primary ? cloneRotation(runtime.rotation) : scenario.program,
+    program: primary ? {
+      ...cloneRotation(runtime.rotation),
+      sequence: scenario.program.sequence,
+    } : scenario.program,
     initialOnFieldMemberId: memberIds.has(scenario.initialOnFieldMemberId)
       ? scenario.initialOnFieldMemberId
       : team.members[0].id,

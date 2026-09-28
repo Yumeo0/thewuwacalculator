@@ -537,7 +537,13 @@ export function holdResonatorData(ids: readonly string[]): () => void {
   return () => {
     state.leases.delete(lease)
     if (state.releaseRequested && state.leases.size === 0) {
-      releaseCalculationGameData()
+      // A draft can swap its retained IDs during an effect cleanup/setup pair.
+      // Wait until that pair has settled before rebuilding the core registry.
+      setTimeout(() => {
+        if (getGameDataG() === state && state.releaseRequested && state.leases.size === 0) {
+          releaseCalculationGameData()
+        }
+      }, 0)
       return
     }
     scheduleResonatorTrim(state)

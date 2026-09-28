@@ -217,6 +217,7 @@ describe('Unison Resonator generated contracts', () => {
     expect(effects.get('1311:s1:heart-of-thunder')).toMatchObject({
       operations: [{
         type: 'scale_skill_multiplier',
+        match: { skillIds: ['1311:heart-of-thunder:remaining'] },
         value: { type: 'const', value: 1.2 },
       }],
     })

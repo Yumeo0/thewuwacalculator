@@ -192,7 +192,7 @@ label:has(.ssc-native-checkbox:focus-visible) .sscr-sw {
 }
 
 
-.sscr-sort .liquid-select__trigger {
+.sscr-sort .app-select__trigger {
   min-width: 0;
   min-height: 1.5rem;
   gap: 0.3rem;
@@ -204,32 +204,32 @@ label:has(.ssc-native-checkbox:focus-visible) .sscr-sw {
   font: 500 0.6rem/1 var(--amdl-mono);
 }
 
-.sscr-sort .liquid-select__trigger:is(:hover, :focus-visible),
-.sscr-sort.open .liquid-select__trigger {
+.sscr-sort .app-select__trigger:is(:hover, :focus-visible),
+.sscr-sort.open .app-select__trigger {
   border-color: var(--amdl-line);
   background: var(--amdl-sunk);
   color: var(--amdl-text);
   box-shadow: none;
 }
 
-.sscr-sort .liquid-select__trigger:focus-visible {
+.sscr-sort .app-select__trigger:focus-visible {
   outline: 1px solid color-mix(in srgb, var(--amdl-accent) 55%, var(--c-transparent));
   outline-offset: 1px;
 }
 
-.sscr-sort .liquid-select__value {
+.sscr-sort .app-select__value {
   font: inherit;
   font-weight: 500;
 }
 
-.sscr-sort .liquid-select__icon {
+.sscr-sort .app-select__icon {
   padding-left: 0;
   border-left: 0;
   color: inherit;
   opacity: 0.7;
 }
 
-.sscr-sort .liquid-select__icon > svg {
+.sscr-sort .app-select__icon > svg {
   width: 0.7rem;
   height: 0.7rem;
 }

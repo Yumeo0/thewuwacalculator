@@ -169,12 +169,12 @@ import {
 import { writeRtPath } from '@/domain/gameData/runtimePath'
 import { normResRtCnt } from '@/engine/gameData/controlOptions'
 import { normNegFfctC } from '@/engine/gameData/negativeEffects'
-import { maxResRt } from '@/engine/gameData/resonatorMax'
-import { initWpnStts, maxWpnRt } from '@/engine/runtime/sourceStateInit'
+import { maxRuntime } from '@/engine/runtime/maxRuntime'
+import { initWpnStts } from '@/engine/runtime/sourceStateInit'
 import { mkMaxTrcNode } from '@/engine/runtime/traceNodes'
-import { getResDtlsBy } from '@/data/gameData/resonators/resonatorDataStore'
 import { getGameData, getKnownFeatureIds } from '@/data/gameData'
-import { listResRttn, listStatesFor } from '@/data/catalog/gameDataService'
+import { getDefaultRotation, listStatesFor } from '@/data/catalog/gameDataService'
+import { isRotationSequence } from '@/domain/gameData/rotationSequence.ts'
 import { makeSourceKey } from '@/data/gameData/registry'
 import { splitScopedTargetOwnerKey } from '@/domain/gameData/targetRouting'
 import {
@@ -636,11 +636,19 @@ function normFeatureNodesForCatalog(
   return next
 }
 
-function normRotationForCatalog(rotation: RotationState): RotationState {
+function normRotationForCatalog(rotation: RotationState, resonatorId: string): RotationState {
   const featureIds = getCatalogFeatureIds()
+  const previousSequence = normFeatureNodesForCatalog(
+    migrateLegacyRotationItems(rotation.sequence), featureIds,
+  )
+  const defaultSequence = getDefaultRotation(resonatorId)?.items ?? []
   return {
     ...rotation,
-    sequence: normFeatureNodesForCatalog(migrateLegacyRotationItems(rotation.sequence), featureIds),
+    // Preserve only legacy advanced content until it can be archived. Compact
+    // manual sequences no longer participate in or persist with a scenario.
+    sequence: previousSequence.length > 0 && !isRotationSequence(previousSequence, resonatorId)
+      ? previousSequence
+      : cloneRotationNodes(defaultSequence),
     program: normFeatureNodesForCatalog(migrateLegacyRotationItems(rotation.program), featureIds),
   }
 }
@@ -725,7 +733,8 @@ function getSeedStts(seed: ResSeed) {
 }
 
 export function mkDefRot(seed: ResSeed): RotationState {
-  const defRot = seed.rotations?.[0] ?? listResRttn(seed.id)[0]
+  const defRot = seed.rotations?.find((rotation) => rotation.items.length > 0)
+    ?? getDefaultRotation(seed.id)
   const defaultItems = defRot?.items ?? []
 
   return cloneRotation({
@@ -891,14 +900,7 @@ export function mkMaxResRt(seed: ResSeed, targetSequence = 0): ResRuntime {
 }
 
 export function maxRtInit(runtime: ResRuntime, targetSequence = 0): ResRuntime {
-  return maxWpnRt(
-    maxResRt(
-      runtime,
-      getResDtlsBy()[runtime.id],
-      { targetSequence },
-    ),
-    { targetRank: 1 },
-  )
+  return maxRuntime(runtime, targetSequence)
 }
 
 export function mkDefTeamMem(seed: ResSeed): TeamMemRtVie {
@@ -1308,7 +1310,10 @@ function normalizeScenario(
       },
       routing: { bySourceMemberId },
     },
-    program: normRotationForCatalog(scenario.program ?? fallback.program),
+    program: normRotationForCatalog(
+      scenario.program ?? fallback.program,
+      contextScenarioMember({ ...scenario, team }).resonatorId,
+    ),
     initialOnFieldMemberId: ids.has(scenario.initialOnFieldMemberId)
       ? scenario.initialOnFieldMemberId
       : team.members[0].id,
@@ -1537,7 +1542,7 @@ function normProfCat(
         },
       routing: cloneSlotRml(profile.runtime.routing),
       team,
-      rotation: cloneRotation(profile.runtime.rotation),
+      rotation: normRotationForCatalog(cloneRotation(profile.runtime.rotation), profileId),
       teamRuntimes,
     },
   }

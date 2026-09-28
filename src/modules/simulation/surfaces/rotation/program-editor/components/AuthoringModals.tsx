@@ -23,7 +23,7 @@ import {
 import {makeNodeId} from "@/domain/gameData/rotationNodeId.ts";
 import {AppModal} from "@/shared/ui/AppModal.tsx";
 import { ModalHeader } from "@/shared/ui/AppModalShell";
-import {LiquidSelect, type SelectOption} from "@/application/ui/LiquidSelect.tsx";
+import {Select, type SelectOption} from "@/application/ui/Select";
 import {Check, Crosshair, Plus, Repeat, Search, Sparkles, X} from "lucide-react";
 import {getResSeedBy} from "@/data/catalog/resonatorSeedService.ts";
 import {RichDscr} from "@/modules/simulation/ui/RichDescription.tsx";
@@ -622,7 +622,7 @@ export function Condition({
                       </div>
                       <div className="cnv-card__row">
                         {isFormulaChoice(choice) && formulaOptions.length > 0 ? (
-                          <LiquidSelect
+                          <Select
                             value={row.choiceId}
                             options={formulaOptions}
                             onChange={(nextChoiceId) => {

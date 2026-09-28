@@ -5,9 +5,9 @@
 */
 
 export const CURRENT_CHANGE_NOTICE = {
-  date: '11/09/2026',
-  patchVersion: '3.7.1 beta',
-  shortDesc: '3.7.1 beta update',
+  date: '28/09/2026',
+  patchVersion: '3.7 live',
+  shortDesc: '3.7 patch update',
 } as const
 
 export const CURRENT_CHANGE_NOTICE_KEY =

@@ -492,7 +492,6 @@ return <ContextTrigger asChild ariaLabel="Build Lab stage actions" items={stageC
               ref={boardRef}
               page={page}
               onPointerUpCapture={flushShowcaseStyle}
-              onKeyUpCapture={flushShowcaseStyle}
               onBlurCapture={flushShowcaseStyle}
               data-css-expanded={isShowcase && cssExpanded ? 'true' : undefined}
             >

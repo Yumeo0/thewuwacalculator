@@ -10,7 +10,9 @@ import '@/styles/modules/simulation/surfaces/rotation/rotation-saved-list.css'
 import '@/styles/modules/simulation/surfaces/rotation/rotation-console.css'
 import {
   type CSSProperties,
+  lazy,
   startTransition,
+  Suspense,
   useCallback,
   useDeferredValue,
   useEffect,
@@ -40,7 +42,6 @@ import {
   withRunMetadata,
 } from '@/modules/simulation/surfaces/rotation/program-editor/simulation/runProgram.ts'
 import {NodeList, useNodeDrag,} from '@/modules/simulation/surfaces/rotation/program-editor/components/NodeList.tsx'
-import {FlatList} from '@/modules/simulation/surfaces/rotation/program-editor/components/FlatList.tsx'
 import {
   countFlatSelectedEntries,
   flatClipboardNodes as collectFlatClipboardNodes,
@@ -60,10 +61,7 @@ import {
   type StepActions,
 } from '@/modules/simulation/surfaces/rotation/program-editor/components/InspectPanels.tsx'
 import {Palette, type PaletteFeature} from '@/modules/simulation/surfaces/rotation/program-editor/components/Palette.tsx'
-import {
-  SavedList,
-  type SavedListPanel,
-} from '@/modules/simulation/surfaces/rotation/program-editor/components/SavedList.tsx'
+import type { SavedListPanel } from '@/modules/simulation/surfaces/rotation/program-editor/components/SavedList.tsx'
 import {
   CMP_MAX,
   formatDuration,
@@ -169,7 +167,6 @@ import {
   type EditorStep,
   isEditorBlock,
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
-import { RotationConsole } from '@/modules/simulation/surfaces/rotation/program-editor/components/RotationConsole.tsx'
 import { makeConsoleModel } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/consoleModel.ts'
 import type {
   CondChoice,
@@ -221,6 +218,7 @@ import {
   editedRotationItems,
   pendingSavedRotationDetails,
   prepareSavedRotationBatch,
+  projectAppendedRotation,
   runEditedRotation,
   runPreparedSavedRotationBatch,
   runSavedRotationDetailBatch,
@@ -337,6 +335,16 @@ const SELECTION_KIND_LABELS: Record<EditorNode['type'], string> = {
 
 type NodeListView = 'tree' | 'flat'
 type EditorPane = 'nodes' | 'read' | 'totals' | null
+const FlatList = lazy(async () => ({
+  default: (await import('@/modules/simulation/surfaces/rotation/program-editor/components/FlatList.tsx')).FlatList,
+}))
+const SavedList = lazy(async () => ({
+  default: (await import('@/modules/simulation/surfaces/rotation/program-editor/components/SavedList.tsx')).SavedList,
+}))
+const RotationConsole = lazy(async () => ({
+  default: (await import('@/modules/simulation/surfaces/rotation/program-editor/components/RotationConsole.tsx')).RotationConsole,
+}))
+
 const EMPTY_SAVED_COMPARISONS: ReadonlyMap<string, SavedRotationComparisonResult | null> = new Map()
 const EMPTY_SAVED_RUNS: ReadonlyMap<string, RunResult | null> = new Map()
 const EMPTY_FLAT_ROWS: readonly FlatRow[] = []
@@ -582,6 +590,19 @@ export function ProgramEditor() {
     }
     return [...ids]
   }, [compareIds, consoleOpen, savedPane, selectedSavedEntry])
+  useEffect(() => {
+    const wanted = new Set(savedDetailIds)
+    let canceled = false
+    queueMicrotask(() => {
+      if (canceled) return
+      setSavedDetails((current) => {
+        if (current.key !== savedBatchKey) return current
+        const kept = new Map([...current.runs].filter(([id]) => wanted.has(id)))
+        return kept.size === current.runs.size ? current : { ...current, runs: kept }
+      })
+    })
+    return () => { canceled = true }
+  }, [savedBatchKey, savedDetailIds])
   const savedRunsById = savedBatch.key === savedBatchKey
     ? savedBatch.runs
     : EMPTY_SAVED_COMPARISONS
@@ -2293,7 +2314,7 @@ export function ProgramEditor() {
   const appendRotation = useCallback((entry: AppendSource) => {
     const appended = appendRotationCopies(entry.items)
     const appendedIds = new Set(appended.map((node) => node.id))
-    const nextResult = runEditedRotation({
+    const projectedSections = projectAppendedRotation({
       runtime: actRt,
       runtimesById: partRtsById,
       targetSelections: actTgtSels,
@@ -2303,7 +2324,7 @@ export function ProgramEditor() {
       append: appended,
       prepWork,
     })
-    if (!nextResult) {
+    if (projectedSections.length === 0) {
       return
     }
 
@@ -2314,8 +2335,6 @@ export function ProgramEditor() {
       which gives append the same after-selection and setup/loop guardrails as
       the palette.
     */
-    const nextRuns = clampLoopRunSelections(nextResult.sections, runsByLoopId)
-    const projectedSections = checkoutAllLoopPasses(nextResult.sections, nextRuns)
     const projected = collectSubtrees(projectedSections, appendedIds).filter(canLiftNode)
     if (projected.length === 0) {
       return
@@ -2346,7 +2365,6 @@ export function ProgramEditor() {
     partRtsById,
     prepWork,
     rotMembers,
-    runsByLoopId,
     selectedId,
     sections,
     setSelectedId,
@@ -2689,7 +2707,7 @@ export function ProgramEditor() {
 
       const appended = appendRotationCopies(payload.items)
       const appendedIds = new Set(appended.map((node) => node.id))
-      const projected = runEditedRotation({
+      const projectedSections = projectAppendedRotation({
         runtime: actRt,
         runtimesById: partRtsById,
         targetSelections: actTgtSels,
@@ -2699,9 +2717,7 @@ export function ProgramEditor() {
         append: appended,
         prepWork,
       })
-      const pasted = projected
-        ? collectSubtrees(projected.sections, appendedIds).filter(canLiftNode)
-        : []
+      const pasted = collectSubtrees(projectedSections, appendedIds).filter(canLiftNode)
       if (pasted.length === 0) {
         showToast({
           content: 'Those rotation entries could not be pasted here.',
@@ -2999,7 +3015,7 @@ export function ProgramEditor() {
       },
       onAttachedMultiplier: (childId, value) => {
         if (id) {
-          bump(setAttachedMultiplier(sections, id, childId, value))
+          bump(setAttachedMultiplier(sections, id, childId, value), undefined, `attached-multiplier:${id}:${childId}`)
         }
       },
       attachedFeatures: selectedStep?.attached ?? [],
@@ -3009,7 +3025,7 @@ export function ProgramEditor() {
           ...step,
           negativeEffectInstances: Math.max(1, Math.floor(value)),
           negSeriesEdited: true,
-        })))
+        })), undefined, `negative-instances:${id}`)
       },
       onNegStableWidth: (value) => {
         if (!id) return
@@ -3017,11 +3033,11 @@ export function ProgramEditor() {
           ...step,
           negativeEffectStableWidth: Math.max(1, Math.floor(value)),
           negSeriesEdited: true,
-        })))
+        })), undefined, `negative-width:${id}`)
       },
       attached: attachedWrites,
       onSetAttachedValue: (index, value) => {
-        bump(setAttachedWriteValue(sections, id, index, value, condChoices))
+        bump(setAttachedWriteValue(sections, id, index, value, condChoices), undefined, `attached-value:${id}:${index}`)
       },
       onSetAttachedAction: (index, action) => {
         bump(setAttachedWriteAction(sections, id, index, action, condChoices))
@@ -3030,7 +3046,7 @@ export function ProgramEditor() {
         bump(removeAttachedWrite(sections, id, index, condChoices))
       },
       onMultiplier: (value) => {
-        bump(setStepMultiplier(sections, id, value))
+        bump(setStepMultiplier(sections, id, value), undefined, `multiplier:${id}`)
       },
       ...clipActionsFor(id),
       onToggleEnabled: () => {
@@ -3172,7 +3188,7 @@ export function ProgramEditor() {
         bump(result.sections)
         setSelectedId(result.selectedId)
       },
-      onSetValue: (value) => bump(setCondValue(sections, id, value)),
+      onSetValue: (value) => bump(setCondValue(sections, id, value), undefined, `condition-value:${id}`),
       onSetAction: (action) => bump(setCondAction(
         sections,
         id,
@@ -3513,7 +3529,7 @@ export function ProgramEditor() {
       onValue: (value) => {
         const runs = normLoopRuns(value)
         if (selectedBlock?.type !== 'loop' || runs >= selectedBlock.runs) {
-          bump(setBlockValue(sections, id, runs))
+          bump(setBlockValue(sections, id, runs), undefined, `block-runs:${id}`)
           return
         }
 
@@ -3538,7 +3554,7 @@ export function ProgramEditor() {
         })
       },
       onUptime: (value) => {
-        bump(setBlockUptime(sections, id, value))
+        bump(setBlockUptime(sections, id, value), undefined, `uptime:${id}`)
       },
       onToggleShut: () => toggleShut(id),
       ...clipActionsFor(id),
@@ -3909,7 +3925,7 @@ export function ProgramEditor() {
         {/* Key by surface identity so transitions do not remount the leaving tree. */}
         {bankUp ? (
           <div className={`rte-surface ${leaving === true ? 'is-going' : 'is-coming'}`}>
-          <SavedList
+          <Suspense fallback={null}><SavedList
             entries={invRttn}
             live={liveRotationRow}
             prefs={svdRotPrefs}
@@ -3943,14 +3959,14 @@ export function ProgramEditor() {
                 onCapture: () => setSavedPane('read'),
               }),
             }}
-          />
+          /></Suspense>
           </div>
         ) : null}
 
         {sheetUp ? (
           <div className={`rte-surface ${leaving === false ? 'is-going' : 'is-coming'}`}>
         {view === 'flat' ? (
-          <FlatList
+          <Suspense fallback={null}><FlatList
             rows={flatRows}
             members={members}
             statKeys={statKeys}
@@ -3973,7 +3989,7 @@ export function ProgramEditor() {
             onOffTuneResume={setOffTuneResumeAt}
             offTuneAuthoring={offTuneAuthoring}
             revealRequest={revealRequest}
-          />
+          /></Suspense>
         ) : (
         <NodeList
           sections={sections}
@@ -4225,7 +4241,7 @@ export function ProgramEditor() {
       </div>
 
       <div className="rte-cns" id="rte-console-panel">
-        <RotationConsole
+        {consoleOpen ? <Suspense fallback={null}><RotationConsole
           model={consoleModel}
           members={consoleMembers}
           decimals={decimals}
@@ -4233,7 +4249,7 @@ export function ProgramEditor() {
           onSelect={showSavedRotationList ? undefined : navigateVisibleNode}
           caption={consoleCaption}
           emptyNote={consoleEmpty}
-        />
+        /></Suspense> : null}
       </div>
 
       <ConfirmHost control={confirmation} portalTarget={portalTarget} />

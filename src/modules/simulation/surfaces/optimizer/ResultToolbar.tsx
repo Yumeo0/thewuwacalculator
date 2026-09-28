@@ -16,7 +16,7 @@ import {
   X,
 } from 'lucide-react'
 import { Expandable } from '@/shared/ui/Expandable'
-import { LiquidSelect, type SelectOption } from '@/application/ui/LiquidSelect'
+import { Select, type SelectOption } from '@/application/ui/Select'
 import { SonataTokens } from '@/modules/simulation/workspace/ui.tsx'
 import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
 import { getEchoSetDe } from '@/data/gameData/echoSets/effects.ts'
@@ -298,7 +298,7 @@ export function ResultToolbar({
     >
       <div className="opt-qc__body">
         <div className="opt-qc__build">
-          <LiquidSelect<string> className="opt-qc__sel opt-qc__sel--col"
+          <Select<string> className="opt-qc__sel opt-qc__sel--col"
             value={col}
             options={columnOptions}
             ariaLabel="Column"
@@ -343,7 +343,7 @@ export function ResultToolbar({
               </button>
             </>
           ) : (
-            <LiquidSelect<string> className="opt-qc__sel opt-qc__sel--cat"
+            <Select<string> className="opt-qc__sel opt-qc__sel--cat"
               value={ALL}
               options={catOptions}
               ariaLabel={`Add ${colMeta.label} condition`}
@@ -354,7 +354,7 @@ export function ResultToolbar({
 
           <div className="opt-qc__build-end">
             <div className="opt-qc__sort">
-              <LiquidSelect<string> className="opt-qc__sel opt-qc__sel--sort"
+              <Select<string> className="opt-qc__sel opt-qc__sel--sort"
                 value={criteria.sortKey}
                 options={SORT_OPTIONS}
                 ariaLabel="Sort column"

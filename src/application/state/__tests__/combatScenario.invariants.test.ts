@@ -15,6 +15,7 @@ import {
 } from '@/domain/entities/combatScenario.ts'
 import { scopedTargetOwnerKey } from '@/domain/gameData/targetRouting.ts'
 import { listResSds } from '@/data/catalog/resonatorSeedService.ts'
+import { getDefaultRotation } from '@/data/catalog/gameDataService.ts'
 import {
   makeAppState,
   makeResProfile,
@@ -70,7 +71,9 @@ describe('combat scenario invariants', () => {
     const runtime = before.runtimesById[member.resonatorId]
     expect(runtime.base).toBe(member.progression)
     expect(runtime.build.echoes).toBe(member.loadout.echoes)
-    expect(runtime.rotation).toBe(scenario.program)
+    expect(runtime.rotation.program).toBe(scenario.program.program)
+    expect(runtime.rotation.sequence).toEqual(getDefaultRotation(member.resonatorId)?.items ?? [])
+    expect(projectScenarioRuntimes(scenario).subjectRuntime.rotation).toBe(runtime.rotation)
     expect(() => simulateCombatScenarioTeam(prepareCombatScenario(scenario))).not.toThrow()
 
     const edited = { ...runtime, state: { ...runtime.state, controls: { ...runtime.state.controls, testControl: 1 } } }

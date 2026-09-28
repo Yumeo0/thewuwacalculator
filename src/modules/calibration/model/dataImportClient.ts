@@ -11,13 +11,33 @@ import type { DataImportWorkerRequest, DataImportWorkerResponse } from './dataIm
 
 let worker: Worker | null = null
 let nextJobId = 1
+let idleTimer: ReturnType<typeof setTimeout> | null = null
+const IDLE_TEARDOWN_MS = 2_000
 
 const pendingJobs = new Map<number, {
   resolve: (value: DataImportResult) => void
   reject: (error: Error) => void
 }>()
 
+function clearIdleTeardown(): void {
+  if (idleTimer !== null) clearTimeout(idleTimer)
+  idleTimer = null
+}
+
+function scheduleIdleTeardown(): void {
+  if (pendingJobs.size > 0 || !worker) return
+  clearIdleTeardown()
+  idleTimer = setTimeout(() => {
+    idleTimer = null
+    if (pendingJobs.size > 0) return
+    worker?.terminate()
+    worker = null
+  }, IDLE_TEARDOWN_MS)
+  ;(idleTimer as unknown as { unref?: () => void }).unref?.()
+}
+
 function ensureWorker(): Worker {
+  clearIdleTeardown()
   if (worker) return worker
 
   worker = new Worker(new URL('./dataImport.worker.ts', import.meta.url), { type: 'module' })
@@ -30,6 +50,7 @@ function ensureWorker(): Worker {
     pendingJobs.delete(message.id)
     if (message.ok) pending.resolve(message.result)
     else pending.reject(new Error(message.error))
+    scheduleIdleTeardown()
   }
   worker.onerror = (event) => {
     const error = new Error(event.message || 'Data import worker failed unexpectedly.')
@@ -39,6 +60,7 @@ function ensureWorker(): Worker {
     pendingJobs.clear()
     worker?.terminate()
     worker = null
+    clearIdleTeardown()
   }
   return worker
 }
@@ -95,6 +117,7 @@ export async function runDataImport(
     } catch (error) {
       pendingJobs.delete(id)
       reject(error instanceof Error ? error : new Error('Could not start the data import worker.'))
+      scheduleIdleTeardown()
     }
   })
 }

@@ -122,6 +122,16 @@ export function makeHistoryEntry(before: PersistedState, after: PersistedState, 
 const historyCompactionQueue: PrssHistEnt[] = []
 let historyCompacting = false
 
+/** A queued compression owns its uncompressed object graph. Drop jobs whose
+ * entries have already fallen out of the bounded undo/redo history. */
+export function retainQueuedHistoryCompactions(history: Pick<PrssHistStt, 'past' | 'future'>): void {
+  if (historyCompactionQueue.length === 0) return
+  const retained = new Set([...history.past, ...history.future])
+  for (let index = historyCompactionQueue.length - 1; index >= 0; index -= 1) {
+    if (!retained.has(historyCompactionQueue[index])) historyCompactionQueue.splice(index, 1)
+  }
+}
+
 function shouldCompact(entry: PrssHistEnt): boolean {
   return entry.changes.length > 100 || entry.changes.some((change) =>
     (Array.isArray(change.before) && change.before.length > 32)
@@ -331,8 +341,6 @@ export function mkLeftPaneVi(view: LeftPaneView): string {
       return 'Opened Enemy Pane'
     case 'buffs':
       return 'Opened Custom Bonuses Pane'
-    case 'rotations':
-      return 'Opened Rotation Pane'
     default:
       return 'Changed Left Pane View'
   }

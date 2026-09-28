@@ -33,7 +33,7 @@ interface LlwdSetDrpdP {
   selectionMode?: 'multi' | 'single'
   closeOnSelect?: boolean
   placeholder?: string
-  triggerVariant?: 'chip' | 'liquid'
+  triggerVariant?: 'chip' | 'select'
   renderTrigger?: (args: { summaryLabel: string; open: boolean }) => ReactNode
 }
 
@@ -238,7 +238,7 @@ export function AllowedSets({
 
   const shouldCloseOnSelect = closeOnSelect ?? selectionMode === 'single'
   const showBulkCommands = selectionMode !== 'single'
-  const liquidTrigger = triggerVariant === 'liquid'
+  const selectTrigger = triggerVariant === 'select'
 
   useEffect(() => {
     if (!open) {
@@ -379,11 +379,11 @@ export function AllowedSets({
   )
 
   return (
-    <div ref={rootRef} className={`co-set-dropdown${liquidTrigger ? ' liquid-select' : ''}${open ? ` is-open${liquidTrigger ? ' open' : ''}` : ''}${closing ? ' closing' : ''}`}>
+    <div ref={rootRef} className={`co-set-dropdown${selectTrigger ? ' app-select' : ''}${open ? ` is-open${selectTrigger ? ' open' : ''}` : ''}${closing ? ' closing' : ''}`}>
       <button
         ref={triggerRef}
         type="button"
-        className={`${liquidTrigger ? 'liquid-select__trigger' : 'co-chip'} co-set-dropdown__trigger${triggerClass ? ` ${triggerClass}` : ''}`}
+        className={`${selectTrigger ? 'app-select__trigger' : 'co-chip'} co-set-dropdown__trigger${triggerClass ? ` ${triggerClass}` : ''}`}
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={() => {
@@ -396,10 +396,10 @@ export function AllowedSets({
       >
         {renderTrigger ? (
           renderTrigger({ summaryLabel, open })
-        ) : liquidTrigger ? (
+        ) : selectTrigger ? (
           <>
-            <span className={`liquid-select__value${selectedTotal === 0 ? ' liquid-select__value--placeholder' : ''}`}>{summaryLabel}</span>
-            <span className="liquid-select__icon">
+            <span className={`app-select__value${selectedTotal === 0 ? ' app-select__value--placeholder' : ''}`}>{summaryLabel}</span>
+            <span className="app-select__icon">
               <ChevronDown size="0.875rem" />
             </span>
           </>

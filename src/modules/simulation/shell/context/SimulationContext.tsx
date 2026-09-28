@@ -157,7 +157,6 @@ const WORKPANEPTNS: Array<{ id: LeftPaneView; label: string }> = [
   { id: 'teams', label: 'Team Buffs' },
   { id: 'enemy', label: 'Enemy' },
   { id: 'buffs', label: 'Custom Bonuses' },
-  { id: 'rotations', label: 'Rotation' },
 ]
 
 const simulationContext = mkCtx<SimulationContextValue | null>(null)

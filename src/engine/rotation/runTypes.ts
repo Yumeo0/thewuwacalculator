@@ -96,6 +96,8 @@ export interface ProgramOpts {
   includeSnapshots?: boolean
   fallbackResonatorId?: string
   captureEntries?: boolean
+  /** Execute every node, but retain inspection and feature rows only for these IDs. */
+  captureNodeIds?: ReadonlySet<string>
   /** Borrowed array and object views must be consumed synchronously. */
   onDamageInvocation?: (invocation: DamageInvocation) => void
 }

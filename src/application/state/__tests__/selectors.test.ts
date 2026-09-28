@@ -108,6 +108,34 @@ describe('workspace selectors', () => {
     expect(selInitRtLkp(state)).toBe(runtimes)
   })
 
+  it('reuses unchanged scenario projections after another scenario changes', () => {
+    const [firstSeed, secondSeed] = listResSds().slice(0, 2)
+    const state = makeAppState() as AppStore
+    const firstId = selectedCombatScenario(state.combat).team.members[0].resonatorId
+    const otherSeed = secondSeed.id === firstId ? firstSeed : secondSeed
+    const other = {
+      ...makeScenarioFromProfiles({ [otherSeed.id]: makeResProfile(otherSeed) }, null, 0, otherSeed.id),
+      id: `scenario:${otherSeed.id}` as typeof state.combat.selectedScenarioId,
+    }
+    state.combat = addScenario(state.combat, other, false)
+    const firstRuntimes = selInitRtLkp(state)
+    const firstProfiles = selScenarioProfiles(state)
+    const current = Object.values(state.combat.scenariosById).find((scenario) => scenario.team.members[0]?.resonatorId === firstId)!
+    const revised = { ...current, target: { ...current.target, level: current.target.level + 1 } }
+    const changed = {
+      ...state,
+      combat: {
+        ...state.combat,
+        scenariosById: { ...state.combat.scenariosById, [current.id]: revised },
+      },
+    } as AppStore
+
+    expect(selInitRtLkp(changed)).not.toBe(firstRuntimes)
+    expect(selScenarioProfiles(changed)).not.toBe(firstProfiles)
+    expect(selInitRtLkp(changed)[otherSeed.id]).toBe(firstRuntimes[otherSeed.id])
+    expect(selScenarioProfiles(changed)[otherSeed.id]).toBe(firstProfiles[otherSeed.id])
+  })
+
   it('projects a last-run program as a detached temporary saved rotation', () => {
     const seed = listResSds()[0]
     const scenario = makeScenarioFromProfiles({ [seed.id]: makeResProfile(seed) }, null, 0, seed.id)

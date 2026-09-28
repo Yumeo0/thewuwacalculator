@@ -11,8 +11,8 @@ import { ChevronRight, Search } from 'lucide-react'
 import { withDefIconM } from '@/shared/lib/imageFallback'
 import { AppModal } from '@/shared/ui/AppModal'
 import { ModalHeader } from '@/shared/ui/AppModalShell'
-import { LiquidSelect } from '@/application/ui/LiquidSelect.tsx'
-import type { SelectOption } from '@/application/ui/LiquidSelect.tsx'
+import { Select } from '@/application/ui/Select'
+import type { SelectOption } from '@/application/ui/Select'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
 import { ECHO_SET_DEFS } from '@/data/gameData/echoSets/effects.ts'
 import { getSntSetClr, getSntSetIco } from '@/data/gameData/catalog/sonataSets.ts'
@@ -378,7 +378,7 @@ export function SetCond(props: {
                 <div className="amdl__grp-name">
                   Sets
                   <span className="amdl__grp-n">{filtered.length}</span>
-                  <LiquidSelect<SortOption>
+                  <Select<SortOption>
                     value={sortBy}
                     options={SORTPTNSLIST}
                     onChange={(value) => setSortBy(value)}

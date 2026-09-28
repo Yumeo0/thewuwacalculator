@@ -50,6 +50,9 @@ export function ThemeDrop({ open, onToggle, onClose }: ThemeDropProps) {
   const session = useConfigurationSession({
     source: ui,
     active: open,
+    // Every edit creates a new top-level object, so opening this small popup
+    // does not need to clone the nested showcase and layout preferences.
+    clone: (source) => source,
     commit: commitAppearanceConfig,
   })
   const draftUi = session.draft

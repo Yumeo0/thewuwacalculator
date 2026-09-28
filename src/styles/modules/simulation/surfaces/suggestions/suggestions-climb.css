@@ -153,18 +153,15 @@
 }
 
 
-.clb__tgt.liquid-select {
-  --liquid-select-accent: var(--clb-ink);
+.clb__tgt.app-select {
+  --select-accent: var(--clb-ink);
 }
 
-.clb__tgt .liquid-select__trigger {
+.clb__tgt .app-select__trigger {
   gap: 0.45rem;
-  padding: 0.36rem 0.55rem;
-  border-radius: 0.45rem;
-  background: color-mix(in srgb, var(--text) 3%, transparent);
 }
 
-.clb__tgt .liquid-select__trigger::before {
+.clb__tgt .app-select__trigger::before {
   content: '';
   flex: 0 0 auto;
   width: 0.42rem;
@@ -174,26 +171,17 @@
   box-shadow: 0 0 8px color-mix(in srgb, var(--clb-ink) 80%, transparent);
 }
 
-.clb__tgt .liquid-select__trigger:is(:hover, :focus-visible),
-.clb__tgt .liquid-select.open .liquid-select__trigger {
-  background: color-mix(in srgb, var(--clb-ink) 10%, transparent);
-}
-
-.clb__tgt .liquid-select__value {
+.clb__tgt .app-select__value {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-.clb__tgt .liquid-select__icon {
-  padding-left: 0.45rem;
-}
-
-.clb__tgt .liquid-select__icon > svg {
+.clb__tgt .app-select__icon > svg {
   width: 0.8rem;
   height: 0.8rem;
 }
 
-.clb__tgt .liquid-select__option:is(:hover, .active) {
+.clb__tgt .app-select__option:is(:hover, .active) {
   color: var(--text);
   background: color-mix(in srgb, var(--text) 7%, transparent);
 }

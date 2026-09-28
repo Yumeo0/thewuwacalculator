@@ -34,7 +34,7 @@
   min-width: 0;
 }
 
-.sgc__target .liquid-select {
+.sgc__target .app-select {
   width: 100%;
   min-width: 0;
 }
@@ -1050,8 +1050,8 @@
   flex-shrink: 0;
 }
 
-.rc-section-head .liquid-select,
-.rc-section-head .liquid-select__trigger {
+.rc-section-head .app-select,
+.rc-section-head .app-select__trigger {
   flex: 1;
 }
 
@@ -1146,16 +1146,8 @@
   opacity: 0.8;
 }
 
-.rc-panel .liquid-select {
-  --liquid-select-input-border: color-mix(in srgb, var(--resonator-accent, var(--accent, #6b7cff)) 16%, var(--item-border, var(--border)));
-}
-
-.rc-panel .liquid-select__trigger {
+.rc-panel .app-select__trigger {
   width: 100%;
-  padding: 0.3rem 0.52rem;
-  border-radius: 0.7rem;
-  font-size: 0.8rem;
-  font-weight: 700;
 }
 
 .rc-footer {

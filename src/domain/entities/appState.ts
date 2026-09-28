@@ -110,7 +110,6 @@ export type LeftPaneView =
     | 'enemy'
     | 'weapon'
     | 'teams'
-    | 'rotations'
     | 'suggestions'
 
 export interface EnemyProfile {

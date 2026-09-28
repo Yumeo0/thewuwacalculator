@@ -1,6 +1,6 @@
 /*
   Author: Runor Ewhro
-  Description: Shared floating select control with portal-mounted options,
+  Description: The app select: an underline field with a chevron with portal-mounted options,
                keyboard navigation, and grouped option support.
 */
 
@@ -29,7 +29,7 @@ export interface SelectGroup<T extends SelectValue = string> {
   options: SelectOption<T>[]
 }
 
-interface LiquidSelectProps<T extends SelectValue> {
+interface SelectProps<T extends SelectValue> {
   value: T
   options: SelectOption<T>[]
   groups?: SelectGroup<T>[]
@@ -48,7 +48,7 @@ interface LiquidSelectProps<T extends SelectValue> {
   placement?: 'auto' | 'down' | 'up'
 }
 
-export function LiquidSelect<T extends SelectValue>({
+export function Select<T extends SelectValue>({
   value,
   options,
   groups,
@@ -65,8 +65,8 @@ export function LiquidSelect<T extends SelectValue>({
   triggerClass: triggerClass,
   motionIconGroup = false,
   placement: preferredPlacement = 'auto',
-}: LiquidSelectProps<T>) {
-  const b = baseClassProp ?? 'liquid-select'
+}: SelectProps<T>) {
+  const b = baseClassProp ?? 'app-select'
   const rootRef = useRef<HTMLDivElement | null>(null)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
@@ -352,7 +352,7 @@ export function LiquidSelect<T extends SelectValue>({
               <span className={`${b}__value-text`}>{selPtn?.label ?? placeholder}</span>
             </span>
             <span className={`${b}__icon`} aria-hidden="true">
-              <ChevronDown size="1rem" />
+              <ChevronDown size="0.85rem" strokeWidth={2.25} />
             </span>
           </>
         )}

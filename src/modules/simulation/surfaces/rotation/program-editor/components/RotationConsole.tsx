@@ -10,9 +10,11 @@ import {
   useLayoutEffect,
   useMemo,
   useState,
+  memo,
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
+  type ReactNode,
 } from 'react'
 import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
 import { withDefResMg } from '@/shared/lib/imageFallback.ts'
@@ -68,6 +70,55 @@ function markHeight(value: number, peak: number, room: number): number {
   if (value <= 0 || peak <= 0) return 0
   return Math.max(1.5, Math.pow(value / peak, CURVE) * room)
 }
+
+/** One SVG path per colour keeps a long execution from mounting a bar group per step. */
+const OutputMarks = memo(function OutputMarks({
+  steps,
+  peak,
+  room,
+  base,
+  slot,
+  xOf,
+  colorOf,
+}: {
+  steps: readonly RcnNode[]
+  peak: number
+  room: number
+  base: number
+  slot: number
+  xOf: (index: number) => number
+  colorOf: (memberId: string | undefined) => string
+}) {
+  const bars = new Map<string, string[]>()
+  const gone: string[] = []
+  const glyphs: ReactNode[] = []
+  const width = Math.max(0.9, Math.min(slot * 0.66, 5))
+  for (const step of steps) {
+    const cx = xOf(step.i)
+    if (step.dead) {
+      gone.push(`M${cx - 3} ${base - 2}H${cx + 3}`)
+      continue
+    }
+    const color = step.color ?? colorOf(step.memberId)
+    const height = markHeight(step.value, peak, room)
+    const top = base - height
+    const segments = bars.get(color) ?? []
+    segments.push(`M${cx - width / 2} ${top}h${width}v${height}h${-width}Z`)
+    bars.set(color, segments)
+    if (slot > 9 && step.glyph) {
+      glyphs.push(<g key={step.key}>{glyphMark(step.glyph, cx, top, width, color)}</g>)
+    }
+  }
+  return (
+    <>
+      {[...bars].map(([color, segments]) => (
+        <path key={color} d={segments.join('')} style={{ fill: color }} />
+      ))}
+      {gone.length > 0 ? <path d={gone.join('')} className="rcon__gone" /> : null}
+      {glyphs}
+    </>
+  )
+})
 
 /* the cap that tells a liberation from a basic at six pixels wide */
 function glyphMark(glyph: RcnGlyph, cx: number, top: number, width: number, color: string) {
@@ -417,21 +468,15 @@ export function RotationConsole({ model, members, decimals, selectedId, onSelect
 
             {label(geo.outTop + 10, 'Output')}
             <line x1={x0} y1={geo.outBase} x2={x1} y2={geo.outBase} className="rcon__rule" />
-            {model.steps.map((step) => {
-              const height = markHeight(step.value, model.peak, geo.outRoom)
-              const width = Math.max(0.9, Math.min(slot * 0.66, 5))
-              const cx = xOf(step.i)
-              if (step.dead) {
-                return <line key={step.key} x1={cx - 3} y1={geo.outBase - 2} x2={cx + 3} y2={geo.outBase - 2} className="rcon__gone" />
-              }
-              const color = step.color ?? colorOf(step.memberId)
-              return (
-                <g key={step.key}>
-                  <rect x={cx - width / 2} y={geo.outBase - height} width={width} height={height} style={{ fill: color }} />
-                  {slot > 9 && step.glyph ? glyphMark(step.glyph, cx, geo.outBase - height, width, color) : null}
-                </g>
-              )
-            })}
+            <OutputMarks
+              steps={model.steps}
+              peak={model.peak}
+              room={geo.outRoom}
+              base={geo.outBase}
+              slot={slot}
+              xOf={xOf}
+              colorOf={colorOf}
+            />
             {model.peak > 0 ? (
               <text x={x0 - 10} y={geo.outTop + 22} textAnchor="end" className="rcon__note">{formatDamage(model.peak, decimals)} top</text>
             ) : null}

@@ -28,10 +28,17 @@ export function loadDisplayImage(image: HTMLImageElement, source: string) {
 function refresh() {
   frame = undefined
   // Read all layout bounds before changing any image URLs.
-  const updates = Array.from(sources, ([image, source]) => ({
-    image, source, width: image.getBoundingClientRect().width,
-  }))
-  for (const { image, source, width } of updates) {
+  const images: HTMLImageElement[] = []
+  const widths: number[] = []
+  for (const image of sources.keys()) {
+    images.push(image)
+    widths.push(image.getBoundingClientRect().width)
+  }
+  for (let index = 0; index < images.length; index += 1) {
+    const image = images[index]!
+    const source = sources.get(image)
+    const width = widths[index] ?? 0
+    if (!source) continue
     // A failed derivative falls back to canonical art until the source changes.
     const current = image.getAttribute('src')
     if (width <= 0 || (current && current !== selectedSources.get(image))) continue
@@ -43,6 +50,12 @@ function refresh() {
 
 function scheduleRefresh() {
   if (frame === undefined) frame = window.requestAnimationFrame(refresh)
+}
+
+function onGeometryTransition(event: TransitionEvent) {
+  // Layout size changes already reach ResizeObserver. Only transforms can
+  // change a measured display width without changing the layout box.
+  if (event.propertyName === 'transform' || event.propertyName === 'scale') scheduleRefresh()
 }
 
 function watchDensity() {
@@ -65,7 +78,7 @@ export function observeDisplayImage(image: HTMLImageElement, source: string) {
     observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(scheduleRefresh)
     window.addEventListener('resize', scheduleRefresh)
     // Transforms can change displayed width without changing the layout box.
-    document.addEventListener('transitionend', scheduleRefresh)
+    document.addEventListener('transitionend', onGeometryTransition)
     watchDensity()
   }
   sources.set(image, source)
@@ -78,7 +91,7 @@ export function observeDisplayImage(image: HTMLImageElement, source: string) {
     observer?.disconnect()
     observer = undefined
     window.removeEventListener('resize', scheduleRefresh)
-    document.removeEventListener('transitionend', scheduleRefresh)
+    document.removeEventListener('transitionend', onGeometryTransition)
     densityQuery?.removeEventListener('change', onDensityChange)
     densityQuery = undefined
     if (frame !== undefined) window.cancelAnimationFrame(frame)

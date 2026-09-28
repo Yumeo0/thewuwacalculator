@@ -45,5 +45,4 @@ export const legacyCalculatorViews: LegacyCalculatorView[] = [
   { key: 'teams', label: 'Team Buffs', icon: 'teams' },
   { key: 'enemy', label: 'Enemy', icon: 'enemy' },
   { key: 'buffs', label: 'Custom Bonuses', icon: 'buffs' },
-  { key: 'rotations', label: 'Rotation', icon: 'rotations' },
 ]

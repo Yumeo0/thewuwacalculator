@@ -30,7 +30,7 @@ import {
 } from '@/engine/runtime/defaults.ts'
 import { mnlBffsSchm } from '@/engine/runtime/manualBuffsSchema.ts'
 import { Expandable } from '@/shared/ui/Expandable.tsx'
-import { LiquidSelect } from '@/application/ui/LiquidSelect.tsx'
+import { Select } from '@/application/ui/Select'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { BuffPresetModal } from './BuffPresetModal.tsx'
 import type { RtUpdHnd } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
@@ -810,7 +810,7 @@ export function BuffEditor({
   const viewModTgtFl = (modifier: MnlMod) => {
     const scopeField = viewModFld(
       'Scope',
-      <LiquidSelect
+      <Select
         value={modifier.scope}
         options={DVNCSCPPTNS}
         onChange={(value) =>
@@ -828,7 +828,7 @@ export function BuffEditor({
           {scopeField}
           {viewModFld(
             'Element',
-            <LiquidSelect
+            <Select
               value={modifier.attribute}
               options={DVNCTTRBPTNS}
               onChange={(value) =>
@@ -849,7 +849,7 @@ export function BuffEditor({
           {scopeField}
           {viewModFld(
             'Skill Type',
-            <LiquidSelect
+            <Select
               value={modifier.skillType}
               options={ADV_SKILL_TYPES}
               onChange={(value) =>
@@ -870,7 +870,7 @@ export function BuffEditor({
           {scopeField}
           {viewModFld(
             'Match By',
-            <LiquidSelect
+            <Select
               value={modifier.matchMode}
               options={ADV_SKILL_MATCH}
               onChange={(value) =>
@@ -886,7 +886,7 @@ export function BuffEditor({
           )}
           {viewModFld(
             modifier.matchMode === 'skillId' ? 'Skill' : modifier.matchMode === 'tab' ? 'Tab' : 'Skill Type',
-            <LiquidSelect
+            <Select
               value={modifier.matchMode === 'skillId'
                 ? modifier.skillId ?? ''
                 : modifier.matchMode === 'tab'
@@ -926,7 +926,7 @@ export function BuffEditor({
         <>
           {viewModFld(
             'Stat',
-            <LiquidSelect
+            <Select
               value={modifier.stat}
               options={DVNCBASESTAT}
               onChange={(value) =>
@@ -939,7 +939,7 @@ export function BuffEditor({
           )}
           {viewModFld(
             'Field',
-            <LiquidSelect
+            <Select
               value={modifier.field}
               options={DVNCBASESTuv}
               onChange={(value) =>
@@ -964,7 +964,7 @@ export function BuffEditor({
         <>
           {viewModFld(
             'Stat',
-            <LiquidSelect
+            <Select
               value={modifier.stat}
               options={DVNCTOPSTATP}
               onChange={(value) =>
@@ -989,7 +989,7 @@ export function BuffEditor({
         <>
           {viewModFld(
             'Modifier',
-            <LiquidSelect
+            <Select
               value={getSkllModPt(modifier)}
               options={SKLLMODPTNS}
               onChange={(value) =>
@@ -1020,7 +1020,7 @@ export function BuffEditor({
           ) : null}
           {modifier.effect === 'scalar' ? viewModFld(
             'Field',
-            <LiquidSelect
+            <Select
               value={modifier.field}
               options={SKLLSCLRPTNS}
               onChange={(value) =>
@@ -1045,7 +1045,7 @@ export function BuffEditor({
         <>
           {viewModFld(
             'Effect',
-            <LiquidSelect
+            <Select
               value={modifier.negativeEffect}
               options={NEG_EFFECT_OPTS}
               onChange={(value) =>
@@ -1058,7 +1058,7 @@ export function BuffEditor({
           )}
           {viewModFld(
             'Modifier',
-            <LiquidSelect
+            <Select
               value={modifier.mod}
               options={NEG_EFFECT_MODS}
               onChange={(value) =>
@@ -1082,7 +1082,7 @@ export function BuffEditor({
       <>
         {viewModFld(
           'Modifier',
-          <LiquidSelect
+          <Select
             value={modifier.mod}
             options={MOD_VL_PTNS}
             onChange={(value) =>

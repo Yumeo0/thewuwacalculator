@@ -44,8 +44,10 @@ export const PHANTOM_ECHO_IDS: readonly string[] = [
   '6000195',
   '6000196',
   '6000202',
+  '6000214',
   '6000216',
   '6000217',
+  '6000220',
 ]
 
 export function getPhantomEchoIcon(id: string): string | null {

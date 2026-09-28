@@ -229,18 +229,14 @@ export function runPrepWorkDetailedProgramTimed(
   prepared: PrepWork,
   items: RotationNode[],
   cacheIdentity: RotationNode[] = items,
+  cacheResult = true,
 ): PreparedDetailedProgramRun | null {
   if (!prepared.activeContext || !prepared.activeSeed || !prepared.rotNvrn) {
     return null
   }
 
-  let byProgram = detailedProgramCache.get(prepared)
-  if (!byProgram) {
-    byProgram = new WeakMap()
-    detailedProgramCache.set(prepared, byProgram)
-  }
-
-  const cached = byProgram.get(cacheIdentity)
+  let byProgram = cacheResult ? detailedProgramCache.get(prepared) : undefined
+  const cached = byProgram?.get(cacheIdentity)
   if (cached) {
     return { result: cached, prepareMs: 0, executeMs: 0, cacheHit: true }
   }
@@ -255,7 +251,13 @@ export function runPrepWorkDetailedProgramTimed(
     { inspect: true, includeSnapshots: true },
   )
   const executeMs = performance.now() - executeStartedAt
-  byProgram.set(cacheIdentity, result)
+  if (cacheResult) {
+    if (!byProgram) {
+      byProgram = new WeakMap()
+      detailedProgramCache.set(prepared, byProgram)
+    }
+    byProgram.set(cacheIdentity, result)
+  }
   return { result, prepareMs, executeMs, cacheHit: false }
 }
 

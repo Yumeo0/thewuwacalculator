@@ -90,6 +90,7 @@ import { useResonatorProfileOps } from '@/modules/simulation/workspace/useResona
 import { ModulationReport } from '@/modules/simulation/surfaces/modulation/ModulationReport.tsx'
 import type { MemberAnalysisSource } from '@/modules/simulation/surfaces/modulation/lib/memberSim.ts'
 import { NarrowEvaluationBanner } from '@/modules/simulation/workspace/NarrowEvaluationBanner.tsx'
+import { ScoreWarning } from '@/modules/simulation/workspace/ScoreWarning.tsx'
 import { getEvaluationStageCtx } from '@/modules/simulation/workspace/context.tsx'
 import { makeEchoSlot } from '@/modules/simulation/workspace/echoSlot.ts'
 import { useWorkspaceEchoActions } from '@/modules/simulation/workspace/useWorkspaceEchoActions.ts'
@@ -815,6 +816,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
 
   return (
     <>
+      <ScoreWarning active={score != null} />
       <div className="simulation-stage">
       <div className={`simulation-workspace${isOptimizer ? ' opt-lab' : ''}${isSuggestions ? ' sgl-lab' : ''}`} style={{ '--resonator-accent': accent, '--grade': tone } as CssVars}>
         {!isShowcase && error ? <div className="workspace-notice workspace-notice--error">{error.message}</div> : null}

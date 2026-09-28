@@ -10,8 +10,6 @@ import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
 import { savedRotationItems } from '@/domain/entities/inventoryStorage.ts'
 import { makeAppState } from '@/engine/runtime/defaults.ts'
 import {
-  acknowledgeAdvancedRotationMigrations,
-  listPendingAdvancedRotationMigrations,
   migrateAdvancedScenarioRotations,
 } from '@/engine/runtime/advancedRotationMigration.ts'
 import { useAppStore } from '@/application/state/store.ts'
@@ -71,16 +69,24 @@ describe('advanced rotation migration', () => {
       name: 'My original name',
       duration: 19.25,
       note: 'Keep this note',
-      migration: { source: 'advanced-sequence', acknowledged: false },
+      migration: { source: 'advanced-sequence', acknowledged: true },
     })
   })
 
-  it('migrates and acknowledges through the pane-facing store actions', () => {
+  it('archives legacy advanced content through the store', () => {
     const scenario = selectedCombatScenario(useAppStore.getState().combat)
-    useAppStore.getState().setScenarioProgram(scenario.id, {
-      ...scenario.program,
-      sequence: structuredClone(advancedItems),
-    })
+    useAppStore.setState((state) => ({
+      combat: {
+        ...state.combat,
+        scenariosById: {
+          ...state.combat.scenariosById,
+          [scenario.id]: {
+            ...scenario,
+            program: { ...scenario.program, sequence: structuredClone(advancedItems) },
+          },
+        },
+      },
+    }))
     consumePersist()
 
     const migrations = useAppStore.getState().migrateAdvancedRotations()
@@ -88,16 +94,19 @@ describe('advanced rotation migration', () => {
     expect(useAppStore.getState().library.rotations).toHaveLength(1)
     expect(consumePersist()).toEqual(['combat.workspace', 'library.rotations'])
 
-    const entryId = migrations[0].savedRotation.id
-    expect(listPendingAdvancedRotationMigrations(useAppStore.getState().library)).toHaveLength(1)
-    useAppStore.getState().acknowledgeAdvancedRotationMigrations([entryId])
-    expect(consumePersist()).toEqual(['library.rotations'])
-    expect(listPendingAdvancedRotationMigrations(useAppStore.getState().library)).toEqual([])
+    expect(useAppStore.getState().library.rotations[0].migration?.acknowledged).toBe(true)
+  })
 
-    const acknowledged = acknowledgeAdvancedRotationMigrations(
-      useAppStore.getState().library,
-      new Set([entryId]),
-    )
-    expect(acknowledged).toBe(useAppStore.getState().library)
+  it('archives imported advanced content during hydration', () => {
+    const payload = makeAppState()
+    const scenario = selectedCombatScenario(payload.combat)
+    scenario.program.sequence = structuredClone(advancedItems)
+
+    useAppStore.getState().hydrate(payload)
+
+    const state = useAppStore.getState()
+    expect(state.library.rotations).toHaveLength(1)
+    expect(savedRotationItems(state.library.rotations[0])).toEqual(advancedItems)
+    expect(selectedCombatScenario(state.combat).program.sequence).not.toEqual(advancedItems)
   })
 })

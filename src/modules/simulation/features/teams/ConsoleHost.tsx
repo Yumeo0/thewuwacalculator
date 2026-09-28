@@ -68,10 +68,11 @@ function ConsoleView({
       'Updated Team Configuration',
     ),
   })
-  const draftMembers = session.draft?.team.members
-  useEffect(() => draftMembers
-    ? holdResonatorData(draftMembers.map((member) => member.resonatorId))
-    : undefined, [draftMembers])
+  const draftMemberIds = session.draft?.team.members
+    .map((member) => member.resonatorId).sort().join(',') ?? ''
+  useEffect(() => draftMemberIds
+    ? holdResonatorData(draftMemberIds.split(','))
+    : undefined, [draftMemberIds])
   const model = useMemberModel(
     resonatorId,
     resolvedScenarioId,

@@ -7,7 +7,7 @@ import type { ReactNode } from 'react'
 import { readRtPath } from '@/domain/gameData/runtimePath'
 import type { ResRuntime } from '@/domain/entities/runtime'
 import type { SourceState } from '@/domain/gameData/contracts'
-import { LiquidSelect } from '@/application/ui/LiquidSelect'
+import { Select } from '@/application/ui/Select'
 import { NumberInput } from '@/modules/simulation/features/controls/NumberInput'
 import {
   isSrcSttOn,
@@ -136,7 +136,7 @@ export function viewRtStt(
       >
         <span className="co-runtime-state__label">{display.label}</span>
         <div className="co-runtime-state__select">
-          <LiquidSelect
+          <Select
             value={selVl}
             options={selPtns.map((option) => ({
               value: option.id,

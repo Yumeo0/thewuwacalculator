@@ -51,18 +51,7 @@ export function makeAppendSource({
 }): AppendSource[] {
   const options: AppendSource[] = []
   const teamIds = currentTeamIds(runtime)
-  const seedName = seedRsntById[runtime.id]?.name ?? runtime.id
-
-  if (runtime.rotation.sequence.length > 0) {
-    options.push({
-      value: `live:${runtime.id}`,
-      label: `${seedName} · Current Rotation · Live`,
-      items: runtime.rotation.sequence,
-    })
-  }
-
-  // append should not require teammates to be saved first; their
-  // authored presets are valid sources alongside live and saved rotations.
+  // Unsaved teammates contribute authored presets directly alongside saved rotations.
   for (const resonatorId of teamIds) {
     const memberSeed = seedRsntById[resonatorId]
     if (!memberSeed) {

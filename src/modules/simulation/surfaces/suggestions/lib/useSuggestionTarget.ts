@@ -1,7 +1,7 @@
 /*
   Author: Runor Ewhro
-  Description: Derives the runtime and simulation used by Suggestions when a
-               catalog rotation replaces the editable live rotation.
+  Description: Derives the runtime and simulation used by Suggestions for
+               a catalog default rotation.
 */
 
 import { useMemo } from 'react'
@@ -24,7 +24,7 @@ export function useSuggestionTarget(
   selectedTargets: Record<string, string | null>,
 ) {
   const runtime = useMemo(() => {
-    const preset = settings.rotationMode && settings.rotationSource === 'default'
+    const preset = settings.rotationMode
       ? getDefaultRotation(liveRuntime.id)
       : null
     if (!preset) return liveRuntime
@@ -36,7 +36,7 @@ export function useSuggestionTarget(
         program: cloneRotationNodes(preset.items),
       },
     }
-  }, [liveRuntime, settings.rotationMode, settings.rotationSource])
+  }, [liveRuntime, settings.rotationMode])
 
   const simulation = useMemo(() => {
     if (runtime === liveRuntime) return liveSimulation

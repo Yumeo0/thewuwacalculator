@@ -4,7 +4,7 @@
                rotation condition nodes and when-rule editors.
 */
 
-import { LiquidSelect } from '@/application/ui/LiquidSelect.tsx'
+import { Select } from '@/application/ui/Select'
 import {
   formatEffectConditionName,
   getStateEffectName,
@@ -136,7 +136,7 @@ export function viewCondVlFl(
 
   if (definition.kind === 'select') {
     return (
-      <LiquidSelect
+      <Select
         value={String(value)}
         options={(definition.options ?? []).map((option) => ({
           value: option.id,

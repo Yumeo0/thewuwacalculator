@@ -77,3 +77,28 @@ describe.each([
     }))
   })
 })
+
+describe('beta 3.7 Echo effects', () => {
+  const sources = JSON.parse(betaEchoSourcesRaw) as SrcPkg[]
+
+  it('keeps the new Echo damage actions and their support effects connected', () => {
+    for (const id of ['6000219', '6000220', '6000222', '6000223', '6000224']) {
+      expect(getEchoSource(sources, id).skills?.length, `${id} has no Echo skill`).toBeGreaterThan(0)
+    }
+
+    expect(getEchoSource(sources, '6000223').effects).toContainEqual(expect.objectContaining({
+      id: 'echo:6000223:effect:always:self',
+      targetScope: 'self',
+      operations: [{ type: 'add_top_stat', stat: 'energyRegen', value: { type: 'const', value: 10 } }],
+    }))
+    expect(getEchoSource(sources, '6000224').effects).toContainEqual(expect.objectContaining({
+      id: 'echo:6000224:effect:toggle:activeOther',
+      targetScope: 'activeOther',
+      operations: [{ type: 'add_attribute_mod', attribute: 'electro', mod: 'dmgBonus', value: { type: 'const', value: 12 } }],
+    }))
+    expect(getEchoSource(sources, '6000225').effects).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'echo:6000225:effect:always:self' }),
+      expect.objectContaining({ id: 'echo:6000225:effect:toggle:self' }),
+    ]))
+  })
+})

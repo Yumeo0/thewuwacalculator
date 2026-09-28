@@ -1,7 +1,7 @@
 /*
   Author: Runor Ewhro
-  Description: Archives rotation programs that exceed the sequence contract
-               before resetting their working scenarios to compact defaults.
+  Description: Archives advanced content found in old compact-sequence storage
+               before discarding that retired editable field.
 */
 
 import {
@@ -51,61 +51,6 @@ function findArchivedRotation(
   )) ?? null
 }
 
-function isLegacyMigrationArchive(entry: SavedRotation): boolean {
-  const resonatorId = savedRotationResonatorId(entry)
-  const resonatorName = getResSeedBy(resonatorId)?.name ?? resonatorId
-  return entry.duration === 0
-    && entry.note === ''
-    && entry.name.startsWith(`${resonatorName} Advanced Rotation`)
-    && !isRotationSequence(savedRotationItems(entry), resonatorId)
-}
-
-function migrationNotice(entry: SavedRotation): AdvancedRotationMigration {
-  return {
-    profileId: savedRotationResonatorId(entry),
-    savedRotation: entry,
-    created: false,
-  }
-}
-
-export function listPendingAdvancedRotationMigrations(
-  library: SavedArtifactLibrary,
-): AdvancedRotationMigration[] {
-  return library.rotations
-    .filter((entry) => (
-      entry.migration?.source === 'advanced-sequence'
-        ? !entry.migration.acknowledged
-        : isLegacyMigrationArchive(entry)
-    ))
-    .map(migrationNotice)
-}
-
-export function acknowledgeAdvancedRotationMigrations(
-  library: SavedArtifactLibrary,
-  entryIds: ReadonlySet<string>,
-): SavedArtifactLibrary {
-  if (entryIds.size === 0) return library
-
-  let changed = false
-  const rotations = library.rotations.map((entry) => {
-    if (!entryIds.has(entry.id)) return entry
-    if (entry.migration?.source === 'advanced-sequence' && entry.migration.acknowledged) {
-      return entry
-    }
-
-    changed = true
-    return {
-      ...entry,
-      migration: {
-        source: 'advanced-sequence' as const,
-        acknowledged: true,
-      },
-    }
-  })
-
-  return changed ? { ...library, rotations } : library
-}
-
 function makeMigrationName(
   resonatorName: string,
   rotations: readonly SavedRotation[],
@@ -138,13 +83,12 @@ export function migrateAdvancedScenarioRotations(
     if (isRotationSequence(items, resonatorId)) continue
 
     const seed = getResSeedBy(resonatorId)
-    if (!seed) continue
 
     let savedRotation = findArchivedRotation(rotations, resonatorId, items)
     const created = !savedRotation
     if (!savedRotation) {
       savedRotation = makeSavedRotation({
-        name: makeMigrationName(seed.name, rotations),
+        name: makeMigrationName(seed?.name ?? resonatorId, rotations),
         duration: 0,
         note: '',
         scenario: {
@@ -157,7 +101,7 @@ export function migrateAdvancedScenarioRotations(
       }, now)
       savedRotation.migration = {
         source: 'advanced-sequence',
-        acknowledged: false,
+        acknowledged: true,
       }
       rotations = [...rotations, savedRotation]
     } else if (savedRotation.migration?.source !== 'advanced-sequence') {
@@ -165,13 +109,13 @@ export function migrateAdvancedScenarioRotations(
         ...savedRotation,
         migration: {
           source: 'advanced-sequence',
-          acknowledged: false,
+          acknowledged: true,
         },
       }
       rotations = rotations.map((entry) => entry.id === savedRotation?.id ? savedRotation : entry)
     }
 
-    const defaultItems = mkDefRot(seed).sequence
+    const defaultItems = seed ? mkDefRot(seed).sequence : []
     const migratedScenario = reviseCombatScenario(scenario, {
       program: {
         ...scenario.program,

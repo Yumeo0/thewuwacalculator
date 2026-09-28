@@ -15,6 +15,7 @@ import { Expandable } from '@/shared/ui/Expandable'
 import AppLdrVrly from '@/shared/ui/AppLoaderOverlay.tsx'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import { SourceStateCtrl } from '@/modules/simulation/features/controls/SourceStateControl.tsx'
+import { SourceStateCell } from '@/modules/simulation/features/controls/SourceStateCell.tsx'
 import { withDefIconM, withDefResMg } from '@/shared/lib/imageFallback'
 import { glyphVars, resNodeIcon } from '@/shared/lib/gameAssets'
 import { ATTR_COLORS, rarityVars } from '@/modules/simulation/model/display.ts'
@@ -222,7 +223,7 @@ function Row({
   ].filter(Boolean).join(' ')
 
   return (
-    <div className={classes}>
+    <SourceStateCell className={classes} state={row.state} runtime={runtime} actRt={actRt} onRtPdt={onRtPdt}>
       <span className="pgs-port" aria-hidden="true">
         <Glyph glyph={row.glyph} className="pgs-port-glyph" />
       </span>
@@ -234,10 +235,11 @@ function Row({
           actRt={actRt}
           state={row.state}
           onRtPdt={onRtPdt}
+          cellOwnsClick
           dscrPrms={row.params.length > 0 ? row.params : undefined}
         />
       </div>
-    </div>
+    </SourceStateCell>
   )
 }
 

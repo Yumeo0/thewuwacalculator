@@ -31,7 +31,7 @@ import { EchoPicker } from '@/modules/simulation/features/echoes/Picker.tsx'
 import { RollReel, StatField, carryTier } from '@/modules/simulation/features/echoes/Edit.tsx'
 import { StatGlyph } from '@/modules/simulation/workspace/ui.tsx'
 import { AppModal } from '@/shared/ui/AppModal.tsx'
-import { LiquidSelect, type SelectOption } from '@/application/ui/LiquidSelect.tsx'
+import { Select, type SelectOption } from '@/application/ui/Select'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback'
 import { Hammer, Minus, Plus, RotateCcw, TriangleAlert, X } from 'lucide-react'
@@ -364,7 +364,7 @@ export function QuickSetup({
               )
             })}
             {canAddSet && vlblSets.length > 0 ? (
-              <LiquidSelect
+              <Select
                 value=""
                 options={vlblSets}
                 placeholder="Add sonata"

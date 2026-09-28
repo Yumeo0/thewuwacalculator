@@ -15,6 +15,7 @@ import {
   ensureRotationEditorSession,
   getRotationEditorSession,
   getRotationEditorSessionGeneration,
+  holdRotationEditorOwner,
   reconcileRotationEditorSession,
   updateRotationEditorSession,
   type RotationEditorSession,
@@ -54,6 +55,31 @@ function timedResult(totalMs: number, ranAt: number) {
 
 describe('rotation editor session store', () => {
   beforeEach(() => clearAllRotationEditorSessions())
+
+  it('drops dormant run traces while preserving the authored draft', async () => {
+    vi.useFakeTimers()
+    try {
+      const result = timedResult(12, 20)
+      ensureRotationEditorSession('owner-a', () => ({
+        ...makeSession('authored'),
+        result,
+        runInputIdentity: {},
+      }))
+      const leave = holdRotationEditorOwner('owner-a')
+      leave()
+      const returnToPage = holdRotationEditorOwner('owner-a')
+      await vi.advanceTimersByTimeAsync(2_000)
+      expect(getRotationEditorSession('owner-a')?.result).toBe(result)
+      returnToPage()
+      await vi.advanceTimersByTimeAsync(2_000)
+      expect(getRotationEditorSession('owner-a')?.result).toBeNull()
+      expect(getRotationEditorSession('owner-a')?.sections[0].id).toBe('authored')
+      expect(getRotationEditorSession('owner-a')?.runInputIdentity).toBeNull()
+    } finally {
+      clearAllRotationEditorSessions()
+      vi.useRealTimers()
+    }
+  })
 
   it('keeps an owner draft when later app state offers another seed', () => {
     ensureRotationEditorSession('owner-a', () => makeSession('initial'))

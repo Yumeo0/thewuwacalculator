@@ -6,7 +6,6 @@
 
 import { getSntSetIco } from '@/data/gameData/catalog/sonataSets.ts'
 import { getEchoSetDe } from '@/data/gameData/echoSets/effects.ts'
-import type { RotationNode } from '@/domain/gameData/contracts.ts'
 import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime.ts'
 import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
 import {
@@ -116,30 +115,6 @@ export function smmrEchoLdt(
 // creates an empty echo plan
 export function mkMptyEchoPl(): [EchoPlan | null, EchoPlan | null] {
   return [null, null]
-}
-
-// whether a rotation node list contains at least one damage feature node.
-// combo (rotation) optimizer mode is only meaningful when such a node exists,
-// so this gates the combo target-mode toggle. only repeat/uptime nodes nest
-// further items; condition/loop markers cannot contain features.
-export function rotHasFeats(items: ReadonlyArray<RotationNode>): boolean {
-  for (const node of items) {
-    if (node.type === 'feature') {
-      return true
-    }
-    if (node.type === 'repeat' && rotHasFeats(node.items)) {
-      return true
-    }
-    if (node.type === 'uptime') {
-      if (rotHasFeats(node.items)) {
-        return true
-      }
-      if (node.setup && rotHasFeats(node.setup)) {
-        return true
-      }
-    }
-  }
-  return false
 }
 
 // Normalize loadouts to the fixed five-slot shape used by runtime consumers.

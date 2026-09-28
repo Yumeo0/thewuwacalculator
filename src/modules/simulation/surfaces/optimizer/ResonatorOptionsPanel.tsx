@@ -10,8 +10,8 @@ import type { CSSProperties as CssProps } from 'react'
 import { ChevronDown, Crosshair, Cpu, Image, Info, Lock, Sword, X, Gpu } from 'lucide-react'
 import type { OptSetChoice, OptStatCstr } from '@/domain/entities/optimizer'
 import type { ResRuntime } from '@/domain/entities/runtime'
-import type { SelectOption, SelectGroup } from '@/application/ui/LiquidSelect'
-import { LiquidSelect } from '@/application/ui/LiquidSelect'
+import type { SelectOption, SelectGroup } from '@/application/ui/Select'
+import { Select } from '@/application/ui/Select'
 import {
   type RtUpdHnd,
 } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
@@ -223,7 +223,7 @@ export function CharPtnsPnl({
 
         <div className="co-config">
           <div className="co-skill-bar">
-            <LiquidSelect
+            <Select
               value={targetValue}
               options={targetOptions}
               groups={targetGroups}
@@ -442,7 +442,7 @@ export function CharPtnsPnl({
                       if (option.value === 'bonus') {
                         const isActive = mainStatFilter.includes('bonus')
                         return (
-                          <LiquidSelect
+                          <Select
                             key={option.value}
                             value={selectedBonus ?? ''}
                             options={bonusOptions}

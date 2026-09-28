@@ -14,13 +14,33 @@ import type {
 
 let worker: Worker | null = null
 let nextJobId = 1
+let idleTimer: ReturnType<typeof setTimeout> | null = null
+const IDLE_TEARDOWN_MS = 1_200
 
 const pendingJobs = new Map<number, {
   resolve: (value: RandomEchoEntry[]) => void
   reject: (error: Error) => void
 }>()
 
+function clearIdleTeardown(): void {
+  if (idleTimer !== null) clearTimeout(idleTimer)
+  idleTimer = null
+}
+
+function scheduleIdleTeardown(): void {
+  if (pendingJobs.size > 0 || !worker) return
+  clearIdleTeardown()
+  idleTimer = setTimeout(() => {
+    idleTimer = null
+    if (pendingJobs.size > 0) return
+    worker?.terminate()
+    worker = null
+  }, IDLE_TEARDOWN_MS)
+  ;(idleTimer as unknown as { unref?: () => void }).unref?.()
+}
+
 function ensureWorker(): Worker {
+  clearIdleTeardown()
   if (worker) {
     return worker
   }
@@ -40,6 +60,7 @@ function ensureWorker(): Worker {
     } else {
       pending.reject(new Error(message.error))
     }
+    scheduleIdleTeardown()
   }
 
   worker.onerror = (event) => {
@@ -48,6 +69,9 @@ function ensureWorker(): Worker {
       pending.reject(error)
     }
     pendingJobs.clear()
+    worker?.terminate()
+    worker = null
+    clearIdleTeardown()
   }
 
   return worker
@@ -65,6 +89,12 @@ export function runRandomEchoSuggestions(
       gameDataMode: getGameDataMode(),
       payload,
     }
-    ensureWorker().postMessage(message)
+    try {
+      ensureWorker().postMessage(message)
+    } catch (error) {
+      pendingJobs.delete(id)
+      reject(error instanceof Error ? error : new Error('Could not start the random Echo worker'))
+      scheduleIdleTeardown()
+    }
   })
 }

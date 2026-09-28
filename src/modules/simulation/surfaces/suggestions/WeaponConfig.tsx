@@ -22,7 +22,7 @@ import { isSourceVisible } from '@/modules/simulation/features/controls/lib/runt
 import { sourceOptions as sourceOptions } from '@/engine/services/sourceStateService.ts'
 import { resPssvPrms, weaponStatsAt, withDefWpnMg } from '@/modules/simulation/features/weapons/lib/weapon.ts'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
-import { LiquidSelect } from '@/application/ui/LiquidSelect.tsx'
+import { Select } from '@/application/ui/Select'
 import { NumberInput } from '@/modules/simulation/features/controls/NumberInput.tsx'
 import { rarityVars } from '@/modules/simulation/model/display.ts'
 import { AppModal } from '@/shared/ui/AppModal.tsx'
@@ -471,7 +471,7 @@ function useWpnCfg({
                           {isOn && state.kind !== 'toggle' ? (
                             <span className="wcfg__st-input" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
                               {state.kind === 'select' ? (
-                                <LiquidSelect value={String(maxVal)} options={opts.map((option) => ({ value: option.id, label: option.label }))} onChange={(nextValue) => {
+                                <Select value={String(maxVal)} options={opts.map((option) => ({ value: option.id, label: option.label }))} onChange={(nextValue) => {
                                   updWpnSt(wpn.id, state.controlKey, (cur) => { const next = { ...cur }; const clean = clnStMax(state, String(nextValue), opts); if (clean === defMax) delete next.max; else next.max = clean; return next })
                                 }} />
                               ) : (

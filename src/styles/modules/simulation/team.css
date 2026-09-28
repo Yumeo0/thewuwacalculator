@@ -38,7 +38,7 @@
   font-weight: 600;
 }
 
-.team-state-control .liquid-select {
+.team-state-control .app-select {
   width: fit-content;
 }
 
@@ -1056,7 +1056,7 @@ button.tlu-seal:is(:hover, :focus-visible) .tlu-seal-coin {
   appearance: textfield;
 }
 
-.tlu-lamp .liquid-select {
+.tlu-lamp .app-select {
   min-width: 6.5rem;
   max-width: 10rem;
 }

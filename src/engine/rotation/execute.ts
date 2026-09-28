@@ -325,6 +325,7 @@ interface RotationExec {
   // accumulated feature result rows produced so far
   entries: DamageFeature[]
   captureEntries: boolean
+  captureNodeIds: ReadonlySet<string> | null
 
   // Rowless execution accumulates directly into one Float64 triple per team
   // member. It is intentionally allocation-free inside the feature hot path.
@@ -429,7 +430,7 @@ function ppndNspcEnt(
   state: RotationExec,
   entry: Omit<InspectEntry, 'loopRuns' | 'loopRunCnts' | 'runtimeById' | 'selectedTargetsByRuntimeId' | 'activeResonatorId' | 'enemy'>,
 ): RotationExec {
-  if (!state.nspcNtrs) {
+  if (!state.nspcNtrs || (state.captureNodeIds && !state.captureNodeIds.has(entry.nodeId))) {
     return state
   }
 
@@ -962,6 +963,7 @@ function mkRotStt(
     detail?: RunDetail
     includeSnapshots?: boolean
     captureEntries?: boolean
+    captureNodeIds?: ReadonlySet<string>
     scoreAggregationType?: SkillAggType | null
   } = {},
 ): RotationExec {
@@ -1001,6 +1003,7 @@ function mkRotStt(
     nspcSnapshotCache: new WeakMap(),
     entries: [],
     captureEntries,
+    captureNodeIds: options.captureNodeIds ?? null,
     scoreIds,
     scoreIndexById: Object.fromEntries(scoreIds.map((id, index) => [id, index])),
     scoreValues: captureEntries ? null : new Float64Array((scoreIds.length + 1) * 3),
@@ -1164,6 +1167,7 @@ export function executeRotationProgram(
       detail: options.detail,
       includeSnapshots: options.includeSnapshots,
       captureEntries: options.captureEntries,
+      captureNodeIds: options.captureNodeIds,
     })
   executionState.offTuneSeal = makeOffTuneSealState(offTuneSealFor(environment, program))
   executionState.onDamageInvocation = options.onDamageInvocation
@@ -2846,7 +2850,8 @@ function runFeatBody(
     the kernel writes its trace into one scratch list, so it has to be taken
     before anything else prepares a skill on this team.
   */
-  const skillScalarWrites = lclFeatStt.numericTeam.skillScalarTrace.length > 0
+  const captureCurrentNode = !lclFeatStt.captureNodeIds || lclFeatStt.captureNodeIds.has(node.id)
+  const skillScalarWrites = captureCurrentNode && lclFeatStt.numericTeam.skillScalarTrace.length > 0
     ? lclFeatStt.numericTeam.skillScalarTrace.slice()
     : EMPTY_SCALAR_WRITES
 
@@ -2876,7 +2881,7 @@ function runFeatBody(
     ? applyFormulaToFinalPlane(lclFeatStt, participant.lane, scaledSkill)
     : null
   const enemy = getActEnemy(lclFeatStt)
-  const effectiveStatsBase = lclFeatStt.captureEntries || lclFeatStt.nspcNtrs
+  const effectiveStatsBase = captureCurrentNode && (lclFeatStt.captureEntries || lclFeatStt.nspcNtrs)
     ? resolveNumericEffectiveStats(
       lclFeatStt.numericTeam,
       participant.lane,
@@ -3200,7 +3205,7 @@ function runFeatBody(
     addNumericScore(lclFeatStt, scoreIndex, wghtRslt.normal, wghtRslt.crit, wghtRslt.avg)
   }
 
-  if (lclFeatStt.captureEntries) {
+  if (lclFeatStt.captureEntries && (!lclFeatStt.captureNodeIds || lclFeatStt.captureNodeIds.has(node.id))) {
     lclFeatStt.metrics.capturedEntries += 1
     lclFeatStt.entries.push({
       id: `${node.id}:${feature.id}`,

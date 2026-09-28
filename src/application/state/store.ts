@@ -61,7 +61,7 @@ import {
     summarizeScenario,
 } from '@/domain/entities/scenarioLibrary'
 import type { ScenarioWorkspace } from '@/domain/entities/scenarioLibrary'
-import type { CombatState, RotationState } from '@/domain/entities/runtime'
+import type { CombatState } from '@/domain/entities/runtime'
 import type {
     SavedBuild,
     SavedEcho,
@@ -119,6 +119,7 @@ import {
     applyHistoryEntry,
     makeHistoryEntry,
     queueHistoryCompaction,
+    retainQueuedHistoryCompactions,
     changedPersistDomains,
     mkMptyHistSt,
     type PrssHistEnt,
@@ -160,13 +161,11 @@ import {
 } from '@/application/state/storeHelpers'
 import {selectPersisted} from '@/application/state/serialization'
 import {
-    acknowledgeAdvancedRotationMigrations as acknowledgeAdvancedRotationMigrationsState,
-    listPendingAdvancedRotationMigrations,
     migrateAdvancedScenarioRotations,
     type AdvancedRotationMigration,
 } from '@/engine/runtime/advancedRotationMigration.ts'
 
-const INV_LEFT_PANES = new Set<LeftPaneView>(['echoes', 'teams', 'rotations'])
+const INV_LEFT_PANES = new Set<LeftPaneView>(['echoes', 'teams'])
 
 function mkIdleOptStt(): AppStore['optimizer'] {
   return {
@@ -384,7 +383,6 @@ export interface AppStore extends Omit<PersistedState, 'simulation' | 'combat'> 
   setInvOpen: (open: boolean) => void
   setInvEchoQ: (search: string) => void
   migrateAdvancedRotations: () => AdvancedRotationMigration[]
-  acknowledgeAdvancedRotationMigrations: (entryIds: string[]) => void
   bumpPickFr: (updates: PckrFreqUpd | PckrFreqUpd[]) => void
   applyScenarioSnapshot: (scenario: CombatScenario) => CombatScenarioId
   commitScenarioConfig: (
@@ -409,7 +407,6 @@ export interface AppStore extends Omit<PersistedState, 'simulation' | 'combat'> 
     routeId: string,
     targetMemberId: TeamMemberId | null,
   ) => void
-  setScenarioProgram: (scenarioId: CombatScenarioId, program: RotationState) => void
   setScenarioTarget: (scenarioId: CombatScenarioId, target: EnemyProfile) => void
   setScenarioCombatState: (scenarioId: CombatScenarioId, combatState: CombatState) => void
   setScenarioInitialOnField: (scenarioId: CombatScenarioId, memberId: TeamMemberId) => void
@@ -637,6 +634,7 @@ export const useAppStore = create<AppStore>((set, get) => {
       optimizer: mkIdleOptStt(),
       history: { past, future, isRestoring: false },
     }))
+    retainQueuedHistoryCompactions(get().history)
     markPrssDmns(domains)
   }
 
@@ -780,6 +778,7 @@ export const useAppStore = create<AppStore>((set, get) => {
       }
       return next
     })
+    retainQueuedHistoryCompactions(get().history)
   }
 
   const bumpPckrFreq = (updates: PckrFreqUpd[]) => {
@@ -959,7 +958,7 @@ export const useAppStore = create<AppStore>((set, get) => {
     if (deferForData(collectResonatorIds(payload), () => get().hydrate(payload), 'hydrate')) return
     get().ensureFullLibrary()
     const curSnap = selectPersisted(get())
-    const nextSnapshot = structuredClone(payload)
+    const nextSnapshot = initAppState(structuredClone(payload))
     const { ui } = get()
 
     cancelOptimizerRequest()
@@ -977,8 +976,10 @@ export const useAppStore = create<AppStore>((set, get) => {
       future: [],
       isRestoring: false,
     }))
+    retainQueuedHistoryCompactions(get().history)
     retainResonatorData(selectedCombatScenario(get().combat).team.members.map((member) => member.resonatorId))
     markPrssDmns(ALL_DOMAIN_KEYS)
+    get().migrateAdvancedRotations()
     scheduleSavedRotationsEviction()
   },
 
@@ -994,6 +995,7 @@ export const useAppStore = create<AppStore>((set, get) => {
       history: mkMptyHistSt(),
       optimizer: mkIdleOptStt(),
     }))
+    retainQueuedHistoryCompactions(get().history)
   },
 
   undo: () => {
@@ -1035,6 +1037,7 @@ export const useAppStore = create<AppStore>((set, get) => {
         savedRotationsHydrated: true,
         library: { ...state.library, rotations, scenarios },
       }))
+      get().migrateAdvancedRotations()
     }
     scheduleSavedRotationsEviction()
   },
@@ -1067,7 +1070,7 @@ export const useAppStore = create<AppStore>((set, get) => {
       ['combat.workspace', 'library.rotations'],
       (state) => {
         const result = migrateAdvancedScenarioRotations(state.library, state.combat)
-        migrations = listPendingAdvancedRotationMigrations(result.library)
+        migrations = result.migrations
         if (result.library === state.library && result.combat === state.combat) return state
 
         return {
@@ -1083,24 +1086,6 @@ export const useAppStore = create<AppStore>((set, get) => {
     )
 
     return migrations
-  },
-
-  acknowledgeAdvancedRotationMigrations: (entryIds) => {
-    get().ensureSavedRotations()
-    const ids = new Set(entryIds)
-    persistedSet(
-      ['library.rotations'],
-      (state) => {
-        const library = acknowledgeAdvancedRotationMigrationsState(
-          state.library,
-          ids,
-        )
-        return library === state.library
-          ? state
-          : { ...state, library }
-      },
-      { recHist: false },
-    )
   },
 
   setTheme: (theme) => {
@@ -1791,18 +1776,6 @@ export const useAppStore = create<AppStore>((set, get) => {
           },
       }))
     }, { historyLabel: 'Updated Target Selection' })
-  },
-
-  setScenarioProgram: (scenarioId, program) => {
-    persistedSet(['combat.workspace'], (state) => {
-      const scenario = state.combat.scenariosById[scenarioId]
-      return scenario ? replaceScenarioInWorkspace(
-      state, scenarioId,
-      reviseCombatScenario(scenario, {
-        program: structuredClone(program),
-      }),
-      ) : state
-    }, { historyLabel: 'Updated Rotation' })
   },
 
   setScenarioTarget: (scenarioId, target) => {

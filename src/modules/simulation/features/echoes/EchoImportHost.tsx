@@ -244,7 +244,9 @@ export function EchoImportHost() {
 
     const next = updater(previous)
     if (next === previous && profiles[target.resonatorId]) return true
-    state.upsertRes([mergeEchoImportIntoProfile(profile, next)], historyLabel)
+    state.upsertRes([mergeEchoImportIntoProfile(profile, next, {
+      maxEffectsOnInit: maxResOnInit,
+    })], historyLabel)
     return true
   }, [maxResOnInit])
 

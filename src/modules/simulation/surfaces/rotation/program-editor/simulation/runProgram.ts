@@ -244,6 +244,9 @@ export function getRunFlatRows(result: RunResult | null | undefined): FlatRow[] 
     source.conditionMeta,
   )
   lazyFlatRowsByRun.set(result, rows)
+  // Once the flat projection exists, keeping its source trace doubles the
+  // lifetime of the largest execution arrays without helping another view.
+  lazyFlatProjectionByRun.delete(result)
   return rows
 }
 
@@ -1796,6 +1799,8 @@ export interface RunInput {
   includeSnapshots?: boolean
   /** retain the ordered rows for the live flattened execution surface */
   includeFlatRows?: boolean
+  /** Background/editor runs may release the raw prepared trace after projection. */
+  cacheDetailed?: boolean
 }
 
 export interface RunTrace extends Pick<ProgramResult, 'entries' | 'inspection'> {
@@ -2094,6 +2099,7 @@ export function executeRunTrace(input: RunInput): RunTrace {
     prepWork,
     detail = 'full',
     includeSnapshots = true,
+    cacheDetailed = true,
   } = input
   const sourceItems = overrideItems ?? runtime.rotation.program ?? []
   const itemSections = overrideItemSections ?? splitEditorSections(sourceItems)
@@ -2111,6 +2117,7 @@ export function executeRunTrace(input: RunInput): RunTrace {
       prepWork,
       items,
       overrideItemSections ? items : sourceItems,
+      cacheDetailed,
     )
     detailed = timed?.result ?? null
     executeMs = timed?.executeMs ?? 0

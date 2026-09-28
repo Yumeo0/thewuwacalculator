@@ -11,7 +11,7 @@ import type { ResDtls, SkillTabKey } from '@/domain/entities/resonator'
 import type { ResRuntime, SkillLevels } from '@/domain/entities/runtime'
 import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
 import { getResDtlsBy } from '@/data/gameData/resonators/resonatorDataStore.ts'
-import { isResRtMaxed, maxResRt } from '@/engine/gameData/resonatorMax.ts'
+import { isRuntimeMaxed, maxRuntime } from '@/engine/runtime/maxRuntime.ts'
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
 import { loadEnemySummary, type EnemySummary } from '@/data/catalog/enemyCatalogService.ts'
 import { useAppStore, selEnemyProf } from '@/application/state'
@@ -88,12 +88,14 @@ function maxLog(resId: string, before: ResRuntime, after: ResRuntime, details: R
   const skillsAfter = skillSpan(after, tabs)
   const states = changedControls(before, after)
   const rows: LogRow[] = [{ label: 'level', value: `${pad(before.base.level)} → ${pad(after.base.level)}` }]
+  rows.push({ label: 'weapon', value: `${pad(before.build.weapon.level)} → ${pad(after.build.weapon.level)}` })
   if (tabs.length) rows.push({ label: `skills ×${tabs.length}`, value: `${skillsBefore} → ${skillsAfter}` })
   if (total) rows.push({ label: 'forte nodes', value: `${nodesBefore} → ${nodesAfter}` })
   rows.push({ label: 'states', value: states ? `${states} set` : 'unchanged' })
 
   const changes = [
     before.base.level !== after.base.level,
+    before.build.weapon.level !== after.build.weapon.level,
     skillsBefore !== skillsAfter,
     nodesBefore !== nodesAfter,
     states > 0,
@@ -118,6 +120,8 @@ function sameMaxed(current: ResRuntime, after: ResRuntime): boolean {
     && current.base.sequence === after.base.sequence
     && JSON.stringify(current.base.skillLevels) === JSON.stringify(after.base.skillLevels)
     && JSON.stringify(current.base.traceNodes.activeNodes) === JSON.stringify(after.base.traceNodes.activeNodes)
+    && JSON.stringify(current.build.weapon) === JSON.stringify(after.build.weapon)
+    && JSON.stringify(current.build.echoes) === JSON.stringify(after.build.echoes)
     && JSON.stringify(current.state.controls) === JSON.stringify(after.state.controls)
 }
 
@@ -197,9 +201,9 @@ export function RailDock({
   const details = resId ? getResDtlsBy()[resId] ?? null : null
 
   const preparedMax = useMemo(() => (
-    runtime ? maxResRt(runtime, details, { targetSequence: runtime.base.sequence }) : null
-  ), [details, runtime])
-  const maxed = runtime && preparedMax ? isResRtMaxed(runtime, details, preparedMax) : false
+    runtime ? maxRuntime(runtime) : null
+  ), [runtime])
+  const maxed = runtime && preparedMax ? isRuntimeMaxed(runtime, preparedMax) : false
   const ceiling = preparedMax?.base.level ?? 1
 
   /* Portal outside the named route-transition root into the persistent
@@ -219,18 +223,17 @@ export function RailDock({
 
   const runMax = useCallback(() => {
     if (!resId || !runtime || maxed) return
-    const resDetails = details
     let before = runtime
     let after = preparedMax ?? runtime
     onRuntimeUpdate(resId, (prev) => {
       before = prev
       after = prev === runtime && preparedMax
         ? preparedMax
-        : maxResRt(prev, resDetails, { targetSequence: prev.base.sequence })
+        : maxRuntime(prev)
       return after
     })
     window.clearTimeout(closeTimer.current)
-    setLog(maxLog(resId, before, after, resDetails))
+    setLog(maxLog(resId, before, after, details))
   }, [details, maxed, onRuntimeUpdate, preparedMax, resId, runtime])
 
   const undoMax = useCallback(() => {
@@ -242,6 +245,7 @@ export function RailDock({
       return {
         ...prev,
         base: log.before.base,
+        build: { ...prev.build, weapon: log.before.build.weapon },
         state: { ...prev.state, controls: log.before.state.controls },
       }
     })
@@ -313,8 +317,8 @@ export function RailDock({
         hotkey="M"
         title={maxed ? 'Maxed' : 'Max build'}
         detail={maxed
-          ? 'Level, skills and forte are at the cap'
-          : `Lv ${runtime.base.level} → ${ceiling}, skills 10, forte nodes`}
+          ? 'Progression, weapon and equipped effects are maxed'
+          : `Lv ${runtime.base.level} → ${ceiling}, weapon, skills and effects`}
         due={!maxed}
         cast={castSeq('max')}
         onCastEnd={clearCast}

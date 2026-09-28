@@ -41,11 +41,7 @@ describe('combat scenario store', () => {
       enabled: true,
       multiplier: 1,
     }
-    useAppStore.getState().setScenarioProgram(initial.id, {
-      sequence: [],
-      program: [node],
-      lastRanAt: 123,
-    })
+    useAppStore.getState().persistRotationProgram([node], 123)
     useAppStore.getState().upsertEnvironmentManualEffect(initial.id, {
       id: 'test:all-atk',
       enabled: true,

@@ -1410,10 +1410,14 @@ export function NodeList({
   )
   const listRef = useRef<HTMLElement | null>(null)
   const { scrollerRef, stack } = useStickyScopes(`${sections.length}:${shutIds.size}`)
+  const loopScope = useMemo(
+    () => collectEditorLoopScopeByNode(sections),
+    [sections],
+  )
   // the same step resolves a different stat line per run
   const ghosts: GhostMap = useMemo(
-    () => computeGhosts(sections, runsByLoopId),
-    [runsByLoopId, sections],
+    () => computeGhosts(sections, runsByLoopId, loopScope.byNodeId),
+    [loopScope, runsByLoopId, sections],
   )
   const ownerRuns: RunMap = useMemo(() => computeOwnerRuns(sections), [sections])
   const condRuns: RunMap = useMemo(() => computeCondRuns(sections), [sections])
@@ -1432,10 +1436,6 @@ export function NodeList({
     for (const section of sections) visit(section.children)
     return hosts
   }, [sections])
-  const loopScope = useMemo(
-    () => collectEditorLoopScopeByNode(sections),
-    [sections],
-  )
   const crossings = useMemo(() => computeLoopCrossings(sections), [sections])
 
   /*

@@ -33,7 +33,7 @@ import { withDefEchoMg, withDefIconM, withDefWpnMg } from '@/shared/lib/imageFal
 import { AppModal } from '@/shared/ui/AppModal.tsx'
 import type { AppModalState } from '@/shared/ui/AppModal.tsx'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
-import { LiquidSelect } from '@/application/ui/LiquidSelect.tsx'
+import { Select } from '@/application/ui/Select'
 import { ModalHeader } from '@/shared/ui/AppModalShell'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
 import { useTstStr } from '@/shared/util/toastStore.ts'
@@ -503,7 +503,7 @@ export function BuffPresetModal({
   const ignoreCardClick = useCallback((event: ReactMouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement
     return Boolean(
-      target.closest('button, input, a, [role="listbox"], [role="radio"], .liquid-select'),
+      target.closest('button, input, a, [role="listbox"], [role="radio"], .app-select'),
     )
   }, [])
 
@@ -623,7 +623,7 @@ export function BuffPresetModal({
                           </div>
 
                           {isWeapon ? (
-                            <LiquidSelect
+                            <Select
                               value={rank}
                               options={RANK_OPTIONS}
                               onChange={(nextRank) => setRankValue(entry.id, nextRank)}
@@ -662,7 +662,7 @@ export function BuffPresetModal({
                               <label key={control.key} className="bp-control">
                                 <span>{control.label}</span>
                                 {control.kind === 'select' && control.options ? (
-                                  <LiquidSelect
+                                  <Select
                                     value={String(values[control.key])}
                                     options={control.options.map((option) => ({
                                       value: option.id,

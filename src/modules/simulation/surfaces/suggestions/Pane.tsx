@@ -83,7 +83,7 @@ import { EchoPicker } from '@/modules/simulation/features/echoes/Picker.tsx'
 import { SetCond } from '@/modules/simulation/features/controls/SetConditional.tsx'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
-import { LiquidSelect } from '@/application/ui/LiquidSelect.tsx'
+import { Select } from '@/application/ui/Select'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { statIconSrc } from '@/modules/simulation/workspace/ui.tsx'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
@@ -1144,7 +1144,7 @@ export function Suggestions({
 
   const targetSelect = (
     <div className="sgc__target">
-      <LiquidSelect
+      <Select
         value={selTgtVl}
         options={targetOptions}
         groups={targetSkillGroups}
@@ -1773,7 +1773,7 @@ export function Suggestions({
 
               <div className="rc-row">
                 <span className="rc-label">Target</span>
-                <LiquidSelect
+                <Select
                   value={selTgtVl}
                   options={targetOptions}
                   groups={targetSkillGroups}
@@ -1852,7 +1852,7 @@ export function Suggestions({
             <div className="rc-section-head">
               <span className="rc-label">Sonata Sets</span>
               {canAddRandSe && vlblRandSetP.length > 0 && (
-                <LiquidSelect
+                <Select
                   value=""
                   options={vlblRandSetP}
                   onChange={(value) => onAddRandSet(String(value))}

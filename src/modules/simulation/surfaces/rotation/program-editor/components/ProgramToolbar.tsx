@@ -69,7 +69,7 @@ import {
   useAppPopupDismiss,
 } from '@/shared/ui/AppPopup.tsx'
 import type { RotationEditorPreferences } from '@/domain/entities/rotationEditorPreferences.ts'
-import { LiquidSelect, type SelectOption } from '@/application/ui/LiquidSelect.tsx'
+import { Select, type SelectOption } from '@/application/ui/Select'
 import { ColumnsMenu } from './ColumnsMenu.tsx'
 import { NodeSearch, type NodeSearchProps } from './NodeSearch.tsx'
 import {
@@ -343,7 +343,7 @@ function FeatureTools({ editor }: Pick<RotationProgramToolbarProps, 'editor'>) {
         keepSelection
         onClick={editor.onToggleSelection}
       />
-      <LiquidSelect className="rte-append"
+      <Select className="rte-append"
         value=""
         options={editor.appendOptions}
         disabled={editor.appendOptions.length === 0}

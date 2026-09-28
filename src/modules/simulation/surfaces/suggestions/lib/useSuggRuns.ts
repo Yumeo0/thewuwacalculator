@@ -40,7 +40,7 @@ import {
   setsSig,
   wpnSig,
 } from '@/modules/simulation/surfaces/suggestions/lib/suggestions.ts'
-import type { SelectGroup } from '@/application/ui/LiquidSelect.tsx'
+import type { SelectGroup } from '@/application/ui/Select'
 
 const RERUN_MS = 300
 const EMPTY_MAIN_RESULTS: MainStatSugg[] = []

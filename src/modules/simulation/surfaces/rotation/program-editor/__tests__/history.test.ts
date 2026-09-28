@@ -3,7 +3,7 @@
   Description: Verifies the history.test behavior and its compatibility invariants.
 */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type {
   EditorBlock,
   EditorCondition,
@@ -79,6 +79,20 @@ function splitSections(
   ]
 }
 
+it('shares unchanged editor nodes between snapshots while preserving earlier edits', () => {
+  const untouched = step('unchanged')
+  const first = section(condition(1), untouched)
+  const before = captureRotationEditSnapshot(first, {})
+  const second = section(condition(2), untouched)
+  const after = captureRotationEditSnapshot(second, {})
+
+  expect(before.sections[0].children[1]).toBe(untouched)
+  expect(after.sections[0].children[1]).toBe(untouched)
+  expect((before.sections[0].children[0] as EditorCondition).writeValue).toBe(1)
+  expect((after.sections[0].children[0] as EditorCondition).writeValue).toBe(2)
+  expect(restoreRotationEditSnapshot(before).sections[0].children[1]).not.toBe(untouched)
+})
+
 function loop(children: EditorNode[]): EditorBlock {
   return seedLoopPassState({
     type: 'loop',
@@ -94,6 +108,28 @@ function loop(children: EditorNode[]): EditorBlock {
 }
 
 describe('rotation editor local history', () => {
+  it('coalesces rapid edits to one control but keeps later edits undoable', () => {
+    vi.useFakeTimers()
+    try {
+      const edit = (before: number, after: number) => ({
+        label: 'Edit multiplier',
+        coalesceKey: 'multiplier:hit',
+        before: captureRotationEditSnapshot(section(condition(before)), {}),
+        after: captureRotationEditSnapshot(section(condition(after)), {}),
+      })
+      const first = commitRotationEdit(emptyRotationEditHistory(), edit(1, 2))
+      vi.advanceTimersByTime(100)
+      const coalesced = commitRotationEdit(first, edit(2, 3))
+      expect(coalesced.past).toHaveLength(1)
+      expect((undoRotationEdit(coalesced).snapshot?.sections[0].children[0] as EditorCondition).writeValue).toBe(1)
+      vi.advanceTimersByTime(501)
+      const later = commitRotationEdit(coalesced, edit(3, 4))
+      expect(later.past).toHaveLength(2)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('undoes and redoes an authored snapshot independently of persistence', () => {
     const before = section(condition(1))
     const after = section(condition(3))

@@ -217,7 +217,7 @@
   text-transform: uppercase;
 }
 
-.manual-modifier-field :is(.liquid-select) {
+.manual-modifier-field :is(.app-select) {
   width: 100%;
 }
 
@@ -598,11 +598,11 @@
   box-shadow: 0 0 0 0.16rem color-mix(in srgb, var(--bp-accent) 16%, transparent);
 }
 
-.bp-control .liquid-select {
+.bp-control .app-select {
   width: 100%;
 }
 
-.bp-control .liquid-select__trigger {
+.bp-control .app-select__trigger {
   width: 100%;
   min-width: 0;
   min-height: 1.5rem;
@@ -614,29 +614,29 @@
   box-shadow: none;
 }
 
-.bp-control .liquid-select__trigger::before {
+.bp-control .app-select__trigger::before {
   content: none;
 }
 
-.bp-control .liquid-select__value {
+.bp-control .app-select__value {
   font-size: 0.8rem;
   font-weight: 600;
 }
 
-.bp-control .liquid-select__trigger:is(:hover, :focus-visible),
-.bp-control .liquid-select.open .liquid-select__trigger {
+.bp-control .app-select__trigger:is(:hover, :focus-visible),
+.bp-control .app-select.open .app-select__trigger {
   transform: none;
   border-color: color-mix(in srgb, var(--bp-accent) 50%, var(--item-border));
   box-shadow: 0 0 0 0.16rem color-mix(in srgb, var(--bp-accent) 14%, transparent);
 }
 
-.bp-rank.liquid-select {
+.bp-rank.app-select {
   width: auto;
   align-self: start;
   justify-self: end;
 }
 
-.bp-rank .liquid-select__trigger {
+.bp-rank .app-select__trigger {
   min-width: 0;
   gap: 0.36rem;
   padding: 0.24rem 0.4rem 0.24rem 0.52rem;
@@ -647,12 +647,12 @@
   overflow: visible;
 }
 
-.bp-rank .liquid-select__trigger::before {
+.bp-rank .app-select__trigger::before {
   content: none;
 }
 
-.bp-rank .liquid-select__trigger:is(:hover, :focus-visible),
-.bp-rank.liquid-select.open .liquid-select__trigger {
+.bp-rank .app-select__trigger:is(:hover, :focus-visible),
+.bp-rank.app-select.open .app-select__trigger {
   transform: none;
   border-color: color-mix(in srgb, var(--bp-accent) 48%, var(--item-border));
   background: color-mix(in srgb, var(--bp-accent) 17%, var(--item-bg));
@@ -681,7 +681,7 @@
   transition: transform 0.2s ease;
 }
 
-.bp-rank.liquid-select.open .bp-rank__chevron {
+.bp-rank.app-select.open .bp-rank__chevron {
   transform: rotate(180deg);
 }
 

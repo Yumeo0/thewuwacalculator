@@ -15,6 +15,7 @@ import type { RotationNode } from '@/domain/gameData/contracts.ts'
 import {
   buildRun,
   memberToReg,
+  projectRun,
   type RunResult,
   withRunMetadata,
 } from '@/modules/simulation/surfaces/rotation/program-editor/simulation/runProgram.ts'
@@ -32,6 +33,7 @@ import {
 import type { PrepWork } from '@/engine/pipeline/preparedWorkspace.ts'
 import { prepareResSimulation } from '@/engine/pipeline/index.ts'
 import {
+  executeRotationProgram,
   executeRotationScore,
   prepareRunEnv,
   prepareRotationProgram,
@@ -101,6 +103,7 @@ function runRuntimeRotation({
     detail,
     includeSnapshots,
     includeFlatRows,
+    cacheDetailed: false,
   })
   const wrapperMs = Math.max(0, performance.now() - startedAt - result.timing.totalMs)
   const additionalPrepareMs = priorPrepareMs + wrapperMs
@@ -311,6 +314,19 @@ const savedWorkerPending = new Map<number, {
 }>()
 let savedWorkerQueue: Array<{ id: number; job: SavedRotationJob }> = []
 let savedWorkerFlushQueued = false
+let savedWorkerIdleTimer: ReturnType<typeof setTimeout> | null = null
+
+function scheduleSavedWorkerRelease(): void {
+  if (savedWorkerPending.size > 0 || savedWorkerQueue.length > 0) return
+  if (savedWorkerIdleTimer !== null) clearTimeout(savedWorkerIdleTimer)
+  savedWorkerIdleTimer = setTimeout(() => {
+    savedWorkerIdleTimer = null
+    if (savedWorkerPending.size === 0 && savedWorkerQueue.length === 0) {
+      savedWorker?.terminate()
+      savedWorker = null
+    }
+  }, 2_000)
+}
 
 export function runSavedRotationJob(job: SavedRotationJob) {
   return job.mode === 'comparison'
@@ -321,9 +337,17 @@ export function runSavedRotationJob(job: SavedRotationJob) {
 function executeSavedRotationJob(
   job: SavedRotationJob,
 ): Promise<RunResult | SavedRotationComparisonResult | null> {
+  // Detail projections contain a lazy flat trace and a feature-label reader.
+  // Structured cloning loses the former and rejects the latter. Only the
+  // compact comparison result crosses the worker boundary.
+  if (job.mode === 'detail') {
+    return Promise.resolve(runSavedRotationJob(job))
+  }
   if (typeof Worker === 'undefined') {
     return Promise.resolve(runSavedRotationJob(job))
   }
+  if (savedWorkerIdleTimer !== null) clearTimeout(savedWorkerIdleTimer)
+  savedWorkerIdleTimer = null
   if (!savedWorker) {
     savedWorker = new Worker(new URL('./savedRotation.worker.ts', import.meta.url), { type: 'module' })
     savedWorker.onmessage = (event: MessageEvent<SavedRotationWorkerResponse>) => {
@@ -337,6 +361,7 @@ function executeSavedRotationJob(
           pending.resolve(result.value ?? null)
         }
       }
+      scheduleSavedWorkerRelease()
     }
     savedWorker.onerror = () => {
       const pending = [...savedWorkerPending.values()]
@@ -379,7 +404,7 @@ const savedRotationRunner = new SimulationBatchRunner<SavedRotationJob, SavedRot
 const savedRotationDetailRunner = new SimulationBatchRunner<SavedRotationJob, RunResult | null>(
   async (job) => (await executeSavedRotationJob(job)) as RunResult | null,
   3,
-  12,
+  0,
   { yieldBeforeExecute: false },
 )
 
@@ -476,6 +501,80 @@ function appendToMain(
       ? { ...section, items: [...section.items, ...items] }
       : section
   ))
+}
+
+function collectNodeIds(items: readonly RotationNode[], into = new Set<string>()): Set<string> {
+  for (const node of items) {
+    into.add(node.id)
+    if (node.type === 'feature' && node.attached) {
+      collectNodeIds(node.attached.conditions, into)
+      collectNodeIds(node.attached.features, into)
+    } else if (node.type === 'repeat' || node.type === 'uptime') {
+      collectNodeIds(node.items, into)
+      if (node.type === 'uptime' && node.setup) collectNodeIds(node.setup, into)
+    } else if (node.type === 'loop' && node.kind === 'start' && node.passForks) {
+      for (const body of Object.values(node.passForks)) collectNodeIds(body, into)
+    }
+  }
+  return into
+}
+
+/** Run the exact standing program, retaining only inserted execution rows. */
+export function projectAppendedRotation({
+  runtime,
+  runtimesById,
+  targetSelections,
+  enemy,
+  members,
+  sections,
+  append,
+  prepWork,
+}: {
+  runtime: ResRuntime | null | undefined
+  runtimesById: Record<string, ResRuntime>
+  targetSelections: Record<string, string | null>
+  enemy: EnemyProfile
+  members: Parameters<typeof buildRun>[0]['members']
+  sections: EditorSection[]
+  append: RotationNode[]
+  prepWork?: PrepWork | null
+}): EditorSection[] {
+  if (!runtime || append.length === 0) return []
+  const seed = seedRsntById[runtime.id]
+  if (!seed) return []
+  const programSections = appendToMain(editedRotationSections(runtime, sections), append)
+  const items = programSections.flatMap((section) => section.items)
+  const reusableEnvironment = prepWork?.actRt === runtime
+    && prepWork.activeSeed?.id === seed.id
+    && prepWork.enemy === enemy
+    ? prepWork.rotNvrn
+    : null
+  const environment = reusableEnvironment ?? prepareRunEnv(
+    prepareResSimulation(runtime, seed, enemy, runtimesById, targetSelections).context,
+    seed,
+  )
+  const execution = executeRotationProgram(
+    environment,
+    prepareRotationProgram(items),
+    { inspect: true, includeSnapshots: true, captureNodeIds: collectNodeIds(append) },
+  )
+  return projectRun({
+    runtime,
+    seed,
+    runtimesById,
+    targetSelections,
+    enemy,
+    members,
+    itemSections: programSections,
+    execution: {
+      entries: execution.entries,
+      inspection: execution.inspection,
+      prepareMs: 0,
+      executeMs: 0,
+      cacheHit: false,
+    },
+    includeFlatRows: false,
+  }).sections
 }
 
 export function runEditedRotation({

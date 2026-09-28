@@ -122,7 +122,7 @@ export function deriveOptSets(params: {
   const targetDefaults: Partial<OptSets> = {
     targetMode: defaultRotation ? 'combo' : 'skill',
     rotationMode: Boolean(defaultRotation),
-    targetComboSourceId: `${defaultRotation ? 'default' : 'live'}:${runtime.id}`,
+    targetComboSourceId: defaultRotation ? `default:${runtime.id}` : null,
   }
   const targetSkill = listOptTrgt(runtime)[0] ?? null
   if (!targetSkill) {

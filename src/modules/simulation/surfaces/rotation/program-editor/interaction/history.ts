@@ -30,6 +30,7 @@ interface RotationEditHistoryEntry {
   before: RotationEditSnapshot
   after: RotationEditSnapshot
   coalesceKey?: string
+  coalesceAt?: number
 }
 
 export interface RotationEditHistory {
@@ -37,7 +38,7 @@ export interface RotationEditHistory {
   future: RotationEditHistoryEntry[]
 }
 
-/** Hard cap so undo does not keep a full extra tree for every old edit. */
+/** Hard cap on the number of undoable edits. Unchanged nodes are shared. */
 export const PAGE_EDIT_HISTORY_LIMIT = 40
 
 export function emptyRotationEditHistory(): RotationEditHistory {
@@ -81,7 +82,9 @@ export function captureRotationEditSnapshot(
   lastRanAt: number | null = null,
 ): RotationEditSnapshot {
   return {
-    sections: structuredClone(checkinAllLoopPasses(sections)),
+    // Editor mutations are immutable. Share untouched projected nodes across
+    // the bounded undo stack instead of copying every stat line on every edit.
+    sections: checkinAllLoopPasses(sections),
     runsByLoopId: { ...runsByLoopId },
     lastRanAt,
     ...(simulationKey !== undefined ? { simulationKey } : {}),
@@ -113,16 +116,24 @@ export function commitRotationEdit(
   entry: RotationEditHistoryEntry,
 ): RotationEditHistory {
   const previous = history.past.at(-1)
-  if (entry.coalesceKey && previous?.coalesceKey === entry.coalesceKey) {
+  const coalesceAt = Date.now()
+  if (entry.coalesceKey && previous?.coalesceKey === entry.coalesceKey
+    && previous.coalesceAt !== undefined && coalesceAt - previous.coalesceAt <= 500) {
     return {
       past: [
         ...history.past.slice(0, -1),
-        { ...previous, after: entry.after, label: entry.label },
+        { ...previous, after: entry.after, label: entry.label, coalesceAt },
       ],
       future: [],
     }
   }
-  return { past: trimPageEditHistory([...history.past, entry]), future: [] }
+  return {
+    past: trimPageEditHistory([
+      ...history.past,
+      { ...entry, coalesceAt: entry.coalesceKey ? coalesceAt : undefined },
+    ]),
+    future: [],
+  }
 }
 
 export function undoRotationEdit(history: RotationEditHistory): {

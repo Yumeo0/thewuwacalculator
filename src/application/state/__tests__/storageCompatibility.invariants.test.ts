@@ -15,6 +15,9 @@ import { makeAppState, makeResProfile, makeScenarioFromProfiles, mkDefRandGnr } 
 import { listResSds } from '@/data/catalog/resonatorSeedService'
 import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE } from '@/domain/entities/preferences'
 import { projectScenarioWorkspaceProfiles } from '@/engine/runtime/scenarioRuntime'
+import { projectScenarioMemberRuntime } from '@/engine/runtime/scenarioRuntime'
+import { getDefaultRotation } from '@/data/catalog/gameDataService.ts'
+import { migrateAdvancedScenarioRotations } from '@/engine/runtime/advancedRotationMigration.ts'
 import { useAppStore } from '@/application/state/store'
 import {
   APPSTORECMBT,
@@ -107,12 +110,13 @@ describe('persisted state compatibility', () => {
     write.mockRestore()
   })
 
-  it('round-trips preset targets while preserving legacy current-rotation selections', () => {
+  it('round-trips preset targets and discards legacy current-rotation selections', () => {
     const state = makeAppState()
     state.simulation.suggestionsByResonatorId = {
-      '1208': { settings: { targetFeatureId: null, rotationMode: true, rotationSource: 'default' }, random: mkDefRandGnr() },
+      '1208': { settings: { targetFeatureId: null, rotationMode: true }, random: mkDefRandGnr() },
       '1108': { settings: { targetFeatureId: 'damage:1108001', rotationMode: true }, random: mkDefRandGnr() },
     }
+    Object.assign(state.simulation.suggestionsByResonatorId['1208'].settings, { rotationSource: 'current' })
     state.simulation.optimizerSettings = {
       ...state.simulation.optimizerSettings,
       targetMode: 'combo',
@@ -122,9 +126,59 @@ describe('persisted state compatibility', () => {
     saveAppState(state)
 
     const loaded = loadPrssAppS()
-    expect(loaded?.simulation.suggestionsByResonatorId).toEqual(state.simulation.suggestionsByResonatorId)
+    expect(loaded?.simulation.suggestionsByResonatorId['1208'].settings).toEqual({
+      targetFeatureId: null,
+      rotationMode: true,
+    })
     expect(loaded?.simulation.optimizerSettings.targetComboSourceId).toBe('default:1208')
     expect(loaded?.simulation.optimizerSettings.rotationMode).toBe(true)
+  })
+
+  it('uses catalog defaults in place of old compact sequences and omits them from new records', () => {
+    const state = makeAppState()
+    const scenario = selectedCombatScenario(state.combat)
+    const resonatorId = contextScenarioMember(scenario).resonatorId
+    const manual = [{
+      id: 'retired-manual-step', type: 'feature' as const,
+      resonatorId, featureId: 'old-manual-feature', enabled: true, multiplier: 1,
+    }]
+    scenario.program.sequence = manual
+
+    saveAppState(state, { domains: ['combat.workspace'] })
+    const index = JSON.parse(localStorage.getItem(APPSTORECMBTINDEX)!)
+    const manifest = JSON.parse(localStorage.getItem(index.recordsById[scenario.id])!)
+    const raw = localStorage.getItem(manifest.programRecord)!
+    const program = JSON.parse(raw.startsWith('wwcalc-lz1:')
+      ? decompressFromUTF16(raw.slice('wwcalc-lz1:'.length))! : raw)
+    expect(program).not.toHaveProperty('sequence')
+
+    const loaded = selectedCombatScenario(loadPrssAppS()!.combat)
+    const expected = getDefaultRotation(resonatorId)?.items ?? []
+    expect(loaded.program.sequence).toEqual(expected)
+    expect(projectScenarioMemberRuntime(loaded, contextScenarioMember(loaded)).rotation.sequence)
+      .toEqual(expected)
+    expect(loaded.program.program).toEqual(scenario.program.program)
+  })
+
+  it('retains old advanced sequence content until it is archived', () => {
+    const state = makeAppState()
+    const scenario = selectedCombatScenario(state.combat)
+    const advanced = [{
+      id: 'old-advanced-condition', type: 'condition' as const,
+      changes: [{ type: 'set' as const, path: 'runtime.test', value: 1 }],
+    }]
+    scenario.program.sequence = advanced
+    saveAppState(state, { domains: ['combat.workspace'] })
+
+    const loaded = loadPrssAppS()!
+    const restored = selectedCombatScenario(loaded.combat)
+    expect(restored.program.sequence).toEqual(advanced)
+    expect(projectScenarioMemberRuntime(restored, contextScenarioMember(restored)).rotation.sequence)
+      .toEqual(getDefaultRotation(contextScenarioMember(restored).resonatorId)?.items ?? [])
+    const archived = migrateAdvancedScenarioRotations(loaded.library, loaded.combat)
+    expect(archived.migrations).toHaveLength(1)
+    expect(archived.migrations[0].savedRotation.scenario.program.program).toEqual(advanced)
+    expect(archived.combat.scenariosById[restored.id].program.program).toEqual(restored.program.program)
   })
 
   it('edits a reloaded getter-backed scenario through the runtime store and persists the change', () => {

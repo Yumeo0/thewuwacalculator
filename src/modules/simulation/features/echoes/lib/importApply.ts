@@ -10,6 +10,8 @@ import type { ParsedBuildScreenshot } from '@/engine/echoParser/ocrParsing.ts'
 import { getWpnById } from '@/data/catalog/weaponCatalogService.ts'
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
 import { normResRtCnt } from '@/engine/gameData/controlOptions.ts'
+import { setResRtSequence } from '@/engine/gameData/resonatorMax.ts'
+import { getResDtlsBy } from '@/data/gameData/resonators/resonatorDataStore.ts'
 import { clampNumber } from '@/shared/lib/number.ts'
 import {
   setResLvl,
@@ -50,13 +52,13 @@ export function cntImprtVls(read: ParsedBuildScreenshot, bands: ImportBands): nu
 function applyResonator(prev: ResRuntime, read: ParsedBuildScreenshot): ResRuntime {
   let next = prev
 
-  if (read.resonator.level !== null) {
-    next = setResLvl(next, read.resonator.level)
-  }
-
   const sequence = clampNumber(Math.round(read.resonator.sequence), 0, 6)
   if (sequence !== next.base.sequence) {
-    next = { ...next, base: { ...next.base, sequence } }
+    next = setResRtSequence(next, getResDtlsBy()[next.id], sequence)
+  }
+
+  if (read.resonator.level !== null) {
+    next = setResLvl(next, read.resonator.level)
   }
 
   for (const key of CARD_SKILLS) {

@@ -11,7 +11,7 @@ import type { ResRuntime } from '@/domain/entities/runtime.ts'
 import type { ResModeGroup } from '@/domain/entities/resonator.ts'
 import { getResModeGroups } from '@/domain/gameData/resonatorStateGraph.ts'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
-import { LiquidSelect } from '@/application/ui/LiquidSelect.tsx'
+import { Select } from '@/application/ui/Select'
 import { ModeGlyph } from '@/modules/simulation/features/controls/ModeGlyph.tsx'
 import { NumberInput } from '@/modules/simulation/features/controls/NumberInput.tsx'
 import { getStateText } from '@/modules/simulation/model/sourceStateDisplay.ts'
@@ -36,6 +36,7 @@ interface SrcSttCntrPr {
   teamTgtSlct?: ReactNode
   hideDscr?: boolean
   dscrPrms?: Array<string | number>
+  cellOwnsClick?: boolean
 }
 
 // renders the control for each resonator source state and wires into the runtime update helpers.
@@ -93,6 +94,7 @@ export function SourceStateCtrl({
   teamTgtSlct: teamTrgtSlct,
   hideDscr: hideDscr,
   dscrPrms: dscrPrms,
+  cellOwnsClick = false,
 }: SrcSttCntrPr) {
   const current = readRtPath(trgtRt, state.path)
   const isEnabled = isSrcSttOn(srcRt, trgtRt, state, actRt)
@@ -106,18 +108,20 @@ export function SourceStateCtrl({
 
   if (state.kind === 'toggle') {
     const checked = toBoolean(resolvedValue)
+    const ToggleRow = cellOwnsClick ? 'div' : 'label'
     return (
       <div className={['stack', 'state-control-field', !isEnabled ? 'is-disabled' : ''].join(' ')}>
         {teamTrgtSlct}
-        <label className={['toggle-row', checked ? 'is-active' : '', !isEnabled ? 'is-disabled' : ''].filter(Boolean).join(' ')}>
+        <ToggleRow className={['toggle-row', checked ? 'is-active' : '', !isEnabled ? 'is-disabled' : ''].filter(Boolean).join(' ')}>
           <span>{display.label}</span>
           <input
             type="checkbox"
+            aria-label={cellOwnsClick ? display.label : undefined}
             checked={checked}
             disabled={!isEnabled}
             onChange={(event) => setSourceState(onRtPdt, srcRt, trgtRt, state, event.target.checked, actRt)}
           />
-        </label>
+        </ToggleRow>
         {!hideDscr && display.description ? (
           <RichDscr
             description={display.description}
@@ -211,7 +215,7 @@ export function SourceStateCtrl({
         {teamTrgtSlct}
         <label className={[isActive ? 'is-active' : '', !isEnabled ? 'is-disabled' : ''].filter(Boolean).join(' ') || undefined}>
           {display.label}
-          <LiquidSelect
+          <Select
             value={selVl}
             options={selPtns.map((option) => ({
               value: option.id,

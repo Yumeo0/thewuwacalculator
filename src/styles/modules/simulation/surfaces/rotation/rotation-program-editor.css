@@ -226,7 +226,7 @@
   flex: none;
 }
 
-.rte-append .liquid-select__trigger {
+.rte-append .app-select__trigger {
   justify-content: center;
   width: 1.62rem;
   min-width: 0;
@@ -241,20 +241,20 @@
   transition: color 140ms ease, background 140ms ease;
 }
 
-.rte-append .liquid-select__trigger:is(:hover, :focus-visible) {
+.rte-append .app-select__trigger:is(:hover, :focus-visible) {
   border-color: transparent;
   box-shadow: none;
   color: var(--text);
   background: color-mix(in srgb, var(--text) 8%, var(--c-transparent));
 }
 
-.rte-append.liquid-select.open .liquid-select__trigger {
+.rte-append.app-select.open .app-select__trigger {
   border-color: color-mix(in srgb, var(--accent) 38%, var(--c-transparent));
   background: color-mix(in srgb, var(--accent) 11%, var(--c-transparent));
   color: color-mix(in srgb, var(--accent) 72%, var(--text));
 }
 
-.rte-append .liquid-select__trigger:disabled {
+.rte-append .app-select__trigger:disabled {
   opacity: 0.42;
   cursor: default;
 }
@@ -3680,21 +3680,13 @@ button.rte-bnd:focus-visible .rte-bnd__nm,
 
 
 .rte-cselect {
-  --liquid-select-accent: var(--rte-res);
-  --liquid-select-radius: 0.35rem;
-  --liquid-select-text: var(--text);
-  --liquid-select-input-border: var(--rte-line-strong);
+  --select-accent: var(--rte-res);
+  --select-text: var(--text);
+  --select-line: var(--rte-line-strong);
 }
 
-.rte-cselect .liquid-select__trigger {
+.rte-cselect .app-select__trigger {
   min-width: 0;
-  padding: 0.3rem 0.4rem 0.3rem 0.55rem;
-  background: var(--surface);
-}
-
-.rte-cselect .liquid-select__trigger:is(:hover, :focus-visible),
-.rte-cselect.open .liquid-select__trigger {
-  background: color-mix(in srgb, var(--rte-res) 8%, var(--surface));
 }
 
 .rte-cwrite {

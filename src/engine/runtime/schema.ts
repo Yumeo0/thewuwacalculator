@@ -40,6 +40,7 @@ function stripLegacyMainMode(value: unknown): unknown {
 
   const rest = { ...value as Record<string, unknown> }
   delete rest.mainMode
+  if (rest.leftPaneView === 'rotations') rest.leftPaneView = 'resonators'
   return rest
 }
 
@@ -612,11 +613,15 @@ const teamMemRtSch = z.lazy(() => z.strictObject({
 }))
 
 // resonator suggestion settings
-const suggSetsSchm = z.lazy(() => z.strictObject({
+const suggSetsSchm = z.lazy(() => z.pipe(z.transform((value) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value
+  const settings = { ...value as Record<string, unknown> }
+  delete settings.rotationSource
+  return settings
+}), z.strictObject({
   targetFeatureId: z._default(z.nullable(z.string()), null),
   rotationMode: z._default(z.boolean(), false),
-  rotationSource: z.optional(z.enum(['default', 'current'])),
-}))
+})))
 
 // random suggestion set preference
 const randGnrtSetP = z.lazy(() => z.strictObject({
@@ -1215,7 +1220,6 @@ const uiPersistSchema = z.strictObject({
     'enemy',
     'weapon',
     'teams',
-    'rotations',
     'suggestions',
   ]),
   suggsViewMode: z._default(z.enum(['mainStats', 'setPlans', 'weapons', 'random', 'substats']), 'mainStats'),

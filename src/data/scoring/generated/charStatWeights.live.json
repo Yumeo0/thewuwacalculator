@@ -345,6 +345,26 @@
       "resonanceLiberation": 0.2382,
       "resonanceSkill": 0.3221
     },
+    "1311": {
+      "atkFlat": 0.5188,
+      "atkPercent": 0.6319,
+      "basicAtk": 0.0617,
+      "critDmg": 1,
+      "critRate": 0.5726,
+      "electro": 1,
+      "energyRegen": 1,
+      "resonanceSkill": 0.5401
+    },
+    "1312": {
+      "atkFlat": 0.6624,
+      "atkPercent": 0.8068,
+      "basicAtk": 0.579,
+      "critDmg": 1,
+      "critRate": 0.9087,
+      "electro": 1,
+      "energyRegen": 1,
+      "resonanceLiberation": 0.1429
+    },
     "1402": {
       "aero": 1,
       "atkFlat": 0.6526,

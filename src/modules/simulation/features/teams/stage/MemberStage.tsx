@@ -78,7 +78,8 @@ import { useTstStr } from '@/shared/util/toastStore.ts'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
 import { useCtxBuilder } from '@/modules/simulation/shell/context-menu/useContextMenuBuilder.ts'
 import { SourceStateCtrl } from '@/modules/simulation/features/controls/SourceStateControl.tsx'
-import { LiquidSelect } from '@/application/ui/LiquidSelect.tsx'
+import { SourceStateCell } from '@/modules/simulation/features/controls/SourceStateCell.tsx'
+import { Select } from '@/application/ui/Select'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
 import { Expandable } from '@/shared/ui/Expandable.tsx'
 import { spriteVars, type ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
@@ -451,12 +452,25 @@ function stateIsLive(rt: ResRuntime, state: SourceState, actRt: ResRuntime): boo
   return num > (state.min ?? 0)
 }
 
-function StateCell({ active, children }: { active?: boolean; children: ReactNode }) {
+function StateCell({ active, state, runtime, actRt, onRtPdt, children }: {
+  active?: boolean
+  state: SourceState
+  runtime: ResRuntime
+  actRt: ResRuntime
+  onRtPdt: RtUpdHnd
+  children: ReactNode
+}) {
   return (
-    <div className={`mcc-cell${active ? ' is-linked' : ''}`}>
+    <SourceStateCell
+      className={`mcc-cell${active ? ' is-linked' : ''}`}
+      state={state}
+      runtime={runtime}
+      actRt={actRt}
+      onRtPdt={onRtPdt}
+    >
       <span className="mcc-cell-port" aria-hidden="true" />
       {children}
-    </div>
+    </SourceStateCell>
   )
 }
 
@@ -860,7 +874,7 @@ function ResonatorView({
     return (
       <label className="team-state-target">
         Routes to
-        <LiquidSelect
+        <Select
           value={selected}
           options={options}
           disabled={options.length <= 1}
@@ -1891,13 +1905,14 @@ function ResonatorView({
                       {section.states.length > 0 ? (
                         <div className="mcc-state-gallery">
                           {section.states.map((state) => (
-                            <StateCell key={state.controlKey} active={stateIsLive(runtime, state, actRt)}>
+                            <StateCell key={state.controlKey} active={stateIsLive(runtime, state, actRt)} state={state} runtime={runtime} actRt={actRt} onRtPdt={cscdRtUpd}>
                               <SourceStateCtrl
                                 srcRt={runtime}
                                 tgtRt={runtime}
                                 actRt={actRt}
                                 state={state}
                                 onRtPdt={cscdRtUpd}
+                                cellOwnsClick
                                 teamTgtSlct={mkRouting(state)}
                                 dscrPrms={isWpnSection ? pssvPrms : undefined}
                               />
@@ -2180,13 +2195,14 @@ function ResonatorView({
                     </div>
                     <div className="mcc-state-gallery">
                       {mainEchoStates.map((state) => (
-                        <StateCell key={state.controlKey}>
+                        <StateCell key={state.controlKey} state={state} runtime={runtime} actRt={actRt} onRtPdt={cscdRtUpd}>
                           <SourceStateCtrl
                             srcRt={runtime}
                             tgtRt={runtime}
                             actRt={actRt}
                             state={state}
                             onRtPdt={cscdRtUpd}
+                            cellOwnsClick
                             teamTgtSlct={mkRouting(state)}
                             hideDscr
                           />
@@ -2265,13 +2281,14 @@ function ResonatorView({
                           {setStates.length > 0 ? (
                             <div className="mcc-state-gallery">
                               {setStates.map((state) => (
-                                <StateCell key={state.controlKey}>
+                                <StateCell key={state.controlKey} state={state} runtime={runtime} actRt={actRt} onRtPdt={cscdRtUpd}>
                                   <SourceStateCtrl
                                     srcRt={runtime}
                                     tgtRt={runtime}
                                     actRt={actRt}
                                     state={state}
                                     onRtPdt={cscdRtUpd}
+                                    cellOwnsClick
                                     teamTgtSlct={mkRouting(state)}
                                   />
                                 </StateCell>

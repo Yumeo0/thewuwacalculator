@@ -13,7 +13,7 @@ import { MAX_RES_LVL } from '@/engine/runtime/defaults'
 import type { EchoDef } from '@/domain/entities/catalog'
 import { getSntSetIco } from '@/data/gameData/catalog/sonataSets'
 import { getEchoSetCn, getEchoSetDe, type SetDef } from '@/data/gameData/echoSets/effects'
-import { LiquidSelect } from '@/application/ui/LiquidSelect'
+import { Select } from '@/application/ui/Select'
 import { StepScrubber } from '@/shared/ui/StepScrubber'
 import { NumberInput } from '@/modules/simulation/features/controls/NumberInput'
 import type { SrcOwnScp, SourceState } from '@/domain/gameData/contracts'
@@ -909,7 +909,7 @@ function OptRtCard({
             <span className="co-bar__sep" />
             <div className="co-topbar-field">
               <span className="co-topbar-field__label">Sequence</span>
-              <LiquidSelect
+              <Select
                 value={sequence}
                 options={sqncPtns}
                 onChange={(value) => {
@@ -998,7 +998,7 @@ function OptRtCard({
               )}
               <div className="co-topbar-field">
                 <span className="co-topbar-field__label">Rank</span>
-                <LiquidSelect
+                <Select
                   value={weaponRank}
                   options={rankOptions}
                   onChange={(value) => {

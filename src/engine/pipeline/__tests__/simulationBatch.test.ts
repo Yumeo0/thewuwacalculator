@@ -37,6 +37,20 @@ describe('simulation batch runner', () => {
     expect(executions).toBe(1)
   })
 
+  it('does not retain completed results when the cache limit is zero', async () => {
+    let executions = 0
+    const runner = new SimulationBatchRunner<number, number>(
+      (value) => { executions += 1; return value },
+      1,
+      0,
+    )
+    const job = [{ id: 'detail', key: 'detail', input: 1 }]
+
+    expect((await runner.run(job)).get('detail')).toBe(1)
+    expect((await runner.run(job)).get('detail')).toBe(1)
+    expect(executions).toBe(2)
+  })
+
   it('does not schedule host yields for an already asynchronous executor', async () => {
     const timeout = vi.spyOn(globalThis, 'setTimeout')
     try {

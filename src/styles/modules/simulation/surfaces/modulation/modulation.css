@@ -538,6 +538,15 @@
   transition: background 220ms ease;
 }
 
+.pgs-cell[role='button'] {
+  cursor: pointer;
+}
+
+.pgs-cell[role='button']:focus-visible {
+  outline: 2px solid var(--mcc-accent);
+  outline-offset: 2px;
+}
+
 
 .pgs-cell::before {
   content: '';

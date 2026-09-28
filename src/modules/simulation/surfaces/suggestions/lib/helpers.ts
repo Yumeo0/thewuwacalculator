@@ -7,8 +7,7 @@
 import type { SimResult } from '@/engine/pipeline/types.ts'
 import { isOptDmgSkll } from '@/engine/optimizer/rules/eligibility.ts'
 import type { OptDamageEligibilityOptions as DmgEligOpts } from '@/engine/optimizer/rules/eligibility.ts'
-import { ROT_TGT_VL } from '@/modules/simulation/surfaces/suggestions/lib/suggestions.ts'
-import type { SelectGroup, SelectOption } from '@/application/ui/LiquidSelect.tsx'
+import type { SelectGroup, SelectOption } from '@/application/ui/Select'
 import { ROT_SKILL_TABS, getSkillTabLabel } from '@/modules/simulation/model/skillTabs.ts'
 import { getDefaultRotation } from '@/data/catalog/gameDataService.ts'
 import type { SuggSets } from '@/domain/entities/suggestions.ts'
@@ -17,16 +16,15 @@ export const DEFAULT_ROTATION_TARGET = '__default_rotation__'
 
 export function suggestionTargetValue(settings: SuggSets): string {
   return settings.rotationMode
-    ? settings.rotationSource === 'default' ? DEFAULT_ROTATION_TARGET : ROT_TGT_VL
+    ? DEFAULT_ROTATION_TARGET
     : settings.targetFeatureId ?? ''
 }
 
 export function selectSuggestionTarget(settings: SuggSets, value: string): SuggSets {
-  const rotationMode = value === DEFAULT_ROTATION_TARGET || value === ROT_TGT_VL
+  const rotationMode = value === DEFAULT_ROTATION_TARGET
   return {
     ...settings,
     rotationMode,
-    rotationSource: value === DEFAULT_ROTATION_TARGET ? 'default' : 'current',
     targetFeatureId: rotationMode ? settings.targetFeatureId : value,
   }
 }
@@ -65,24 +63,10 @@ export function targetOpts(
     ? [{ value: DEFAULT_ROTATION_TARGET, label: 'Default Rotation' }]
     : []
 
-  if ((simulation?.rotation.sequence.entries ?? []).some((entry) => (
-    entry.resonatorId === runtimeId &&
-    entry.aggregationType === 'damage' &&
-    isOptDmgSkll(entry.skill, options)
-  ))) {
-    return [
-      ...defaults,
-      ...direct,
-      { value: ROT_TGT_VL, label: 'Total Rotation DMG' },
-    ]
-  }
-
   return [...defaults, ...direct]
 }
 
-// bucket the flat target list into skill-tab groups (matching the optimizer's
-// grouped dropdown). targets without a tab; e.g. Total Rotation DMG, fall
-// into a "Rotation" group, led by the default preset when one is available.
+// Preserve skill-tab ordering and place targets without a skill tab in Rotation.
 export function targetGroups(options: SuggTgtPtn[]): SelectGroup<string>[] {
   const grouped = new Map<string, SelectOption<string>[]>()
   const extras: SelectOption<string>[] = []

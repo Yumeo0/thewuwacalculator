@@ -28,6 +28,21 @@ import {
 import { cloneOptInventorySelection } from '@/domain/entities/profile'
 import { cloneSntSet } from '@/domain/entities/sonataSetConditionals'
 import { normResRtCnt } from '@/engine/gameData/controlOptions'
+import { getDefaultRotation } from '@/data/catalog/gameDataService.ts'
+import type { RotationNode } from '@/domain/gameData/contracts.ts'
+
+const defaultRotationByProgram = new WeakMap<CombatScenario['program'], Map<string, ResRuntime['rotation']>>()
+const EMPTY_ROTATION: RotationNode[] = []
+function projectedRotation(program: CombatScenario['program'], resonatorId: string): ResRuntime['rotation'] {
+  let byResonator = defaultRotationByProgram.get(program)
+  if (!byResonator) defaultRotationByProgram.set(program, byResonator = new Map())
+  const sequence = getDefaultRotation(resonatorId)?.items ?? EMPTY_ROTATION
+  const previous = byResonator.get(resonatorId)
+  if (previous?.sequence === sequence) return previous
+  const rotation = { ...program, sequence }
+  byResonator.set(resonatorId, rotation)
+  return rotation
+}
 
 export function scenarioTeamSlots(scenario: CombatScenario): TeamSlots {
   return [
@@ -92,10 +107,11 @@ export function projectScenarioMemberRuntime(
     .slice(0, 2)
     .map((candidate) => compactMember(scenario, candidate))
   const teamRuntimes: ResRuntime['teamRuntimes'] = [teammates[0] ?? null, teammates[1] ?? null]
+  const rotation = projectedRotation(scenario.program, member.resonatorId)
   if (previous && previous.build.team === stableTeam
     && previous.state.manualBuffs === manualBuffs
     && previous.state.combat === scenario.environment.combatState
-    && previous.rotation === scenario.program
+    && previous.rotation === rotation
     && teamRuntimes.every((runtime, index) => runtime === previous.teamRuntimes[index])) return previous
 
   const runtime: ResRuntime = {
@@ -111,7 +127,7 @@ export function projectScenarioMemberRuntime(
       manualBuffs,
       combat: scenario.environment.combatState,
     },
-    rotation: scenario.program,
+    rotation,
     teamRuntimes,
   }
   runtimeByMember.set(member, runtime)
@@ -289,7 +305,7 @@ export function projectScenarioMemberProfile(
         selectedTargetsByOwnerKey: { ...routing },
       },
       team: scenarioTeamSlots(scenario),
-      rotation: cloneRotation(scenario.program),
+      rotation: cloneRotation(runtime.rotation),
       teamRuntimes: runtime.teamRuntimes,
     },
   } satisfies ResProf

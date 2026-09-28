@@ -40,7 +40,7 @@ const LEGACY_LEFT: Record<string, UiState['leftPaneView']> = {
   enemies: 'enemy',
   weapon: 'weapon',
   teams: 'teams',
-  rotations: 'rotations',
+  rotations: 'resonators',
   suggestions: 'suggestions',
 }
 

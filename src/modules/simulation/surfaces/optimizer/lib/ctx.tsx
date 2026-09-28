@@ -4,7 +4,7 @@
                by the split optimizer controls, result panes, and menus.
 */
 
-import type { SelectOption, SelectGroup } from '@/application/ui/LiquidSelect'
+import type { SelectOption, SelectGroup } from '@/application/ui/Select'
 import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
 import { Cpu, Crosshair, Eraser, Image as ImageIcon, Play, Square, SquareArrowUpRight as SqrRrwUpRght } from 'lucide-react'
 

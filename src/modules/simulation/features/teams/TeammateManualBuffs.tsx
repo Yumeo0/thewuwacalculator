@@ -25,7 +25,7 @@ import { getResonatorById as getResById } from '@/data/catalog/catalogService.ts
 import { resolveSkill } from '@/engine/pipeline/resolveSkill.ts'
 import { getEchoStatI } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
 import { NumberInput } from '@/modules/simulation/features/controls/NumberInput.tsx'
-import { LiquidSelect } from '@/application/ui/LiquidSelect.tsx'
+import { Select } from '@/application/ui/Select'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import type { RtUpdHnd } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
 import { BuffPresetModal } from '@/modules/simulation/features/buffs/BuffPresetModal.tsx'
@@ -248,7 +248,7 @@ export function TeammateManualBuffs({ runtime, onRtPdt }: { runtime: ResRuntime;
     // effect controls below decide which numeric field inside that bucket moves.
     const scopeSelect = modField(
       'Scope',
-      <LiquidSelect
+      <Select
         value={modifier.scope}
         options={DVNCSCPPTNS}
         onChange={(value) => updateMod(modifier.id, (current) => changeModScope(current, value as MnlModScp))}
@@ -261,7 +261,7 @@ export function TeammateManualBuffs({ runtime, onRtPdt }: { runtime: ResRuntime;
           {scopeSelect}
           {modField(
             'Element',
-            <LiquidSelect
+            <Select
               value={modifier.attribute}
               options={DVNCTTRBPTNS}
               onChange={(value) => updateMod(modifier.id, (current) => setAttribute(current, value as AttributeKey | 'all'))}
@@ -277,7 +277,7 @@ export function TeammateManualBuffs({ runtime, onRtPdt }: { runtime: ResRuntime;
           {scopeSelect}
           {modField(
             'Skill type',
-            <LiquidSelect
+            <Select
               value={modifier.skillType}
               options={ADV_SKILL_TYPES}
               onChange={(value) => updateMod(modifier.id, (current) => setSkillType(current, value as SkillTypeKey))}
@@ -300,7 +300,7 @@ export function TeammateManualBuffs({ runtime, onRtPdt }: { runtime: ResRuntime;
           {scopeSelect}
           {modField(
             'Match by',
-            <LiquidSelect
+            <Select
               value={modifier.matchMode}
               options={ADV_SKILL_MATCH}
               onChange={(value) =>
@@ -312,7 +312,7 @@ export function TeammateManualBuffs({ runtime, onRtPdt }: { runtime: ResRuntime;
           )}
           {modField(
             modifier.matchMode === 'skillId' ? 'Skill' : modifier.matchMode === 'tab' ? 'Tab' : 'Skill type',
-            <LiquidSelect
+            <Select
               value={targetValue}
               options={targetOptions}
               onChange={(value) => updateMod(modifier.id, (current) => setSkillTarget(current, value))}
@@ -331,7 +331,7 @@ export function TeammateManualBuffs({ runtime, onRtPdt }: { runtime: ResRuntime;
         <>
           {modField(
             'Stat',
-            <LiquidSelect
+            <Select
               value={modifier.stat}
               options={DVNCBASESTAT}
               onChange={(value) => updateMod(modifier.id, (current) => setBaseStat(current, value as MnlBaseStatK))}
@@ -339,7 +339,7 @@ export function TeammateManualBuffs({ runtime, onRtPdt }: { runtime: ResRuntime;
           )}
           {modField(
             'Field',
-            <LiquidSelect
+            <Select
               value={modifier.field}
               options={DVNCBASESTuv}
               onChange={(value) => updateMod(modifier.id, (current) => setBaseField(current, value as 'flat' | 'percent'))}
@@ -355,7 +355,7 @@ export function TeammateManualBuffs({ runtime, onRtPdt }: { runtime: ResRuntime;
         <>
           {modField(
             'Stat',
-            <LiquidSelect
+            <Select
               value={modifier.stat}
               options={DVNCTOPSTATP}
               onChange={(value) => updateMod(modifier.id, (current) => setTopStat(current, value as MnlTopStatKe))}
@@ -371,7 +371,7 @@ export function TeammateManualBuffs({ runtime, onRtPdt }: { runtime: ResRuntime;
         <>
           {modField(
             'Modifier',
-            <LiquidSelect
+            <Select
               value={modifier.mod}
               options={MOD_VL_PTNS}
               onChange={(value) => updateMod(modifier.id, (current) => setElementMod(current, value as MnlModVlKey))}
@@ -387,7 +387,7 @@ export function TeammateManualBuffs({ runtime, onRtPdt }: { runtime: ResRuntime;
         <>
           {modField(
             'Effect',
-            <LiquidSelect
+            <Select
               value={modifier.negativeEffect}
               options={NEG_EFFECT_OPTS}
               onChange={(value) => updateMod(modifier.id, (current) => setNegEffect(current, value as NegEffectKey))}
@@ -395,7 +395,7 @@ export function TeammateManualBuffs({ runtime, onRtPdt }: { runtime: ResRuntime;
           )}
           {modField(
             'Modifier',
-            <LiquidSelect
+            <Select
               value={modifier.mod}
               options={NEG_EFFECT_MODS}
               onChange={(value) =>
@@ -412,7 +412,7 @@ export function TeammateManualBuffs({ runtime, onRtPdt }: { runtime: ResRuntime;
       <>
         {modField(
           'Modifier',
-          <LiquidSelect
+          <Select
             value={getSkllModPt(modifier)}
             options={SKLLMODPTNS}
             onChange={(value) => updateMod(modifier.id, (current) => applySkillMod(current, value))}
@@ -434,7 +434,7 @@ export function TeammateManualBuffs({ runtime, onRtPdt }: { runtime: ResRuntime;
         {modifier.effect === 'scalar'
           ? modField(
               'Field',
-              <LiquidSelect
+              <Select
                 value={modifier.field}
                 options={SKLLSCLRPTNS}
                 onChange={(value) => updateMod(modifier.id, (current) => setSkillScalarField(current, value as MnlSkllSclrK))}

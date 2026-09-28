@@ -19,8 +19,6 @@ import { formatTruncCompact } from '@/shared/lib/number.ts'
 export type { SuggsViewMod } from '@/domain/entities/suggestions.ts'
 export { runtimeSig } from '@/engine/runtime/runtimeSignature.ts'
 
-export const ROT_TGT_VL = '__rotation__'
-
 export const DEFRANDSETS: RandGnrtSets = {
   bias: 0.5,
   rollQuality: 0.3,

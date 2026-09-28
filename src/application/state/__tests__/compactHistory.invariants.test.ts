@@ -4,11 +4,17 @@
                capacity limits, and immutable-branch preservation across undo and redo.
 */
 
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/application/state/store'
 import { consumePersist } from '@/application/persistence/storage'
 import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
-import { applyHistoryEntry, makeHistoryEntry } from '@/application/state/history'
+import {
+  applyHistoryEntry,
+  makeHistoryEntry,
+  queueHistoryCompaction,
+  retainQueuedHistoryCompactions,
+  type PrssHistEnt,
+} from '@/application/state/history'
 import { selectPersisted } from '@/application/state/serialization'
 import { compressToUTF16 } from 'lz-string'
 
@@ -107,5 +113,44 @@ describe('compact global history', () => {
     expect(useAppStore.getState().history.future).toHaveLength(1)
     useAppStore.getState().commitAppearanceConfig((ui) => ({ ...ui, entranceAnimations: !ui.entranceAnimations }))
     expect(useAppStore.getState().history.future).toHaveLength(0)
+  })
+
+  it('does not send evicted undo entries to the compression worker', () => {
+    vi.useFakeTimers()
+    vi.stubGlobal('requestIdleCallback', undefined)
+    const posted: unknown[] = []
+    const workers: WorkerStub[] = []
+    class WorkerStub {
+      constructor() { workers.push(this) }
+      onmessage: ((event: MessageEvent<{ packed: string | null }>) => void) | null = null
+      onerror: ((event: ErrorEvent) => void) | null = null
+      postMessage(value: unknown) { posted.push(value) }
+      terminate() {}
+    }
+    vi.stubGlobal('Worker', WorkerStub)
+    try {
+      const entry = (label: string): PrssHistEnt => ({
+        label,
+        domains: ['combat.workspace'],
+        changes: Array.from({ length: 101 }, (_, index) => ({
+          path: ['combat', index],
+          before: index,
+          after: index + 1,
+          beforeExists: true,
+          afterExists: true,
+        })),
+      })
+      const evicted = entry('evicted')
+      const retained = entry('retained')
+      queueHistoryCompaction(evicted)
+      queueHistoryCompaction(retained)
+      retainQueuedHistoryCompactions({ past: [retained], future: [] })
+      vi.runOnlyPendingTimers()
+      expect(posted).toEqual([retained.changes])
+      workers[0]?.onmessage?.({ data: { packed: null } } as MessageEvent<{ packed: string | null }>)
+    } finally {
+      vi.unstubAllGlobals()
+      vi.useRealTimers()
+    }
   })
 })

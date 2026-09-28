@@ -41,7 +41,7 @@ describe('default rotation targets', () => {
     renderToStaticMarkup(createElement(Probe))
     expect(runtime.rotation.sequence).toEqual([])
     expect(getDefaultRotation(runtime.id)).toEqual(preset)
-    expect(suggestionTargetValue({ rotationMode: true, targetFeatureId: null })).toBe('__rotation__')
+    expect(suggestionTargetValue({ rotationMode: true, targetFeatureId: null })).toBe(DEFAULT_ROTATION_TARGET)
   })
 
   it.each(['1208', '1405', '1106', '1303'])('derives the preset or existing skill fallback for %s', (id) => {
@@ -54,7 +54,7 @@ describe('default rotation targets', () => {
     const hasDefault = id === '1208'
     expect(options[0].value === DEFAULT_ROTATION_TARGET).toBe(hasDefault)
     expect(settings.rotationMode).toBe(hasDefault)
-    expect(settings.targetComboSourceId).toBe(`${hasDefault ? 'default' : 'live'}:${id}`)
+    expect(settings.targetComboSourceId).toBe(hasDefault ? `default:${id}` : null)
     expect(settings.targetSkillId).toBeTruthy()
     expect(targetOpts(id, null)).toEqual([])
   })

@@ -10,10 +10,6 @@ import type { SimResult } from '@/engine/pipeline/types'
 import { Resonator } from '@/modules/simulation/features/resonator/Pane.tsx'
 import AppLdrVrly from '@/shared/ui/AppLoaderOverlay'
 
-const LazyRotPane = lazy(async () => ({
-  default: (await import('@/modules/simulation/surfaces/rotation/sequence-editor/Pane.tsx')).RotationSequenceEditor,
-}))
-
 const LazyCalcBffs = lazy(async () => ({
   default: (await import('@/modules/simulation/features/buffs/BuffsPane.tsx')).BuffsPane,
 }))
@@ -138,18 +134,6 @@ export function Left({
         <LazyCalcTmsP
           runtime={runtime}
           prtcRntmById={partRntmById}
-          onRtPdt={onRtPdt}
-        />
-      </Suspense>
-    )
-  }
-
-  if (view === 'rotations') {
-    return (
-      <Suspense fallback={<LeftPaneLdr text="Loading rotations..." />}>
-        <LazyRotPane
-          runtime={runtime}
-          simulation={simulation}
           onRtPdt={onRtPdt}
         />
       </Suspense>

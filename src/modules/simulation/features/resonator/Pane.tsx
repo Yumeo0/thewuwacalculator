@@ -13,9 +13,10 @@ import {useAppStore} from '@/application/state'
 import {setResLvl, setSkllLvl, tglTrcNd} from '@/modules/simulation/features/resonator/lib/buildEdits'
 import {RichDscr} from '@/modules/simulation/ui/RichDescription'
 import {Tooltip} from '@/shared/ui/Tooltip'
-import {LiquidSelect} from '@/application/ui/LiquidSelect'
+import {Select} from '@/application/ui/Select'
 import {getResNumMax, normResCntrOpt, normResRtCnt} from '@/engine/gameData/controlOptions'
-import {isResRtMaxed, maxResRt, setResRtSequence} from '@/engine/gameData/resonatorMax'
+import {setResRtSequence} from '@/engine/gameData/resonatorMax'
+import {isRuntimeMaxed, maxRuntime} from '@/engine/runtime/maxRuntime'
 import {
   getResChainControls,
   getResInherentControls,
@@ -390,7 +391,7 @@ export function Resonator({
         <div key={control.key} className={['state-control-field', isDisabled ? 'is-disabled' : ''].filter(Boolean).join(' ')}>
           <label className={['state-control-desc toggle-row', options?.className, isActive ? 'is-active' : '', isDisabled ? 'is-disabled' : ''].filter(Boolean).join(' ')}>
             {control.label}
-            <LiquidSelect
+            <Select
               value={selectValue}
               disabled={isDisabled}
               options={optionsList.map((option) => ({
@@ -463,14 +464,14 @@ export function Resonator({
   }
 
   const handleMax = () => {
-    onRtPdt((prev) => maxResRt(prev, details, { targetSequence: prev.base.sequence }))
+    onRtPdt((prev) => maxRuntime(prev))
   }
 
   const looseCtrls = details
     ? getLooseResCtrls(details).filter((control) => getCntrVsbl(control))
     : []
 
-  const maxedSkills = isResRtMaxed(runtime, details)
+  const maxedSkills = useMemo(() => isRuntimeMaxed(runtime, maxRuntime(runtime)), [runtime])
 
   const mdlPrtlTgt = mainPortal()
 

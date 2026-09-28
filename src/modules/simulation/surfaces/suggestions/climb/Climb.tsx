@@ -11,7 +11,7 @@ import type { WeaponPlanSet } from '@/domain/entities/suggestions.ts'
 import type { SntSetConds } from '@/domain/entities/sonataSetConditionals.ts'
 import { formatCompactNum, formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import { statIconSrc } from '@/modules/simulation/workspace/ui.tsx'
-import { LiquidSelect, type SelectGroup } from '@/application/ui/LiquidSelect.tsx'
+import { Select, type SelectGroup } from '@/application/ui/Select'
 import { getDiffLabel, getDiffTone } from '../lib/suggestions.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
 import {
@@ -352,7 +352,7 @@ export function Climb({
 
       <div className="clb__main">
         <div className="clb__head">
-          <LiquidSelect<string> className="clb__tgt"
+          <Select<string> className="clb__tgt"
             value={targetValue}
             options={[]}
             groups={targetGroups}

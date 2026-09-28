@@ -42,6 +42,8 @@ const rotationEditorSessionStore = createStore<RotationEditorSessionState>(() =>
   byOwnerId: {},
   generationByOwnerId: {},
 }))
+const mountedOwners = new Map<string, number>()
+const dormantTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
 export function getRotationEditorSession(ownerId: string): RotationEditorSession | null {
   return rotationEditorSessionStore.getState().byOwnerId[ownerId] ?? null
@@ -129,6 +131,9 @@ export function updateRotationEditorSession(
  * load and a same-owner replacement both seed from the incoming scenario.
  */
 export function clearRotationEditorSession(ownerId: string): void {
+  const pending = dormantTimers.get(ownerId)
+  if (pending) clearTimeout(pending)
+  dormantTimers.delete(ownerId)
   rotationEditorSessionStore.setState((state) => {
     const next = { ...state.byOwnerId }
     delete next[ownerId]
@@ -143,7 +148,33 @@ export function clearRotationEditorSession(ownerId: string): void {
 }
 
 export function clearAllRotationEditorSessions(): void {
+  for (const timer of dormantTimers.values()) clearTimeout(timer)
+  dormantTimers.clear()
   rotationEditorSessionStore.setState({ byOwnerId: {}, generationByOwnerId: {} })
+}
+
+export function holdRotationEditorOwner(ownerId: string): () => void {
+  const pending = dormantTimers.get(ownerId)
+  if (pending) clearTimeout(pending)
+  dormantTimers.delete(ownerId)
+  mountedOwners.set(ownerId, (mountedOwners.get(ownerId) ?? 0) + 1)
+  return () => {
+    const remaining = (mountedOwners.get(ownerId) ?? 1) - 1
+    if (remaining > 0) {
+      mountedOwners.set(ownerId, remaining)
+      return
+    }
+    mountedOwners.delete(ownerId)
+    // Wait past Strict Mode effect replay and route transitions before dropping
+    // the large execution trace. The authored draft and undo stack survive.
+    dormantTimers.set(ownerId, setTimeout(() => {
+      dormantTimers.delete(ownerId)
+      if (mountedOwners.has(ownerId)) return
+      updateRotationEditorSession(ownerId, (current) => current.result
+        ? { ...current, result: null, runInputIdentity: null }
+        : current)
+    }, 2_000))
+  }
 }
 
 export function useRotationEditorSession(
@@ -152,7 +183,10 @@ export function useRotationEditorSession(
   create: () => RotationEditorSession,
   reconcile: SessionUpdate,
 ) {
-  const [initial] = useState(() => ({ ownerId, session: create() }))
+  const [initial, setInitial] = useState<{ ownerId: string; session: RotationEditorSession } | null>(() => ({
+    ownerId,
+    session: getRotationEditorSession(ownerId) ?? create(),
+  }))
   const session = useStore(
     rotationEditorSessionStore,
     (state) => state.byOwnerId[ownerId],
@@ -168,19 +202,30 @@ export function useRotationEditorSession(
 
   useEffect(() => {
     ensureRotationEditorSession(ownerId, () => (
-      initial.ownerId === ownerId && generation === 0
+      initial?.ownerId === ownerId && generation === 0
         ? initial.session
         : createRef.current()
     ))
     reconcileRotationEditorSession(ownerId, runInputIdentity, reconcile)
+    // The store now owns the session. Do not pin its initial full run through
+    // every later edit and execution for the lifetime of this page mount.
+    if (!initial) return
+    let canceled = false
+    queueMicrotask(() => {
+      if (!canceled) setInitial((current) => current === initial ? null : current)
+    })
+    return () => { canceled = true }
   }, [generation, initial, ownerId, reconcile, runInputIdentity])
+  useEffect(() => holdRotationEditorOwner(ownerId), [ownerId])
 
   const updateSession = useCallback((update: SessionUpdate) => {
     updateRotationEditorSession(ownerId, update)
   }, [ownerId])
 
   return {
-    ...(session ?? (initial.ownerId === ownerId ? initial.session : create())),
+    ...(session ?? (initial?.ownerId === ownerId
+      ? initial.session
+      : getRotationEditorSession(ownerId) ?? create())),
     updateSession,
   }
 }

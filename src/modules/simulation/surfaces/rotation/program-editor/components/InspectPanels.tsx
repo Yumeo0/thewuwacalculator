@@ -77,7 +77,7 @@ import {
   type ReactNode,
 } from 'react'
 import { Expandable } from '@/shared/ui/Expandable.tsx'
-import { LiquidSelect, type SelectOption } from '@/application/ui/LiquidSelect.tsx'
+import { Select, type SelectOption } from '@/application/ui/Select'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
 import type { SourceState } from '@/domain/gameData/contracts.ts'
 import { HexColorInput, HexColorPicker } from 'react-colorful'
@@ -754,7 +754,7 @@ function CondValue({
 
   if (state.kind === 'select') {
     return (
-      <LiquidSelect className="rte-cselect"
+      <Select className="rte-cselect"
         value={value}
         options={(state.options ?? []).map((option) => ({
           value: option.id,

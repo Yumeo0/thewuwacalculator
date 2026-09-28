@@ -23,6 +23,8 @@ import {
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/nodeAuthoring.ts'
 import {
   prepareSavedRotationBatch,
+  projectAppendedRotation,
+  runEditedRotation,
   runPreparedSavedRotationBatch,
   runSavedRotation,
   runSavedRotationBatch,
@@ -479,6 +481,48 @@ describe('writes attached to a step', () => {
 })
 
 describe('saved rotation inspection', () => {
+  it('keeps appended node projection equal while retaining only its execution rows', () => {
+    const seed = seedRsntById[DEF_RES_ID]
+    const feature = seed ? listFeatsFor('resonator', seed.id)[0] : undefined
+    expect(seed).toBeDefined()
+    expect(feature).toBeDefined()
+    if (!seed || !feature) return
+
+    const runtime = makeResRuntime(seed)
+    runtime.rotation.program = [{
+      id: 'existing-block',
+      type: 'repeat',
+      times: 3,
+      items: [{ id: 'existing', type: 'feature', featureId: feature.id }],
+    }]
+    const members = presentRotMembers(runtime)
+    const enemy = makeEnemy()
+    const standing = runStoredRotation({
+      runtime,
+      runtimesById: { [runtime.id]: runtime },
+      targetSelections: {},
+      enemy,
+      members,
+    })
+    expect(standing).not.toBeNull()
+    if (!standing) return
+    const append: RotationNode[] = [{ id: 'appended', type: 'feature', featureId: feature.id }]
+    const input = {
+      runtime,
+      runtimesById: { [runtime.id]: runtime },
+      targetSelections: {},
+      enemy,
+      members,
+      sections: standing.sections,
+      append,
+    }
+    const full = runEditedRotation(input)
+    const projected = projectAppendedRotation(input)
+
+    expect(full).not.toBeNull()
+    expect(findNode(projected, 'appended')).toEqual(findNode(full!.sections, 'appended'))
+  })
+
   it('can refresh the standing last-run program instead of a changed persisted program', () => {
     const seed = seedRsntById[DEF_RES_ID]
     const feature = seed ? listFeatsFor('resonator', seed.id)[0] : undefined

@@ -60,7 +60,7 @@ import { getEchoSetDe } from '@/data/gameData/echoSets/effects.ts'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import { Expandable } from '@/shared/ui/Expandable.tsx'
-import { LiquidSelect } from '@/application/ui/LiquidSelect.tsx'
+import { Select } from '@/application/ui/Select'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { scopedTargetOwnerKey } from '@/domain/gameData/targetRouting.ts'
 
@@ -514,7 +514,7 @@ export function Teams({
     return (
       <label className="team-state-target">
         Active Resonator
-        <LiquidSelect
+        <Select
           value={selVl}
           options={options}
           disabled={options.length <= 1}
@@ -628,7 +628,7 @@ export function Teams({
           <label className={`tlu-lamp tlu-lamp--field${active ? ' is-on' : ''}${!enabled ? ' is-disabled' : ''}`}>
             <i className="tlu-lamp-dot" aria-hidden="true" />
             <span className="tlu-lamp-label">{display.label}</span>
-            <LiquidSelect
+            <Select
               value={String(resolved)}
               options={options.map((option) => ({ value: option.id, label: option.label }))}
               disabled={!enabled}

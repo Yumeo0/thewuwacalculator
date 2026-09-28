@@ -490,9 +490,9 @@ export type GhostMap = ReadonlyMap<string, ReadonlySet<StatKey>>
 export function computeGhosts(
   sections: EditorSection[],
   selections: LoopRunSelections,
+  loopScopeByNodeId: ReadonlyMap<string, readonly string[]> = collectEditorLoopScopeByNode(sections).byNodeId,
 ): GhostMap {
   const ghosts = new Map<string, ReadonlySet<StatKey>>()
-  const loopScopeByNodeId = collectEditorLoopScopeByNode(sections).byNodeId
   let previous: EditorStep | null = null
   let previousRun = 1
 

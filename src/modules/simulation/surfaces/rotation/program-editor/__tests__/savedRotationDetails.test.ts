@@ -3,13 +3,13 @@
   Description: Guards saved detail scheduling against live and unavailable ids.
 */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { makeResProfile, makeScenarioFromProfiles } from '@/engine/runtime/defaults.ts'
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
 import { makeLiveRotationEntry } from '@/engine/runtime/liveRotationEntry.ts'
 import type { SavedRotation } from '@/domain/entities/inventoryStorage.ts'
 import type { RunResult } from '../simulation/runProgram.ts'
-import { pendingSavedRotationDetails } from '../simulation/simulation.ts'
+import { pendingSavedRotationDetails, runSavedRotationDetailBatch } from '../simulation/simulation.ts'
 
 function fixture() {
   const seed = getResSeedBy('1108')!
@@ -20,6 +20,19 @@ function fixture() {
 }
 
 describe('saved rotation detail scheduling', () => {
+  it('keeps rich detail on the main thread so its flat trace remains available', async () => {
+    const { saved } = fixture()
+    const worker = vi.fn(() => { throw new Error('detail must not enter a worker') })
+    vi.stubGlobal('Worker', worker)
+    try {
+      const result = await runSavedRotationDetailBatch([saved])
+      expect(result.has(saved.id)).toBe(true)
+      expect(worker).not.toHaveBeenCalled()
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
   it('does not schedule an empty batch for a live comparison', () => {
     const { live, saved } = fixture()
     const completed = new Map<string, RunResult | null>([[saved.id, null]])

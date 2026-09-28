@@ -107,6 +107,11 @@ describe('game data bootstrap invariants', () => {
       await vi.advanceTimersByTimeAsync(1_201)
       expect(data.hasResonatorData(['1202'])).toBe(true)
       release()
+      const releaseAgain = data.holdResonatorData(['1202'])
+      await vi.advanceTimersByTimeAsync(0)
+      expect(data.hasResonatorData(['1202'])).toBe(true)
+      releaseAgain()
+      await vi.advanceTimersByTimeAsync(0)
       expect(data.hasResonatorData(['1202'])).toBe(false)
     } finally {
       vi.useRealTimers()

@@ -11,6 +11,8 @@ import type { PersistedUnknown } from '@/engine/runtime/defaults'
 import { makeScenarioTeam, type CombatScenario, type CombatScenarioId } from '@/domain/entities/combatScenario'
 import { copyScenarioRecords, summarizeScenario, type ScenarioSummary, type ScenarioWorkspace } from '@/domain/entities/scenarioLibrary'
 import { makeAppState, initAppState, normalizeStoredCombatScenario } from '@/engine/runtime/defaults'
+import { isRotationSequence } from '@/domain/gameData/rotationSequence.ts'
+import { contextScenarioMember } from '@/domain/entities/combatScenario.ts'
 import { compressToUTF16, decompressFromUTF16 } from 'lz-string'
 import { readStoredScenarioIds } from './resonatorScope'
 import {
@@ -262,7 +264,7 @@ function readScenarioRecord(id: string, recordKey: string): CombatScenario {
   if (!result.success) throw new Error(`Invalid combat scenario record: ${id}`)
   // Normalize one record when it is actually read; this restores catalog
   // derived weapon fields without expanding every saved scenario at startup.
-  return normalizeStoredCombatScenario(parsed as unknown as CombatScenario)
+  return normalizeStoredCombatScenario(result.data as unknown as CombatScenario)
 }
 
 function makeLazyScenarioRecords(index: CombatStorageIndex): Record<string, CombatScenario> {
@@ -464,8 +466,27 @@ function writeCombatWorkspace(combat: PersistedState['combat']): void {
         ? previousManifest.targetRecord : writeCombatRecord(id, 'target', validated.target, createdKeys)
       const environmentRecord = previousScenario?.environment === scenario.environment && previousManifest?.environmentRecord
         ? previousManifest.environmentRecord : writeCombatRecord(id, 'environment', validated.environment, createdKeys)
-      const programRecord = previousScenario?.program === scenario.program && previousManifest?.programRecord
-        ? previousManifest.programRecord : writeCombatRecord(id, 'program', validated.program, createdKeys)
+      // Compact sequences are derived from the catalog when projected. Old
+      // advanced content remains on disk until the saved-rotation migration
+      // archives it, so a routine workspace save cannot erase that content.
+      const resonatorId = contextScenarioMember(validated).resonatorId
+      const legacyAdvancedSequence = validated.program.sequence.length > 0
+        && !isRotationSequence(validated.program.sequence, resonatorId)
+      const previousProgram = previousManifest?.programRecord
+        ? decodeCombatRecord(previousManifest.programRecord) as Record<string, unknown>
+        : null
+      const previousStoredLegacySequence = previousProgram
+        && Object.hasOwn(previousProgram, 'sequence')
+      const reuseProgramRecord = previousScenario?.program === scenario.program
+        && previousManifest?.programRecord
+        && Boolean(previousStoredLegacySequence) === legacyAdvancedSequence
+      const programRecord = reuseProgramRecord
+        ? previousManifest.programRecord
+        : writeCombatRecord(id, 'program', {
+          ...(legacyAdvancedSequence ? { sequence: validated.program.sequence } : {}),
+          program: validated.program.program,
+          lastRanAt: validated.program.lastRanAt,
+        }, createdKeys)
       const dormantRecord = scenario.dormantMembersByResonatorId
         ? previousScenario?.dormantMembersByResonatorId === scenario.dormantMembersByResonatorId && previousManifest?.dormantRecord
           ? previousManifest.dormantRecord

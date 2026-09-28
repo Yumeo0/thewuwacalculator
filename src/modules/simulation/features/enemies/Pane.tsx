@@ -40,7 +40,7 @@ import { useEnemyCat } from '@/application/hooks/useEnemyCatalog.ts'
 import { NumberInput } from '@/modules/simulation/features/controls/NumberInput.tsx'
 import { SourceStateCtrl } from '@/modules/simulation/features/controls/SourceStateControl.tsx'
 import { StackGauge } from '@/modules/simulation/features/controls/StackGauge.tsx'
-import { LiquidSelect } from '@/application/ui/LiquidSelect.tsx'
+import { Select } from '@/application/ui/Select'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
 import { getStateText } from '@/modules/simulation/model/sourceStateDisplay.ts'
 import { getSrcSttNct } from '@/engine/gameData/controlOptions.ts'
@@ -105,7 +105,7 @@ function EnemyCombatCtrl({ state, value, onChange }: EnemyCombatCtrlPrps) {
       <div className="state-control-field">
         <label className={isActive ? 'state-control-label is-active' : 'state-control-label'}>
           {display.label}
-          <LiquidSelect
+          <Select
             value={current}
             options={state.options.map((option) => ({ value: option.id, label: option.label }))}
             onChange={(next) => onChange(next)}
@@ -322,7 +322,7 @@ function ResCombatStateControl({
     return (
       <label className={['res-combat-control', !enabled ? 'is-disabled' : ''].filter(Boolean).join(' ')}>
         <span>{display.label}</span>
-        <LiquidSelect
+        <Select
           value={value}
           options={options.map((option) => ({ value: option.id, label: option.label }))}
           disabled={!enabled}

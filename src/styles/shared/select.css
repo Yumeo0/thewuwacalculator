@@ -1,0 +1,212 @@
+.app-select {
+  --select-accent: var(--resonator-accent, var(--accent, #6b7cff));
+  --select-text: var(--input-color, var(--text, #1b2435));
+  --select-line: var(--picker-modal-border, var(--input-border, var(--border, rgba(27, 36, 53, 0.14))));
+  --select-menu-z-index: 1300;
+  position: relative;
+  width: fit-content;
+  z-index: 1;
+}
+
+.app-select.open {
+  z-index: 50;
+}
+
+.app-select__trigger {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 4.5rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-direction: row-reverse;
+  gap: 0.45rem;
+  padding: 0.16rem 0.05rem 0.2rem 0.1rem;
+  border: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--select-accent) 34%, var(--select-line));
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--select-text);
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    color 150ms ease;
+}
+
+.app-select__trigger:hover {
+  border-bottom-color: color-mix(in srgb, var(--select-accent) 70%, var(--select-line));
+}
+
+.app-select__trigger:focus-visible,
+.app-select.open .app-select__trigger {
+  outline: none;
+  border-bottom-color: var(--select-accent);
+  box-shadow: 0 1px 0 0 var(--select-accent);
+}
+
+.app-select__trigger:disabled {
+  border-bottom-style: dashed;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.app-select__value {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 500;
+}
+
+.app-select__value-text,
+.app-select__option-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-select__value--placeholder {
+  color: color-mix(in srgb, var(--select-text) 42%, transparent);
+  font-weight: 500;
+}
+
+.app-select__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  color: color-mix(in srgb, var(--select-text) 45%, transparent);
+  transition: color 150ms ease;
+}
+
+.app-select__icon > svg {
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-select__trigger:is(:hover, :focus-visible) .app-select__icon,
+.app-select.open .app-select__icon {
+  color: var(--select-accent);
+}
+
+.app-select.open .app-select__icon > svg {
+  transform: rotate(180deg);
+}
+
+.app-select__menu {
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  height: auto;
+  min-height: 0;
+  gap: 0.2rem;
+  padding: 0.25rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  color: var(--select-text);
+  outline: none;
+}
+
+.app-select__option {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.3rem 0.4rem;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  color: var(--select-text);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.app-select__option-label {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-select__option-icon {
+  flex: 0 0 auto;
+  width: 1.4em;
+  height: 1.4em;
+  border-radius: 0.2rem;
+  object-fit: contain;
+}
+
+.app-select__option-check {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  color: var(--select-accent);
+  transition: opacity 120ms ease;
+}
+
+.app-select__option:is(:hover, .active) {
+  background: color-mix(in srgb, var(--select-accent) 8%, transparent);
+}
+
+.app-select__option.selected {
+  color: color-mix(in srgb, var(--select-accent) 85%, var(--select-text));
+}
+
+.app-select__option.selected .app-select__option-check {
+  opacity: 1;
+}
+
+.app-select__group,
+.app-select__group-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.app-select__group + .app-select__group {
+  margin-top: 0.18rem;
+}
+
+.app-select__group-label {
+  padding: 0.2rem 0.45rem 0.1rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.app-select__menu::-webkit-scrollbar {
+  width: 0.42rem;
+}
+
+.app-select__menu::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--select-accent) 32%, transparent);
+}
+
+:is(.no-entrance-anim, .reduce-animation) .app-select__trigger,
+:is(.no-entrance-anim, .reduce-animation) .app-select__icon,
+:is(.no-entrance-anim, .reduce-animation) .app-select__icon > svg,
+:is(.no-entrance-anim, .reduce-animation) .app-select__option,
+:is(.no-entrance-anim, .reduce-animation) .app-select__option-check {
+  transition: none;
+}
