@@ -5,8 +5,25 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import type { SrcPkg } from '@/domain/gameData/contracts'
+import type { EffectScope, SrcPkg } from '@/domain/gameData/contracts'
+import { mkGameDataRe, listSrcRtFfc } from '@/data/gameData/registry'
+import { evalCond, evalForm } from '@/engine/effects/evaluator'
 import enemySourcesRaw from '../../../../public/data/beta/enemies/sources.json?raw'
+import liveSourcesRaw from '../../../../public/data/live/enemies/sources.json?raw'
+
+const betaSources = JSON.parse(enemySourcesRaw) as SrcPkg[]
+const liveSources = JSON.parse(liveSourcesRaw) as SrcPkg[]
+
+function scope(paradox: number): EffectScope {
+  return {
+    context: {
+      enemy: {
+        status: { paradox },
+        res: { 0: 10, 1: 20, 2: 30, 3: 40, 4: 50, 5: 60, 6: 70 },
+      },
+    },
+  } as unknown as EffectScope
+}
 
 const NEGATIVE_STATUS_TYPES = [
   'spectroFrazzle',
@@ -24,6 +41,10 @@ function getEnemySource(sources: SrcPkg[], enemyId: string): SrcPkg {
 }
 
 describe('enemy source invariants', () => {
+  it('keeps beta and live enemy mechanics identical', () => {
+    expect(liveSources).toEqual(betaSources)
+  })
+
   it('encodes the new 3.6 enemy vulnerabilities', () => {
     const sources = JSON.parse(enemySourcesRaw) as SrcPkg[]
     const skywatchLancer = getEnemySource(sources, '320000690')
@@ -88,6 +109,55 @@ describe('enemy source invariants', () => {
           value: { type: 'const', value: 30 },
         }],
       }))
+    }
+  })
+
+  it('reuses quantified mechanics for the new 3.7 encounter variants', () => {
+    for (const [newId, originalId] of [
+      ['340000212', '340000210'],
+      ['340000213', '340000210'],
+      ['340000221', '340000220'],
+      ['340000222', '340000220'],
+      ['340000252', '340000250'],
+      ['340000261', '340000260'],
+    ]) {
+      const current = getEnemySource(betaSources, newId)
+      const original = getEnemySource(betaSources, originalId)
+      expect(current.effects?.map((effect) => effect.id.replace(newId, '')))
+        .toEqual(original.effects?.map((effect) => effect.id.replace(originalId, '')))
+      expect(current.states?.map((state) => state.id))
+        .toEqual(original.states?.map((state) => state.id))
+    }
+  })
+
+  it('applies Suhsin Paradox vulnerability and removes each current resistance at two stacks', () => {
+    const registry = mkGameDataRe(betaSources)
+
+    for (const id of ['340000330', '340000331', '340000332']) {
+      const source = getEnemySource(betaSources, id)
+      const paradox = source.states?.find((state) => state.id === 'paradox')
+      const vulnerability = source.effects?.find((effect) => effect.id.endsWith(':paradox-vuln'))
+      const resistance = source.effects?.find((effect) => effect.id.endsWith(':paradox-res-zero'))
+
+      expect(paradox).toMatchObject({ kind: 'stack', max: 2, path: 'enemy.status.paradox' })
+      expect(vulnerability?.operations).toMatchObject([{ type: 'add_top_stat', stat: 'dmgVuln' }])
+      expect(resistance?.operations).toHaveLength(7)
+      expect(listSrcRtFfc(registry, { type: 'enemy', id }, 'preStats').map((effect) => effect.id))
+        .toEqual([`enemy:${id}:paradox-vuln`, `enemy:${id}:paradox-res-zero`])
+      if (!vulnerability || !resistance) throw new Error(`Missing Suhsin effects for ${id}`)
+
+      const value = vulnerability.operations[0]
+      if (!value || !('value' in value)) throw new Error(`Missing Paradox value for ${id}`)
+      expect(evalForm(value.value, scope(1))).toBe(15)
+      expect(evalForm(value.value, scope(2))).toBe(30)
+      expect(evalCond(resistance.condition, scope(1))).toBe(false)
+      expect(evalCond(resistance.condition, scope(2))).toBe(true)
+
+      for (const [index, operation] of resistance.operations.entries()) {
+        expect(operation).toMatchObject({ type: 'add_attribute_mod', mod: 'resShred' })
+        if (!('value' in operation)) throw new Error(`Missing RES value for ${id}`)
+        expect(evalForm(operation.value, scope(2))).toBe((index + 1) * 10)
+      }
     }
   })
 })
