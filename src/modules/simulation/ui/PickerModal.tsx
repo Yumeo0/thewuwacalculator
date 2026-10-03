@@ -10,6 +10,10 @@ import { ModalHeader } from '@/shared/ui/AppModalShell'
 import { rarityVars } from '@/modules/simulation/model/display.ts'
 import { usePickerMotion } from '@/modules/simulation/ui/pickerMotion.ts'
 import { observeDisplayImage } from '@/shared/lib/displayImageSizing'
+import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
+import { Check } from 'lucide-react'
+import { MobilePickerModal } from '@/modules/simulation/ui/mobile/MobilePickerModal.tsx'
 
 export type PckrMdlRrty = 1 | 2 | 3 | 4 | 5
 
@@ -29,7 +33,7 @@ export interface PckrMdlItem {
   onSelect: () => void
 }
 
-interface PckrMdlPrps {
+export interface PckrMdlPrps {
   visible: boolean
   open: boolean
   closing?: boolean
@@ -48,7 +52,11 @@ interface PckrMdlPrps {
   onClose: () => void
 }
 
-export function PickerModal({
+export function PickerModal(props: PckrMdlPrps) {
+  return useMobileUi() ? <MobilePickerModal {...props} /> : <DesktopPickerModal {...props} />
+}
+
+function DesktopPickerModal({
   visible,
   open,
   closing = false,
@@ -84,7 +92,7 @@ export function PickerModal({
       ariaLabelBy={titleId}
       onClose={onClose}
     >
-      <div className="amdl picker-modal__frame" data-variant={variant} onClick={(event) => event.stopPropagation()}>
+      <div className="amdl pkm__frame" data-variant={variant} onClick={(event) => event.stopPropagation()}>
         <ModalHeader
           over={eyebrow}
           title={<h2 id={titleId}>{title}</h2>}
@@ -94,7 +102,7 @@ export function PickerModal({
           {summary ? <div className="amdl__gauge" onClickCapture={capture}>{summary}</div> : null}
         </ModalHeader>
 
-        <div className={`picker-modal__stage ${filters ? 'has-rail' : ''}`}>
+        <div className={`pkm__stage ${filters ? 'has-rail' : ''}`}>
           {filters ? (
             <nav className="amdl__rail pkr-rail" aria-label="Filters" onClickCapture={capture} onChangeCapture={capture}>
               {filters}
@@ -102,13 +110,13 @@ export function PickerModal({
             </nav>
           ) : null}
 
-          <div className="picker-modal__body" ref={bodyRef}>
+          <div className="pkm__body" ref={bodyRef}>
             {items.length === 0 ? (
-              <div className="picker-modal__empty">
+              <div className="pkm__empty">
                 {emptyState ?? <p>No items available.</p>}
               </div>
             ) : (
-              <div className="picker-modal__grid picker-modal__grid--cards">
+              <div className="pkm__grid pkm__grid--cards">
                 {items.map((item) => (
                   <PickerCard key={item.id} item={item} />
                 ))}
@@ -140,11 +148,11 @@ export function usePickerEntrance(bodyRef: RefObject<HTMLElement | null>, visibl
     let frame: number | null = window.requestAnimationFrame(() => {
       frame = null
       // Layout-delta motion takes ownership after the first picker mutation.
-      if (body.closest('.picker-modal__frame')?.classList.contains('is-live')) return
+      if (body.closest('.pkm__frame')?.classList.contains('is-live')) return
 
       const view = body.getBoundingClientRect()
       const rows = new Map<number, HTMLElement[]>()
-      body.querySelectorAll<HTMLElement>('.picker-modal__grid > *').forEach((card) => {
+      body.querySelectorAll<HTMLElement>('.pkm__grid > *').forEach((card) => {
         const rect = card.getBoundingClientRect()
         if (rect.top > view.bottom || rect.bottom < view.top) return
         const row = Math.round(rect.top)
@@ -218,9 +226,20 @@ export function PickerCard({
   className?: string
 }) {
   return (
+    <ContextTrigger
+      asChild
+      ariaLabel={`${item.title} picker actions`}
+      items={[{
+        id: `picker:${item.id}:select`,
+        label: `Select ${item.title}`,
+        icon: <Check size="1em" />,
+        disabled: item.disabled || item.selected,
+        onSelect: item.onSelect,
+      }]}
+    >
     <button
       type="button"
-      className={`picker-modal__card ${item.selected ? 'is-selected' : ''} ${!item.leading ? 'picker-modal__card--plain' : ''} ${className}`}
+      className={`pkm__card ${item.selected ? 'is-selected' : ''} ${!item.leading ? 'pkm__card--plain' : ''} ${className}`}
       style={{
         ...rarityVars(item.rarity, item.bis),
         ...(item.tone ? { '--picker-item-tone': item.tone } : null),
@@ -232,21 +251,22 @@ export function PickerCard({
       disabled={item.disabled}
     >
       {item.leading ? (
-        <div className="picker-modal__card-art">
+        <div className="pkm__card-art">
           {item.leading}
-          {item.cornerNote ? <div className="picker-modal__card-flag picker-modal__card-flag--left">{item.cornerNote}</div> : null}
-          {item.trailing ? <div className="picker-modal__card-flag">{item.trailing}</div> : null}
+          {item.cornerNote ? <div className="pkm__card-flag pkm__card-flag--left">{item.cornerNote}</div> : null}
+          {item.trailing ? <div className="pkm__card-flag">{item.trailing}</div> : null}
           {art}
         </div>
       ) : null}
 
-      <div className="picker-modal__card-cap">
-        <div className="picker-modal__card-title">{item.title}</div>
-        {item.subtitle ? <div className="picker-modal__card-subtitle">{item.subtitle}</div> : null}
+      <div className="pkm__card-cap">
+        <div className="pkm__card-title">{item.title}</div>
+        {item.subtitle ? <div className="pkm__card-subtitle">{item.subtitle}</div> : null}
         {item.meta ? (
-          <div className="picker-modal__card-spec">{item.meta}</div>
+          <div className="pkm__card-spec">{item.meta}</div>
         ) : null}
       </div>
     </button>
+    </ContextTrigger>
   )
 }

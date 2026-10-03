@@ -38,6 +38,25 @@ import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { rarityVars } from '@/modules/simulation/model/display.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
+import { useMenuContributions } from '@/application/context-menu/AppContextMenu'
+import type { MenuContribution } from '@/application/context-menu/menuContributions'
+
+interface WeaponPaneMenuContext {
+  id: string
+  canMax: boolean
+  openPicker: () => void
+  max: () => void
+}
+
+const weaponPaneMenu: MenuContribution<WeaponPaneMenuContext>[] = [{
+  id: 'weapon-pane-actions',
+  group: '1_primary',
+  build: ({ id, canMax, openPicker, max }) => [
+    { id: `weapon-picker:${id}`, label: 'Choose weapon', onSelect: openPicker },
+    { id: `weapon-max:${id}`, label: 'Max weapon', disabled: !canMax, onSelect: max },
+  ],
+}]
 
 interface WeaponPaneProps {
   runtime: ResRuntime
@@ -59,6 +78,7 @@ function StatIcon({ statKey }: { statKey: string }) {
 }
 
 export function Weapon({ runtime, onRtPdt: onRtPdt }: WeaponPaneProps) {
+  useMenuContributions('weapon.pane', weaponPaneMenu)
   const bumpPickerFreq = useAppStore((state) => state.bumpPickFr)
   const maxWpnOnInit = useAppStore((state) => state.ui.preferences.maxResOnInit)
   const resonator = getResonator(runtime.id)
@@ -179,6 +199,12 @@ export function Weapon({ runtime, onRtPdt: onRtPdt }: WeaponPaneProps) {
   const hasStates = weaponStates.length > 0
 
   return (
+    <ContextTrigger
+      asChild
+      ariaLabel={`${weaponDef?.name ?? 'Weapon'} actions`}
+      location="weapon.pane"
+      context={{ id: runtime.id, canMax: !isMaxed, openPicker: weaponMenu.show, max: handleMax }}
+    >
     <section className="calc-pane resonator-pane weapon-pane">
 
       <div className="weapon-banner">
@@ -353,7 +379,7 @@ export function Weapon({ runtime, onRtPdt: onRtPdt }: WeaponPaneProps) {
                 </span>
               </div>
 
-              <div className="weapon-effect__body pane-section inherent-skill ui-surface-card">
+              <div className="weapon-effect__body pane-section ihs ui-surface-card">
                 {hasStrcDesc ? (
                   <>
                     {weaponOwner?.description ? (
@@ -418,5 +444,6 @@ export function Weapon({ runtime, onRtPdt: onRtPdt }: WeaponPaneProps) {
 
       {wpnPckrPrtl}
     </section>
+    </ContextTrigger>
   )
 }

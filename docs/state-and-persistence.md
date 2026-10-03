@@ -2,7 +2,7 @@
 
 ## Summary
 
-The global Zustand store separates durable UI preferences, canonical combat scenarios, Simulation-tool state, saved artifacts, materialized runtime projections, and transient execution state.
+The composed app store owns saved preferences, combat scenarios, Simulation settings, saved builds and rotations, and runtime projections. Focused Zustand stores own temporary optimizer and inventory UI state.
 
 ## Persisted State
 
@@ -10,8 +10,14 @@ Primary files:
 
 - [src/domain/entities/appState.ts](../src/domain/entities/appState.ts)
 - [src/application/state/store.ts](../src/application/state/store.ts)
+- [src/application/state/optimizerRunStore.ts](../src/application/state/optimizerRunStore.ts)
+- [src/application/state/inventoryUiStore.ts](../src/application/state/inventoryUiStore.ts)
 - [src/engine/runtime/schema.ts](../src/engine/runtime/schema.ts)
 - [src/application/persistence/storage.ts](../src/application/persistence/storage.ts)
+- [src/application/persistence/scenarioRecords.ts](../src/application/persistence/scenarioRecords.ts)
+- [src/application/persistence/persistenceCoordinator.ts](../src/application/persistence/persistenceCoordinator.ts)
+- [src/application/persistence/storageCodec.ts](../src/application/persistence/storageCodec.ts)
+- [src/application/persistence/legacyMigration.ts](../src/application/persistence/legacyMigration.ts)
 
 Current persisted roots are:
 
@@ -20,7 +26,7 @@ Current persisted roots are:
 - `simulation`: optimizer settings and suggestion state
 - `library`: saved Echoes, builds, rotations, and scenarios
 
-Character progression and loadout belong to members inside canonical combat scenarios. Simulation tools consume materialized projections of that state; they do not keep a second page-owned model.
+Character progression and equipment are stored with each member in the combat scenario. Simulation tools calculate the runtime data they need from that scenario.
 
 ## Granular Storage Domains
 
@@ -48,7 +54,7 @@ Primary files:
 - [src/engine/runtime/runtimeMaterialization.ts](../src/engine/runtime/runtimeMaterialization.ts)
 - [src/engine/runtime/combatGraph.ts](../src/engine/runtime/combatGraph.ts)
 
-Runtime adapters turn persisted scenario members, routing, controls, and local conditionals into engine-ready resonator and teammate runtimes. Selectors expose those projections to Modulation, Rotation, Showcase, Optimizer, suggestions, and evaluation.
+Runtime adapters convert saved scenario members, team assignments, controls, and conditions into calculation inputs for each resonator and teammate. Selectors provide those inputs to Modulation, Rotation, Showcase, Optimizer, Suggestions, and evaluation.
 
 ## Evaluation And Showcase Preferences
 
@@ -62,7 +68,7 @@ The version 28 migration accepts the prior `showBenchStates`, `benchAnim2d`, and
 
 ## Transient State
 
-Optimizer progress and results, worker lifecycle state, inventory hydration flags, modal state, and other in-flight UI state are not durable. Reload behavior should be diagnosed against that boundary before changing persistence.
+Optimizer progress and results live in `optimizerRunStore`; inventory panel state lives in `inventoryUiStore`. Worker state, inventory loading flags, open modals, and other temporary UI state are not saved. Check whether a value should survive reloads before changing persistence.
 
 ## Writeback And Recovery
 

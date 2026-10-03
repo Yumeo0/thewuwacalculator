@@ -5,6 +5,8 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
+import { Images, Pause, Play, Sword, UserRound } from 'lucide-react'
 import { memo, useCallback, useMemo, type CSSProperties, type MouseEvent as ReactMouseEvent, type RefObject } from 'react'
 import type { ResRuntime, ResSeed, WeaponState } from '@/domain/entities/runtime'
 import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
@@ -228,48 +230,48 @@ export const BuildRail = memo(function BuildRail({
   [editable, railModel.runtime?.build.team, railModel.teamSupports, railResId, scenarioId])
   const weaponBlock = (
     <>
-      <span className="workspace-weapon-frame" data-rarity={railModel.weaponRarity ?? undefined}>
+      <span className="wk-weapon-frame" data-rarity={railModel.weaponRarity ?? undefined}>
         {railModel.weaponIcon ? (
           <DisplayImage
             src={railModel.weaponIcon}
-            alt={railModel.weaponName} className="workspace-weapon-icon"
+            alt={railModel.weaponName} className="wk-weapon-icon"
             loading="lazy"
             decoding="async"
             onError={withDefIconM}
           />
         ) : (
-          <span className="workspace-weapon-icon workspace-weapon-icon--fallback">W</span>
+          <span className="wk-weapon-icon wk-weapon-icon--fallback">W</span>
         )}
       </span>
-      <span className="workspace-weapon-copy">
-        <span className="workspace-weapon-head">
-                          <span className="workspace-weapon-meta">
-            <span className="workspace-weapon-lv">Lv.{railModel.weaponState?.level ?? 1} • R{railModel.weaponState?.rank ?? 1}</span>
+      <span className="wk-weapon-copy">
+        <span className="wk-weapon-head">
+                          <span className="wk-weapon-meta">
+            <span className="wk-weapon-lv">Lv.{railModel.weaponState?.level ?? 1} • R{railModel.weaponState?.rank ?? 1}</span>
           </span>
-          <strong className="workspace-weapon-name">{railModel.weaponName}</strong>
+          <strong className="wk-weapon-name">{railModel.weaponName}</strong>
         </span>
-        <span className="workspace-weapon-stat">
+        <span className="wk-weapon-stat">
           {railModel.weapon ? (
             <>
-              <span className="workspace-weapon-stat-item" data-stat-family={statFamily('atk')}>
+              <span className="wk-weapon-stat-item" data-stat-family={statFamily('atk')}>
                 <StatGlyph statKey="atk" size={1.25} />
-                <span className="workspace-weapon-stat-figure">
-                  <span className="workspace-weapon-stat-value">{Math.round(weaponStats?.atk ?? railModel.weapon.baseAtk)}</span>
-                  <span className="workspace-weapon-stat-label">Base ATK</span>
+                <span className="wk-weapon-stat-figure">
+                  <span className="wk-weapon-stat-value">{Math.round(weaponStats?.atk ?? railModel.weapon.baseAtk)}</span>
+                  <span className="wk-weapon-stat-label">Base ATK</span>
                 </span>
               </span>
-              <span className="workspace-weapon-stat-item" data-stat-family={statFamily(railModel.weapon.statKey)}>
+              <span className="wk-weapon-stat-item" data-stat-family={statFamily(railModel.weapon.statKey)}>
                 <StatGlyph statKey={railModel.weapon.statKey} size={1.25} />
-                <span className="workspace-weapon-stat-figure">
-                  <span className="workspace-weapon-stat-value">
+                <span className="wk-weapon-stat-figure">
+                  <span className="wk-weapon-stat-value">
                     {formatStatKeyValue(railModel.weapon.statKey, weaponStats?.statVal ?? railModel.weapon.statValue)}
                   </span>
-                  <span className="workspace-weapon-stat-label">{formatStatKeyLabel(railModel.weapon.statKey)}</span>
+                  <span className="wk-weapon-stat-label">{formatStatKeyLabel(railModel.weapon.statKey)}</span>
                 </span>
               </span>
             </>
           ) : (
-            <span className="workspace-weapon-stat--empty">No bonus stat</span>
+            <span className="wk-weapon-stat--empty">No bonus stat</span>
           )}
         </span>
       </span>
@@ -277,8 +279,22 @@ export const BuildRail = memo(function BuildRail({
   )
 
   return (
+    <ContextTrigger
+      asChild
+      ariaLabel="Build rail actions"
+      items={isShowcase || !editable || !railResId ? [] : [
+        { id: 'rail:member', label: 'Configure resonator', icon: <UserRound size="1em" />, onSelect: openMember },
+        { id: 'rail:weapon', label: 'Configure weapon', icon: <Sword size="1em" />, onSelect: editWeapon },
+        ...(onEchoOpen ? [{ id: 'rail:main-echo', label: 'Edit main Echo', icon: <Images size="1em" />, onSelect: () => onEchoOpen(0) }] : []),
+        ...(onAnimatedPortraitsChange ? [{
+          id: 'rail:animation', label: animatedPortraits ? 'Pause portrait' : 'Play portrait',
+          icon: animatedPortraits ? <Pause size="1em" /> : <Play size="1em" />,
+          onSelect: () => onAnimatedPortraitsChange(!animatedPortraits),
+        }] : []),
+      ]}
+    >
     <aside
-      ref={buildCardRef} className="workspace-rail workspace-card"
+      ref={buildCardRef} className="wk-rail wk-card"
       data-phase={railPhase}
       data-layout={seal ? 'seal' : undefined}
       data-edit={isShowcase ? editMode ?? undefined : undefined}
@@ -291,25 +307,25 @@ export const BuildRail = memo(function BuildRail({
       {isShowcase && customCss ? <style>{customCss}</style> : null}
       <SpineSetupBackground
         resId={railResId}
-        fallbackUrl={railModel.portraitSrc} className="workspace-portrait-bg"
+        fallbackUrl={railModel.portraitSrc} className="wk-portrait-bg"
         style={backdropStyle}
         captureUrl={captureBackdrop}
       />
 
       {onAnimatedPortraitsChange ? (
         <>
-          <span className="workspace-portrait-scrim" aria-hidden="true" />
-          <span className="workspace-portrait-cue" aria-hidden="true">
-            <span className={`workspace-cue-glyph${animatedPortraits ? '' : ' is-paused'}`}>
-              <i className="workspace-cue-bar workspace-cue-bar--a" />
-              <i className="workspace-cue-bar workspace-cue-bar--b" />
+          <span className="wk-portrait-scrim" aria-hidden="true" />
+          <span className="wk-portrait-cue" aria-hidden="true">
+            <span className={`wk-cue-glyph${animatedPortraits ? '' : ' is-paused'}`}>
+              <i className="wk-cue-bar wk-cue-bar--a" />
+              <i className="wk-cue-bar wk-cue-bar--b" />
             </span>
-            <span className="workspace-cue-word">{animatedPortraits ? 'Pause' : 'Play'}</span>
+            <span className="wk-cue-word">{animatedPortraits ? 'Pause' : 'Play'}</span>
           </span>
         </>
       ) : null}
-      <div className="workspace-rail-port">
-        <div className="workspace-portrait-figure"
+      <div className="wk-rail-port">
+        <div className="wk-portrait-figure"
           data-switch={onAnimatedPortraitsChange ? 'true' : undefined}
           role={onAnimatedPortraitsChange ? 'switch' : undefined}
           aria-checked={onAnimatedPortraitsChange ? animatedPortraits : undefined}
@@ -332,7 +348,7 @@ export const BuildRail = memo(function BuildRail({
             onImageReady={onPortraitReady}
             animated={animatedPortraits}
             playing={surfacePhase === 'idle' && railPhase === 'idle'}
-            spineClassName="workspace-portrait-spine"
+            spineClassName="wk-portrait-spine"
             placement={showcasePlacement}
             overrideImageUrl={resolvedPortrait}
             captureImageUrl={capturePortrait}
@@ -340,7 +356,7 @@ export const BuildRail = memo(function BuildRail({
               <DisplayImage src={railModel.portraitSrc}
                 onLoad={() => onPortraitReady?.(railModel.portraitSrc)}
                 fetchPriority="high"
-                alt={railModel.seed?.name ?? 'Resonator'} className="workspace-portrait-img"
+                alt={railModel.seed?.name ?? 'Resonator'} className="wk-portrait-img"
                 style={railModel.spriteCss}
                 loading="eager"
                 decoding="async"
@@ -349,7 +365,7 @@ export const BuildRail = memo(function BuildRail({
             }
           />
           {grade && !seal ? (
-            <span className="workspace-portrait-grade" data-score={Math.floor(score ?? 0)} style={{ '--grade': tone } as CssVars}>
+            <span className="wk-portrait-grade" data-score={Math.floor(score ?? 0)} style={{ '--grade': tone } as CssVars}>
               {grade}
             </span>
           ) : null}
@@ -364,37 +380,37 @@ export const BuildRail = memo(function BuildRail({
         </div>
 
         {!seal ? (
-          <div className="workspace-rail-body">
-            <div className="workspace-portrait-meta" data-rarity={railModel.rarity}>
-              <span className="workspace-portrait-name"> {railModel.attrIcon ? (
+          <div className="wk-rail-body">
+            <div className="wk-portrait-meta" data-rarity={railModel.rarity}>
+              <span className="wk-portrait-name"> {railModel.attrIcon ? (
                 <DisplayImage
                   src={railModel.attrIcon}
-                  alt="" className="workspace-portrait-elem"
+                  alt="" className="wk-portrait-elem"
                   loading="lazy"
                   decoding="async"
                   onError={withDefIconM}
                 />
               ) : null} <ResonatorName name={railModel.seed?.name ?? 'Resonator'} onOpen={canOpenMember ? openMember : undefined} /></span>
-              <div className="workspace-portrait-tags">
-                <span className="workspace-rarity" role="img" aria-label={`${railModel.rarity}-star resonator`}>
+              <div className="wk-portrait-tags">
+                <span className="wk-rarity" role="img" aria-label={`${railModel.rarity}-star resonator`}>
                   {Array.from({ length: railModel.rarity }, (_, star) => (
-                    <i key={star} className="workspace-rarity-star" aria-hidden="true" />
+                    <i key={star} className="wk-rarity-star" aria-hidden="true" />
                   ))}
                 </span>
-                <span className="workspace-portrait-lv">LV {railModel.runtime?.base.level ?? 1}</span>
+                <span className="wk-portrait-lv">LV {railModel.runtime?.base.level ?? 1}</span>
               </div>
             </div>
 
             {editable && railResId && railModel.runtime ? (
               <button
-                type="button" className="workspace-weapon"
+                type="button" className="wk-weapon"
                 aria-label={`Edit ${railModel.weaponName}`}
                 onClick={() => openWpnCnsl(railResId, scenarioId)}
               >
                 {weaponBlock}
               </button>
             ) : (
-              <div className="workspace-weapon">{weaponBlock}</div>
+              <div className="wk-weapon">{weaponBlock}</div>
             )}
 
             {!(isShowcase && cardHidden.team) ? (
@@ -410,7 +426,7 @@ export const BuildRail = memo(function BuildRail({
         ) : null}
       </div>
 
-      <div className="workspace-rail-build"
+      <div className="wk-rail-build"
         data-phase={isShowcase ? surfacePhase : undefined}
         {...(isShowcase ? echoSelection?.surfaceProps : undefined)}
       >
@@ -463,26 +479,27 @@ export const BuildRail = memo(function BuildRail({
       </div>
 
       {isShowcase && !seal && !cardHidden.brand ? (
-        <div className="workspace-rail-brand" aria-hidden="true">
-          <span className="workspace-brand-word">rendered by</span>
-          <Thewuwacalculator className="workspace-brand-mark" />
-          <span className="workspace-brand-word">
-            thewuwacalculator<span className="workspace-brand-tld">.com</span>
+        <div className="wk-rail-brand" aria-hidden="true">
+          <span className="wk-brand-word">rendered by</span>
+          <Thewuwacalculator className="wk-brand-mark" />
+          <span className="wk-brand-word">
+            thewuwacalculator<span className="wk-brand-tld">.com</span>
           </span>
         </div>
       ) : null}
 
       {!seal && credits.length ? (
-        <div className="workspace-rail-credit" aria-hidden="true">
+        <div className="wk-rail-credit" aria-hidden="true">
           {credits.map((credit) => (
-            <span key={credit.tag} className="workspace-credit-line">
-              <span className="workspace-credit-tag">{credit.tag}</span>
+            <span key={credit.tag} className="wk-credit-line">
+              <span className="wk-credit-tag">{credit.tag}</span>
               <span>{credit.who}</span>
             </span>
           ))}
         </div>
       ) : null}
     </aside>
+    </ContextTrigger>
   )
 })
 
@@ -525,11 +542,11 @@ function TeamBlock({
   })
 
   return (
-    <div className={variant === 'seal' ? 'seal-party' : 'workspace-rail-block'}>
+    <div className={variant === 'seal' ? 'seal-party' : 'wk-rail-block'}>
       {variant === 'seal' ? seats : (
         <>
-          <span className="workspace-eyebrow">Team</span>
-          <div className="workspace-team">{seats}</div>
+          <span className="wk-eyebrow">Team</span>
+          <div className="wk-team">{seats}</div>
         </>
       )}
 
@@ -555,32 +572,32 @@ function TeamBlock({
 function EmptyTeamMate({ onPick }: { onPick?: () => void }) {
   const body = (
     <>
-      <strong className="workspace-mate-name">No resonator</strong>
-      <span className="workspace-mate-meta" aria-hidden="true">
-        <span className="workspace-mate-seq">
+      <strong className="wk-mate-name">No resonator</strong>
+      <span className="wk-mate-meta" aria-hidden="true">
+        <span className="wk-mate-seq">
           {Array.from({ length: 6 }, (_, pip) => (
             <i key={pip} />
           ))}
         </span>
       </span>
-      <span className="workspace-mate-kit" aria-hidden="true">
-        <span className="workspace-mate-tile workspace-mate-tile--empty" />
+      <span className="wk-mate-kit" aria-hidden="true">
+        <span className="wk-mate-tile wk-mate-tile--empty" />
       </span>
     </>
   )
 
   return (
-    <article className="workspace-mate workspace-mate--empty">
+    <article className="wk-mate wk-mate--empty">
       {onPick ? (
         <button
-          type="button" className="workspace-mate-content"
+          type="button" className="wk-mate-content"
           aria-label="Add a resonator to this team slot"
           onClick={onPick}
         >
           {body}
         </button>
       ) : (
-        <div className="workspace-mate-content">{body}</div>
+        <div className="wk-mate-content">{body}</div>
       )}
     </article>
   )
@@ -599,26 +616,31 @@ function TeamMate({
   const mateSets = mate.sets.filter((set) => set.icon).slice(0, 3)
   const body = (
     <>
-      <strong className="workspace-mate-name">{mate.name}</strong>
-      <span className="workspace-mate-meta">
-        <span className="workspace-mate-seq" aria-label={`Sequence ${mate.sequence} of 6`}>
+      <strong className="wk-mate-name">{mate.name}</strong>
+      <span className="wk-mate-meta">
+        <span className="wk-mate-seq" aria-label={`Sequence ${mate.sequence} of 6`}>
           {Array.from({ length: 6 }, (_, pip) => (
             <i key={pip} data-on={pip < mate.sequence ? 'true' : undefined} />
           ))}
         </span>
-        <span className="workspace-mate-lv">Lv.<b>{mate.level ?? 1}</b></span>
+        <span className="wk-mate-lv">Lv.<b>{mate.level ?? 1}</b></span>
       </span>
     </>
   )
 
   return (
-    <article className="workspace-mate"
+    <ContextTrigger asChild ariaLabel={`${mate.name} teammate actions`} items={editable ? [
+      { id: `rail:mate:${mate.id}:configure`, label: 'Configure teammate', icon: <UserRound size="1em" />, onSelect: () => openTeamCnsl(mate.id, 'loadout', scenarioId) },
+      { id: `rail:mate:${mate.id}:weapon`, label: 'Configure weapon', icon: <Sword size="1em" />, onSelect: () => openWpnCnsl(mate.id, scenarioId) },
+      { id: `rail:mate:${mate.id}:echoes`, label: 'Configure Echoes', icon: <Images size="1em" />, onSelect: () => openTeamCnsl(mate.id, 'echoes', scenarioId) },
+    ] : []}>
+    <article className="wk-mate"
       data-rarity={mate.rarity}
       style={{ '--browser-accent': mate.accent, '--mate-rar': getRarityColor(mate.rarity) } as CssVars}
     >
-      <span className="workspace-mate-frame" aria-hidden="true">
+      <span className="wk-mate-frame" aria-hidden="true">
         <DisplayImage src={mate.sprite}
-          alt="" className="workspace-mate-portrait"
+          alt="" className="wk-mate-portrait"
           style={mate.spriteCss}
           loading="lazy"
           decoding="async"
@@ -627,20 +649,20 @@ function TeamMate({
       </span>
       {editable ? (
         <button
-          type="button" className="workspace-mate-content"
+          type="button" className="wk-mate-content"
           aria-label={`Configure ${mate.name}, ${mate.rarity}-star`}
           onClick={() => openTeamCnsl(mate.id, 'loadout', scenarioId)}
         >
           {body}
         </button>
       ) : (
-        <div className="workspace-mate-content">{body}</div>
+        <div className="wk-mate-content">{body}</div>
       )}
-      <span className="workspace-mate-kit">
-        <span className="workspace-mate-kit-row" data-row="weapon">
+      <span className="wk-mate-kit">
+        <span className="wk-mate-kit-row" data-row="weapon">
           <Tile
             type={editable ? 'button' : undefined}
-            className="workspace-mate-tile" data-kind="weapon"
+            className="wk-mate-tile" data-kind="weapon"
             aria-label={editable ? `Configure ${mate.name}'s weapon: ${mate.weaponName ?? 'Weapon'}` : undefined}
             onClick={editable ? () => openWpnCnsl(mate.id, scenarioId) : undefined}
             title={mate.weaponName ?? undefined}
@@ -653,12 +675,12 @@ function TeamMate({
           </Tile>
         </span>
         {mateSets.length ? (
-          <span className="workspace-mate-kit-row" data-row="sonata">
+          <span className="wk-mate-kit-row" data-row="sonata">
             {mateSets.map((set, index) => (
               <Tile
                 key={set.id ?? set.setId ?? index}
                 type={editable ? 'button' : undefined}
-                className="workspace-mate-tile" data-kind="set" title={`${set.name} · ${set.count ?? set.pieces}pc`}
+                className="wk-mate-tile" data-kind="set" title={`${set.name} · ${set.count ?? set.pieces}pc`}
                 aria-label={editable ? `Configure ${mate.name}'s Echoes: ${set.name}` : undefined}
                 onClick={editable ? () => openTeamCnsl(mate.id, 'echoes', scenarioId) : undefined}
               >
@@ -670,6 +692,7 @@ function TeamMate({
         ) : null}
       </span>
     </article>
+    </ContextTrigger>
   )
 }
 

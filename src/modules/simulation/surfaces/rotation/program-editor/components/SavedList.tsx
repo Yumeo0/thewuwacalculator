@@ -5,6 +5,8 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
+import type { MenuEntry } from '@/shared/ui/CtxMenu'
 import {
   startTransition,
   type CSSProperties,
@@ -93,6 +95,7 @@ interface SavedListProps {
   /** Stable identity of the active saved entry. */
   selectedId: string | null
   onSelect: (id: string) => void
+  getContextItems: (id: string, live: boolean) => MenuEntry[]
   panel: SavedListPanel
   dockPanel: boolean
   onPanelChange: (panel: SavedListPanel) => void
@@ -589,6 +592,7 @@ function Row({
   picked,
   onPick,
   onSelect,
+  getContextItems,
   compareMark,
   compareOff,
   grouped = false,
@@ -616,6 +620,7 @@ function Row({
   picked: ResonatorId | null
   onPick: (id: ResonatorId) => void
   onSelect: (id: string) => void
+  getContextItems: (id: string, live: boolean) => MenuEntry[]
   /* banked under its lead, where the head has already said who the take was
      written for. the row spends that portrait on the rest of the team instead */
   grouped?: boolean
@@ -628,6 +633,11 @@ function Row({
   const at = axis.at(row.avg)
 
   return (
+    <ContextTrigger
+      asChild
+      ariaLabel={`${row.label} rotation actions`}
+      getItems={() => getContextItems(row.id, Boolean(row.live))}
+    >
     <div
       className={[
         'rsl-row',
@@ -781,6 +791,7 @@ function Row({
 
       </span>
     </div>
+    </ContextTrigger>
   )
 }
 
@@ -1086,7 +1097,7 @@ function SavedTakeBuild({
   if (!build) {
     return (
       <p className="rsl-team__take-void">
-        This take was saved before builds were kept with them.
+        This rotation was saved before builds were included.
       </p>
     )
   }
@@ -1227,8 +1238,8 @@ function SavedTeamCompareInspector({
     >
       <div className="rte-inspector__head rsl-team__head">
         <span className="rte-lbl">Compared</span>
-        <b>Saved damage index</b>
-        <small>{roster.length} across the archive</small>
+        <b>Resonator damage</b>
+        <small>{roster.length} across saved rotations</small>
       </div>
 
       <div className="rte-inspector__mid rte-scroll">
@@ -1283,11 +1294,11 @@ function SavedTeamInspector({
     >
       <div className="rte-inspector__head rsl-team__head">
         <span className="rte-lbl">Resonators</span>
-        <b>Saved damage index</b>
+        <b>Resonator damage</b>
         <small>
           {compare.mode
             ? `${compare.ids.length + (member ? 1 : 0)} of ${CMP_MAX}`
-            : `${roster.length} across the archive`}
+            : `${roster.length} across saved rotations`}
         </small>
         <button
           type="button" className="rsl-team__cmp"
@@ -1295,7 +1306,7 @@ function SavedTeamInspector({
           disabled={!compare.mode && roster.length < 2}
           title={compare.mode
             ? 'Stop comparing'
-            : 'Stand another resonator beside this one'}
+            : 'Compare with another resonator'}
           onClick={compare.onToggle}
         >
           <GitCompare aria-hidden="true" />
@@ -1326,6 +1337,7 @@ export function SavedList({
   view,
   selectedId,
   onSelect,
+  getContextItems,
   panel,
   dockPanel,
   onPanelChange,
@@ -1681,12 +1693,12 @@ export function SavedList({
             ? 'These saved rotations do not have enough runtime data to recalculate.'
             : 'No rotations saved yet.'}
         </p>
-        {liveHidden ? <p className="rsl-live__hidden">1 live take hidden by this search.</p> : null}
+        {liveHidden ? <p className="rsl-live__hidden">Current rotation hidden by this search.</p> : null}
       </div>
     )
   }
 
-  const select = (id: string, noRead?: boolean) => {
+  const select = (id: string) => {
     if (compare.mode) {
       if (cmpMark(id) !== 'off') {
         compare.onToggle(id)
@@ -1701,9 +1713,7 @@ export function SavedList({
       onGroupOpenChange(next.lead.id, true)
     }
     onSelect(id)
-    /* a pick off the index used to stop short of the note because opening it
-       would have closed the index. it opens beside it now, so it opens */
-    if (!noRead || panel === 'list') onPanelChange('read')
+    if (id === selectedId) onPanelChange('read')
   }
 
   const pickMember = (id: ResonatorId) => {
@@ -1837,6 +1847,7 @@ export function SavedList({
                 picked={selectedMemberId}
                 onPick={pickMember}
                 onSelect={select}
+                getContextItems={getContextItems}
                 live={row.live ? live : null}
               />
             ))
@@ -1900,6 +1911,7 @@ export function SavedList({
                         picked={selectedMemberId}
                         onPick={pickMember}
                         onSelect={select}
+                        getContextItems={getContextItems}
                         grouped
                         live={row.live ? live : null}
                       />
@@ -1911,7 +1923,7 @@ export function SavedList({
           {/* the query filters the archive and the live take with it, so the
               field says what it is no longer drawing rather than losing it */}
           {liveHidden ? (
-            <p className="rsl-live__hidden">1 live take hidden by this search.</p>
+            <p className="rsl-live__hidden">Current rotation hidden by this search.</p>
           ) : null}
         </div>
       </div>
@@ -1925,7 +1937,7 @@ export function SavedList({
     >
       <div className="rte-palette__head rsl-lead__head">
         <span className="rte-lbl">Rotations</span>
-        <b>Saved index</b>
+        <b>Saved rotations</b>
         <small>
           {keptCount} entries
         </small>
@@ -1947,8 +1959,13 @@ export function SavedList({
           const isGrouped = !isOn && litLead != null && row.lead.id === litLead
           const leadMark = cmpMark(row.id)
           return (
-            <div
+            <ContextTrigger
               key={row.id}
+              asChild
+              ariaLabel={`${row.label} rotation actions`}
+              getItems={() => getContextItems(row.id, Boolean(row.live))}
+            >
+            <div
               className={[
                 'rsl-ld',
                 isOn ? 'is-on' : '',
@@ -1968,12 +1985,12 @@ export function SavedList({
               tabIndex={0}
               onClickCapture={row.live ? undefined : selection.buildClickCapture(row.id)}
               onClick={() => {
-                if (!row.live || !selection.mode) select(row.id, true)
+                if (!row.live || !selection.mode) select(row.id)
               }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault()
-                  if (!row.live || !selection.mode) select(row.id, true)
+                  if (!row.live || !selection.mode) select(row.id)
                 }
               }}
             >
@@ -2010,6 +2027,7 @@ export function SavedList({
                 ))}
               </span>
             </div>
+            </ContextTrigger>
           )
         })}
       </div>
@@ -2078,8 +2096,8 @@ export function SavedList({
     >
       {([
         ['list', 'list', 'Saved rotations'],
-        ['read', 'read', 'Read the selected saved rotation'],
-        ['team', 'team', 'Compare resonator damage across saved rotations'],
+        ['read', 'details', 'Details for the selected saved rotation'],
+        ['team', 'damage', 'Compare resonator damage across saved rotations'],
       ] as const).map(([channel, label, hint]) => (
         <button
           key={channel}

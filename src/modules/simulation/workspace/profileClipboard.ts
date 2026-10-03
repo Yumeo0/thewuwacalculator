@@ -6,6 +6,7 @@
 */
 
 import { decShareText, encShareText } from '@/shared/lib/shareCodec.ts'
+import { rememberWorkspaceClipboardText } from '@/shared/lib/workspaceClipboardCache.ts'
 import type { ResProf } from '@/domain/entities/profile.ts'
 import type { ResonatorId } from '@/domain/entities/runtime.ts'
 import { cloneResProf } from '@/engine/runtime/runtimeCloning.ts'
@@ -132,13 +133,15 @@ export async function writeProfClip(
   }
 
   cachedProfile = nrmlPay
+  const text = serializeClip(nrmlPay)
+  rememberWorkspaceClipboardText(text)
 
   if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
     return true
   }
 
   try {
-    await navigator.clipboard.writeText(serializeClip(nrmlPay))
+    await navigator.clipboard.writeText(text)
     return true
   } catch {
     return false

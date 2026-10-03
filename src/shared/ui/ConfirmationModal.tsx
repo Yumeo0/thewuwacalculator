@@ -50,7 +50,7 @@ export function ConfirmModal({
   const confirmBtn = (
     <button
       type="button"
-      className={`confirmation-modal__door confirmation-modal__door--go${variant === 'danger' ? ' confirmation-modal__door--danger' : ''}`}
+      className={`cfm__door cfm__door--go${variant === 'danger' ? ' cfm__door--danger' : ''}`}
       onClick={onConfirm}
       disabled={confirmDisabled}
       title={confirmTitle}
@@ -60,7 +60,7 @@ export function ConfirmModal({
   )
   const cancelBtn = (
     <button
-      type="button" className="confirmation-modal__door"
+      type="button" className="cfm__door"
       onClick={onCancel}
     >
       {cancelLabel}
@@ -75,21 +75,21 @@ export function ConfirmModal({
       ariaLabel={title}
       onClose={onCancel}
     >
-      <div className="confirmation-modal__seal">
-        <span className="confirmation-modal__medal">
+      <div className="cfm__seal">
+        <span className="cfm__medal">
           <Icon size="1.35rem" />
         </span>
-        <h2 className="confirmation-modal__title">{title}</h2>
-        <div className="confirmation-modal__message">{message}</div>
+        <h2 className="cfm__title">{title}</h2>
+        <div className="cfm__message">{message}</div>
       </div>
       <div
-        className={`confirmation-modal__doors${hasSecondary ? ' confirmation-modal__doors--stack' : ''}`}
+        className={`cfm__doors${hasSecondary ? ' cfm__doors--stack' : ''}`}
       >
         {hasSecondary ? (
           <>
             {confirmBtn}
             <button
-              type="button" className="confirmation-modal__door"
+              type="button" className="cfm__door"
               onClick={onSecondary}
             >
               {secondaryLabel}

@@ -84,7 +84,7 @@ export function WeaponInspect({
       </header>
       <div className="weapon-inspect__identity">
         <span className="weapon-inspect__frame">
-          <DisplayImage src={opts.icon} alt={opts.name} className="weapon-inspect__icon" onError={withDefWpnMg} />
+          <DisplayImage src={opts.icon} alt={opts.name} className="wpi__icon" onError={withDefWpnMg} />
         </span>
         <div className="weapon-inspect__title">
           <h3 className="weapon-inspect__name">{opts.name}</h3>

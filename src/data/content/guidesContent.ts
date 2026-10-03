@@ -79,36 +79,39 @@ export type GuideBlock =
     caption: string
   }
   | {
-    type: 'imagePlaceholder'
-    title: string
-    caption: string
+    type: 'plate'
+    shot: string
+    width: number
+    height: number
+    alt: string
+    steps: GuidePlateStep[]
   }
 
+// Coordinates are [left, top, width, height] percentages in source-image space.
+export interface GuidePlateStep {
+  title: string
+  description: string
+  box: [number, number, number, number]
+}
+
 const paragraph = (...text: string[]): GuideBlock => ({ type: 'paragraph', text })
-const bullets = (...items: string[]): GuideBlock => ({ type: 'bullets', items })
-const definitions = (...items: Array<[string, string]>): GuideBlock => ({
-  type: 'definitions',
-  items: items.map(([term, description]) => ({ term, description })),
-})
+const note = (text: string, tone?: 'info' | 'warning'): GuideBlock => ({ type: 'note', tone, text })
 const steps = (...items: Array<[string, string]>): GuideBlock => ({
   type: 'steps',
   items: items.map(([title, description]) => ({ title, description })),
 })
-const comparison = (
-  leftLabel: string,
-  rightLabel: string,
-  ...rows: Array<[string, string, string]>
+const plate = (
+  shot: string,
+  [width, height]: [number, number],
+  alt: string,
+  ...steps: Array<[string, string, GuidePlateStep['box']]>
 ): GuideBlock => ({
-  type: 'comparison',
-  leftLabel,
-  rightLabel,
-  rows: rows.map(([label, left, right]) => ({ label, left, right })),
-})
-const image = (src: string, alt: string, caption: string): GuideBlock => ({
-  type: 'image',
-  src,
+  type: 'plate',
+  shot,
+  width,
+  height,
   alt,
-  caption,
+  steps: steps.map(([title, description, box]) => ({ title, description, box })),
 })
 const section = (title: string, ...blocks: GuideBlock[]): GuideSection => ({ title, blocks })
 const article = (
@@ -125,504 +128,434 @@ const article = (
 
 export const gdCtgr: GuideCategory[] = [
   {
-    id: 'resonators',
-    title: 'Resonators',
-    summary: 'Set the active character, progression, sequence, traces, and visible kit state.',
-    aliases: ['Resonator', 'Characters', 'Character'],
+    id: 'app-basics',
+    title: 'App Basics',
+    summary: 'Preferences, data, menus, shortcuts, imports and exports.',
+    aliases: ['Getting Started', 'Calibration', 'Settings', 'Home', 'Navigation'],
     articles: [
       article(
-        'resonator-progression-and-kit-state',
-        'Progression and Kit State',
-        'Set the character-side values that damage, rotations, teams, suggestions, and optimizer runs read.',
+        'calibration',
+        'Calibration',
+        'Set how the app looks and behaves. Open it from READ in the header.',
         section(
-          'Edit the active runtime',
-          steps(
-            ['Pick a resonator', 'Open the resonator pane and choose the character to edit. This changes the character attached to the live build.'],
-            ['Set progression', 'Set level, skill levels, resonance chain, and trace nodes from the visible controls.'],
-            ['Set kit state', 'Use any mode, stack, and status controls shown for that resonator. These values become part of the live scenario.'],
-            ['Review dependent panes', 'Damage rows, rotation output, team summaries, suggestions, and optimizer baselines read the same live runtime.']
+          'Theme',
+          paragraph('Choose a separate theme for Light, Dark and Background mode. Switching modes keeps each theme selection.'),
+          plate(
+            'app-look-theme',
+            [1562, 784],
+            'Calibration Look section with the three theme slots',
+            ['Light', 'Click the slot to switch to light mode and show the light themes below.', [1.1, 17, 31.7, 28.7]],
+            ['Dark', 'Live marks the active mode.', [34, 17, 31.6, 28.7]],
+            ['Background', 'Use a preset wallpaper or upload your own.', [67, 17, 31.6, 28.7]],
+            ['Follow my device', 'Switch between your light and dark picks with your system setting.', [1.1, 48.9, 97.7, 13.2]],
+            ['Pick a theme', 'The themes for the open slot. Click one to use it.', [1, 65.7, 98, 29]],
           ),
-          definitions(
-            ['Runtime', 'The current build, character state, team state, enemy state, and manual state used for calculations.'],
-            ['Trace node', 'A passive progression node that adds stats or enables a kit effect.'],
-            ['Kit state', 'A visible resonator-owned mode, stack, toggle, or status value.']
+        ),
+        section(
+          'Font and uploads',
+          plate(
+            'app-look-font',
+            [1400, 845],
+            'Body font specimens, Google Fonts link and upload storage',
+            ['Body font', 'Each row shows the same line in that font. Click one to use it.', [1.1, 8.3, 98, 51.5]],
+            ['Any Google Font', 'Paste a Google Fonts link and press Use it.', [1.1, 62.4, 97.7, 8.3]],
+            ['This device', 'Wallpapers and showcase card images stay in this browser only.', [1.1, 82.5, 48.2, 15.1]],
+            ['ImgBB', 'Uploads go to ImgBB under your own API key and are kept as links, so they follow you to other devices.', [50.5, 82.5, 48.2, 15.1]],
+          ),
+        ),
+        section(
+          'App preferences',
+          plate(
+            'app-behavior',
+            [1306, 924],
+            'Behavior section, App group',
+            ['Glass Blur', 'Frosted-glass backdrops behind pop-ups and panels. Turn it off on slower machines.', [1.1, 17.3, 46.4, 9]],
+            ['SOME Animations', 'Fade-ins and other entrance motion.', [1.1, 26.5, 46.4, 8.7]],
+            ['In-App Context Menus', 'Right-click opens the app’s own action menus instead of the browser menu.', [1.1, 35.4, 46.4, 11.5]],
+            ['Update Toasts', 'Show a notification when an app update is available.', [1.1, 47.1, 46.4, 8.9]],
+            ['Beta Game Data', 'Use the beta game catalogs. Changing it reloads the app.', [1.1, 56.2, 46.4, 8.8]],
+            ['Compressed Exports', 'Export files as compact .wwcalc instead of plain JSON. Both import back.', [1.1, 65.2, 46.4, 11.4]],
+            ['App History', 'Turns undo and redo on. The number is how many steps are kept.', [1.1, 76.7, 46.4, 8.8]],
+          ),
+        ),
+        section(
+          'Calculator preferences',
+          plate(
+            'app-behavior',
+            [1306, 924],
+            'Behavior section, Calculator group',
+            ['Compact Inventory Items', 'Smaller inventory tiles, so more fit on screen.', [52.4, 17.3, 46.4, 9]],
+            ['Show equipped by', 'Inventory Echoes show which resonators wear them.', [52.4, 26.5, 46.4, 8.7]],
+            ['Recommended Menu Items', 'Recommended entries come first in pickers and menus.', [52.4, 35.4, 46.4, 8.8]],
+            ['Show All Evaluation States', 'Effects lists every enabled source, even ones that add no number.', [52.4, 44.4, 46.4, 11.6]],
+            ['Max Resonators on Init', 'A new or reset resonator starts at max level, skills, traces, sequence and effect states.', [52.4, 56.2, 46.4, 10.4]],
           ),
         ),
       ),
       article(
-        'resonator-max-button',
-        'The Max Button',
-        'Fill the visible resonator progression controls to their authored high state.',
+        'your-data',
+        'Your Data',
+        'Your data stays in this browser unless you export it or enable Google Drive backup.',
         section(
-          'What Max changes',
-          bullets(
-            'Sets level to 90.',
-            'Sets skill levels to 10.',
-            'Turns available trace nodes on.',
-            'Sets supported kit controls to their authored high state for the current sequence.',
-            'Keeps mutually exclusive mode groups as a single active choice.'
+          'Data',
+          plate(
+            'app-data',
+            [1182, 1008],
+            'Calibration Data section',
+            ['Player', 'Name and UID sign your showcase cards. Importing a build card can fill them, after asking.', [1, 10.9, 68.2, 24.8]],
+            ['Storage', 'How much browser storage each data type uses.', [1, 40.2, 97.7, 10.5]],
+            ['Export snapshot', 'Download all app data in one file.', [1, 59, 15.1, 4]],
+            ['Export a slice', 'Or export one part: the current resonator, all resonators, inventory, settings or session.', [1, 69, 46.4, 30.7]],
+            ['Bring data in', 'Drop or choose an exported data file.', [52.2, 59.1, 46.5, 10.6]],
+            ['Or paste it', 'Paste the contents of a file, then press Import data.', [52.2, 74.4, 46.5, 20.6]],
           ),
-          paragraph(
-            'Max writes real live state. Edit any field after pressing it to model a lower level, lower skill level, different mode, or different stack state.'
+        ),
+        section(
+          'Backup',
+          plate(
+            'app-backup',
+            [1568, 664],
+            'Calibration Backup section',
+            ['Google Drive', 'Turn it on and sign in to back up to your own Drive and restore on another device. Nothing uploads until you do.', [1.1, 22.3, 46.5, 32]],
+            ['Old app backup', 'Import a v1 All Data backup. Data the current app cannot use is omitted.', [52.2, 49, 46.5, 16.1]],
+            ['Delete all local data', 'Erases everything in this browser. There is no undo.', [1.1, 71.7, 97.7, 25.6]],
+          ),
+          note('Export a snapshot before deleting anything or switching browsers.', 'warning'),
+        ),
+        section(
+          'Where to import and export',
+          {
+            type: 'definitions',
+            items: [
+              { term: 'All app data', description: 'Calibration, Data: Export snapshot and Bring data in.' },
+              { term: 'Old v1 backup', description: 'Calibration, Backup: Import a v1 backup.' },
+              { term: 'Build card image', description: 'Import above the Echo Loadout, or press I in the Simulation quick actions. See Simulation Basics.' },
+              { term: 'Rotation', description: 'Import in the Rotation toolbar; Share and Saved rotations export one.' },
+              { term: 'Showcase card style', description: 'Export and Import in the Showcase Customize panel.' },
+              { term: 'Share link', description: 'Opening a shared link shows an import confirmation before anything changes.' },
+            ],
+          },
+        ),
+      ),
+      article(
+        'menus-and-shortcuts',
+        'Menus and Shortcuts',
+        'Right-click menus, selecting several things at once, and undo.',
+        section(
+          'Right-click menus',
+          paragraph('With In-App Context Menus enabled, right-click opens an action menu. Hover an icon for its label. An icon with a small square in its corner opens a submenu.'),
+          plate(
+            'app-ctx-navigate',
+            [1532, 252],
+            'Context menu strip with the Navigate submenu open',
+            ['Item actions', 'Actions for what you clicked. On an Echo card: save, equip to, copy and select.', [3.9, 17.9, 19.6, 30.6]],
+            ['Undo and Redo', 'Each lists the recent steps, so you can jump back several at once.', [24.8, 17.9, 9.5, 30.6]],
+            ['Navigate', 'Jump to any page.', [35.6, 17.9, 4.6, 30.6]],
+            ['App', 'Open Inventory, the Optimizer, Modulation or the app status.', [40.8, 17.9, 4.3, 30.6]],
+            ['Reset', 'Resets the selected resonator after a confirmation.', [45.4, 17.9, 4.6, 30.6]],
+            ['What it is for', 'The label names what the menu acts on.', [50.3, 17.9, 17.6, 30.6]],
+            ['A submenu', 'Hovering Navigate opens the page list.', [35.6, 54.8, 61.1, 29.4]],
+          ),
+        ),
+        section(
+          'Undo and redo',
+          plate(
+            'app-ctx-undo',
+            [1086, 366],
+            'Undo submenu listing two history steps',
+            ['Undo', 'Hover to see the steps you can undo.', [35, 12.3, 6.6, 20.5]],
+            ['Shortcut', 'The shortcut is shown on the label.', [70.9, 13.7, 24.8, 17.8]],
+            ['History', 'Click a step to undo back to it.', [35, 38.3, 32.7, 51.4]],
+          ),
+          note('Undo and redo only work with App History turned on in Calibration.'),
+        ),
+        section(
+          'Select several',
+          paragraph('Pick Select from a menu, or Ctrl/Cmd-click an item, to start selecting. Shift-click selects everything between.'),
+          plate(
+            'app-selection',
+            [1568, 699],
+            'Three Echoes selected, with the selection bar at the top',
+            ['Count', 'How many are selected.', [10.5, 2.1, 6.7, 7.2]],
+            ['Act on them', 'The actions the list allows, such as copy, apply to every selected item. Inventory adds cut, paste and delete.', [18.2, 2.1, 7.3, 7.2]],
+            ['Select all, deselect, exit', 'Change the selection or leave selection mode.', [26.8, 2.1, 19.1, 7.2]],
+            ['Selected items', 'Selected cards are outlined.', [0.9, 53, 59.4, 45]],
+          ),
+        ),
+        section(
+          'Keyboard',
+          {
+            type: 'definitions',
+            items: [
+              { term: 'Ctrl/Cmd + Z', description: 'Undo.' },
+              { term: 'Ctrl/Cmd + Shift + Z, Ctrl + Y', description: 'Redo.' },
+              { term: 'Ctrl/Cmd + A', description: 'Select all in the list you are in. Add Shift to deselect all.' },
+              { term: 'Ctrl/Cmd + C, X, V', description: 'Copy, cut or paste the selection, or the item under focus.' },
+              { term: 'Delete, Backspace', description: 'Remove the selection where removing is allowed.' },
+              { term: 'Esc', description: 'Leave selection mode, or close the open menu or modal.' },
+              { term: 'M, I, B, K, T', description: 'Dock keys on Simulation pages: Max, Import, Buffs, Skill data, Target.' },
+              { term: '/', description: 'Jump to search on Guides and Docs.' },
+            ],
+          },
+        ),
+      ),
+      article(
+        'docs',
+        'Docs',
+        'How the numbers are worked out. Open Docs from READ in the header.',
+        section(
+          'Method notes',
+          paragraph('Guides show how to use the app. Docs explain the method behind it: how a score is computed, how the optimizer searches, how negative effects stack.'),
+          plate(
+            'app-docs',
+            [1567, 552],
+            'Docs page on the Scoring method',
+            ['Search', 'Search every method. Press / to jump here.', [32.4, 1.8, 26.2, 6.9]],
+            ['Step through', 'Move to the previous or next method.', [58.7, 1.8, 8.8, 6.9]],
+            ['Interactive examples', 'Some methods include a demo. Adjust its controls to see how the result changes.', [0.8, 29.5, 80.5, 65.3]],
+            ['Methods', 'Every method, with a small preview.', [83.7, 17.8, 15.6, 29.7]],
+            ['On this page', 'Jump to a part of the open method.', [83.7, 51.6, 15.6, 47]],
           ),
         ),
       ),
     ],
   },
   {
-    id: 'rotations',
-    title: 'Rotations',
-    summary: 'Author feature rows, state changes, repeats, loops, uptime blocks, and read the computed output.',
-    aliases: ['Rotations', 'Rotation'],
+    id: 'simulation-basics',
+    title: 'Simulation Basics',
+    summary: 'Use the Simulation roster and the build controls shared by Modulation, Showcase, Optimizer and Suggestions.',
+    aliases: ['Build Setup', 'Simulation'],
     articles: [
       article(
-        'rotation-mental-model',
-        'Draft Versus Result',
-        'Separate the rotation you edit from the output produced by the simulator.',
+        'roster-and-build-card',
+        'Roster and Build Card',
+        'Pick the resonator you are working on and reach its gear and team from the card.',
         section(
-          'Two layers',
-          comparison(
-            'Draft',
-            'Result',
-            ['Stores', 'Nodes, order, enabled state, loop markers, repeat counts, uptime weights, and when rules', 'Damage, healing, shield, tune, status, and contribution rows'],
-            ['Changes when', 'You edit the rotation tree', 'The tree or shared combat state changes'],
-            ['Saved by', 'Saved rotations and rotation imports', 'Rotation summaries, result views, and preview panels']
+          'Switch the resonator',
+          paragraph('The roster on the left lists resonators with saved working setups. The highlighted resonator is selected for Simulation, so its build is the one you view and edit.'),
+          plate(
+            'sim-left',
+            [840, 1427],
+            'Resonator roster beside Phoebe’s build card',
+            ['Select a resonator', 'Click a portrait to select that resonator. Its highlighted portrait and the name below the roster show the selection.', [4.5, 57, 12, 7]],
+            ['Fold a group', 'Resonators are grouped by attribute. Click a group heading to fold or open it; the number shows its resonator count.', [7, 23.8, 9, 3.3]],
+            ['See every resonator', 'The button below the roster opens the full resonator picker.', [6, 88.3, 10, 5.6]],
           ),
-          definitions(
-            ['Node', 'One editable entry in the rotation tree.'],
-            ['Execution trace', 'The ordered output produced after the simulator runs the tree.'],
-            ['Combat state', 'Build stats, team effects, enemy profile, set state, manual buffs, and temporary rotation state.']
+        ),
+        section(
+          'Pick from every resonator',
+          paragraph('The picker below the roster lists every resonator, including those without a setup.'),
+          plate(
+            'sim-resonator-picker',
+            [1383, 868],
+            'Select Resonator picker with filters and portrait grid',
+            ['Filter', 'Narrow the grid by rarity, weapon type, element or role.', [1, 8.5, 14, 90]],
+            ['Pick a resonator', 'Click a portrait to select that resonator. If it has no setup, the app creates one and adds it to the roster.', [16.8, 9.3, 9.8, 20.6]],
+            ['Check the selection', 'The corner shows the selected resonator.', [90.4, 2.2, 5.2, 5]],
+          ),
+        ),
+        section(
+          'Read the build card',
+          paragraph('The card beside the roster summarizes the selected resonator’s build. Click a part of the card to open its settings.'),
+          plate(
+            'sim-left',
+            [840, 1427],
+            'Phoebe’s build card with chain nodes, weapon and team',
+            ['Set the chain', 'The nodes down the left edge are the resonance chain. Click a node to set the chain to it; clicking the current node steps back one.', [35, 10.8, 9.5, 41]],
+            ['Pause the portrait', 'Click the artwork to pause or play the animated portrait.', [45.5, 16, 52.5, 38]],
+            ['Open member settings', 'Click anywhere else on the card, such as the name, to open the member’s Loadout settings.', [36.5, 55.5, 30, 6.5]],
+            ['Edit the weapon', 'The weapon icon opens weapon settings.', [37.2, 62.2, 11, 6.6]],
+            ['Open a teammate', 'Click a team card to open that teammate’s settings.', [36.5, 71.2, 59, 8.4]],
+            ['Jump to a teammate’s gear', 'The two tiles on a team card open that teammate’s weapon settings and Echoes tab.', [88.4, 71.6, 6.8, 7.3]],
+          ),
+        ),
+        section(
+          'Weapon settings',
+          plate(
+            'sim-weapon-console',
+            [996, 824],
+            'Weapon settings for Luminous Hymn',
+            ['The weapon', 'Name, base ATK and its bonus stat.', [4.6, 24.5, 38, 15]],
+            ['Weapon level', 'Click the level to change it.', [80.5, 25, 15.5, 12]],
+            ['Rank', 'Click a star on the track to set the rank from R1 to R5.', [10, 40, 79, 11.5]],
+            ['Passive', 'The weapon’s passive effect at the selected rank.', [4.2, 56.5, 91.5, 26.5]],
+            ['Change weapon', 'Opens the weapon picker to equip a different weapon.', [4.6, 85.6, 29, 8.7]],
           ),
         ),
       ),
       article(
-        'rotation-node-types',
-        'Choose the Right Node Type',
-        'Pick the block that matches the action you are trying to model.',
+        'echo-loadout',
+        'Echo Loadout',
+        'Read, edit and save the five equipped Echoes.',
         section(
-          'Node roles',
-          definitions(
-            ['Feature', 'Runs one skill, echo, support action, tune action, healing entry, shield entry, or other authored feature.'],
-            ['Condition', 'Changes runtime state without creating its own damage row.'],
-            ['Repeat', 'Runs its child nodes a fixed number of times.'],
-            ['Uptime', 'Runs its child nodes under a weighted contribution ratio.'],
-            ['Loop start and end', 'Creates named loop context with run numbers for nodes inside the loop.']
+          'The Echo loadout',
+          plate(
+            'sim-loadout',
+            [1568, 423],
+            'Echo Loadout header and five equipped Echo cards',
+            ['Echo skill and Sonata effects', 'Click the Echo Loadout title to show the Echo skill and active Sonata effects.', [0.5, 2, 11, 12]],
+            ['Cost', 'The cost spent against the 12 cost cap.', [11.3, 2.5, 8, 11]],
+            ['Whose loadout', 'Select a portrait to show that member’s Echoes. This does not change the resonator selected in the roster.', [19, 0.5, 6, 14.5]],
+            ['Import', 'Read Echoes from a build card screenshot.', [63.8, 3, 4.8, 10]],
+            ['Config', 'Opens settings for this resonator and team.', [69.3, 3, 4.8, 10]],
+            ['Forge', 'Builds a loadout from the Echoes saved in your bag.', [74.6, 3, 4.4, 10]],
+            ['Save build, Save all', 'Save build stores the weapon and Echoes together. Save all stores the equipped Echoes individually in Inventory. Save build shows Saved if that build is already stored.', [79.6, 3, 13.8, 10]],
+            ['Unequip', 'Removes every equipped Echo after a confirmation.', [94.2, 3, 5.4, 10]],
+            ['An Echo card', 'Main stat, substats, crit value and the card’s score. Click the card to open the Echo editor.', [0.7, 22, 19.2, 76]],
           ),
-          steps(
-            ['Add output with Feature', 'Select the feature kind, then choose the skill or action from the feature picker.'],
-            ['Add setup with Condition', 'Place the condition before the feature rows that need the state change.'],
-            ['Compact repeated actions with Repeat', 'Put the repeated nodes inside the repeat block and set the count.'],
-            ['Model a phase with Loop', 'Wrap the phase in matching loop markers and set the run count on the loop.']
+        ),
+        section(
+          'Echo skill and Sonata effects',
+          paragraph('The panel below the Echo Loadout title shows the main Echo skill and active Sonata effects.'),
+          plate(
+            'sim-loadout-leaf',
+            [862, 970],
+            'Echo skill and Sonata effects panel below the Echo Loadout title',
+            ['The title', 'The title stays underlined while the panel is open. Click it again to close the panel.', [1.5, 1.3, 26, 5.7]],
+            ['Echo skill', 'The main Echo’s skill and its main-slot bonus.', [2, 7.5, 95, 51.5]],
+            ['Sonata effect', 'Each set tier, ticked when enough pieces are equipped.', [2, 61, 95, 37]],
+          ),
+        ),
+        section(
+          'Edit an Echo',
+          paragraph('Clicking an Echo card opens the editor for that slot.'),
+          plate(
+            'sim-echo-editor',
+            [1508, 788],
+            'Echo editor for Capitaneus with five substat reels',
+            ['Change the Echo', 'Click the icon to swap in a different Echo.', [2.7, 5.6, 6, 11]],
+            ['Sonata set', 'The set this Echo counts toward.', [9.3, 12.3, 15.8, 5.8]],
+            ['Main stat', 'The main stat and its value.', [2.8, 22.5, 32.5, 8.5]],
+            ['Pick the set', 'For an Echo that can belong to more than one set, pick which one it counts toward.', [84, 22, 12.8, 9.8]],
+            ['Roll a substat', 'Each reel lists the legal rolls for its stat. Drag or scroll the reel to set the value.', [3, 36.3, 18.3, 46.7]],
+            ['Save', 'Save changes updates the equipped Echo; Cancel discards your edits.', [83.2, 88.4, 13.8, 6.8]],
+          ),
+        ),
+        section(
+          'Look at a teammate’s loadout',
+          plate(
+            'sim-teammate-view',
+            [1568, 423],
+            'Echo Loadout turned to a teammate, with the portrait dial spread out',
+            ['Select a teammate', 'Hover over the portrait selector to show all three members, then click one. The Echo loadout and Modulation panel show that member’s build.', [19, 0.5, 11.2, 14.5]],
+            ['Their Echoes', 'Edit a teammate’s Echoes here the same way as your own.', [0.7, 22, 98.6, 76]],
           ),
         ),
       ),
       article(
-        'rotation-loops-and-iteration-semantics',
-        'Use Loops Without Misreading Totals',
-        'Create loop windows, target individual runs, and read loop-aware totals.',
+        'member-console',
+        'Member Settings',
+        'Edit a member’s level, chain, weapon, skills, effects, Echoes and buffs in one place.',
         section(
-          'Loop authoring',
-          definitions(
-            ['Loop id', 'The name that connects the start marker, end marker, run rules, and loop summaries.'],
-            ['Run count', 'The number of passes the loop executes.'],
-            ['Run number', 'The current pass while nodes inside the loop are executing.'],
+          'Loadout',
+          paragraph('Open member settings from Config above the Echo loadout, the build card or a team card.'),
+          plate(
+            'sim-console-loadout',
+            [1421, 840],
+            'Member settings on the Loadout tab',
+            ['Tabs', 'Switch between Loadout, Skills, Effects, Echoes and Buffs. The number on a tab counts what is set in it.', [32.9, 3.3, 46.5, 6]],
+            ['Members', 'The portraits switch whose settings you are editing.', [82.1, 3.3, 11, 6]],
+            ['Level', 'Click the level to change it.', [25.3, 65, 4.6, 5.6]],
+            ['Chain', 'Click a point on the track to set the resonance chain.', [2.3, 71.4, 27.6, 4.3]],
+            ['Weapon', 'Weapon name and level; Change opens the weapon picker.', [2.3, 80.5, 27.6, 9.5]],
+            ['Rank', 'Click a point on the track to set the weapon rank.', [2.3, 91.4, 27.6, 4.4]],
+            ['Saved builds', 'Click a saved build to apply its weapon and Echoes. All builds opens every saved build.', [32.9, 13.4, 64.7, 20]],
+            ['Combat stats', 'Calculated stat totals for this member’s current setup.', [32.9, 35.4, 64.7, 47.6]],
           ),
-          image(
-            '/assets/app/guides/loop-forward.png',
-            'Forward loop boundary example in the rotation editor',
-            'Forward loop. The end marker appears after the start marker, so the loop body is the range between them.'
+        ),
+        section(
+          'Skills',
+          plate(
+            'sim-console-skills',
+            [1421, 840],
+            'Member settings on the Skills tab with the forte tree',
+            ['Skill level', 'Click a level pill to raise it by one; past 10 it wraps back to 1.', [40.4, 75.8, 5.5, 3.8]],
+            ['Stat nodes', 'Click a stat node to turn it on or off.', [40.6, 34.8, 5, 10.6]],
+            ['Inherent skills', 'Inherent nodes unlock at the level shown under them.', [62.8, 21.7, 4.6, 9.8]],
           ),
-          image(
-            '/assets/app/guides/loop-wrap-end.png',
-            'Wrap end loop boundary example in the rotation editor',
-            'Wrap end loop. The end marker appears before the start marker in the same list, so the body wraps across the list boundary.'
+        ),
+        section(
+          'Effects',
+          plate(
+            'sim-console-effects',
+            [1421, 840],
+            'Member settings on the Effects tab',
+            ['Pick a state', 'Some effects are a choice between states. Click the one that applies; Clear sets none.', [32.9, 17.5, 64.7, 36]],
+            ['Toggle an effect', 'Switch conditional effects on or off. Stack effects take a count instead.', [91.5, 62, 5.5, 5]],
+            ['Weapon and Echo effects', 'Weapon, Echo and Sonata effects follow in their own groups.', [32.9, 81.2, 64.7, 10.8]],
           ),
-          image(
-            '/assets/app/guides/loop-wrap-start.png',
-            'Wrap start loop boundary example in the rotation editor',
-            'Wrap start loop. There is no end marker, so the loop starts at the start marker and continues until execution returns to it.'
+        ),
+        section(
+          'Echoes',
+          plate(
+            'sim-console-echoes',
+            [1421, 840],
+            'Member settings on the Echoes tab with the Echo orbit',
+            ['Loadout actions', 'The same actions as above the Echo loadout, plus Inventory.', [60.5, 12.9, 37, 3.6]],
+            ['Pick an Echo', 'The main Echo sits in the middle and the others orbit it. Click one to read it.', [32.9, 17.5, 40.8, 73.5]],
+            ['Echo details', 'Main stat and substats of the selected Echo.', [75.8, 19, 21.8, 36]],
+            ['Act on it', 'Make it the main Echo, save it to the bag, edit it, swap it or unequip it.', [75.8, 47.9, 21.8, 6]],
+            ['Sonata sets', 'The equipped sets and their piece counts.', [32.9, 94.5, 64.7, 5]],
           ),
-          steps(
-            ['Add the loop markers', 'Insert a loop start and matching loop end around the nodes that repeat.'],
-            ['Set the run count', 'Edit the loop count on the marker control.'],
-            ['Target a run', 'Open a node when rule and select the loop id plus run number.'],
-            ['Read the total', 'Loop-aware summary rows average repeated loop bodies by the configured run count. Raw inspection still shows the executed rows.']
+        ),
+        section(
+          'Buffs',
+          plate(
+            'sim-console-buffs',
+            [1421, 840],
+            'Member settings on the Buffs tab with custom modifiers',
+            ['Quick buffs', 'Type flat or percent bonuses for the common stats.', [32.9, 13, 64.7, 46.3]],
+            ['Presets and Add', 'Presets opens the buff preset picker. Add creates an empty custom modifier.', [86.6, 62, 11, 3.8]],
+            ['A custom modifier', 'Choose its scope, stat and value. The dot turns it on or off; the icons copy or delete it.', [32.9, 67, 64.7, 18]],
+          ),
+        ),
+        section(
+          'Buff presets',
+          paragraph('Presets are the known Echo, Sonata and weapon buffs, ready to add as custom modifiers.'),
+          plate(
+            'sim-buff-presets',
+            [1298, 924],
+            'Buff Presets picker',
+            ['Search', 'Find a buff by name, source or effect.', [2.1, 8.4, 34.7, 5.2]],
+            ['Source', 'Show Echoes, Sonata sets or Weapons.', [37.3, 8.4, 32.9, 5.2]],
+            ['Who it affects', 'Self, Active or Team buffs.', [70.5, 8.4, 27.4, 5.2]],
+            ['Select presets', 'Click cards to select them. Each lists the modifiers it adds.', [2.1, 16, 47.6, 16.5]],
+            ['Add them', 'Add Selected adds the modifiers. Select Visible picks everything in the current filter.', [61.8, 92.9, 36, 5.2]],
           ),
         ),
       ),
       article(
-        'rotation-repeat-and-uptime',
-        'Repeat, Uptime, and Weighting',
-        'Choose direct duplication or weighted contribution.',
+        'dock-and-target',
+        'Dock and Target',
+        'Quick actions on the right edge and settings for the enemy used in damage calculations.',
         section(
-          'Repeat compared with uptime',
-          comparison(
-            'Repeat',
-            'Uptime',
-            ['What it does', 'Executes child nodes multiple times', 'Executes child nodes under a contribution ratio'],
-            ['Control', 'Count', 'Percent or ratio'],
-            ['Output', 'Repeated rows enter the trace', 'Weighted rows enter totals with scaled contribution'],
-            ['Common control location', 'Rotation tree repeat node', 'Rotation tree uptime node']
+          'The dock',
+          paragraph('Each key also has a keyboard shortcut, shown on its corner.'),
+          plate(
+            'sim-dock',
+            [214, 596],
+            'Simulation dock with Max, Import, Buffs, Skill data and Target keys',
+            ['Max (M)', 'Fills level, weapon, skills and effects for the member currently shown. An undo appears in the dock right after.', [45, 3.3, 40.5, 14]],
+            ['Import (I)', 'Read Echoes from a build card screenshot.', [45, 22.3, 40.5, 14]],
+            ['Buffs (B)', 'Opens member settings on Buffs.', [45, 41, 40.5, 14]],
+            ['Skill data (K)', 'Skill levels and forte nodes.', [45, 59.7, 40.5, 14]],
+            ['Target (T)', 'The current enemy. Click to open target settings.', [43, 80.2, 47, 17.5]],
           ),
-          steps(
-            ['Set repeat count', 'Use Repeat for actions that happen more than once in the authored sequence.'],
-            ['Set uptime ratio', 'Use Uptime for actions or effects that occupy only part of the measured window.'],
-            ['Place setup first', 'Put setup nodes before the repeated or weighted feature rows that need them.']
-          ),
+          paragraph('Max keeps the resonance chain, weapon rank and equipped Echo rolls.'),
         ),
-      ),
-      article(
-        'rotation-conditions-and-when-rules',
-        'Conditions and When Rules',
-        'Apply state changes and restrict rows to the intended execution window.',
         section(
-          'Condition controls',
-          definitions(
-            ['Condition node', 'A visible state change in the rotation tree.'],
-            ['Feature condition', 'A state change attached directly to one feature row.'],
-            ['When rule', 'A filter that lets a node run only in selected loop runs or selected execution context.'],
-            ['Runtime path', 'The internal state field changed by a condition. Labels on the control describe the user-facing state.']
-          ),
-          steps(
-            ['Add a condition node', 'Place it before every feature row that needs the changed state.'],
-            ['Attach a feature condition', 'Open the feature row and add local setup when only that row needs the change.'],
-            ['Set a when rule', 'Select the loop id and run range that the node belongs to.'],
-            ['Inspect the row', 'Open the computed row details to confirm the active state used for that feature.']
-          ),
-        ),
-      ),
-      article(
-        'rotation-live-saved-and-team-state',
-        'Live and Saved Rotation State',
-        'Load rotations without mixing up the editor, saved records, and teammate links.',
-        section(
-          'Rotation locations',
-          definitions(
-            ['Live rotation', 'The rotation currently attached to the active resonator in the selected scenario.'],
-            ['Saved rotation', 'A stored rotation record that can be loaded back into live state.'],
-            ['Team rotation link', 'A teammate rotation selected by the team pane for team contribution calculations.'],
-            ['Imported rotation', 'A rotation loaded from a JSON payload or older backup format.']
-          ),
-          steps(
-            ['Edit live state', 'Change nodes in the rotation pane to change the active resonator rotation.'],
-            ['Save a copy', 'Save the current rotation before loading another record if the current draft needs to stay available.'],
-            ['Load a record', 'Loading replaces the live rotation for the selected resonator.'],
-            ['Set teammate links', 'Open team configuration and choose which saved or live teammate rotation contributes to team summaries.']
-          ),
-        ),
-      ),
-      article(
-        'rotation-totals-and-breakdown-rows',
-        'Read Rotation Totals and Breakdowns',
-        'Interpret summary rows, contribution rows, and support rows from the computed trace.',
-        section(
-          'Displayed output',
-          definitions(
-            ['Normal', 'Damage with no critical hit applied.'],
-            ['Crit', 'Damage when the row crits.'],
-            ['Average', 'Expected damage after crit rate and crit damage are applied.'],
-            ['Contribution row', 'A grouped row showing how much a skill family, source, teammate, or loop section adds to the total.'],
-            ['Support row', 'Healing, shield, tune, or status output tracked outside the main damage total.']
-          ),
-          steps(
-            ['Read top totals first', 'Start with the total and average columns for the full simulated rotation.'],
-            ['Open breakdown rows', 'Expand skill, source, teammate, and loop rows to see where the total comes from.'],
-            ['Compare loop summaries carefully', 'Loop-aware totals show repeated windows as averaged contribution; raw row details still show each executed entry.']
-          ),
-        ),
-      ),
-    ],
-  },
-  {
-    id: 'echoes',
-    title: 'Echoes',
-    summary: 'Equip echo instances, set stats, choose the main echo, and manage set conditionals.',
-    aliases: ['Echo', 'Echoes'],
-    articles: [
-      article(
-        'echo-loadout-rules',
-        'Loadout Rules and Slot Roles',
-        'Fill the five active echo slots and understand what each slot controls.',
-        section(
-          'Active loadout',
-          definitions(
-            ['Slot', 'One of the five equipped echo positions on the active build.'],
-            ['Cost', 'The echo cost value used by loadout validation and set planning.'],
-            ['Main echo', 'The equipped echo whose active echo skill is selected for echo-skill features and main echo effects.'],
-            ['Sonata set', 'The set id on each echo. Two-piece, three-piece, and five-piece logic reads these ids.']
-          ),
-          steps(
-            ['Equip an echo', 'Choose an echo instance for an empty slot or replace the current slot item.'],
-            ['Set cost and set', 'Pick the echo identity and sonata set shown on that slot.'],
-            ['Choose main echo', 'Mark the intended echo as the main echo when the active echo skill matters.'],
-            ['Check validation text', 'Read any cost, duplicate, or set messages shown by the pane.']
-          ),
-        ),
-      ),
-      article(
-        'echo-instance-identity',
-        'Echo Instance Identity and Inventory State',
-        'Track the difference between a catalog echo and the actual item in your bag.',
-        section(
-          'Instance fields',
-          definitions(
-            ['Catalog echo', 'The base game echo identity: name, cost, element, image, and possible main stats.'],
-            ['Echo instance', 'One owned item with a selected set, main stat, substats, level, and tuning state.'],
-            ['Inventory owner', 'The build or bag location currently holding the instance.'],
-            ['Duplicate identity', 'Two items may share the same catalog echo while still being different instances.']
-          ),
-          steps(
-            ['Edit the equipped instance', 'Changes to level, stat rolls, set, and main stat apply to the actual equipped item.'],
-            ['Move items through inventory actions', 'Use equip, unequip, replace, and inventory modal actions to control where the instance is stored.'],
-            ['Check ownership labels', 'Inventory labels show whether an item is equipped, available, or tied to another build.']
-          ),
-        ),
-      ),
-      article(
-        'echo-main-stats-and-substats',
-        'Main Stats, Substats, and Roll Interpretation',
-        'Set the stat lines that feed build totals and echo scoring.',
-        section(
-          'Stat controls',
-          definitions(
-            ['Main stat', 'The primary stat line on the echo. The available list depends on echo cost and slot rules.'],
-            ['Substat', 'A secondary roll line on the echo. Each substat has a stat type and value.'],
-            ['Roll value', 'The numeric value on the substat row.'],
-            ['CV', 'Crit Value. In the app it is shown as crit rate times two plus crit damage.']
-          ),
-          steps(
-            ['Select main stat', 'Choose the stat from the slot main-stat picker.'],
-            ['Add substats', 'Fill each roll row with the stat kind and value.'],
-            ['Use normalized labels', 'Element and skill-family labels use game-facing names when available.'],
-            ['Read totals', 'Echo stat totals update the active build immediately.']
-          ),
-        ),
-      ),
-      article(
-        'echo-main-echo-and-sets',
-        'Main Echo Effects and Sonata Sets',
-        'Control which echo skill and set effects the build can read.',
-        section(
-          'Echo skill and set state',
-          definitions(
-            ['Main echo skill', 'The active echo action available to rotation feature rows.'],
-            ['Two-piece set', 'A set effect active when at least two equipped echoes share the set id.'],
-            ['Three-piece set', 'A set effect active when at least three equipped echoes share the set id.'],
-            ['Five-piece set', 'A set effect active when all five equipped echoes share the set id.'],
-            ['Set conditional', 'A visible control for a set effect whose state, stacks, or mode is not automatic.']
-          ),
-          steps(
-            ['Assign the main echo', 'Set the main echo marker on the equipped echo that supplies the active echo skill.'],
-            ['Build set counts', 'Equip echoes with matching sonata set ids to activate the intended set parts.'],
-            ['Open set conditionals', 'Turn on stack or mode controls for set effects that expose configurable state.']
-          ),
-        ),
-      ),
-      article(
-        'echo-quick-setup',
-        'Quick Setup Forge',
-        'Generate a full equipped echo loadout from selected constraints.',
-        section(
-          'Forge flow',
-          steps(
-            ['Open Quick Setup', 'Start from the echo pane quick setup action.'],
-            ['Choose set plan', 'Select the sonata set arrangement the generated loadout will use.'],
-            ['Choose main stats', 'Pick the main stat pattern for each cost slot.'],
-            ['Generate', 'The forge writes real echo instances into the active build.'],
-            ['Edit after generation', 'Adjust level, set, main stat, substats, and main echo status from the normal echo controls.']
-          ),
-          definitions(
-            ['Generated instance', 'A new equipped item created by Quick Setup.'],
-            ['Set plan', 'The requested distribution of sonata set ids across the five slots.']
-          ),
-        ),
-      ),
-      article(
-        'echo-surface-totals-and-scores',
-        'Echo Stats, CV, and Surface Totals',
-        'Read the echo-only totals shown by the echo pane.',
-        section(
-          'Echo pane numbers',
-          definitions(
-            ['Echo stats', 'The stat contribution from equipped echoes before non-echo build context is added.'],
-            ['Surface total', 'A summary value shown on the echo pane for the current equipped loadout.'],
-            ['Score', 'The app score assigned by the active scoring table and current target context.'],
-            ['CV', 'Crit rate times two plus crit damage from the echo stat lines.']
-          ),
-          comparison(
-            'Echo pane',
-            'Full build output',
-            ['Stat source', 'Equipped echo instances', 'Character, weapon, echoes, team, enemy, and manual state'],
-            ['Purpose', 'Inspect echo loadout state', 'Read the complete scenario result'],
-            ['Changes from teammate state', 'No direct teammate totals', 'Yes, when team effects are active']
-          ),
-        ),
-      ),
-      article(
-        'echo-set-conditionals',
-        'Set Effect Conditionals',
-        'Set stacks and modes for sonata effects that expose configurable state.',
-        section(
-          'Conditional controls',
-          steps(
-            ['Open the set conditional panel', 'Use the set conditional controls from the echo or build state surface.'],
-            ['Select the set part', 'Choose the set effect part shown for the active equipped sets.'],
-            ['Set stacks or mode', 'Use the visible input, select, or toggle for that effect.'],
-            ['Recheck affected output', 'Damage rows, suggestions, optimizer baselines, and summaries read the updated set state.']
-          ),
-          definitions(
-            ['Automatic set effect', 'A set effect active from equipped set counts with no extra user control.'],
-            ['Configurable set effect', 'A set effect that needs a visible stack, mode, or on/off state.'],
-            ['Part', 'The two-piece, three-piece, or five-piece portion of the set definition.']
-          ),
-        ),
-      ),
-    ],
-  },
-  {
-    id: 'suggestions',
-    title: 'Suggestions',
-    summary: 'Rank main stats, set plans, weapons, substats, and generated echoes against the selected target.',
-    aliases: ['Suggestions', 'Suggestion'],
-    articles: [
-      article(
-        'suggestion-target-model',
-        'Pick the Right Target',
-        'Choose the row or rotation that suggestion lists rank against.',
-        section(
-          'Target controls',
-          definitions(
-            ['Target skill', 'One selected feature row or skill family used as the ranking objective.'],
-            ['Rotation target', 'A full rotation output used as the ranking objective.'],
-            ['Current build baseline', 'The live build state used as the starting point before a candidate change is tested.'],
-            ['Candidate', 'One generated main-stat plan, set plan, weapon, substat pattern, or echo loadout being ranked.']
-          ),
-          steps(
-            ['Select the target', 'Pick the target row, skill, or rotation from the suggestion surface controls.'],
-            ['Set list options', 'Adjust rarity, set, rank, generation, or filter controls for the suggestion type.'],
-            ['Run or refresh', 'Use the surface action to rebuild the ranking after changing target or options.'],
-            ['Inspect a row', 'Open a candidate row to see the candidate state and score or damage comparison.']
-          ),
-        ),
-      ),
-      article(
-        'suggestions-main-stat-recipes',
-        'Main Stat Suggestions',
-        'Rank echo main-stat combinations for the current target.',
-        section(
-          'Reading the list',
-          definitions(
-            ['Recipe', 'A five-slot main-stat pattern.'],
-            ['Locked slot', 'A slot kept at its current main stat while recipes are generated.'],
-            ['Delta', 'The candidate result compared with the current build baseline.'],
-            ['Main Echo effect', 'The equipped main Echo passive is ignored for this comparison, including the baseline row.'],
-            ['Rank row', 'One candidate recipe sorted by the selected objective.']
-          ),
-          steps(
-            ['Choose slot rules', 'Lock or unlock slots from the recipe controls.'],
-            ['Pick target', 'Select the target skill or rotation.'],
-            ['Review ranked recipes', 'Read the sorted rows and open a candidate to inspect its main-stat pattern.'],
-            ['Apply a recipe', 'Use the apply action to write selected main stats to the active echo slots.']
-          ),
-        ),
-      ),
-      article(
-        'suggestions-set-plans',
-        'Set Plan Suggestions',
-        'Rank sonata set distributions for the equipped slots.',
-        section(
-          'Plan controls',
-          definitions(
-            ['Set plan', 'A proposed sonata set assignment across the five equipped slots.'],
-            ['Active set parts', 'The two-piece, three-piece, and five-piece effects created by the candidate plan.'],
-            ['Grouped row', 'Equivalent set effects with the same scored damage are shown together as set icons and piece counts.'],
-            ['Current plan', 'The set ids currently equipped on the active build.']
-          ),
-          steps(
-            ['Select allowed sets', 'Choose which sonata sets can appear in generated plans.'],
-            ['Set target', 'Pick the skill or rotation objective.'],
-            ['Read candidates', 'Compare the ranked set plans and their score or damage deltas. Only set effects that changed the scored damage are shown.'],
-            ['Apply plan', 'Write the selected set ids onto the equipped echo instances.']
-          ),
-        ),
-      ),
-      article(
-        'suggestions-weapons',
-        'Weapon Suggestions',
-        'Rank weapons and ranks for the current target.',
-        section(
-          'Weapon list controls',
-          definitions(
-            ['Rank', 'The weapon passive rank used for evaluation.'],
-            ['Rarity row', 'A filter and rank control group for weapons of the same rarity or source group.'],
-            ['Passive state', 'Any weapon-owned stack, mode, or toggle exposed by the app for evaluation.'],
-            ['Inspect', 'The row action that opens the candidate weapon details before applying it.']
-          ),
-          steps(
-            ['Choose rarity visibility', 'Turn weapon rarity groups on or off from the list controls.'],
-            ['Set ranks', 'Select the rank value for each group.'],
-            ['Set passive controls', 'Adjust visible weapon state controls for the candidates.'],
-            ['Inspect and apply', 'Open a row to review it, then apply to equip the weapon and selected rank.']
-          ),
-        ),
-      ),
-      article(
-        'suggestions-substat-priority',
-        'Substat Priority',
-        'Read which substats move the selected target the most from the current build.',
-        section(
-          'Priority tables',
-          definitions(
-            ['Gain table', 'Shows the expected change from adding more of a substat family.'],
-            ['Current value table', 'Shows the value already present on the current build.'],
-            ['Roll chunk', 'The stat increment used by the table when comparing one substat family with another.'],
-            ['Reserved stat', 'A stat the model keeps available for required Energy Regen or similar target needs.']
-          ),
-          steps(
-            ['Select target', 'Pick the target skill or rotation.'],
-            ['Read top rows', 'Higher rows show stronger next-roll direction for the selected target.'],
-            ['Compare current value', 'Use the current value table to see which existing rolls are carrying the build.'],
-            ['Change target to rerank', 'Switching from one skill to a full rotation can change the table order.']
-          ),
-        ),
-      ),
-      article(
-        'suggestions-random-generation',
-        'Random Echo Generation',
-        'Generate and rank random echo loadouts under selected rules.',
-        section(
-          'Generation controls',
-          definitions(
-            ['Batch', 'A group of generated loadouts evaluated together.'],
-            ['Generation rule', 'A selected limit for sets, main stats, costs, or stat families.'],
-            ['Candidate loadout', 'A complete generated five-echo build.'],
-            ['Apply generated', 'The action that writes the candidate loadout to the active build.']
-          ),
-          steps(
-            ['Set generation rules', 'Choose the allowed sets, main stats, and other limits shown by the surface.'],
-            ['Run generation', 'Start the generator and wait for ranked candidates.'],
-            ['Inspect a candidate', 'Open the candidate details to review its five echoes and score.'],
-            ['Apply selected loadout', 'Write the candidate echoes into the active build from the row action.']
-          ),
-        ),
-      ),
-      article(
-        'suggestions-inspect-and-apply',
-        'Inspect and Apply',
-        'Move a ranked suggestion into the active build after reviewing the row.',
-        section(
-          'Row actions',
-          definitions(
-            ['Preview', 'A candidate view that shows the state before it is written to the build.'],
-            ['Apply', 'Writes the candidate change to the active live build.'],
-            ['Delta', 'The difference between the current build baseline and the candidate evaluation.'],
-            ['Baseline', 'The state of the build before the candidate is applied.']
-          ),
-          steps(
-            ['Open the row', 'Inspect the candidate details from the ranked list.'],
-            ['Check what changes', 'Review the displayed weapon, echo, set, or stat fields that will be written.'],
-            ['Apply deliberately', 'Use the row apply action only for the candidate you want on the live build.'],
-            ['Save after applying', 'Create a saved record if the updated build needs to be kept as a reusable snapshot.']
+          'Target settings',
+          plate(
+            'sim-target-console',
+            [1124, 956],
+            'Target settings for Nightmare: Adam Smasher',
+            ['Change target', 'Click the portrait to pick another enemy or Custom.', [3.3, 3.7, 7.3, 8.3]],
+            ['Tower or Field', 'Switch between the Tower and Field versions of the enemy.', [3.8, 14.9, 15.2, 5.3]],
+            ['Level', 'Drag or type the enemy level; defense follows it.', [66, 15.3, 30.3, 5.1]],
+            ['Resistances', 'The damage multiplier for each element. Click one to read its resistance.', [3.8, 20.2, 92.4, 13.1]],
+            ['Combat effects', 'Vulnerabilities and other enemy states.', [3.8, 45.2, 92.4, 24.6]],
+            ['Tune Strain and negative effects', 'Enemy stack counts used by skills that depend on them.', [3.8, 72.4, 92.4, 14.7]],
+            ['Presets', 'One click sets a standard target. Done closes target settings.', [3.8, 90.2, 56, 6.2]],
           ),
         ),
       ),
@@ -631,46 +564,658 @@ export const gdCtgr: GuideCategory[] = [
   {
     id: 'modulation',
     title: 'Modulation',
-    summary: 'Tune a build, read its evaluation, and use the Showcase tool.',
-    aliases: ['Modulation', 'Build Evaluation', 'Showcase'],
+    summary: 'Score the build, read its stats, damage and effects, and open the build report.',
     articles: [
       article(
-        'evaluation-report',
-        'Evaluation Report',
-        'Read the current build against generated reference and maximum builds.',
+        'read-the-score',
+        'Read the Score',
+        'Compare this build’s damage with the no-Echo, reference and maximum benchmarks.',
         section(
-          'Report sections',
-          definitions(
-            ['Current build', 'The live build being measured.'],
-            ['100 percent target', 'The generated reference build used as the lower comparison.'],
-            ['200 percent target', 'The generated maximum build used as the higher comparison.'],
-            ['Per-step change', 'The table showing how one stat increment changes the selected target.'],
-            ['Current build state', 'The table showing how current stat investment is valued by the selected target.']
+          'The score band',
+          paragraph('Use the band at the top of Modulation to compare the current build with its displayed baseline, reference and maximum markers for the selected team and target.'),
+          plate(
+            'mod-score',
+            [1568, 221],
+            'Build score band at 130% with its markers',
+            ['Build score', 'The current build’s score, with its average damage below.', [2.3, 20, 15.3, 59.5]],
+            ['Baseline, 0%', 'The same build with no Echoes equipped.', [19.2, 15.5, 7.9, 21]],
+            ['Reference, 100%', 'A constrained investment benchmark. Scores can go past it.', [53.3, 15.5, 9.2, 21]],
+            ['Your marker', 'The needle and its grade tag are this build.', [67, 26, 5.4, 42.3]],
+            ['Maximum, 200%', 'The maximum-value benchmark for these conditions.', [88.7, 15.5, 8.3, 21]],
+            ['Grades', 'Letter grades from F to SSS sit along the scale.', [38, 65, 42.7, 17]],
           ),
-          steps(
-            ['Open Modulation', 'Navigate to Modulation for the active build.'],
-            ['Compare target cards', 'Read current, 100 percent, and 200 percent cards side by side.'],
-            ['Read stat tables', 'Use per-step rows for next-stat direction and current-state rows for existing investment.']
+          note('Compare scores under the same team and target. Editing the advanced Rotation page does not change this score.', 'warning'),
+        ),
+      ),
+      article(
+        'reading-panel',
+        'Build Details',
+        'Stats, Damage, Effects and Skills panels below the Echo loadout.',
+        section(
+          'Stats',
+          plate(
+            'mod-stats',
+            [1567, 642],
+            'Build Stats panel with the Crit DMG row selected',
+            ['Tabs', 'Switch between Stats, Damage, Effects and Skills. The subtitle under each tab summarizes its contents.', [50.8, 2.5, 48.6, 8.7]],
+            ['Benchmark columns', 'Next to base, gain and total, the same stat in the 100% and 200% benchmark builds.', [44.4, 16, 20, 83.5]],
+            ['Select a row', 'Click a row to show its breakdown.', [0.7, 70.6, 66.8, 7.6]],
+            ['Breakdown', 'Every source behind the selected stat, as base values and additions.', [69.2, 14, 30.2, 68.9]],
+            ['Echoes against the benchmarks', 'Your Echo loadout next to the ones the 100% and 200% builds use.', [69.2, 85.2, 30.2, 14.6]],
+          ),
+        ),
+        section(
+          'Damage',
+          plate(
+            'mod-damage',
+            [1567, 642],
+            'Damage reading with a formula worksheet and an expanded row',
+            ['Skill groups', 'Rows are grouped by skill, with Normal, Crit and Avg damage.', [0.7, 15.3, 66.8, 6.8]],
+            ['Read a formula', 'Click a row’s dot to show its worksheet.', [0.7, 23, 4, 7.6]],
+            ['Expand the hits', 'Click a grouped row to list its hits.', [0.7, 31, 66.8, 20]],
+            ['Worksheet', 'Each factor of the damage: base power, motion value, DMG bonus, amplify, vulnerability and the rest.', [69.2, 14, 30.2, 85.6]],
+          ),
+        ),
+        section(
+          'Effects',
+          plate(
+            'mod-effects',
+            [1567, 642],
+            'Effects reading grouped by source',
+            ['Sources', 'Effects are grouped by where they come from; the count shows how many are on.', [1.8, 15.3, 96.5, 6.8]],
+            ['Pick a state', 'The same controls as the Effects tab in member settings.', [2.3, 25.4, 96, 44.2]],
+            ['Toggle', 'Switch a conditional effect on or off.', [92.3, 70.5, 5.3, 6.5]],
+          ),
+        ),
+        section(
+          'Skills',
+          paragraph('The Skills tab shows resonator levels and forte nodes. When the loadout scrolls out of view, the teammate selector appears in the panel header.'),
+          plate(
+            'mod-skills',
+            [1316, 909],
+            'Level and Nodes reading with the level track and forte tree',
+            ['Teammate selector', 'Select another member here without scrolling back to the loadout.', [13.5, 1.4, 11.2, 5.8]],
+            ['Resonator level', 'Drag the track to set the level.', [0.7, 9, 98.6, 10]],
+            ['Ascension stops', 'Click a mark to jump to that level. Bold marks unlock an inherent skill.', [52.8, 15, 25.8, 4.3]],
+            ['Stat nodes', 'Click a node to turn it on or off.', [14.2, 48, 6.3, 11.3]],
+            ['Skill levels', 'Click a skill to raise its level by one.', [13, 76.5, 8.3, 16]],
+            ['Skill data', 'Open the skill data for any skill.', [38.5, 95.2, 22.7, 4.8]],
           ),
         ),
       ),
       article(
-        'showcase-view',
-        'Showcase View',
-        'Create a presentation card from the current simulation context.',
+        'build-report',
+        'Build Report',
+        'Read the build’s damage contributions and see which changes would move its score.',
         section(
-          'Showcase controls',
-          definitions(
-            ['Showcase card', 'The presentation view built from the selected resonator, build, stats, and evaluation context.'],
-            ['Card preset', 'A saved visual layout and style set for the card.'],
-            ['Export', 'The action that copies or downloads the rendered card.']
+          'Open the report',
+          paragraph('Click Report in the panel header to open the build report beside the page.'),
+          plate(
+            'mod-stats',
+            [1567, 642],
+            'Report button in the panel header',
+            ['Report', 'Click to open the build report.', [42.8, 3, 7.3, 7.7]],
           ),
+        ),
+        section(
+          'Read the report',
+          plate(
+            'mod-report',
+            [924, 1307],
+            'Build report for the active build',
+            ['Which build', 'Current is your build. 100% and 200% show the benchmark builds the score is measured against.', [2, 7.1, 96, 3.2]],
+            ['Score and damage', 'Values for the build selected at the top of the report.', [2, 10.8, 96, 5.3]],
+            ['Rotation wheel', 'The outer ring splits damage by feature, the inner ring by talent node. Hover a slice to read it in the centre.', [4, 20, 43.4, 30.9]],
+            ['By type and node', 'The same split as a list. Hover a row to find it on the wheel.', [50.6, 19.6, 47.6, 31.9]],
+            ['Features', 'Every damage feature in the displayed default rotation, with its total and share.', [2, 52.1, 96, 27.4]],
+            ['Upgrade paths', 'The chart shows the score each proposed change would produce.', [2, 80.4, 96, 19.3]],
+          ),
+        ),
+        section(
+          'Compare upgrade paths',
+          plate(
+            'mod-report-paths',
+            [924, 1307],
+            'Upgrade paths ladder and change table',
+            ['Ladder', 'Each mark is a change, placed at the score it would reach.', [2, 61.7, 96, 18.9]],
+            ['Changes', 'Swap one main stat or Sonata set for another, with its cost, damage and score change. Hover a row to find it on the ladder.', [2, 81.2, 96, 16.3]],
+            ['More options', 'A count means more swaps give the same result.', [59.5, 93.8, 5, 3.2]],
+          ),
+        ),
+        section(
+          'Read a benchmark build',
+          plate(
+            'mod-report-reference',
+            [924, 1307],
+            'Build report on the generated 100% reference build',
+            ['Pick 100% or 200%', 'The report switches to that benchmark build.', [34.1, 7.1, 31.9, 3.2]],
+            ['Selected build', 'The report heading names the build you are viewing.', [1.3, 0.9, 30.5, 4.2]],
+            ['Score and damage', 'The benchmark build’s score and damage for comparison with yours.', [2, 10.8, 47.6, 5.3]],
+          ),
+        ),
+      ),
+    ],
+  },
+  {
+    id: 'rotation',
+    title: 'Rotation',
+    summary: 'Add rotation steps and conditions, run the simulation, inspect damage, then save or share it.',
+    aliases: ['Rotations', 'Rotation Editor', 'Saved Rotations'],
+    articles: [
+      article(
+        'the-editor',
+        'The Editor',
+        'Use the toolbar and view the rotation as a tree or in run order.',
+        section(
+          'The roster',
+          paragraph('The roster on the left is the same column as on the other Simulation pages, but on Rotation it also tells you who has a rotation written, and it holds the shortcut to each team.'),
+          plate(
+            'rot-roster',
+            [224, 1244],
+            'Roster on the Rotation page, with Phoebe selected',
+            ['Spark', 'A spark at the left edge means this resonator has a rotation. Press it to pin their capsule open.', [0, 59.8, 20.5, 5.6]],
+            ['No spark', 'No rotation written yet for this resonator.', [29, 16.9, 42, 7.6]],
+            ['Selected', 'The resonator whose rotation is in the editor. Click another bead to switch.', [24, 57.9, 53, 9.3]],
+            ['Attribute group', 'Resonators are grouped by attribute. Click the knot to fold or open a group.', [40, 11, 40, 3]],
+          ),
+          plate(
+            'rot-capsule',
+            [576, 392],
+            'Phoebe’s capsule pinned open from her spark',
+            ['Pinned spark', 'The spark turns while the capsule is pinned. Press it again, press Esc, or click elsewhere to close it.', [0, 40.8, 8, 17.9]],
+            ['Face', 'On the selected resonator, the face opens their member console.', [10.4, 36.7, 18, 26.5]],
+            ['Name and nodes', 'Who it is, and how many nodes their rotation has.', [32.6, 40, 25, 20]],
+            ['Teammates', 'The selected resonator’s capsule also carries the team. Each face opens that teammate’s member console.', [62.8, 41.8, 24.7, 16.3]],
+          ),
+          paragraph('Clicking the selected bead again, or pressing Space on it, also opens and closes its capsule. Capsules of other resonators show only their name and node count.'),
+        ),
+        section(
+          'The toolbar',
+          paragraph('The editor has a toolbar, a list of rotation steps and conditions, and two side panels on the right.'),
+          plate(
+            'rot-bar-edit',
+            [1500, 68],
+            'Rotation toolbar, editing half',
+            ['Editor or Saved', 'Switch between the editor and your saved rotations.', [0.7, 5, 8.3, 90]],
+            ['Undo and redo', 'Step back or forward through your edits to this rotation.', [9.6, 5, 7.4, 90]],
+            ['Save, import, share, clear', 'Save this rotation, import one, share or export it (after a run), or clear the list.', [17.6, 5, 15, 90]],
+            ['Preamble', 'Opens Set the opening, which writes the starting state for every member.', [33.8, 5, 3.2, 90]],
+            ['Loop, block, note', 'Add an empty loop, an empty Repeat block, or a note after the selected row.', [37.4, 5, 10.9, 90]],
+            ['Select', 'Selection mode, for acting on several rows at once.', [48.3, 5, 3.6, 90]],
+            ['Append', 'Add a member’s preset rotation, or one of your saved rotations for this team, onto the end.', [51.9, 5, 3.6, 90]],
+            ['Collapse and expand', 'Fold or open every block at once.', [55.6, 5, 7.3, 90]],
+            ['Find a node', 'Search the list for a step, condition or note.', [64.5, 5, 3.5, 90]],
+            ['Selected node', 'Shows the selected row and its damage. Click to scroll to that row. The time on the right shows how long the last calculation took.', [69, 5, 31, 90]],
+          ),
+          plate(
+            'rot-bar-reading',
+            [1074, 72],
+            'Rotation toolbar, reading half',
+            ['Sweep', 'Removes rows the last run showed doing nothing. The count is how many it found.', [1.1, 11.7, 4.8, 71]],
+            ['Team', 'One seat per member. Each ring fills to that member’s share of the damage. Opens the party menu.', [7.1, 11.7, 16, 71]],
+            ['Tree or Run order', 'Tree keeps rows inside their blocks. Run order lists every row in the order it runs.', [25, 11.7, 9.9, 71]],
+            ['Decimals', 'Fewer or more decimal places on damage.', [37.2, 11.7, 14, 71]],
+            ['Percent or factor', 'Show multiplier columns as percentages or as factors.', [52.9, 11.7, 4.8, 71]],
+            ['Compare', 'Shows the selected rows side by side.', [58.8, 11.7, 4.8, 71]],
+            ['Columns', 'Choose which stat columns the list shows, and their order.', [65, 11.7, 4.8, 71]],
+            ['Dock the panel', 'Keep the side panel beside the list instead of floating over it. The list gives up five stat columns.', [71, 11.7, 4.8, 71]],
+            ['Settings', 'Opens the editor settings.', [76.9, 11.7, 4.8, 71]],
+            ['Run', 'Runs the changed rotation. It lights up after an edit. Shortcut: Cmd Enter.', [83.8, 11.7, 15.8, 71]],
+          ),
+          plate(
+            'rot-team-menu',
+            [544, 440],
+            'Party menu open from the Team seats',
+            ['Team', 'The trigger, with each member’s share as a ring.', [66.2, 2.7, 31.6, 11.8]],
+            ['Split', 'The whole rotation split between the members.', [44.5, 21, 48.5, 6]],
+            ['Members', 'One row per member, in seat order. The textured fill behind each row is that member’s share.', [2.2, 30.5, 95.6, 50.5]],
+            ['Configure', 'Opens that member’s console.', [72.8, 32.7, 10.3, 46.4]],
+            ['Skill data', 'Opens that member’s Skill Data.', [84.6, 32.7, 10.3, 46.4]],
+            ['Set team', 'Opens the team picker to change the teammates.', [68, 85, 25, 8.2]],
+          ),
+        ),
+        section(
+          'Reading the list',
+          paragraph('A rotation has two sections. Preamble sets where every state starts. Main is the rotation itself, and runs top to bottom.'),
+          plate(
+            'rot-list',
+            [1568, 462],
+            'Top of the rotation list in Tree view',
+            ['Columns', 'Each column shows one value for the row. Choose columns from the toolbar.', [0, 0, 100, 4.8]],
+            ['Preamble', 'The opening state. Click to fold it open.', [0, 6.5, 100, 5.4]],
+            ['Main', 'The rotation. The count is its nodes and steps.', [0.3, 17.3, 13.4, 4.3]],
+            ['A loop', 'A block that runs its rows several times. The bar beside the count shows the passes.', [2.2, 22.9, 19, 4.3]],
+            ['A step', 'One skill hit: its type, its talent node, and its damage as average, normal and crit.', [2, 28.6, 97, 6]],
+            ['Off Tune', 'The Off-Tune gauge after this hit, against its threshold.', [63.1, 28.6, 5.2, 6]],
+            ['Stats', 'The stats this hit was calculated with.', [69.8, 28.6, 29, 6]],
+            ['Faded repeats', 'A stat that has not changed since the row above is dimmed.', [69.8, 36.4, 29, 4.8]],
+            ['A condition', 'A state being set, in italics, with the value it sets on the right.', [2.5, 42.9, 44.2, 4.5]],
+            ['This pass', 'Which pass of the loop the list is showing, and what that pass deals.', [89.3, 23.4, 9.8, 3.9]],
+          ),
+          plate(
+            'rot-rows',
+            [1568, 288],
+            'Notes, attachments and a resonator switch near the end of the loop',
+            ['A note', 'A label and a line of text between rows. It changes nothing in the run.', [39.5, 1.7, 58.7, 7]],
+            ['A step with attachments', 'The badge counts what is attached. Attached conditions sit under the step name.', [2.9, 12.2, 25.8, 21]],
+            ['An attached feature', 'A second hit that fires with the step, with damage of its own.', [4.1, 26, 94.5, 7.6]],
+            ['Resonator switch', 'The active resonator changes here.', [2.6, 68.8, 11.2, 8.3]],
+            ['A greyed row', 'The last run got nothing out of it: it set a value the state already had, or never ran. Sweep removes rows like this.', [2.6, 79.2, 44, 7.6]],
+          ),
+        ),
+        section(
+          'Run order',
+          plate(
+            'rot-run-order',
+            [1566, 358],
+            'The same rotation in Run order view',
+            ['Starting state', 'Conditions set in the Preamble appear first.', [22, 0, 24.6, 22.3]],
+            ['Pass', 'Which loop pass these rows belong to.', [85.9, 23, 12.5, 4]],
+            ['Step numbers', 'Every step is numbered in the order it fires.', [1.9, 29.3, 2.2, 70]],
+            ['Conditions', 'Conditions sit under the step before them.', [22, 42.5, 24.6, 42.6]],
+          ),
+        ),
+      ),
+      article(
+        'build-a-rotation',
+        'Build a Rotation',
+        'Set the opening, add steps and conditions, then group them into loops and blocks.',
+        section(
+          'Set the opening',
+          paragraph('Preamble on the toolbar opens Set the opening. It lists every state your team can change, grouped by resonator, with the value each one starts at.'),
+          plate(
+            'rot-preamble-gen',
+            [1036, 1154],
+            'Set the opening',
+            ['States by resonator', 'Every state the team can change, with its starting value.', [2.4, 13, 95, 66]],
+            ['Starts on field', 'Pick who is on the field when the rotation starts.', [2.4, 80.2, 62.5, 8.7]],
+            ['Generate', 'Writes these values into the Preamble, replacing what is there.', [83.2, 94.3, 14, 3.8]],
+          ),
+          plate(
+            'rot-preamble',
+            [1111, 1092],
+            'Generated Preamble section',
+            ['Preamble', 'Click to expand or collapse the section. The count shows its conditions.', [1, 0.5, 30, 3]],
+            ['Opening values', 'One condition per state. Edit any of them like any other condition.', [2, 4, 95, 91]],
+            ['Starting resonator', 'The resonator on the field when Main begins.', [2, 95.5, 24, 3.6]],
+          ),
+        ),
+        section(
+          'Add steps and conditions',
+          paragraph('The add tab on the right edge opens the palette. Click a tile to add it after the selected row (or at the end, if nothing is selected), or drag it to where it should go.'),
+          plate(
+            'rot-palette',
+            [736, 914],
+            'Palette on the Features tab',
+            ['Side tabs', 'add opens the palette. read opens the inspector for the selected row.', [92.7, 3.5, 6.5, 34.3]],
+            ['Features or Conditions', 'Switch between skills to add and states to set.', [2.7, 1.3, 85.6, 5.8]],
+            ['Search', 'Find a skill or state by name.', [2.7, 8.5, 85.6, 5.7]],
+            ['Whose', 'Show every member, or one.', [2.7, 15.9, 72.3, 5.8]],
+            ['A skill', 'Click or drag to add it as a step.', [2.2, 30.9, 86.4, 6.1]],
+            ['Its hits', 'The arrow opens a skill with several hits, so you can add one hit alone.', [2.2, 38.1, 86.4, 19.4]],
+          ),
+          plate(
+            'rot-add-step',
+            [1330, 896],
+            'Add a step picker',
+            ['Search', 'Find a skill by name.', [35.6, 2.5, 32.5, 6]],
+            ['Hits', 'List each hit of a skill on its own row.', [69.5, 2.5, 8, 6]],
+            ['Member', 'Whose skills to list.', [78.6, 2.5, 14.3, 6]],
+            ['Skill types', 'Jump to a skill group. The number shows how many skills are in it.', [0.9, 12.5, 21, 45.5]],
+            ['Pick a skill', 'Click a skill to use it.', [24.8, 16.7, 73, 5.6]],
+            ['Hit list', 'Opens the skill to pick one of its hits.', [89.8, 17.8, 7.1, 3.4]],
+          ),
+          note('The same picker opens from Edit feature on a step, where it replaces that step’s skill.'),
+        ),
+        section(
+          'Edit a step',
+          paragraph('Click a row to select it. The inspector on the right opens on that row.'),
+          plate(
+            'rot-step-inspector',
+            [678, 1350],
+            'Step inspector',
+            ['The step', 'Its damage and its share of the rotation.', [2, 5, 96, 12.5]],
+            ['Actions', 'Swap its skill, copy, cut, paste, duplicate, switch it off, or delete it.', [2, 19, 96, 32]],
+            ['Times', 'How many times the step fires. Run 1 of 4 says which loop pass an edit here applies to.', [2, 52, 96, 4]],
+            ['Attached', 'Conditions and features that fire with this step. See Attach to a step below.', [2, 58, 96, 23.5]],
+            ['Occurrences, Note, Buffs applied', 'Everywhere this skill appears, a note of its own, and the buffs its damage used.', [2, 83, 96, 16]],
+          ),
+        ),
+        section(
+          'Edit a condition',
+          plate(
+            'rot-condition-inspector',
+            [678, 1286],
+            'Condition inspector',
+            ['Now and was', 'The value after this row, and the value before it.', [2, 5, 96, 13]],
+            ['State', 'What the state does, and where it comes from.', [2, 20, 96, 19]],
+            ['Set or Add', 'Set replaces the value. Add adds to it. Type the value on the right.', [2, 45, 96, 9]],
+            ['Actions', 'Open the full editor, copy, cut, paste, duplicate, switch it off, or delete it.', [2, 55, 96, 32]],
+            ['History', 'Every change to this state across the rotation, shown by loop pass.', [2, 88, 96, 5.6]],
+          ),
+        ),
+        section(
+          'Attach to a step',
+          paragraph('An attachment belongs to a step instead of standing in the list on its own. It fires when the step fires. A condition attached to a step only affects that step and what else is attached to it; the rows after it do not see it.'),
           steps(
-            ['Open Showcase', 'Open the separate Showcase tool from the Simulation navigation.'],
-            ['Choose card settings', 'Select the visual preset, visible stat groups, and any card options shown.'],
-            ['Review displayed data', 'Check the resonator, weapon, Echo, stat, and evaluation fields on the card.'],
-            ['Export the card', 'Use copy or download from the showcase actions.']
+            ['Open Attached', 'Select the step and open Attached in the inspector.'],
+            ['Add feature', 'Pick a skill in the Add a step picker. It fires with the step, and has its own Times count.'],
+            ['Add condition', 'Pick a state in the Feature conditions picker and set its value.'],
           ),
+          plate(
+            'rot-attach-conditions',
+            [1481, 812],
+            'Feature conditions picker, opened from Add condition',
+            ['Search and kinds', 'Find a state, or show only switches, stacks, values or options.', [35.1, 2.2, 59.4, 5.5]],
+            ['Whose', 'Show every state, or one source’s.', [0.8, 11.7, 13.5, 35]],
+            ['States', 'Click + to attach a state.', [15.5, 11.7, 50.7, 80]],
+            ['Directives', 'What this step will set: Set or Add, and the value.', [67.9, 19.9, 31, 35.1]],
+            ['Save', 'Attaches the directives to the step.', [93.4, 93.6, 5.2, 4.6]],
+          ),
+        ),
+        section(
+          'Loops',
+          paragraph('A loop runs its rows several times, one pass after another. Add an empty one from the toolbar, or select rows and use Loopify.'),
+          plate(
+            'rot-loop',
+            [1568, 645],
+            'A four-pass loop and its inspector',
+            ['Loop header', 'Click to select the loop. The bar shows its passes.', [1.9, 14, 19.2, 3.1]],
+            ['Colour', 'The colour of the loop’s edge in the list.', [79, 27.6, 12.2, 3.7]],
+            ['Passes', 'What each pass deals. Click one to show that pass in the list.', [78.6, 33.3, 20.4, 16.6]],
+            ['Runs', 'How many passes the loop makes.', [78.6, 52.4, 20.4, 3.7]],
+            ['Remove end', 'Takes the loop’s end away, so it runs back round to its own start.', [78.6, 63.9, 20.4, 3.4]],
+          ),
+          note('Edits made while a pass is shown apply from that pass on. Later passes keep the change unless you changed them yourself.'),
+        ),
+        section(
+          'Blocks',
+          paragraph('A Repeat block runs its rows a set number of times in a row, and can hold a setup branch. Add an empty one from the toolbar, or select rows and use Blockify.'),
+          plate(
+            'rot-selection',
+            [1568, 508],
+            'Three rows selected, with the selection inspector',
+            ['Selected rows', 'Click rows to pick them. Shift-click picks a range.', [0.1, 20.5, 77.4, 18.5]],
+            ['Count', 'How many rows are picked.', [78.1, 8.9, 20.9, 9.4]],
+            ['Compare', 'Show the selected rows side by side.', [78.1, 34.4, 20.9, 5.1]],
+            ['Loopify and Blockify', 'Wrap the picked rows in a loop or a Repeat block.', [78.1, 40.4, 20.9, 10.8]],
+            ['Everything else', 'Copy, cut, paste, duplicate, select all, clear, exit (Esc) and delete.', [78.1, 52.2, 20.9, 46]],
+          ),
+          plate(
+            'rot-block',
+            [1567, 537],
+            'A Repeat block with a setup branch',
+            ['Repeat header', 'Click to select the block. The count is how many times it repeats.', [1.9, 40.6, 75.6, 4.1]],
+            ['Setup', 'Runs once to open the window. It only takes conditions.', [1.9, 45.6, 75.6, 9.3]],
+            ['Body', 'The rows the block repeats.', [1.9, 55.9, 75.6, 17.7]],
+            ['Colour', 'The colour of the block’s edge in the list.', [78.2, 28.9, 12.4, 5.6]],
+            ['Repeat body', 'How many times the body runs.', [78.2, 36.3, 21, 8.4]],
+            ['Setup window', 'The share of the time the setup’s window is up. Add setup creates the branch; minus removes it.', [78.2, 46.5, 21, 5.6]],
+            ['Actions', 'Fold, copy, cut, paste, duplicate, switch off, or delete the block.', [78.2, 55.9, 21, 43]],
+          ),
+        ),
+      ),
+      article(
+        'run-and-read',
+        'Run and Read',
+        'Run the rotation, then read its totals and its timeline.',
+        section(
+          'Run it',
+          paragraph('The list keeps the last run’s numbers until you run again. After an edit, Run lights up: press it, or Cmd Enter.'),
+          plate(
+            'rot-totals',
+            [678, 1422],
+            'Totals tab in the inspector',
+            ['Rotation total', 'Average damage of the whole rotation, and how many damage rows it has.', [2, 5.6, 96, 10.2]],
+            ['Resonators', 'What each member dealt, and their share.', [2, 18.3, 96, 22.5]],
+            ['Builds', 'Each member’s Echoes, sets and weapon for this run. Click to open it; see Builds below.', [2, 42.9, 96, 2.8]],
+            ['Breakdown', 'Split the total by skill type, talent node or attribute.', [2, 49.2, 96, 6.3]],
+            ['Parts', 'Each part’s damage and share.', [2, 57, 96, 42]],
+          ),
+        ),
+        section(
+          'Builds',
+          paragraph('Open, the Builds section has one band per member. Every part of a band is also a shortcut into that member’s setup.'),
+          plate(
+            'rot-builds',
+            [656, 980],
+            'Builds section of the totals panel',
+            ['Name', 'Opens the member console.', [3, 5.7, 40, 4.9]],
+            ['Level, sequence, cost', 'The level, the Resonance Chain, and the Echo cost used out of 12.', [64, 6.5, 32, 3.1]],
+            ['Echoes', 'Grouped by set, not by slot, with each Echo’s cost in its corner. Click to open the member’s Echoes.', [3, 12, 94.2, 12]],
+            ['Main Echo', 'The marked corner is the main Echo.', [16.5, 12, 4.3, 2.9]],
+            ['Set tie', 'The line under the Echoes ties together the pieces of one set and names it. Solid: the set is complete. Dashed: a five-piece set stopped at two. Dotted: pieces that give nothing.', [3, 24.5, 94.2, 3.2]],
+            ['Weapon', 'The weapon, its rank and level, and its stats. Opens the weapon console.', [6.7, 28.4, 88, 4.9]],
+          ),
+        ),
+        section(
+          'The Timeline',
+          paragraph('Timeline, at the right end of the totals strip, opens a view of the whole run under the list.'),
+          plate(
+            'rot-console',
+            [1568, 320],
+            'Timeline under the rotation list',
+            ['Totals strip', 'Average, normal and crit damage of the whole rotation.', [0, 0, 23, 9.4]],
+            ['Ran in', 'How long the calculation took. For DPS, set a duration on a saved rotation.', [90.8, 0, 3.5, 9.4]],
+            ['Timeline', 'Opens or closes the timeline.', [95, 0.9, 5, 7]],
+            ['Selected node', 'The selected row: its skill, owner, damage and pass.', [59.5, 11.9, 40.5, 5.3]],
+            ['Ruler and playhead', 'Nodes in run order. The line marks the selected row.', [7.3, 17.2, 90.3, 5.3]],
+            ['Passes', 'Where each loop pass begins and ends.', [0, 23.4, 98, 6.3]],
+            ['Active', 'Which resonator is active at each point.', [0, 31.3, 98, 7.8]],
+            ['Output', 'Damage per hit.', [0, 40.6, 98, 38]],
+            ['State', 'How key states rise and fall across the run.', [0, 79.7, 98, 19]],
+          ),
+        ),
+        section(
+          'Columns and settings',
+          plate(
+            'rot-columns',
+            [982, 566],
+            'Columns menu',
+            ['Columns', 'The toolbar button that opens this menu.', [93.2, 0.9, 5.4, 9.4]],
+            ['Width', 'How many columns are on, and the width they take.', [75.4, 15.5, 21, 4.2]],
+            ['Order', 'Drag a band to move it. Top to bottom here is left to right in the list.', [3.9, 29.2, 2, 53]],
+            ['Switch columns', 'Click a column to switch it on or off.', [20.9, 28.3, 50.4, 55]],
+            ['Reset', 'Back to the default columns.', [86, 89.2, 9.7, 6.2]],
+          ),
+          plate(
+            'rot-settings',
+            [1455, 815],
+            'Rotation editor settings on the Display tab',
+            ['Editor or Saved', 'Settings for the editor, or for the saved rotations view.', [85.9, 3.1, 7.2, 6.1]],
+            ['Display or Simulation', 'On Simulation, Total damage can average loop passes or count every pass.', [1.2, 14.1, 18.7, 12.3]],
+            ['Layout', 'Tree or Flat (Run order).', [22.2, 14.5, 76.5, 7.6]],
+            ['Fade repeats', 'Dim a stat that has not changed since the row above.', [22.2, 25.5, 76.5, 7.6]],
+            ['Show priors', 'Keep the value a condition changed from in view, instead of only on hover.', [22.2, 36.8, 76.5, 7.4]],
+            ['Keep the side panel open', 'The same as Dock the panel on the toolbar.', [22.2, 47.9, 76.5, 10.4]],
+            ['Decimals', 'Decimal places on calculated values.', [22.2, 62, 76.5, 7.4]],
+            ['Columns', 'The same column rack as the Columns menu.', [22.2, 73, 76.5, 27]],
+          ),
+        ),
+      ),
+      article(
+        'saved-rotations',
+        'Saved Rotations',
+        'Save, share and import rotations, and compare the ones you keep.',
+        section(
+          'Share and import',
+          plate(
+            'rot-share',
+            [960, 376],
+            'Share rotation',
+            ['Token', 'A text token of this rotation. Copy it to send it.', [2.6, 33.2, 94.4, 14]],
+            ['Link', 'A link that opens the rotation in the app.', [2.6, 56.4, 94.4, 13.3]],
+            ['Export file', 'Download the rotation as a file.', [61.2, 79.8, 23.4, 13.3]],
+          ),
+          note('Share needs a completed run. After an edit, run the rotation first.'),
+          plate(
+            'rot-import',
+            [832, 600],
+            'Import from the Rotation toolbar',
+            ['Token', 'Paste a share token, or use Paste.', [4.2, 53.3, 91.6, 12]],
+            ['Continue', 'Checks the pasted token and shows the rotation to import.', [0, 71.7, 50, 12.5]],
+            ['Choose file', 'Import an exported rotation file instead.', [50, 71.7, 50, 12.5]],
+          ),
+          paragraph('Import then shows what it found: choose Import & load to open it in the editor, or Import only to add it to your saved rotations.'),
+        ),
+        section(
+          'The saved view',
+          paragraph('The scale icon at the left of the toolbar opens your saved rotations. The toolbar changes to work on them.'),
+          plate(
+            'rot-bar-saved',
+            [836, 68],
+            'Saved view toolbar, left half',
+            ['Editor or Saved', 'Back to the editor.', [1.2, 5, 14.4, 90]],
+            ['Save, import, share, delete', 'Save the editor’s rotation, import one, or share or delete the selected saved rotation.', [17.3, 5, 41.3, 90]],
+            ['Duplicate and paste', 'Copy the selected saved rotation, or paste copied rotations into the list.', [60.4, 5, 10.4, 90]],
+            ['Load', 'Open the picked rotation in the editor. This also restores the scenario it was saved with.', [74.6, 5, 5, 90]],
+            ['Edit', 'Rename it, give it a duration or add a note.', [81.3, 5, 5, 90]],
+            ['Select', 'Pick several saved rotations at once.', [87.1, 5, 5, 90]],
+            ['Find', 'Search by rotation or resonator name.', [94.5, 5, 5, 90]],
+          ),
+          plate(
+            'rot-bar-saved-read',
+            [836, 68],
+            'Saved view toolbar, right half',
+            ['Live rotation', 'Show the editor’s last completed run beside your saved ones.', [1.2, 5, 6, 90]],
+            ['List or grouped', 'One list, or grouped by the resonator each was written for.', [9.6, 5, 13.2, 90]],
+            ['Contributors', 'Show only rotations with one, two or three members dealing damage.', [25.7, 5, 6, 90]],
+            ['Sort and reverse', 'Sort by date, name, average damage or DPS, and flip the order.', [33.5, 5, 13.4, 90]],
+            ['Compare', 'Open compared rotations side by side.', [70.6, 5, 6, 90]],
+            ['Scale', 'Scale the chart around the selected rotation or use one scale for all rotations.', [77.8, 5, 6, 90]],
+          ),
+          plate(
+            'rot-saved-field',
+            [1568, 545],
+            'Saved rotations chart',
+            ['Scale', 'Damage along the top.', [22.6, 1.8, 77.4, 3.7]],
+            ['The selected rotation', 'Its members and a bar divided by each member’s damage.', [0.6, 8.3, 99.4, 17.4]],
+            ['A saved rotation', 'Click one to pick it.', [0.6, 28.4, 38, 10.1]],
+            ['Member marks', 'The end of each member’s segment on the damage bar.', [22.6, 32, 14.5, 5.5]],
+            ['Duration and DPS', 'Shown once a duration is set in Edit.', [8, 95.4, 14, 3.3]],
+          ),
+          plate(
+            'rot-saved-index',
+            [736, 940],
+            'Saved rotations panel',
+            ['Side tabs', 'List shows saved rotations. Details opens the selected rotation. Damage compares resonators across rotations.', [92.7, 3.4, 6.5, 50.3]],
+            ['Selected rotation', 'The rotation shown in the chart and details panel.', [1.1, 15.1, 82.6, 7.8]],
+            ['Your rotations', 'Each with its team and damage. The line under it splits that damage by member.', [1.1, 24, 82.6, 76]],
+          ),
+          plate(
+            'rot-saved-read',
+            [678, 1398],
+            'Details for a saved rotation',
+            ['The rotation', 'Its name, when it was saved, and its damage.', [2, 0.7, 96, 10.7]],
+            ['Resonators', 'What each member dealt.', [2, 13.6, 96, 3]],
+            ['Builds', 'Each member’s level, sequence, Echoes, set and weapon when it was saved.', [2, 19.5, 96, 68.5]],
+            ['Breakdown and Nodes', 'Its damage breakdown and every rotation node.', [2, 89.8, 96, 9.3]],
+          ),
+          plate(
+            'rot-saved-edit',
+            [1152, 656],
+            'Edit a saved rotation',
+            ['Name', 'What it is called in the list.', [2.5, 21.5, 68, 15.5]],
+            ['Duration', 'The fight length in seconds. With it, the rotation shows DPS.', [72.5, 21.5, 25, 15.5]],
+            ['Note', 'Anything you want to remember about it.', [2.5, 40, 95, 41]],
+            ['Save changes', 'Keeps the edit.', [76.6, 88.4, 20.8, 7.6]],
+          ),
+          note('The Rotation page edits the advanced rotation. The Default Rotation target in Optimizer and Suggestions is a separate choice.'),
+        ),
+      ),
+    ],
+  },
+  {
+    id: 'showcase',
+    title: 'Showcase',
+    summary: 'Create a shareable card from the selected build and edit the build from that card.',
+    articles: [
+      article(
+        'showcase-surface',
+        'The Showcase',
+        'Which Simulation controls remain available and what the card shows.',
+        section(
+          'Still a Simulation surface',
+          paragraph('Showcase displays the current build as a card. You can still use the roster, quick actions and build settings described in Simulation Basics. Edits here update the same build used on other Simulation pages.'),
+          plate(
+            'sc-page',
+            [1511, 798],
+            'Showcase page on Phoebe, with the roster, card, Customize panel and dock',
+            ['Roster', 'Select a resonator to show its build on the card.', [0, 0.2, 6.7, 99.8]],
+            ['Score notice', 'The same reminder as elsewhere: a score only compares builds made under the same setup.', [0, 36.3, 1.4, 23.2]],
+            ['The card', 'Shows the selected build and updates after each edit. Click card details to edit them; see Edit from the Card.', [14, 9.8, 59, 81.2]],
+            ['Customize', 'Change the card’s appearance, then export it.', [74, 9.8, 19, 81.2]],
+            ['Dock', 'The Skill HUD from Simulation Basics, with Max and the target, works here too.', [96.4, 32.1, 3, 31.9]],
+          ),
+        ),
+      ),
+      article(
+        'showcase-card',
+        'Edit from the Card',
+        'The card also opens the same build settings as the build card and loadout.',
+        section(
+          'Seal',
+          plate(
+            'sc-seal',
+            [1288, 935],
+            'Seal card for Phoebe',
+            ['Resonance Chain', 'Click a node to set the sequence to it. Clicking the current node steps back one.', [34.3, 11.1, 4, 45.8]],
+            ['Name', 'Opens member settings on Loadout.', [5.8, 51.3, 17.1, 6]],
+            ['Weapon', 'Opens weapon settings.', [76.1, 10, 19.3, 23.6]],
+            ['Teammates', 'Click a teammate to open their settings. An empty seat opens the team picker.', [76.1, 36.7, 19.3, 19.4]],
+            ['Echoes', 'Click an Echo to open it in the Echo editor, or an empty slot to pick one. Right click for its menu; selecting several works as on the loadout.', [1.6, 64.2, 96.8, 34.4]],
+          ),
+        ),
+        section(
+          'Follow a stat',
+          paragraph('Hover any stat on the card, in the stat breakdown or on an Echo, and the card lights that stat everywhere it appears while the rest fade. It works the same on Classic.'),
+          plate(
+            'sc-stat-hover',
+            [1288, 935],
+            'Seal card with Crit DMG hovered',
+            ['The hovered stat', 'Here Crit DMG in the stat breakdown, with its build and combat totals.', [39.3, 44.2, 33.7, 3.9]],
+            ['As a main stat', 'An Echo whose main stat is the hovered one.', [61.3, 75.4, 16.3, 2.7]],
+            ['As a substat', 'Every Echo that rolled it, so you can see where the total comes from.', [2.3, 87.9, 17.1, 2.8]],
+          ),
+        ),
+        section(
+          'Classic',
+          paragraph('Classic lays the same controls out differently, and gives each teammate two more shortcuts.'),
+          plate(
+            'sc-classic',
+            [1288, 935],
+            'Classic card for Phoebe',
+            ['Resonance Chain', 'The chain down the portrait works the same way as on Seal.', [1.2, 2.1, 4, 49]],
+            ['Name', 'Opens member settings.', [5.2, 56.8, 10.9, 4.4]],
+            ['Weapon', 'Opens weapon settings.', [1.5, 63.6, 29.2, 9.2]],
+            ['Teammate', 'The card opens their settings.', [1.5, 75, 29.2, 21.4]],
+            ['Teammate weapon', 'Opens that teammate’s weapon settings.', [27.3, 75.6, 3, 4.4]],
+            ['Teammate set', 'Opens that teammate’s Echoes tab in member settings.', [27.7, 80.6, 2.6, 3.9]],
+            ['Echoes', 'As on Seal: click to edit, right click for the menu.', [77.8, 2.2, 20.6, 30.6]],
+          ),
+          note('Everything the card opens is covered in Simulation Basics.'),
+        ),
+      ),
+      article(
+        'showcase-export',
+        'Style and Export',
+        'The parts of Customize that are not self-explanatory.',
+        section(
+          'Customize',
+          plate(
+            'sc-panel',
+            [640, 1440],
+            'Customize panel with the Show group open',
+            ['Reset', 'Puts every group of this resonator’s card back to its defaults.', [76.5, 2.5, 19.2, 3.1]],
+            ['Card', 'Classic or Seal. The choice applies to every resonator.', [5, 12.2, 90.6, 3.9]],
+            ['Player, UID', 'Printed on the card. They are your own details, not the resonator’s, so they stay the same for every card.', [4.7, 17.7, 91, 5.3]],
+            ['Group actions', 'Each open group has its own Reset and Export, so one part of a style (a colour scheme, say) can be shared on its own.', [50.3, 30, 41.9, 2.6]],
+            ['Capture', 'Downloads the card as a PNG.', [5, 93.5, 21, 4.6]],
+            ['Copy', 'Copies the PNG to the clipboard, ready to paste.', [28.1, 93.5, 21.1, 4.6]],
+            ['Import', 'Loads a style file: a whole card, or a single group.', [51.3, 93.5, 21.1, 4.6]],
+            ['Export all', 'Saves the whole style as one file.', [74.5, 93.5, 21.1, 4.6]],
+          ),
+          paragraph('Card style is saved separately for each resonator. Check the selected resonator before editing or exporting its card.'),
         ),
       ),
     ],
@@ -678,655 +1223,447 @@ export const gdCtgr: GuideCategory[] = [
   {
     id: 'optimizer',
     title: 'Optimizer',
-    summary: 'Select search scope, objective, constraints, engine path, and apply the result you choose.',
-    aliases: ['Optimizer', 'Optimize'],
+    summary: 'Choose a target and search settings, run the optimizer, inspect results and equip a build.',
     articles: [
       article(
-        'optimizer-search-space',
-        'Choose What the Optimizer Can Use',
-        'Define which echoes, weapons, and slots the optimizer may search.',
+        'set-up-a-search',
+        'Set Up a Search',
+        'Choose search settings from the bar below the results area.',
         section(
-          'Search inputs',
-          definitions(
-            ['Inventory search', 'Uses echo instances from your bag under the selected filters.'],
-            ['Theory mode', 'Uses generated stat arrangements based on the active build and theory settings.'],
-            ['Include weapon', 'Adds weapon candidates to the search instead of keeping the current weapon fixed.'],
-            ['Locked slot', 'Keeps a slot fixed while other slots are searched.'],
-            ['Exclude equipped', 'Removes echoes already equipped on other builds from the candidate pool.']
+          'Search controls',
+          paragraph('Optimizer shows the roster, build card, score band and Echo loadout described in Simulation Basics and Modulation. The search controls are at the bottom of the page. Each control opens a settings panel above it; changes apply when you close that panel.'),
+          plate(
+            'opt-bar',
+            [1568, 186],
+            'Optimizer search controls',
+            ['Run', 'Starts the search. While it runs this becomes Halt.', [2, 67, 4.7, 20]],
+            ['Target', 'What the search maximises.', [7.6, 67, 34, 20]],
+            ['Source', 'Where the Echoes come from.', [43, 67, 7.1, 20]],
+            ['Main echo', 'Lock the main Echo slot.', [52.4, 67, 6, 20]],
+            ['Sets', 'Which Sonata sets are allowed, with a count.', [60, 67, 6.1, 20]],
+            ['Main stat', 'Which main stats are allowed.', [67.4, 67, 8.1, 20]],
+            ['Effects', 'Which set and weapon effects count.', [77.3, 67, 6, 20]],
+            ['Limits', 'Minimum and maximum stat totals.', [84.8, 67, 6.5, 20]],
+            ['Engine', 'GPU or CPU, memory and result count.', [92.7, 67, 2, 20]],
+            ['Clear results', 'Empties the result list.', [95.6, 67, 2, 20]],
           ),
-          steps(
-            ['Choose mode', 'Select inventory search or theory mode from the optimizer controls.'],
-            ['Set inventory filters', 'Pick included sets, costs, locked slots, equipped handling, and candidate limits.'],
-            ['Set weapon inclusion', 'Turn weapon inclusion on only when weapon candidates need to be ranked with echo candidates.'],
-            ['Start search', 'Run the optimizer after search scope and objective controls are set.']
+        ),
+        section(
+          'Target',
+          plate(
+            'opt-target',
+            [970, 246],
+            'Target settings open above the search controls',
+            ['Target control', 'Shows the current target. Click to choose another.', [14.6, 70, 77, 21]],
+            ['Combo or Skill', 'Switch between the default rotation (Combo) and a single skill.', [43, 17.9, 10, 13.8]],
+            ['Pick one', 'Click the rotation or skill to search for.', [16, 44.7, 38, 18.3]],
+          ),
+        ),
+        section(
+          'Source',
+          plate(
+            'opt-source',
+            [686, 384],
+            'Source settings with Theorymax selected',
+            ['Source control', 'Shows the selected Echo source.', [23.8, 81, 25, 12.5]],
+            ['Inventory', 'Search the Echoes saved in your bag. This adds Skip echoes equipped elsewhere and the Inventory Search filter.', [26, 23.4, 48.7, 11.7]],
+            ['Theorymax', 'Search using the substat rolls of your equipped Echoes.', [26, 37, 48.7, 12]],
+            ['Echo count', 'How many Echoes the search can use.', [50, 9.9, 23.5, 6.3]],
+            ['Search weapons too', 'With Theorymax, test weapons as well as Echoes.', [26, 59.4, 48.7, 12.2]],
+          ),
+          note('Theorymax works from the equipped Echo rolls. Check those Echoes before you run it.'),
+        ),
+        section(
+          'Lock the main Echo',
+          paragraph('Main echo opens the Echo picker. Pick one to force it into the main slot; pick nothing to leave the slot open.'),
+          plate(
+            'opt-main-echo',
+            [1383, 868],
+            'Select Echo picker opened from Main echo',
+            ['Search', 'Find an Echo by name.', [1.4, 9, 13.8, 4]],
+            ['Cost', 'Show only 4, 3 or 1 cost Echoes.', [1.4, 17, 9.6, 2.8]],
+            ['Sonata', 'Show only Echoes of one set.', [1.4, 23, 13.8, 76]],
+            ['Pick an Echo', 'Click one to lock it as the main Echo.', [17.1, 9.7, 9.1, 20]],
+          ),
+        ),
+        section(
+          'Sonata sets',
+          plate(
+            'opt-sets',
+            [1034, 794],
+            'Sonata set settings on the 5pc tab',
+            ['Sets control', 'The number shows how many sets are allowed.', [4.4, 90.7, 14.5, 6.5]],
+            ['Piece count', 'Switch between 5pc, 3pc and 1pc sets.', [5.8, 9.8, 88.5, 5.3]],
+            ['Search', 'Find a set by name.', [5.8, 17, 88.5, 6]],
+            ['Allow sets', 'Tick the sets the search may use.', [5.8, 24.6, 88.5, 53.5]],
+            ['All or none', 'Tick or clear every set on this tab.', [6.8, 81.9, 21.7, 4.5]],
+            ['Any', 'Remove every set restriction.', [86.4, 81.9, 7, 4.5]],
+          ),
+        ),
+        section(
+          'Main stat',
+          plate(
+            'opt-main-stat',
+            [640, 556],
+            'Main stat settings',
+            ['Main stat control', 'The number shows how many main stats are allowed.', [15.2, 86.9, 30.6, 9]],
+            ['Main stats', 'Pick the main stats the search may use.', [17.2, 18.9, 66.4, 37]],
+            ['Attribute DMG', 'Pick the element bonus main stat.', [17.2, 64.5, 66.4, 18.5]],
+            ['Clear', 'Allow every main stat again.', [66.9, 7.7, 15.2, 6.1]],
+          ),
+        ),
+        section(
+          'Effects',
+          plate(
+            'opt-effects',
+            [664, 354],
+            'Effect settings',
+            ['Effects control', 'Opens the effect settings.', [15.4, 79.7, 22.3, 14.1]],
+            ['Sonata set effects', 'How many set effects are on. The arrow opens Sonata Set Config, the same one Suggestions uses.', [20, 26.8, 67, 15.5]],
+            ['Weapon effects', 'Weapon passive states, used when Search weapons too is on.', [20, 50.8, 67, 12.7]],
+          ),
+        ),
+        section(
+          'Stat limits',
+          plate(
+            'opt-limits',
+            [644, 688],
+            'Stat limit settings',
+            ['Limits control', 'Opens stat limits. A dash means no limits are set.', [30, 89.4, 25.2, 7.3]],
+            ['Skill targets only', 'Limits apply to a single skill target, not a combo.', [18.3, 16, 56, 4.7]],
+            ['Min and max', 'Type a minimum or maximum total for any stat or damage.', [18.3, 24, 75.5, 60.3]],
+            ['Clear', 'Remove every limit.', [77.6, 6.5, 14.9, 4.8]],
+          ),
+        ),
+        section(
+          'Engine',
+          plate(
+            'opt-engine',
+            [644, 502],
+            'Engine settings',
+            ['Engine control', 'Click the sliders icon to open engine settings.', [57.5, 85.3, 7.8, 10.4]],
+            ['GPU or CPU', 'GPU uses WebGPU. If it is unavailable, pick CPU.', [18.2, 17.9, 76, 19]],
+            ['Low memory', 'Trades speed for a smaller memory footprint.', [18.2, 46.2, 76, 8]],
+            ['Results kept', 'How many results the search keeps.', [18.2, 56.8, 76, 7.4]],
+            ['Guide and Rules', 'Open the optimizer’s own notes.', [60, 71.1, 33, 7.2]],
           ),
         ),
       ),
       article(
-        'optimizer-targets-and-objectives',
-        'Pick the Right Objective',
-        'Tell the optimizer which result the candidates are ranked by.',
+        'run-and-read',
+        'Run and Read Results',
+        'Watch the search, then sort and filter what it found.',
         section(
-          'Objective controls',
-          definitions(
-            ['Skill objective', 'Ranks candidates by one selected feature or skill result.'],
-            ['Rotation objective', 'Ranks candidates by full rotation output.'],
-            ['Combo objective', 'Ranks candidates by the configured combined target rows.'],
-            ['Base row', 'The live-build row shown beside optimizer results for comparison.']
+          'While it runs',
+          plate(
+            'opt-running',
+            [1568, 660],
+            'Optimizer showing search progress',
+            ['Progress', 'How far the search has got.', [44, 25.8, 12.1, 19.7]],
+            ['Counters', 'Combinations discovered and processed, batch size, rate and results so far.', [32.5, 56.8, 35, 6.3]],
+            ['Halt', 'Stops the search and keeps what it found.', [2, 90.6, 5.4, 5.9]],
           ),
-          steps(
-            ['Select objective type', 'Choose skill, rotation, or combo from the objective controls.'],
-            ['Pick target rows', 'Select the skill row, rotation, or combo entries shown for that objective.'],
-            ['Review base row', 'Use the base row to compare the live build with optimizer candidates.'],
-            ['Run again after target changes', 'Target changes require a new search to update result order.']
+        ),
+        section(
+          'The result list',
+          plate(
+            'opt-results',
+            [1455, 820],
+            'Optimizer results sorted by damage',
+            ['Result summary', 'The current filter and sort, and how many builds there are. Click it to open the result filters.', [0.8, 2.7, 98.2, 5.9]],
+            ['Columns', 'Sets, main Echo, cost layout and stat totals for each build.', [0.8, 10.4, 98.2, 4.3]],
+            ['Your build', 'The equipped build is pinned at the top.', [0.8, 15, 98.2, 4.5]],
+            ['Sets', 'Each badge is a set and its piece count.', [3.8, 21.3, 5.2, 69]],
+            ['DMG and EFF', 'Damage for the target, and EFF as a percentage of your equipped build.', [82, 21.3, 16.3, 69]],
+            ['Pages', 'Step through the results.', [44, 85, 11.8, 5.2]],
+          ),
+        ),
+        section(
+          'Filter, find and sort',
+          plate(
+            'opt-console',
+            [1567, 220],
+            'Result filters open under the summary',
+            ['Filter or Find', 'Filter hides builds that fail a condition. Find keeps them all and jumps between matches.', [1, 10, 10.8, 16.4]],
+            ['Column', 'The stat the condition tests.', [1, 35.5, 10.4, 19]],
+            ['Operator', 'At least, more than, equal, at most or less than.', [12.1, 35.5, 13, 19]],
+            ['Value', 'Type a value and press Enter to add the condition.', [25.7, 35.5, 21.7, 19]],
+            ['Sort', 'The column to sort by, and its direction.', [86.9, 35.5, 12, 19]],
           ),
         ),
       ),
       article(
-        'optimizer-constraints-and-failures',
-        'Constraints, Locked State, and No Result Cases',
-        'Tighten or loosen the legal candidate set.',
+        'preview-and-equip',
+        'Preview and Equip',
+        'Show a result in the Echo preview before equipping it.',
         section(
-          'Constraint controls',
-          definitions(
-            ['Constraint', 'A rule that a candidate must satisfy before it can appear in results.'],
-            ['Minimum stat', 'A lower bound for a stat such as Energy Regen or crit rate.'],
-            ['Maximum stat', 'An upper bound for a stat.'],
-            ['Locked main stat', 'A requirement that a slot keep its current main stat.'],
-            ['No result', 'The optimizer could not find a candidate inside every selected rule.']
-          ),
-          steps(
-            ['Add stat limits', 'Set minimums or maximums for required stat targets.'],
-            ['Lock required state', 'Lock slots, sets, or main stats that cannot change.'],
-            ['Run the search', 'The optimizer filters illegal candidates before ranking legal ones.'],
-            ['Loosen rules if empty', 'Remove or widen constraints when no result appears.']
-          ),
-        ),
-      ),
-      article(
-        'optimizer-result-rows',
-        'Result Rows, Preview, and Apply Modes',
-        'Read candidate rows and choose where a candidate is written.',
-        section(
-          'Result actions',
-          definitions(
-            ['Result row', 'One legal candidate build sorted by the selected objective.'],
-            ['Preview', 'A non-written view of the candidate build and output.'],
-            ['Apply to sim', 'Writes the candidate into optimizer simulation state.'],
-            ['Apply to live', 'Writes the candidate into the active scenario build.'],
-            ['Delta', 'The difference between the candidate row and the displayed base row.']
-          ),
-          steps(
-            ['Open a result', 'Inspect the candidate echoes, weapon, stats, and output.'],
-            ['Preview before writing', 'Use preview to compare without changing live state.'],
-            ['Apply to sim', 'Keep experimenting in optimizer state after adopting a candidate there.'],
-            ['Apply to live', 'Move the selected candidate into the active scenario build.']
-          ),
-        ),
-      ),
-      article(
-        'optimizer-theorymax-mode',
-        'Theorymax Mode',
-        'Search generated roll arrangements instead of owned inventory items.',
-        section(
-          'Theory controls',
-          definitions(
-            ['Theory mode', 'A generated search over possible roll arrangements rather than the exact bag.'],
-            ['Theory percent', 'The stat budget level used by the theory search.'],
-            ['Theory slot', 'A slot included in generated theory arrangements.'],
-            ['Theory weapon inclusion', 'A search mode where generated echo arrangements and weapon candidates are evaluated together.']
-          ),
-          steps(
-            ['Turn on theory mode', 'Switch the optimizer mode before setting theory controls.'],
-            ['Choose theory percent', 'Select the generated stat budget level.'],
-            ['Set slot and set rules', 'Choose which slots, sets, and main stats the generated candidates may use.'],
-            ['Run and compare', 'Read theory results against the live base row and any inventory-search results you want to compare manually.']
-          ),
-        ),
-      ),
-      article(
-        'optimizer-cpu-and-gpu-paths',
-        'Choosing CPU or GPU',
-        'Select the execution path for optimizer searches.',
-        section(
-          'Engine controls',
-          comparison(
-            'CPU',
-            'GPU',
-            ['Where it runs', 'JavaScript worker path', 'WebGPU path when available in the browser'],
-            ['Availability', 'Available broadly', 'Shown only when WebGPU support is available'],
-            ['Progress', 'Reports through worker progress', 'Reports through GPU batch progress'],
-            ['Fallback', 'Can run without GPU support', 'Falls back by switching to CPU controls']
-          ),
-          steps(
-            ['Pick an engine', 'Select CPU or GPU from the optimizer engine controls.'],
-            ['Start search', 'Run the optimizer with the selected search scope.'],
-            ['Read progress', 'Use the progress text and result count to track the running search.'],
-            ['Switch engines', 'Change engine path and rerun if browser support or search size calls for a different path.']
+          'Preview a result',
+          paragraph('Click a result row to show its Echoes in the preview above the list.'),
+          plate(
+            'opt-preview',
+            [1204, 983],
+            'Row 2 selected, with its Echoes proposed on the preview',
+            ['Proposed', 'The preview is marked Proposed while it shows a result that is not your build.', [3.5, 3.9, 7, 2.2]],
+            ['The proposal', 'The Echoes this result uses.', [0.8, 6.6, 98.4, 25]],
+            ['The picked row', 'The row you selected.', [0.8, 46, 98.2, 3.3]],
+            ['Your build', 'Click the pinned row to go back to your equipped Echoes.', [0.8, 41.9, 98.2, 3.3]],
+            ['Save', 'Save build keeps the proposal as a build; Save all puts its Echoes in the bag.', [79.3, 1.2, 13.2, 2.1]],
+            ['Equip', 'Puts the proposal on the context resonator.', [94, 1, 5.2, 2.6]],
           ),
         ),
       ),
     ],
   },
   {
-    id: 'team-effects',
-    title: 'Team Effects',
-    summary: 'Enable teammate effects, configure exposed state, and link teammate rotations.',
-    aliases: ['Team', 'Teams', 'Teammates'],
+    id: 'suggestions',
+    title: 'Suggestions',
+    summary: 'Compare main stat, Sonata set and weapon changes for a target, then preview and apply a result.',
     articles: [
       article(
-        'team-effect-sources',
-        'Where Team Effects Come From',
-        'Know which teammate fields can affect the active resonator.',
+        'read-suggestions',
+        'Read Suggestions',
+        'Pick what to change, what to measure, and read how each alternative compares.',
         section(
-          'Team sources',
-          definitions(
-            ['Team slot', 'A teammate position configured beside the active resonator.'],
-            ['Team effect', 'A buff, debuff, status, or support output supplied by a teammate.'],
-            ['Source kind', 'The origin of the effect, such as resonator kit, weapon, echo, set, or manual buff.'],
-            ['Target', 'The resonator or team member receiving the effect.']
+          'The results',
+          paragraph('Suggestions keeps the roster, build card and Echo loadout from Simulation Basics. Below the loadout, the results rank alternatives for the context build against one target.'),
+          plate(
+            'sug-main-stats',
+            [1473, 812],
+            'Main Stat suggestions with the current build at the top',
+            ['Kind', 'Switch between Main Stats, Sonata Sets and Weapons. The number is how many results each found; the open kind shows the damage it is measured from.', [0.8, 1.5, 14.3, 17]],
+            ['Target', 'The damage used to rank results: the Default Rotation, or any single skill.', [17, 1.2, 33.3, 4.4]],
+            ['Current', 'Your equipped build, marked Current and ranked with the rest.', [16, 11.7, 84, 10.5]],
+            ['An alternative', 'Each row is one change. Lit slots are the ones it changes.', [16, 22.8, 84, 10]],
+            ['Damage and change', 'Its damage, and the change from your current build.', [90.3, 24, 8.5, 7.4]],
+            ['Selected result', 'The bar at the bottom repeats the selected result. Click a row, or use the arrow keys, to select another.', [0, 87.5, 100, 12.5]],
           ),
-          steps(
-            ['Add teammate', 'Open the team pane and choose the resonator in a team slot.'],
-            ['Enable effect groups', 'Turn on the teammate effect groups shown for that slot.'],
-            ['Check target labels', 'Read active, self, and team labels to see who receives the effect.'],
-            ['Return to results', 'Damage and summary rows update from the configured team state.']
+          paragraph('Results refresh on their own when the build, team or target changes. If no results appear, equip Echoes first.'),
+        ),
+        section(
+          'Choose the target',
+          paragraph('Click the target to open its menu.'),
+          plate(
+            'sug-target',
+            [768, 756],
+            'Suggestion target menu open',
+            ['Target control', 'Shows the current damage target. Click to choose another.', [2.9, 3.3, 91.6, 7.3]],
+            ['Default Rotation', 'Ranks by the whole default rotation.', [4, 19.8, 89.5, 6.5]],
+            ['One skill', 'Or pick any damage row, grouped by skill.', [4, 29.4, 89.5, 56]],
           ),
         ),
       ),
       article(
-        'team-effect-configuration',
-        'Automatic Versus Configurable Effects',
-        'Set teammate effect state only where a visible control exists.',
+        'preview-and-apply',
+        'Preview and Apply',
+        'Preview an Echo suggestion on your loadout before you apply it.',
         section(
-          'Effect controls',
-          definitions(
-            ['Automatic effect', 'An effect applied from selected teammate state with no extra control.'],
-            ['Configurable effect', 'An effect with a visible rank, stack, toggle, mode, or value control.'],
-            ['Effect card', 'The UI entry showing the effect label, source, target, and controls.']
-          ),
-          steps(
-            ['Open team configuration', 'Select the teammate and effect group to edit.'],
-            ['Set visible controls', 'Choose stacks, modes, ranks, and toggles on configurable effect cards.'],
-            ['Leave automatic entries alone', 'Automatic entries only need their source or teammate enabled.'],
-            ['Review active summaries', 'Read the team summary to confirm which effects are currently included.']
+          'Preview a result',
+          paragraph('In Main Stats and Sonata Sets, selecting a row other than Current shows its Echo proposal on the loadout above the results. Weapon results remain in the list.'),
+          plate(
+            'sug-proposed',
+            [1204, 983],
+            'Row 3 selected, with the proposed Echoes shown in the loadout',
+            ['Proposed', 'The loadout shows Proposed while previewing a result. Select Current to return to your equipped build and resume editing.', [3.5, 3.9, 7, 2.2]],
+            ['Cost', 'The proposal’s cost against the 12 cost cap.', [11.5, 1.2, 7, 2.2]],
+            ['The proposal', 'Echoes that move are drawn without their Sonata fill.', [0.8, 6.6, 98.4, 25]],
+            ['Selected result', 'The result you selected.', [16.6, 55.7, 82.5, 6.4]],
+            ['Apply', 'Click Apply here or Equip above the Echo loadout to use the proposed Echoes.', [0.8, 90.5, 98.4, 8.7]],
           ),
         ),
       ),
       article(
-        'team-rotation-links',
-        'Linked Teammate Rotations',
-        'Attach teammate rotations to team contribution output.',
+        'sonata-sets',
+        'Sonata Sets',
+        'Rank set plans and configure active Sonata effects.',
         section(
-          'Rotation linking',
-          definitions(
-            ['Linked rotation', 'A live or saved rotation selected for a teammate slot.'],
-            ['Team contribution', 'Output from teammate rows included in the team summary.'],
-            ['Link state', 'The selected teammate rotation and whether it is enabled.']
+          'Set plans',
+          plate(
+            'sug-sets',
+            [1204, 983],
+            'Sonata Set suggestions with row 2 selected and the proposal on the loadout',
+            ['Current plan', 'Your equipped sets and piece counts.', [16.6, 41.2, 82.5, 5.6]],
+            ['A set plan', 'Each chip is a set and how many pieces it takes.', [21.4, 47.8, 19.8, 3.4]],
+            ['Change', 'Damage change from your current plan.', [92.6, 49.8, 5, 2.3]],
+            ['The proposal', 'Selecting a plan shows the Echoes it would use.', [0.8, 6.6, 98.4, 25]],
+            ['Config', 'Opens Sonata Set Config.', [93, 34.4, 5, 2.5]],
           ),
-          steps(
-            ['Open the teammate slot', 'Use the team pane configuration for the teammate.'],
-            ['Choose rotation source', 'Select live rotation or a saved rotation record.'],
-            ['Enable the link', 'Turn on the linked rotation for team contribution output.'],
-            ['Read team rows', 'Open team summaries or rotation breakdowns to see teammate contribution rows.']
+        ),
+        section(
+          'Sonata Set Config',
+          paragraph('Use Sonata Set Config to turn the listed set effect parts on or off. Search and Pieces filter the list shown in this window.'),
+          plate(
+            'sug-set-config',
+            [1277, 952],
+            'Sonata Set Config with Celestial Light expanded',
+            ['Search', 'Find a set by name or effect.', [2.3, 11.9, 17.1, 5]],
+            ['Pieces', 'Show only the 1, 2, 3 or 5 piece effects.', [2.3, 19.4, 17.1, 26.8]],
+            ['Sort', 'Order the sets.', [87.7, 12.6, 9.6, 3.7]],
+            ['A set', 'Click a set to expand its piece effects. Its switch changes the parts shown by the current filters.', [93, 47, 4.4, 3.6]],
+            ['A piece effect', 'Each effect has its own switch, with a note on when it applies.', [22.2, 46.2, 75.3, 25.3]],
+            ['Toggle all', 'Turn the effects shown by the current filters on or off together. The header counts how many are on.', [2.3, 90.3, 16.5, 6.4]],
+          ),
+        ),
+      ),
+      article(
+        'weapons',
+        'Weapons',
+        'Rank weapons for this build, and choose which ones and passive states to test.',
+        section(
+          'Weapon results',
+          plate(
+            'sug-weapons',
+            [1473, 812],
+            'Weapon suggestions with Stringmaster ranked first',
+            ['Search setup', 'A summary of the weapon search: rarities and ranks, and how passives are tested.', [63, 1.8, 30.2, 3.7]],
+            ['A weapon', 'Name, rarity, rank, base ATK and its bonus stat.', [16, 11.7, 84, 11.1]],
+            ['Stacked and resting', 'The big number has the passives stacked; resting is with them at rest.', [85.2, 13, 13.3, 9.3]],
+            ['Current weapon', 'Your equipped weapon, ranked with the rest.', [16, 34.5, 84, 11.3]],
+            ['Both passive states', 'The bar shows damage changes with passives at maximum stacks (MAX) and at rest (REST).', [26, 91, 16.5, 4.7]],
+            ['Equip', 'Equips the selected weapon.', [93.3, 91, 5.5, 5.2]],
+            ['Config', 'Opens the weapon search config.', [94, 1.8, 4.6, 3.7]],
+          ),
+        ),
+        section(
+          'Weapon search config: Search',
+          plate(
+            'sug-weapon-search',
+            [1456, 837],
+            'Weapon Search config on the Search tab',
+            ['Tabs', 'Search sets the pool; Passives sets passive states.', [19.6, 5.4, 17.2, 5.4]],
+            ['Search for', 'Test passives at rest (Default), stacked (Max), or Both.', [3.3, 19.7, 31.8, 4.2]],
+            ['Rank by', 'With Both, choose which measure orders the results.', [3.3, 25, 31.8, 4.2]],
+            ['Rarities', 'Turn each rarity on or off.', [3.3, 37.6, 13, 36.5]],
+            ['Rank', 'The rank each rarity is tested at.', [33, 37.6, 25, 36.5]],
+            ['Pool', 'The weapons that will be tested.', [66.3, 37.6, 30.6, 12]],
+            ['Standard weapons', 'The standard banner weapons get their own rank.', [3.3, 77.4, 55, 5.6]],
+            ['Reset', 'Back to the default search.', [79.7, 91, 16.5, 4.5]],
+          ),
+        ),
+        section(
+          'Weapon search config: Passives',
+          plate(
+            'sug-weapon-passives',
+            [1277, 952],
+            'Weapon Search config on the Passives tab',
+            ['Filter by rarity', 'Show one rarity at a time. Use the search box in the header to find a weapon by name.', [3.1, 11.9, 23, 3]],
+            ['A weapon', 'Every passive state the weapon has.', [3.1, 32.8, 94, 16.5]],
+            ['Tick a state', 'Ticked states count when the passive is stacked.', [11, 22.6, 2.3, 3.2]],
+            ['Stacks', 'The stack count or value the passive is tested at when stacked.', [86.8, 22.4, 9.7, 4.4]],
+            ['Toggle all visible', 'Tick or clear every shown state at once.', [68, 11.8, 29.1, 3.2]],
           ),
         ),
       ),
     ],
   },
   {
-    id: 'enemy-and-combat-state',
-    title: 'Enemy and Combat State',
-    summary: 'Pick enemy profile, resistance mode, and combat-side statuses.',
-    aliases: ['Enemy', 'Enemies', 'Combat'],
+    id: 'inventory',
+    title: 'Inventory',
+    summary: 'Keep Echoes and whole builds in one library, find them again and put them on any resonator.',
     articles: [
       article(
-        'enemy-profile-basics',
-        'Enemy Profile Basics',
-        'Set the enemy level, defense, and profile used by calculations.',
+        'inventory-library',
+        'The Library',
+        'Open Inventory, switch collections and narrow the list.',
         section(
-          'Enemy controls',
-          definitions(
-            ['Enemy profile', 'The selected enemy template and its base combat fields.'],
-            ['Enemy level', 'The level used by defense and mitigation calculations.'],
-            ['Defense modifier', 'The enemy-side defense adjustment shown on the enemy surface.'],
-            ['Combat state', 'Enemy-side status values that rows may read during calculation.']
+          'Open it',
+          paragraph('The library icon in the header opens Inventory from any Simulation page. Use Save all above the Echo loadout to save equipped Echoes, or Save build to save a weapon and Echoes together. You can also add Echoes from the Inventory header.'),
+          plate(
+            'inv-head',
+            [1176, 96],
+            'Inventory header on the Echoes collection',
+            ['Echoes, Builds', 'Switch between saved Echoes and saved builds. The header actions and filters update for the selected collection.', [1, 15, 20.8, 68]],
+            ['Count', 'How many entries the filters show, out of everything saved.', [22.6, 15, 13.2, 68]],
+            ['Paste', 'Adds Echoes copied from a loadout or another list. Ctrl or Cmd+V does the same.', [37, 15, 4, 68]],
+            ['Group', 'Groups Echoes by Sonata set, or builds by resonator.', [41.9, 15, 4.3, 68]],
+            ['Compact', 'Show saved Echoes as tiles with details for the selected Echo beside them.', [46.6, 15, 4.2, 68]],
+            ['Clear', 'Removes every entry in the open collection, after a confirmation.', [51.2, 15, 4.3, 68]],
+            ['Add', 'Picks an Echo from the catalogue and saves it straight into the bag.', [57, 15, 11.2, 68]],
+            ['Save equipped', 'Saves the equipped Echoes of every resonator you have set up, not only the one open.', [69, 15, 21.8, 68]],
           ),
-          steps(
-            ['Choose profile', 'Select the enemy from the enemy picker.'],
-            ['Set level', 'Adjust enemy level from the visible level control.'],
-            ['Set defense fields', 'Edit defense modifiers or tower fields shown by the surface.'],
-            ['Recalculate rows', 'Damage output reads the current enemy profile immediately.']
+        ),
+        section(
+          'Narrow the Echoes',
+          plate(
+            'inv-rail',
+            [418, 1005],
+            'Inventory rail on the Echoes collection',
+            ['Equipped', 'The open resonator’s five slots and their cost. Click a slot to find that Echo in the library; empty or unsaved slots stay dim.', [4, 1.5, 92, 41.5]],
+            ['Search', 'Matches Echo names, and the resonators wearing them.', [4, 48.5, 92, 6.2]],
+            ['Cost', 'Show only 4, 3 or 1 cost Echoes. Click again to clear it.', [7, 56, 43, 4]],
+            ['Sonata', 'Show one set. The number is how many you have saved in it.', [4, 62.5, 92, 37]],
           ),
+          paragraph('Use the page controls below the list to move through a long inventory list.'),
         ),
       ),
       article(
-        'enemy-resistance-and-tower-mode',
-        'Resistances and Tower Mode',
-        'Set element resistance and tower-style enemy fields.',
+        'inventory-echoes',
+        'Use a Saved Echo',
+        'Read an Echo, put it in a slot, and keep the bag tidy.',
         section(
-          'Resistance fields',
-          definitions(
-            ['Resistance', 'The enemy mitigation value for an element or damage family.'],
-            ['Tower mode', 'A preset enemy configuration for tower-style scenarios.'],
-            ['Profile override', 'A field changed away from the selected enemy default.']
+          'Echo cards',
+          plate(
+            'inv-cards',
+            [808, 420],
+            'Two saved Capitaneus cards, one hovered and one worn by Phoebe',
+            ['Card actions', 'Hover a card for Copy, Cut and Remove. Click the card itself to open it in the Echo editor.', [2.5, 4.8, 7.4, 90.5]],
+            ['Worn by', 'A face on the icon means that resonator wears a copy of this Echo.', [17.3, 14.8, 4.7, 9]],
+            ['Crit value', 'The Echo’s crit value from its substats.', [39.6, 28.6, 6.2, 6.7]],
+            ['Slots', 'Click a number to equip the Echo in that slot of the open resonator. Dim numbers would take the loadout past 12 cost.', [12.4, 83.3, 34, 8.3]],
+            ['Worn here', 'A gold rim and a lit number mean the open resonator already wears it, in that slot.', [52, 4.8, 43.8, 90.5]],
           ),
-          steps(
-            ['Select enemy mode', 'Choose normal profile state or tower mode from the enemy controls.'],
-            ['Edit resistances', 'Change the resistance fields that apply to the target element.'],
-            ['Check override labels', 'Read any labels that show a value no longer matches the enemy default.'],
-            ['Compare output', 'Return to damage rows to see the result under the selected resistance state.']
+          note('The bag keeps its own copy. Editing a saved Echo does not change one that is already equipped, and editing an equipped Echo does not change the saved one.'),
+        ),
+        section(
+          'Compact view',
+          plate(
+            'inv-compact',
+            [1481, 806],
+            'Compact inventory with Phoebe’s Capitaneus selected and its details shown',
+            ['Echo tiles', 'Each saved Echo shows its set, cost and wearer. Click a tile to show its details, or right-click for its menu.', [0, 0, 71, 100]],
+            ['Slot tag', 'S1 to S5 marks the tiles the open resonator wears, and in which slot.', [9.5, 33.7, 8.2, 15]],
+            ['Echo details', 'The selected Echo’s stats, crit value, set and skill. Use the pencil to edit it or the cross to remove it.', [72.1, 1.2, 27.2, 87]],
+            ['Worn by, slots', 'Who wears it, and the slot numbers to equip it, as on a card.', [72.5, 88.5, 27, 11]],
           ),
+          paragraph('In a narrow window, clicking a tile opens its menu because the details panel is hidden.'),
+        ),
+        section(
+          'Grouped by set',
+          plate(
+            'inv-grouped',
+            [1216, 776],
+            'Compact inventory grouped by Sonata set',
+            ['Set heading', 'Each heading shows the set name and its saved Echo count. Grouping works in card and tile views.', [0.5, 1, 99, 4.5]],
+            ['Wearer', 'The face in a tile’s corner is who wears it.', [1.5, 74.5, 2.5, 3.9]],
+          ),
+          paragraph('To act on several Echoes at once, select them and use the selection bar, as in Menus and Shortcuts. Inventory adds cut, paste and remove to it.'),
         ),
       ),
       article(
-        'enemy-negative-effects-and-status',
-        'Negative Effects, Tune Strain, and Specialized State',
-        'Set combat statuses that specific rows may read.',
+        'inventory-builds',
+        'Saved Builds',
+        'Keep a weapon and five Echoes together and put them back on in one click.',
         section(
-          'Status fields',
-          definitions(
-            ['Negative effect', 'An enemy-side status applied by a skill, echo, set, weapon, or manual entry.'],
-            ['Tune strain', 'A specialized status field used by tune-related rows.'],
-            ['Specialized state', 'A named combat state path surfaced only for rows that support it.']
-          ),
-          steps(
-            ['Open status controls', 'Use the enemy or combat state panel that exposes the status.'],
-            ['Set stacks or value', 'Enter the active stack count, value, or toggle state.'],
-            ['Run the relevant row', 'Only rows that read that status path will change.'],
-            ['Clear state', 'Return the control to its neutral value when the status is not part of the scenario.']
+          'Find a build',
+          plate(
+            'inv-builds-rail',
+            [418, 462],
+            'Inventory rail on the Builds collection',
+            ['Search', 'Matches build and resonator names.', [4.8, 11.7, 85, 12.6]],
+            ['Resonator', 'Click a resonator to show only its builds. The number is how many it has.', [4, 37, 89, 63]],
           ),
         ),
-      ),
-    ],
-  },
-  {
-    id: 'custom-bonuses',
-    title: 'Custom Bonuses',
-    summary: 'Add manual modifiers, choose scope, and import preset modifiers from game data.',
-    aliases: ['Custom Buffs', 'Manual Buffs', 'Buffs', 'Bonuses'],
-    articles: [
-      article(
-        'custom-bonus-purpose',
-        'What a Custom Bonus Represents',
-        'Create a manual modifier that is not already handled by a visible built-in control.',
         section(
-          'Manual entry fields',
-          definitions(
-            ['Manual buff', 'A user-created modifier entry added to the runtime.'],
-            ['Modifier', 'One stat, damage, resistance, amp, or specialized effect applied by the entry.'],
-            ['Source label', 'The text used to identify where the manual entry came from.'],
-            ['Enabled state', 'Whether the manual entry is currently included in calculations.']
+          'Build cards',
+          plate(
+            'inv-builds',
+            [1168, 174],
+            'Three saved builds, with Phoebe’s Preset hovered',
+            ['Resonator and name', 'Who the build was saved from, and its name. The line under the name reads Equipped when it matches the open loadout.', [1.7, 11.5, 22, 34.5]],
+            ['Weapon', 'The saved weapon and its rank.', [26, 14, 4.6, 32]],
+            ['Echoes', 'The five saved Echoes, each with its set.', [1.7, 62, 21.5, 30]],
+            ['Equip, Rename, Delete', 'Hover a card for its actions. Rename edits the name in place: Enter keeps it, Esc cancels.', [60.6, 4.6, 4.9, 92]],
           ),
-          steps(
-            ['Open custom buffs', 'Use the custom buffs surface for the active build or team context.'],
-            ['Add an entry', 'Create a manual buff and name the source clearly.'],
-            ['Add modifiers', 'Choose each modifier type, stat, target, and value.'],
-            ['Toggle the entry', 'Turn the entry on or off from the manual buff list.']
-          ),
-        ),
-      ),
-      article(
-        'custom-bonus-scope',
-        'Choose the Right Buff Type',
-        'Set who receives the manual modifier.',
-        section(
-          'Buff type labels',
-          definitions(
-            ['Active', 'Applies to the active resonator result being calculated.'],
-            ['Self', 'Applies to the source resonator itself.'],
-            ['Team', 'Applies to teammates or group-facing targets. Other specialized scopes are grouped under this label in preset browsing.']
-          ),
-          steps(
-            ['Pick the type first', 'Choose Active, Self, or Team before adding modifiers.'],
-            ['Set modifier target', 'For damage or skill-family modifiers, select the element or skill family from the modifier row.'],
-            ['Review list labels', 'The manual buff row shows the target and source so the receiving side is clear.']
-          ),
-        ),
-      ),
-      article(
-        'custom-bonus-presets',
-        'Quick Imports with Presets',
-        'Create manual buff entries from game-data preset effects.',
-        section(
-          'Preset catalog',
-          definitions(
-            ['Preset', 'A game-data buff source that can be converted into one or more manual modifiers.'],
-            ['Source kind', 'The preset origin: echo, set, weapon, or resonator source.'],
-            ['Buff type filter', 'The Active, Self, or Team filter in the preset modal.'],
-            ['Selected effect', 'A preset modifier row selected for import.']
-          ),
-          steps(
-            ['Open presets', 'Use the preset button in the custom buffs header.'],
-            ['Filter the catalog', 'Filter by source kind, buff type, search text, or weapon rank controls shown by the modal.'],
-            ['Select entries', 'Click each preset modifier row that needs to become a manual buff entry.'],
-            ['Add selected', 'Confirm the modal action to create the selected manual buff entries.'],
-            ['Edit after import', 'Adjust values, labels, enabled state, or scope from the manual buff list.']
-          ),
-        ),
-      ),
-      article(
-        'custom-bonus-entry-review',
-        'Check Manual Entries',
-        'Review manual buffs after adding or importing them.',
-        section(
-          'Entry review',
-          steps(
-            ['Check duplicates', 'Look for manual entries that duplicate built-in resonator, weapon, set, echo, or team controls already enabled.'],
-            ['Check value type', 'Percent modifiers and flat modifiers appear as separate modifier kinds.'],
-            ['Check target family', 'Element, skill type, damage bonus, resistance, and amp fields target different calculation paths.'],
-            ['Check enabled state', 'Disabled manual entries stay in the list but do not affect output.']
-          ),
-          definitions(
-            ['Flat value', 'A direct numeric addition to the selected stat path.'],
-            ['Percent value', 'A percentage modifier for the selected stat or damage path.'],
-            ['Target family', 'The element, skill type, damage family, or stat path selected on a modifier row.']
-          ),
-        ),
-      ),
-    ],
-  },
-  {
-    id: 'damage-results',
-    title: 'Damage Results',
-    summary: 'Read damage rows, subhits, formulas, rotation summaries, and support output.',
-    aliases: ['Damage', 'Results', 'Formulas'],
-    articles: [
-      article(
-        'damage-result-columns',
-        'Read the Main Result Columns',
-        'Understand the columns on damage rows.',
-        section(
-          'Column meanings',
-          definitions(
-            ['Normal', 'Resolved damage without a critical hit.'],
-            ['Crit', 'Resolved damage if the row crits.'],
-            ['Average', 'Expected value using current crit rate and crit damage.'],
-            ['Multiplier', 'The skill or authored multiplier used by the row.'],
-            ['Hits', 'The count of hits represented by the row.']
-          ),
-          steps(
-            ['Pick a row', 'Select the skill or feature row to inspect.'],
-            ['Read Average for expected output', 'Average is the default comparison value for most ranking surfaces.'],
-            ['Read Normal and Crit for range', 'Normal and Crit show the low and high crit-state result for that row.'],
-            ['Open details for inputs', 'Use row details to inspect formula pieces, buffs, debuffs, and state.']
-          ),
-        ),
-      ),
-      article(
-        'damage-subhits-and-grouping',
-        'Sub Hits, Grouped Rows, and Breakdowns',
-        'Expand compound rows into their parts.',
-        section(
-          'Expanded output',
-          definitions(
-            ['Sub hit', 'One component hit inside a compound skill row.'],
-            ['Grouped row', 'A row that combines several sub hits or related parts under one displayed total.'],
-            ['Breakdown', 'An expanded view showing how the total is assembled.']
-          ),
-          steps(
-            ['Expand a grouped row', 'Open the row details or disclosure control.'],
-            ['Read sub hit totals', 'Each visible sub hit shows its own normal, crit, and average values.'],
-            ['Compare with parent total', 'The grouped parent row combines the expanded parts shown underneath it.']
-          ),
-        ),
-      ),
-      article(
-        'damage-formula-reading',
-        'Formula Reading Guide',
-        'Read the visible formula breakdown for a row.',
-        section(
-          'Formula pieces',
-          definitions(
-            ['Base stat', 'The stat used as the starting value, such as ATK, HP, DEF, or a converted stat.'],
-            ['Scaling', 'The skill multiplier or authored scaling value.'],
-            ['Bonus', 'Damage bonus and related additive modifier groups.'],
-            ['Amplify', 'Multiplicative modifier groups applied after additive bonus groups.'],
-            ['Enemy mitigation', 'Defense, resistance, and enemy-side reductions.']
-          ),
-          steps(
-            ['Open formula details', 'Select the row details action on a damage result.'],
-            ['Read top to bottom', 'Formula panels show the main stages in the order the app displays them.'],
-            ['Open modifier groups', 'Expand groups to see which active sources contributed values.'],
-            ['Compare rows', 'Use formula details on two rows to see which stage differs.']
-          ),
-        ),
-      ),
-      article(
-        'damage-rotation-summary-interpretation',
-        'Read Rotation Summaries',
-        'Interpret totals that come from a simulated rotation.',
-        section(
-          'Summary fields',
-          definitions(
-            ['Rotation total', 'The combined output of the simulated rotation under the selected summary rules.'],
-            ['DPS', 'Rotation total divided by the displayed duration.'],
-            ['Contribution', 'A grouped share of the total by skill, source, teammate, or loop.'],
-            ['Loop-aware total', 'A total that averages repeated loop windows by configured run count.']
-          ),
-          steps(
-            ['Read total and duration', 'Start with the total, DPS, and displayed rotation duration.'],
-            ['Open contribution groups', 'Expand skill, source, teammate, and loop groups to see the total split.'],
-            ['Compare raw details separately', 'Raw execution rows show executed entries; summary rows may group or average them.']
-          ),
-        ),
-      ),
-      article(
-        'damage-healing-shield-and-specialized-rows',
-        'Healing, Shield, Tune, and Specialized Rows',
-        'Read non-damage output that appears beside damage results.',
-        section(
-          'Support rows',
-          definitions(
-            ['Healing row', 'A row whose output is healing rather than damage.'],
-            ['Shield row', 'A row whose output is shield value rather than damage.'],
-            ['Tune row', 'A row tied to tune strain, tune rupture, or a specialized tune output.'],
-            ['Specialized row', 'A row with a custom output family defined by its feature.']
-          ),
-          steps(
-            ['Open the support section', 'Find healing, shield, tune, and specialized rows in their own result groups.'],
-            ['Read their own totals', 'Support rows are not folded into the main damage total unless the surface explicitly says so.'],
-            ['Open details', 'Inspect the formula and active state the same way as a damage row.']
-          ),
-        ),
-      ),
-    ],
-  },
-  {
-    id: 'saved-builds-and-presets',
-    title: 'Saved Builds and Presets',
-    summary: 'Save, load, rename, overwrite, and delete build records.',
-    aliases: ['Saved', 'Presets', 'Builds'],
-    articles: [
-      article(
-        'saved-record-types',
-        'Saved Record Types',
-        'Identify what each saved record contains before loading it.',
-        section(
-          'Record types',
-          definitions(
-            ['Build record', 'A saved resonator build snapshot with equipment and relevant state.'],
-            ['Rotation record', 'A saved rotation tree.'],
-            ['Preset', 'A reusable authored setup created by the app or user.'],
-            ['Backup', 'A larger saved payload for import, export, or sync.']
-          ),
-          steps(
-            ['Open saved records', 'Use the saved builds or saved rotations surface.'],
-            ['Read record type', 'Check the label before loading, overwriting, or deleting.'],
-            ['Open details', 'Inspect owner, resonator, timestamp, and included state fields.']
-          ),
-        ),
-      ),
-      article(
-        'saved-live-matching-and-usage',
-        'Live Matching and Usage Labels',
-        'Read labels that compare saved records with live state.',
-        section(
-          'Labels',
-          definitions(
-            ['Live match', 'The saved record matches the current live state for the compared fields.'],
-            ['Different from live', 'At least one compared field differs from the current live state.'],
-            ['In use', 'The record is currently selected or linked by a live surface.'],
-            ['Owner', 'The resonator or build context associated with the record.']
-          ),
-          steps(
-            ['Compare before loading', 'Read live-match and owner labels on the record row.'],
-            ['Open linked surfaces', 'Use in-use labels to find where a record is currently referenced.'],
-            ['Save new state', 'Create a new record when the live build has changed and needs its own snapshot.']
-          ),
-        ),
-      ),
-      article(
-        'saved-load-overwrite-and-delete',
-        'Load, Overwrite, Rename, and Delete Semantics',
-        'Use saved-record actions without mixing them up.',
-        section(
-          'Record actions',
-          definitions(
-            ['Load', 'Copies the saved record into live state.'],
-            ['Overwrite', 'Replaces the saved record with the current live state.'],
-            ['Rename', 'Changes the saved record name only.'],
-            ['Delete', 'Removes the saved record from storage.']
-          ),
-          steps(
-            ['Load into live', 'Use Load when the saved state needs to become the active state.'],
-            ['Overwrite from live', 'Use Overwrite when the current active state needs to replace that record.'],
-            ['Rename for organization', 'Use Rename to change the label without changing the record contents.'],
-            ['Delete old records', 'Use Delete only for records no longer needed.']
-          ),
-        ),
-      ),
-    ],
-  },
-  {
-    id: 'import-export-and-sync',
-    title: 'Import, Export, and Sync',
-    summary: 'Bring in echo screenshots, rotation JSON, legacy backups, and Google Drive backups.',
-    aliases: ['Import', 'Export', 'Sync', 'Backup'],
-    articles: [
-      article(
-        'import-echo-parser',
-        'Echo Image Import',
-        'Create echo entries from supported echo images.',
-        section(
-          'Import flow',
-          definitions(
-            ['Image import', 'A parser flow that reads echo stat fields from an uploaded image.'],
-            ['Parsed field', 'A detected echo name, set, main stat, substat, or value.'],
-            ['Review step', 'The confirmation step before parsed fields are written into state.']
-          ),
-          steps(
-            ['Open image import', 'Use the echo import action from the echo or inventory surface.'],
-            ['Upload image', 'Select the supported echo screenshot or image file.'],
-            ['Review parsed fields', 'Correct any name, set, stat, or value before saving.'],
-            ['Save the echo', 'Write the reviewed echo into the target slot or inventory location.']
-          ),
-        ),
-      ),
-      article(
-        'import-rotation-json-and-legacy-backups',
-        'Rotation JSON and Legacy Backup Import',
-        'Import rotation files and older app backup payloads.',
-        section(
-          'Import types',
-          definitions(
-            ['Rotation JSON', 'A file containing a rotation tree.'],
-            ['Legacy backup', 'An older full-state payload converted into the current state shape during import.'],
-            ['Import preview', 'The review step showing what the payload contains before it is written.']
-          ),
-          steps(
-            ['Choose import action', 'Open the import action for rotations or backup data.'],
-            ['Select file', 'Pick the JSON or backup file.'],
-            ['Review preview', 'Read the resonator, rotation, build, and storage fields shown by the importer.'],
-            ['Confirm import', 'Write the imported state after the preview matches what you intend to load.']
-          ),
-        ),
-      ),
-      article(
-        'sync-local-and-google-drive',
-        'Local Persistence and Google Drive Backup',
-        'Control browser storage and Drive backup state.',
-        section(
-          'Storage paths',
-          definitions(
-            ['Local storage', 'The browser storage used by the app on the current device and browser profile.'],
-            ['Drive backup', 'A Google Drive copy of app state created through the sync controls.'],
-            ['Export file', 'A downloaded backup payload that can be imported later.'],
-            ['Sync status', 'The displayed sign-in, upload, download, or error state for Drive operations.']
-          ),
-          steps(
-            ['Check local state', 'Open settings or data management to see local storage controls.'],
-            ['Export backup', 'Download a backup file before large state changes.'],
-            ['Sign in for Drive', 'Use the Google Drive sign-in action before upload or download.'],
-            ['Upload or restore', 'Choose the sync action that matches whether local state or Drive state is the source.']
-          ),
-        ),
-      ),
-    ],
-  },
-  {
-    id: 'app-behavior-and-controls',
-    title: 'App Behavior and Controls',
-    summary: 'Understand persistence, selection mode, confirmations, toasts, history, and restore actions.',
-    aliases: ['Controls', 'State', 'History'],
-    articles: [
-      article(
-        'app-persistence-model',
-        'Persistence Model',
-        'Know which app state survives refresh and which state is only temporary.',
-        section(
-          'State locations',
-          definitions(
-            ['Persisted state', 'Saved browser state that returns after refresh.'],
-            ['Session state', 'Temporary UI state that may reset when the surface closes or reloads.'],
-            ['Live scenario state', 'The active resonator, build, rotation, enemy, team, and manual state currently used by Simulation tools.'],
-            ['Derived state', 'Computed output rebuilt from live state rather than stored directly.']
-          ),
-          steps(
-            ['Edit live state', 'Simulation controls update live state and persist where the app stores that domain.'],
-            ['Refresh to reload', 'Persisted state returns after page refresh in the same browser profile.'],
-            ['Export for transfer', 'Use backup export or sync to move state to another device or browser.']
-          ),
-        ),
-      ),
-      article(
-        'app-selection-confirmations-and-toasts',
-        'Selection Mode, Confirmations, and Toasts',
-        'Read short-lived UI feedback and selection controls.',
-        section(
-          'Control feedback',
-          definitions(
-            ['Selection mode', 'A temporary mode where clicking entries selects them for a batch action.'],
-            ['Confirmation', 'A prompt shown before overwriting, deleting, importing, or replacing important state.'],
-            ['Toast', 'A short message confirming an action, warning about state, or reporting an error.'],
-            ['Batch action', 'An action applied to multiple selected entries at once.']
-          ),
-          steps(
-            ['Enter selection mode', 'Use the selection control on lists that support multi-select.'],
-            ['Select entries', 'Click entries to add or remove them from the selected set.'],
-            ['Confirm destructive actions', 'Read the confirmation text before approving overwrite, delete, import, or replace actions.'],
-            ['Read toast text', 'Use toast messages to confirm completion or identify the action that failed.']
-          ),
-        ),
-      ),
-      article(
-        'app-history-and-restore-behavior',
-        'History, Undo, and Restore Behavior',
-        'Use app history and restore controls to return to earlier state.',
-        section(
-          'History controls',
-          definitions(
-            ['Undo', 'Reverts the most recent supported state change.'],
-            ['Redo', 'Reapplies a reverted supported state change.'],
-            ['Restore', 'Loads state from a saved record, backup, or prior snapshot.'],
-            ['History entry', 'A stored state transition available to the history controls.']
-          ),
-          steps(
-            ['Use undo after an edit', 'Run undo immediately after a supported edit to return to the previous state.'],
-            ['Use redo after undo', 'Run redo to reapply the reverted edit.'],
-            ['Restore from a record', 'Load a saved build, rotation, backup, or sync payload when a larger state reset is needed.'],
-            ['Save before broad changes', 'Create a record or backup before large imports, batch edits, or optimizer applies.']
-          ),
+          paragraph('Equip puts the build on the resonator you have open, whoever it was saved from. Its Echoes always go on. The weapon goes on only if it is the right type, and a notice says so when it is not.'),
         ),
       ),
     ],

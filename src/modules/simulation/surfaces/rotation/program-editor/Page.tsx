@@ -4,10 +4,10 @@
                comparison, history, clipboard, and saved-rotation workflows.
 */
 
-import '@/styles/modules/simulation/surfaces/rotation/rotation-program-editor.css'
-import '@/styles/modules/simulation/surfaces/rotation/rotation-flat-list.css'
-import '@/styles/modules/simulation/surfaces/rotation/rotation-saved-list.css'
-import '@/styles/modules/simulation/surfaces/rotation/rotation-console.css'
+import '@/styles/surfaces/rotation/program.css'
+import '@/styles/surfaces/rotation/flat-list.css'
+import '@/styles/surfaces/rotation/saved.css'
+import '@/styles/surfaces/rotation/console.css'
 import {
   type CSSProperties,
   lazy,
@@ -21,12 +21,16 @@ import {
   useRef,
   useState,
 } from 'react'
-import { ChevronDown, Copy, Scissors, Trash2 } from 'lucide-react'
+import { ChevronDown, ClipboardPaste, Copy, CopyPlus, FolderOpen, ListPlus, MessageSquarePlus, Pencil, Play, RotateCwSquare, Save, Scissors, Settings, Share2, SquareDashedMousePointer, Trash2 } from 'lucide-react'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 import {useTstStr} from '@/shared/util/toastStore.ts'
+import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay.tsx'
 import {useAppStore} from '@/application/state'
 import {selEnemyProf, selWorkDrvd} from '@/application/state'
 import { useSavedRotationsLease } from '@/application/hooks/useSavedRotationsLease.ts'
 import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
+import { openTeamCnsl } from '@/modules/simulation/features/teams/lib/teamConsoleStore.ts'
+import { openWpnCnsl } from '@/modules/simulation/features/weapons/lib/weaponConsoleStore.ts'
 import type {RotationNode} from '@/domain/gameData/contracts.ts'
 import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
 import {
@@ -45,6 +49,7 @@ import {NodeList, useNodeDrag,} from '@/modules/simulation/surfaces/rotation/pro
 import {
   countFlatSelectedEntries,
   flatClipboardNodes as collectFlatClipboardNodes,
+  flatTargetMatchesRuns,
   resolveFlatRowTarget,
   type FlatRow,
   type FlatRowTarget,
@@ -52,6 +57,7 @@ import {
 import type { PaletteSpec } from '@/modules/simulation/surfaces/rotation/program-editor/model/paletteSpec.ts'
 import {
   type BlockActions,
+  type BuildActions,
   type ConditionActions,
   type HandoffActions,
   Inspector,
@@ -73,6 +79,12 @@ import {
 import { RotationProgramToolbar } from '@/modules/simulation/surfaces/rotation/program-editor/components/ProgramToolbar.tsx'
 import { ReadInspector } from '@/modules/simulation/surfaces/rotation/program-editor/components/ReadInspector.tsx'
 import { useCompareMount } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/compareRack.ts'
+import { useColumnCeiling } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/useColumnCeiling'
+import {
+  editColumnSelection,
+  fitColumnSelection,
+  resizeColumnSelection,
+} from '@/modules/simulation/surfaces/rotation/program-editor/model/columnSelection'
 import { resolveReadNode, type ReadNode } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/readNode.ts'
 import { placeLeader } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/leaderPlacement.ts'
 import type {
@@ -127,7 +139,6 @@ import {
   removeNode,
   removeSubtrees,
   setAttachedMultiplier,
-  replaceFeature,
   setBlockExtent,
   setBlockValue,
   setBlockUptime,
@@ -194,7 +205,7 @@ import {makeAppendSource, appendRotationCopies, type AppendSource,} from '@/modu
 import {mainPortal} from '@/shared/lib/portalTarget.ts'
 import { ConfirmHost } from '@/shared/ui/ConfirmationModal.tsx'
 import type {MenuEntry} from '@/shared/ui/CtxMenu.tsx'
-import {makeSelectionMenu, makeRowMenu,} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/contextMenus.tsx'
+import {makeAddToSelectionMenu, makeSelectedNodesMenu, makeSelectionMenu, makeRowMenu,} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/contextMenus.tsx'
 import {
   applyConditionChanges,
   applyFeatureConditionChanges,
@@ -274,7 +285,7 @@ import {
 import { useRtChrmMen } from '@/application/context-menu/routeMenuContext'
 import { useExpandableCollection } from '@/shared/ui/Expandable.tsx'
 import { useImportSurface } from '@/modules/simulation/shell/imports/ImportSurface.tsx'
-import { useLoadRotation } from '@/modules/simulation/surfaces/rotation/program-editor/saved/useLoadRotation.ts'
+import { useLoadRotation, type RotationLoadMode } from '@/modules/simulation/surfaces/rotation/program-editor/saved/useLoadRotation.ts'
 import { RotationShareModal } from '@/modules/simulation/surfaces/rotation/program-editor/components/ShareModal.tsx'
 import { SavedRotationEditModal } from '@/modules/simulation/surfaces/rotation/program-editor/components/SavedRotationEditModal.tsx'
 import {
@@ -381,6 +392,11 @@ export function ProgramEditor() {
   const rmInvRot = useAppStore((state) => state.rmInvRot)
   const persistRotationProgram = useAppStore((state) => state.persistRotationProgram)
   const scenario = useAppStore((state) => selectedCombatScenario(state.combat))
+  const buildActions = useMemo<BuildActions>(() => ({
+    onResonator: (memberId) => openTeamCnsl(memberId, 'loadout', scenario.id),
+    onEchoes: (memberId) => openTeamCnsl(memberId, 'echoes', scenario.id),
+    onWeapon: (memberId) => openWpnCnsl(memberId, scenario.id),
+  }), [scenario.id])
   const setRotPrefs = useAppStore((state) => state.setRotPrefs)
   const enemyProfile = useAppStore(selEnemyProf)
   const featMenuMdl = useAppModalValue<FeatureMenuState>()
@@ -398,6 +414,7 @@ export function ProgramEditor() {
   >()
   const { openImport } = useImportSurface()
   const loadRotation = useLoadRotation()
+  const loadingSavedRef = useRef(false)
   const confirmation = useConfirm()
 
   const rotMembers = useMemo(
@@ -685,19 +702,18 @@ export function ProgramEditor() {
   const [revealRequest, setRevealRequest] = useState<RotationNodeRevealRequest | null>(null)
   const ghostRepeats = editorPreferences.ghostRepeats
   const showPriors = editorPreferences.showPriors
-  const [statKeys, setStatKeysState] = useState<readonly StatKey[]>(() => (
-    editorPreferences.statKeys.slice(0, statCeiling(editorPreferences.dockPane))
+  const dockPane = editorPreferences.dockPane
+  const columnCeiling = useColumnCeiling(dockPane)
+  const [columnSelection, setColumnSelection] = useState(() => fitColumnSelection(
+    editorPreferences.statKeys.slice(0, statCeiling(false)),
+    columnCeiling,
   ))
+  const currentColumns = resizeColumnSelection(columnSelection, columnCeiling)
+  if (currentColumns !== columnSelection) setColumnSelection(currentColumns)
+  const statKeys = currentColumns.visible
   // Persisted register-group ordering.
   const groupOrder: readonly RegisterGroup[] = editorPreferences.groupOrder
   const [searchOpen, setSearchOpen] = useState(false)
-  const dockPane = editorPreferences.dockPane
-  // Track columns hidden by docking separately from columns the user hides.
-  const dockedOff = useRef<readonly StatKey[]>(
-    editorPreferences.dockPane
-      ? editorPreferences.statKeys.slice(statCeiling(true))
-      : [],
-  )
   const duplicateSavedEntries = useCallback((entries: readonly SavedRotation[]) => {
     const duplicates: SavedRotation[] = []
     for (const entry of entries) {
@@ -841,9 +857,15 @@ export function ProgramEditor() {
       .then((runs) => {
         if (!controller.signal.aborted) setSavedBatch({ key: savedBatchKey, runs })
       })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) showToast({
+          content: error instanceof Error ? error.message : 'Could not load saved rotation data.',
+          variant: 'error',
+        })
+      })
 
     return () => controller.abort()
-  }, [savedBatchKey, savedBatchPlan, showSavedRotationList])
+  }, [savedBatchKey, savedBatchPlan, showSavedRotationList, showToast])
 
   useEffect(() => {
     if (!showSavedRotationList || savedDetailIds.length === 0) {
@@ -870,6 +892,12 @@ export function ProgramEditor() {
           return { key: savedBatchKey, runs: next }
         })
       })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) showToast({
+          content: error instanceof Error ? error.message : 'Could not load saved rotation details.',
+          variant: 'error',
+        })
+      })
     return () => controller.abort()
   }, [
     invRttn,
@@ -877,11 +905,11 @@ export function ProgramEditor() {
     savedDetailIds,
     savedDetailRuns,
     showSavedRotationList,
+    showToast,
   ])
 
   const dockPaneTo = useCallback((next: boolean) => {
     setEditorPreferences({ dockPane: next })
-    // Compute dock side effects outside state updaters, which React may replay.
     if (next) {
       // Docking requires a concrete pane; the archive uses its default channel.
       if (showSavedRotationList) {
@@ -889,27 +917,14 @@ export function ProgramEditor() {
       } else {
         setPane((current) => current ?? 'read')
       }
-      const ceiling = statCeiling(true)
-      dockedOff.current = statKeys.slice(ceiling)
-      setStatKeysState(statKeys.slice(0, ceiling))
-      return
     }
-    const back = dockedOff.current.filter((key) => !statKeys.includes(key))
-    dockedOff.current = []
-    if (back.length > 0) {
-      const restored = [...statKeys, ...back].slice(0, statCeiling(false))
-      setStatKeysState(restored)
-      setEditorPreferences({ statKeys: [...restored] })
-    }
-  }, [setEditorPreferences, setPane, showSavedRotationList, statKeys])
+  }, [setEditorPreferences, setPane, showSavedRotationList])
 
   const setStatKeys = useCallback((next: readonly StatKey[]) => {
-    setStatKeysState(next)
-    const hidden = dockPane
-      ? dockedOff.current.filter((key) => !next.includes(key))
-      : []
-    setEditorPreferences({ statKeys: [...next, ...hidden] })
-  }, [dockPane, setEditorPreferences])
+    const selection = editColumnSelection(columnSelection, next)
+    setColumnSelection(selection)
+    setEditorPreferences({ statKeys: [...selection.visible, ...selection.hidden] })
+  }, [columnSelection, setEditorPreferences])
 
   const setGroupOrder = useCallback((next: readonly RegisterGroup[]) => {
     setEditorPreferences({ groupOrder: [...next] })
@@ -941,6 +956,11 @@ export function ProgramEditor() {
       : EMPTY_SUPPORT_TOTALS)
     : (fullBasis ? result?.fullSummary : result?.summary)?.supportTotals
       ?? EMPTY_SUPPORT_TOTALS
+  const teamSummary = fullBasis ? result?.fullSummary : result?.summary
+  const teamShares = useMemo(
+    () => Object.fromEntries((teamSummary?.resonators ?? []).map((group) => [group.id, group.sharePct])),
+    [teamSummary],
+  )
   // Project console data lazily from the active editor or archive run.
   const consoleRun = selectedSavedRun
   const consoleMembers = useMemo(
@@ -961,11 +981,11 @@ export function ProgramEditor() {
     )
   }, [consoleMembers, consoleOpen, consoleRun, result, runsByLoopId, sections, showSavedRotationList])
   const consoleCaption = showSavedRotationList
-    ? selectedSavedEntry?.name ?? 'No take picked'
+    ? selectedSavedEntry?.name ?? 'No rotation selected'
     : 'This rotation'
   const consoleEmpty = showSavedRotationList
-    ? 'Pick a take on the list above to draw it here.'
-    : 'Nothing to draw yet. Add a step and the console follows.'
+    ? 'Select a saved rotation above to view its timeline.'
+    : 'Add a step to view the rotation timeline.'
 
   const deleteSelectedRef = useRef<(ids: readonly string[]) => void>(() => {})
   const copySelectedRef = useRef<(ids: readonly string[]) => void>(() => {})
@@ -1548,8 +1568,7 @@ export function ProgramEditor() {
         : current.filter((other) => other !== id)
     })
     setSelectedId(id)
-    // Ordinary row selection opens its inspector pane.
-    setPane('read')
+    if (selectedId === id) setPane('read')
   }, [selectedId, setPane, setSelectedId])
 
   // Saved-entry inspection uses that entry's accent instead of the last editor accent.
@@ -1605,16 +1624,28 @@ export function ProgramEditor() {
     startTransition(() => setDrawnSaved(nextSaved))
   }, [drawnSaved, setEditorPreferences, setPane])
 
-  const loadSavedRotation = useCallback(() => {
-    if (!selectedSavedEntry) return
-
-    loadRotation(selectedSavedEntry)
-    showSavedRots('off')
-    showToast({
-      content: `Loaded "${selectedSavedEntry.name}" into the editor.`,
-      variant: 'success',
-      duration: 2600,
-    })
+  const loadSavedRotation = useCallback(async (mode: RotationLoadMode) => {
+    if (!selectedSavedEntry || loadingSavedRef.current) return
+    loadingSavedRef.current = true
+    try {
+      await loadRotation(selectedSavedEntry, mode)
+      showSavedRots('off')
+      showToast({
+        content: mode === 'build'
+          ? `Loaded "${selectedSavedEntry.name}" with its full build.`
+          : `Loaded the steps from "${selectedSavedEntry.name}".`,
+        variant: 'success',
+        duration: 2600,
+      })
+    } catch {
+      showToast({
+        content: `Could not load "${selectedSavedEntry.name}". Please try again.`,
+        variant: 'error',
+        duration: 3000,
+      })
+    } finally {
+      loadingSavedRef.current = false
+    }
   }, [loadRotation, selectedSavedEntry, showSavedRots, showToast])
 
   /* Measure the body-dependent transition distance after mount. A timer clears
@@ -2143,8 +2174,11 @@ export function ProgramEditor() {
         : current.filter((other) => other !== target.nodeId)
     })
     selectNodeTarget(target)
-    setPane('read')
-  }, [selectNodeTarget, selectedId, setPane])
+    // The same authored node can appear in several loop runs.
+    if (selectedId === target.nodeId && flatTargetMatchesRuns(target, runsByLoopId)) {
+      setPane('read')
+    }
+  }, [runsByLoopId, selectNodeTarget, selectedId, setPane])
 
   const navigateVisibleNode = useCallback((target: RotationNodeTarget) => {
     if (view !== 'flat') {
@@ -2255,7 +2289,7 @@ export function ProgramEditor() {
 
     confirmation.confirm({
       title: 'Clean up rotation?',
-      message: `This takes out ${describeRotationCleanup(cleanupPlan)}`,
+      message: `This removes ${describeRotationCleanup(cleanupPlan)}`,
       confirmLabel: 'Clean up',
       variant: 'danger',
       onConfirm: () => {
@@ -2407,8 +2441,8 @@ export function ProgramEditor() {
   }, [actRt?.id, bump, condChoices, expandEditorFold, openingStateCount, preambleMdl, sections, showToast])
 
   const featureNodeFor = useCallback((entry: PaletteFeature): EditorStep => {
-    return makeFeatureNode(entry, focusedId)
-  }, [focusedId])
+    return makeFeatureNode(entry, focusedId, rotMembers)
+  }, [focusedId, rotMembers])
 
   // Seed new conditions from the standing value, or max when the state is currently zero.
   const seedCondValueAt = useCallback((choice: CondChoice, anchor: CondAnchor) => (
@@ -2441,6 +2475,7 @@ export function ProgramEditor() {
       condChoices,
       (choice) => seedCondValueAt(choice, anchor),
       (choice) => standingCondValueAt(choice, anchor),
+      rotMembers,
     )
     if (!node) {
       showToast({
@@ -2450,7 +2485,7 @@ export function ProgramEditor() {
       })
     }
     return node
-  }, [condChoices, focusedId, seedCondValueAt, showToast, standingCondValueAt])
+  }, [condChoices, focusedId, rotMembers, seedCondValueAt, showToast, standingCondValueAt])
 
   // Advance the insertion anchor so consecutive additions retain their order.
   const addFeatureNode = useCallback((entry: PaletteFeature) => {
@@ -2563,7 +2598,7 @@ export function ProgramEditor() {
     showToast({
       content: `Removed ${
         node.type === 'swap'
-          ? 'the handoff'
+          ? 'the resonator switch'
           : node.type === 'note'
             ? node.label ?? 'note'
             : node.label
@@ -2961,27 +2996,52 @@ export function ProgramEditor() {
     const previousId = featureId ? book?.previous[featureId] : undefined
     const adjacentId = featureId ? book?.adjacent[featureId] : undefined
     const nameOf = (value: string | undefined) => (value && book ? book.label(value) : null)
+    const entryFor = (featureId: string | undefined): SkillMenuEntry | null => {
+      const member = rotMembers.find((candidate) => candidate.id === selectedStep?.memberId)
+      const feature = member?.features.find((candidate) => candidate.id === featureId)
+      const skill = member?.skills.find((candidate) => candidate.id === feature?.skillId)
+      return member && feature && skill ? {
+        featureId: feature.id,
+        resonatorId: member.id,
+        resName: member.name,
+        featureLabel: feature.label,
+        feature,
+        skill,
+        variant: feature.variant ?? 'skill',
+        hitIndex: feature.hitIndex,
+      } : null
+    }
 
     return {
       ...actionScopeFor(id),
       previousLabel: nameOf(previousId),
       adjacentLabel: nameOf(adjacentId),
       onReplacePrevious: () => {
-        if (previousId && book) {
-          bump(replaceFeature(sections, id, previousId, book.label(previousId)))
+        const entry = entryFor(previousId)
+        if (entry) {
+          bump(applyFeatureSelection(sections, id, entry, rotMembers))
         }
       },
       onAddAdjacent: () => {
         if (!adjacentId || !book || !selectedStep) {
           return
         }
-        // Newly attached steps begin without execution evidence.
-        const node = makeStep(book.label(adjacentId), selectedStep.memberId)
-        bump(insertBeside(sections, { ...node, featureId: adjacentId }, id, 'after'))
+        const entry = entryFor(adjacentId)
+        if (!entry) return
+        const node = makeFeatureNode({
+          label: book.label(adjacentId),
+          featureId: entry.featureId,
+          resonatorId: entry.resonatorId,
+          tab: entry.skill.tab,
+          color: skillDisplayColor(entry.skill),
+          aggregationType: entry.skill.aggregationType,
+        }, selectedStep.memberId, rotMembers)
+        bump(insertBeside(sections, node, id, 'after'))
       },
       onReplaceAdjacent: () => {
-        if (adjacentId && book) {
-          bump(replaceFeature(sections, id, adjacentId, book.label(adjacentId)))
+        const entry = entryFor(adjacentId)
+        if (entry) {
+          bump(applyFeatureSelection(sections, id, entry, rotMembers))
         }
       },
       onEdit: () => {
@@ -3067,6 +3127,7 @@ export function ProgramEditor() {
     condChoices,
     deleteNodeAtView,
     result,
+    rotMembers,
     featCondDtrMdl,
     featMenuMdl,
     focusedId,
@@ -3395,6 +3456,11 @@ export function ProgramEditor() {
 
   // Reuse inspector operations for row context actions.
   const rowCtxMenu = useCallback((node: EditorNode): MenuEntry[] => {
+    if (nodeSelection.selectionMode) {
+      return nodeSelection.selectedIdSet.has(node.id)
+        ? makeSelectedNodesMenu(selectionBranchActions, nodeSelection.selectedCount)
+        : makeAddToSelectionMenu(() => nodeSelection.addToSelection(node.id), selectionBranchActions)
+    }
     const resume = node.type === 'step' ? offTuneResumeScope(sections, node.id) : null
     return makeRowMenu({
     node,
@@ -3410,9 +3476,11 @@ export function ProgramEditor() {
     onToggleEnabled: () => {
       toggleEnabled(
         node.id,
-        (current) => mapNode(current, node.id, (entry) => (
-          entry.type === 'note' ? entry : { ...entry, disabled: !entry.disabled }
-        )),
+        (current) => node.type === 'loop'
+          ? mapLoopBlocks(current, node.loopId ?? node.id, (entry) => ({ ...entry, disabled: !node.disabled }))
+          : mapNode(current, node.id, (entry) => (
+            entry.type === 'note' ? entry : { ...entry, disabled: !entry.disabled }
+          )),
       )
     },
     onDelete: () => {
@@ -3421,8 +3489,8 @@ export function ProgramEditor() {
     },
     edit: {
       ...clipActionsFor(node.id),
-      copy: { onSelect: () => copyNodes(new Set([node.id])) },
-      cut: { onSelect: () => cutNodes(new Set([node.id])) },
+      copy: { disabled: !canLiftNode(node), onSelect: () => copyNodes(new Set([node.id])) },
+      cut: { disabled: !canLiftNode(node), onSelect: () => cutNodes(new Set([node.id])) },
       paste: {
         disabled: false,
         onSelect: () => {
@@ -3453,10 +3521,29 @@ export function ProgramEditor() {
     nodeSelection,
     pasteNodes,
     sections,
+    selectionBranchActions,
     setSelectedId,
     setOffTuneResumeAt,
     toggleEnabled,
   ])
+
+  const flatRowCtxMenu = useCallback((row: FlatRow): MenuEntry[] => {
+    const target = row.target
+    if (nodeSelection.selectionMode) {
+      return nodeSelection.selectedIdSet.has(target.nodeId)
+        ? makeSelectedNodesMenu(flatSelectionBranchActions, nodeSelection.selectedCount)
+        : makeAddToSelectionMenu(() => nodeSelection.addToSelection(target.nodeId), flatSelectionBranchActions)
+    }
+    const copies = collectFlatClipboardNodes([row], new Set([target.nodeId]))
+    return [
+      { id: `rotation:flat:${target.nodeId}:inspect`, label: 'Inspect this run', icon: <FolderOpen size="1em" />, onSelect: () => selectFlatRow(target) },
+      { id: `rotation:flat:${target.nodeId}:copy`, label: 'Copy', icon: <Copy size="1em" />, disabled: copies.length === 0, onSelect: () => {
+        const copied = storeClipboard(copies)
+        if (copied > 0) showToast({ content: `Copied ${copied} ${copied === 1 ? 'entry' : 'entries'}.`, variant: 'success', duration: 2000 })
+      } },
+      { id: `rotation:flat:${target.nodeId}:select`, label: 'Select', icon: <SquareDashedMousePointer size="1em" />, onSelect: () => nodeSelection.addToSelection(target.nodeId) },
+    ]
+  }, [flatSelectionBranchActions, nodeSelection, selectFlatRow, showToast, storeClipboard])
 
   const pickCtxMenu = useCallback((label: string, add: () => void): MenuEntry[] => makeSelectionMenu({
     label,
@@ -3700,7 +3787,7 @@ export function ProgramEditor() {
     const nodeId = featMenuMdl.value?.nodeId
     const label = entry.variant === 'subHit' ? getSubHitLbl(entry) : entry.skill.label
     if (featMenuMdl.value?.mode === 'edit' && nodeId) {
-      bump(applyFeatureSelection(sections, nodeId, entry))
+      bump(applyFeatureSelection(sections, nodeId, entry, rotMembers))
       setSelectedId(nodeId)
     } else if (featMenuMdl.value?.mode === 'add' && nodeId) {
       // Add mode attaches the selected feature to the node that opened the menu.
@@ -3746,11 +3833,11 @@ export function ProgramEditor() {
   const sideMarks = view === 'flat'
     ? ([
       ['totals', 'totals', 'Totals: aggregate rotation damage'],
-      ['read', 'read', 'Read: what the selected execution entry is doing'],
+      ['read', 'details', 'Details for the selected execution entry'],
     ] as const)
     : ([
       ['nodes', 'add', 'Skill list: steps and conditions to add'],
-      ['read', 'read', 'Read: what the selected node is doing'],
+      ['read', 'details', 'Details for the selected rotation item'],
     ] as const)
 
   const saveFeatureCondition = (changes: Parameters<typeof applyFeatureConditionChanges>[2]) => {
@@ -3763,6 +3850,35 @@ export function ProgramEditor() {
     bump(applyFeatureConditionChanges(sections, nodeId, changes, condChoices))
     setSelectedId(nodeId)
     featCondDtrMdl.hide()
+  }
+
+  const getSavedContextItems = (id: string, live: boolean): MenuEntry[] => {
+    if (!live && savedSelection.selectionMode) {
+      return savedSelection.selectedIdSet.has(id)
+        ? makeSelectedNodesMenu(savedSelectionBranchActions, savedSelection.selectedCount)
+        : makeAddToSelectionMenu(() => savedSelection.addToSelection(id), savedSelectionBranchActions)
+    }
+    if (live) return [{
+      id: 'saved-rotation:live:open', label: 'Open live rotation',
+      icon: <FolderOpen size="1em" />, onSelect: () => selectSavedEntry(id),
+    }]
+    const entry = invRttn.find((candidate) => candidate.id === id)
+    if (!entry) return []
+    return [
+      { id: `saved-rotation:${id}:open`, label: 'Open details', icon: <FolderOpen size="1em" />, onSelect: () => { selectSavedEntry(id); setSavedPane('read') } },
+      { id: `saved-rotation:${id}:rename`, label: 'Rename', icon: <Pencil size="1em" />, onSelect: () => savedEditMdl.show({ kind: 'edit', entryId: id }) },
+      { id: `saved-rotation:${id}:duplicate`, label: 'Duplicate', icon: <CopyPlus size="1em" />, onSelect: () => {
+        const duplicate = duplicateSavedEntries([entry])[0]
+        if (duplicate) setSavedSelId(duplicate.id)
+      } },
+      { id: `saved-rotation:${id}:share`, label: 'Share or export', icon: <Share2 size="1em" />, onSelect: () => shareMdl.show({ kind: 'saved', entryId: id }) },
+      { type: 'separator' },
+      { id: `saved-rotation:${id}:copy`, label: 'Copy', icon: <Copy size="1em" />, onSelect: () => { void copySavedEntries([entry]) } },
+      { id: `saved-rotation:${id}:cut`, label: 'Cut', icon: <Scissors size="1em" />, onSelect: () => { void cutSavedEntries([entry]) } },
+      { id: `saved-rotation:${id}:paste`, label: 'Paste', icon: <ClipboardPaste size="1em" />, onSelect: () => { void pasteSavedEntries() } },
+      { type: 'separator' },
+      { id: `saved-rotation:${id}:delete`, label: 'Delete', icon: <Trash2 size="1em" />, danger: true, onSelect: () => deleteSavedEntries([entry]) },
+    ]
   }
 
   return (
@@ -3908,6 +4024,7 @@ export function ProgramEditor() {
           },
         }}
         display={{
+          teamShares,
           statKeys,
           onStatKeys: setStatKeys,
           onDockPane: dockPaneTo,
@@ -3916,6 +4033,28 @@ export function ProgramEditor() {
         run={{ dirty: simulationDirty, armed: runArmed, onRun: runRotation }}
       />
 
+      <ContextTrigger
+        asChild
+        ariaLabel="Rotation editor actions"
+        getItems={(event) => {
+          const target = event.target
+          if (bankUp || (target instanceof Element && target.closest('button, input, select, textarea, [role="button"], [role="option"]'))) return []
+          if (nodeSelection.selectionMode) return makeSelectedNodesMenu(
+            view === 'flat' ? flatSelectionBranchActions : selectionBranchActions,
+            nodeSelection.selectedCount,
+          )
+          return [
+            { id: 'rotation:blank:add-loop', label: 'Add loop', icon: <RotateCwSquare size="1em" />, disabled: nodeSelection.selectionMode, onSelect: () => addContainerNode('loop') },
+            { id: 'rotation:blank:add-block', label: 'Add block', icon: <ListPlus size="1em" />, disabled: nodeSelection.selectionMode, onSelect: () => addContainerNode('repeat') },
+            { id: 'rotation:blank:add-note', label: 'Add note', icon: <MessageSquarePlus size="1em" />, disabled: nodeSelection.selectionMode, onSelect: addNoteNode },
+            { type: 'separator' },
+            { id: 'rotation:blank:paste', label: 'Paste', icon: <ClipboardPaste size="1em" />, onSelect: () => { void pasteNodes(selectedId) } },
+            { id: 'rotation:blank:run', label: 'Run rotation', icon: <Play size="1em" />, disabled: !actRt, onSelect: runRotation },
+            { id: 'rotation:blank:save', label: 'Save rotation', icon: <Save size="1em" />, disabled: !actRt, onSelect: () => savedEditMdl.show({ kind: 'create' }) },
+            { id: 'rotation:blank:settings', label: 'Rotation settings', icon: <Settings size="1em" />, onSelect: () => configMdl.show({}) },
+          ]
+        }}
+      >
       <div className="rte-body"
         ref={bodyRef}
         style={{ '--rte-note-res': leaderAccent } as CSSProperties}
@@ -3925,13 +4064,14 @@ export function ProgramEditor() {
         {/* Key by surface identity so transitions do not remount the leaving tree. */}
         {bankUp ? (
           <div className={`rte-surface ${leaving === true ? 'is-going' : 'is-coming'}`}>
-          <Suspense fallback={null}><SavedList
+          <Suspense fallback={<AppLoaderOverlay text="Loading saved rotations..." />}><SavedList
             entries={invRttn}
             live={liveRotationRow}
             prefs={svdRotPrefs}
             view={savedView === 'groups' ? 'groups' : 'list'}
             selectedId={savedSelId}
             onSelect={selectSavedEntry}
+            getContextItems={getSavedContextItems}
             panel={savedPane}
             dockPanel={dockPane}
             onPanelChange={setSavedPane}
@@ -3966,7 +4106,7 @@ export function ProgramEditor() {
         {sheetUp ? (
           <div className={`rte-surface ${leaving === false ? 'is-going' : 'is-coming'}`}>
         {view === 'flat' ? (
-          <Suspense fallback={null}><FlatList
+          <Suspense fallback={<AppLoaderOverlay text="Loading rotation steps..." />}><FlatList
             rows={flatRows}
             members={members}
             statKeys={statKeys}
@@ -3986,6 +4126,7 @@ export function ProgramEditor() {
             onAddSelection={nodeSelection.addToSelection}
             onRangeSelection={nodeSelection.addRangeToSelection}
             onToggleSelection={nodeSelection.toggleSelection}
+            rowMenu={flatRowCtxMenu}
             onOffTuneResume={setOffTuneResumeAt}
             offTuneAuthoring={offTuneAuthoring}
             revealRequest={revealRequest}
@@ -4039,7 +4180,7 @@ export function ProgramEditor() {
             ref={noteRef}
             className={`rte-inspector${activePane === 'read' ? ' is-out' : ''}`}
             inert={activePane !== 'read'}
-            aria-label={`${nodeCmpAnchor.label}, read against`}
+            aria-label={`${nodeCmpAnchor.label}, comparison details`}
             style={{
               '--rte-res': nodeCmpAnchor.accent,
               ...(nodeCmpAnchor.step?.aggregationType
@@ -4060,7 +4201,7 @@ export function ProgramEditor() {
               ref={noteRef}
               className={`rte-inspector${activePane === 'read' ? ' is-out' : ''}`}
               inert={activePane !== 'read'}
-              aria-label={`${flatSelectedRead.label}, read`}
+              aria-label={`${flatSelectedRead.label}, details`}
               style={{
                 '--rte-res': flatSelectedRead.accent,
                 ...(flatSelectedRead.step?.aggregationType
@@ -4104,6 +4245,7 @@ export function ProgramEditor() {
           run={selectedRun}
           member={activeMember}
           members={members}
+          buildActions={buildActions}
           buffs={buffs}
           summary={fullBasis ? result.fullSummary : result.summary}
           // Normalize row share against the per-pass rotation total.
@@ -4126,6 +4268,7 @@ export function ProgramEditor() {
             open={activePane === 'totals'}
             summary={fullBasis ? result.fullSummary : result.summary}
             members={members}
+            buildActions={buildActions}
             decimals={decimals}
           />
         ) : null}
@@ -4189,6 +4332,7 @@ export function ProgramEditor() {
         </div>
         ) : null}
       </div>
+      </ContextTrigger>
 
       {leaving !== null ? <i className="rte-roller" aria-hidden="true" /> : null}
 
@@ -4235,13 +4379,13 @@ export function ProgramEditor() {
           aria-controls="rte-console-panel"
           onClick={() => setConsoleOpen((open) => !open)}
         >
-          console
+          timeline
           <ChevronDown className="rte-cnstoggle__chev" size="0.7rem" aria-hidden="true" />
         </button>
       </div>
 
       <div className="rte-cns" id="rte-console-panel">
-        {consoleOpen ? <Suspense fallback={null}><RotationConsole
+        {consoleOpen ? <Suspense fallback={<AppLoaderOverlay mode="inline" text="Loading timeline..." />}><RotationConsole
           model={consoleModel}
           members={consoleMembers}
           decimals={decimals}

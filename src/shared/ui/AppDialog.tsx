@@ -25,7 +25,7 @@ interface AppDlgPrps {
 }
 
 function isFltnSelCtn(target: EventTarget | null) {
-  return target instanceof Element && Boolean(target.closest('.selection-focus-actions'))
+  return target instanceof Element && Boolean(target.closest('.sfa'))
 }
 
 function isAppPopup(target: EventTarget | null) {

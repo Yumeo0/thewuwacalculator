@@ -70,6 +70,24 @@ import {clampNumber} from '@/shared/lib/number'
 import {mainPortal} from '@/shared/lib/portalTarget'
 import {getWeapon} from '@/modules/simulation/features/weapons/lib/weapon.ts'
 import {FaBookBookmark} from "react-icons/fa6";
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
+import { useMenuContributions } from '@/application/context-menu/AppContextMenu'
+import type { MenuContribution } from '@/application/context-menu/menuContributions'
+
+interface ResonatorPaneMenuContext {
+  id: string
+  openPicker: () => void
+  openSkillData: () => void
+}
+
+const resonatorPaneMenu: MenuContribution<ResonatorPaneMenuContext>[] = [{
+  id: 'resonator-pane-actions',
+  group: '1_primary',
+  build: ({ id, openPicker, openSkillData }) => [
+    { id: `resonator-picker:${id}`, label: 'Choose resonator', onSelect: openPicker },
+    { id: `resonator-skills:${id}`, label: 'View skill data', onSelect: openSkillData },
+  ],
+}]
 
 interface ResPanePrps {
   runtime: ResRuntime
@@ -132,6 +150,7 @@ export function Resonator({
   const [menuPrld, setMenuPrld] = useState(false)
   const menuModal = useAppModal()
   const ctxMenu = useCtxBuilder()
+  useMenuContributions('resonator.pane', resonatorPaneMenu)
 
   const resonator = getResonator(runtime.id)
   const details = getResDtls(runtime.id)
@@ -536,6 +555,12 @@ export function Resonator({
   }, [runtime.build.team, runtime.id, runtime.teamRuntimes])
 
   return (
+    <ContextTrigger
+      asChild
+      ariaLabel={`${displayName} actions`}
+      location="resonator.pane"
+      context={{ id: runtime.id, openPicker: openMenu, openSkillData: openSkllMdl }}
+    >
     <section className="calc-pane resonator-pane resonator-pane-v2"
       style={{ '--slider-color': curSldrClr } as CssProps}
     >
@@ -812,7 +837,7 @@ export function Resonator({
       </div>
 
 
-      <div className="inherent-skills-box">
+      <div className="ihs-set-box">
         {getResModeGroups(details).map((group) => {
           const modeValue = String(viewRuntime.state.controls[group.controlKey] ?? group.defaultValue)
           const hasNone = group.modes.some((mode) => mode.id === 'none')
@@ -884,7 +909,7 @@ export function Resonator({
           <span className="panel-overline">Inherent Skills</span>
         </div>
 
-        <div className="inherent-skills">
+        <div className="ihs-set">
           {details?.inherentSkills.map((inherent, order) => {
             const locked = runtime.base.level < inherent.unlockLevel
             const controls = getResInherentControls(details, inherent)
@@ -897,11 +922,11 @@ export function Resonator({
                 key={inherent.ownerKey ?? `inherent-${inherent.unlockLevel}-${inherent.name}`}
                 className={
                   locked
-                    ? 'pane-section inherent-skill locked'
-                    : 'pane-section inherent-skill'
+                    ? 'pane-section ihs locked'
+                    : 'pane-section ihs'
                 }
               >
-                <div className="sequence-card-head inherent-skill-head">
+                <div className="sequence-card-head ihs-head">
                   <div className="sequence-card-title-row">
                     <CardBadge
                       icon={resInherentIcon(runtime.id, order)}
@@ -912,7 +937,7 @@ export function Resonator({
                   <span className={locked ? 'sequence-card-status' : 'sequence-card-status active'}>{statusLabel}</span>
                 </div>
 
-                <div className="sequence-card-body inherent-skill-body">
+                <div className="sequence-card-body ihs-body">
                   <RichDscr
                     description={inherent.desc}
                     params={inherent.param}
@@ -922,7 +947,7 @@ export function Resonator({
                 </div>
 
                 {(footerCtrls.length > 0 || locked) && (
-                  <div className="sequence-card-footer inherent-skill-footer">
+                  <div className="sequence-card-footer ihs-footer">
                     {footerCtrls.map((control) =>
                       viewCntrFld(control, { disabled: locked, className: 'inherent-skill-control' }))}
                     {locked ? <span className="inherent-lock">Unlocks at Lv. {inherent.unlockLevel}</span> : null}
@@ -986,7 +1011,7 @@ export function Resonator({
               <span className="panel-overline">Outro Skill</span>
             </div>
 
-            <div className="inherent-skills">
+            <div className="ihs-set">
               {details.outroSkills.map((outro) => {
                 const controls = getResOutroControls(details, outro)
                 const vsblCntr = controls.filter((control) => getCntrVsbl(control))
@@ -1000,16 +1025,16 @@ export function Resonator({
                 if (sections.length > 0) {
                   return sections.map(({ section, controls: sectionControls }) => (
                     <article
-                      key={`${outro.ownerKey ?? `outro-${outro.name}`}:${section.id ?? section.title}`} className="pane-section inherent-skill"
+                      key={`${outro.ownerKey ?? `outro-${outro.name}`}:${section.id ?? section.title}`} className="pane-section ihs"
                     >
-                      <div className="sequence-card-head inherent-skill-head">
+                      <div className="sequence-card-head ihs-head">
                         <div className="sequence-card-title-row">
                           <CardBadge icon={resNodeIcon(runtime.id, 'outroSkill')} label="Outro" />
                           <h4 className="highlight">{section.title}</h4>
                         </div>
                       </div>
 
-                      <div className="sequence-card-body inherent-skill-body">
+                      <div className="sequence-card-body ihs-body">
                         <RichDscr
                           description={section.body}
                           params={section.param}
@@ -1019,7 +1044,7 @@ export function Resonator({
                       </div>
 
                       {sectionControls.length > 0 ? (
-                        <div className="sequence-card-footer inherent-skill-footer">
+                        <div className="sequence-card-footer ihs-footer">
                           {sectionControls.map((control) => viewCntrFld(control, { className: 'inherent-skill-control' }))}
                         </div>
                       ) : null}
@@ -1029,16 +1054,16 @@ export function Resonator({
 
                 return (
                   <article
-                    key={outro.ownerKey ?? `outro-${outro.name}`} className="pane-section inherent-skill"
+                    key={outro.ownerKey ?? `outro-${outro.name}`} className="pane-section ihs"
                   >
-                    <div className="sequence-card-head inherent-skill-head">
+                    <div className="sequence-card-head ihs-head">
                       <div className="sequence-card-title-row">
                         <CardBadge icon={resNodeIcon(runtime.id, 'outroSkill')} label="Outro" />
                         <h4 className="highlight">{outro.name}</h4>
                       </div>
                     </div>
 
-                    <div className="sequence-card-body inherent-skill-body">
+                    <div className="sequence-card-body ihs-body">
                       <RichDscr
                         description={outro.desc}
                         params={outro.param}
@@ -1048,7 +1073,7 @@ export function Resonator({
                     </div>
 
                     {vsblCntr.length > 0 ? (
-                      <div className="sequence-card-footer inherent-skill-footer">
+                      <div className="sequence-card-footer ihs-footer">
                         {vsblCntr.map((control) => viewCntrFld(control, { className: 'inherent-skill-control' }))}
                       </div>
                     ) : null}
@@ -1078,7 +1103,7 @@ export function Resonator({
                 accentColor={curSldrClr}
                 xtrKywr={mrgDscrKywr(details?.descriptionKeywords, panel.keywords)}
               />
-              <div className="sequence-card-footer inherent-skill-footer">
+              <div className="sequence-card-footer ihs-footer">
                 <div className="stack">{vsblCntr.map((control) => viewCntrFld(control))}</div>
               </div>
             </div>
@@ -1091,7 +1116,7 @@ export function Resonator({
             <div className="stack">
               {looseCtrls.map((control) => (
                 <div key={control.key}>
-                  <div className="sequence-card-footer inherent-skill-footer">
+                  <div className="sequence-card-footer ihs-footer">
                     {viewCntrFld(control)}
                   </div>
                 </div>
@@ -1102,7 +1127,7 @@ export function Resonator({
       </div>
 
       {details && runtime.base.sequence > 0 && (
-        <div className="inherent-skills-box">
+        <div className="ihs-set-box">
           <div className="resonator-strip__head">
             <span className="weapon-effect__sigil" aria-hidden="true" />
             <span className="panel-overline">Resonance Chain</span>
@@ -1165,5 +1190,6 @@ export function Resonator({
         </div>
       )}
     </section>
+    </ContextTrigger>
   )
 }

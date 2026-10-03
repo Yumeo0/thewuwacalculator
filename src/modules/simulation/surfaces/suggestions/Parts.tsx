@@ -48,7 +48,7 @@ export function SuggsMdl(props: {
             </button>
           )}
         </ModalHeader>
-        <div className="suggestions-modal-body">{children}</div>
+        <div className="sgm-body">{children}</div>
       </div>
     </AppModal>
   )

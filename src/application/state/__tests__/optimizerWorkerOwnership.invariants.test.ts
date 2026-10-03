@@ -7,6 +7,7 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import type { OptStartPay } from '@/engine/optimizer/types'
 import { compOptPayIn, ensOptCompWr, stopOptCompW } from '../storeOptimizerRuntime'
+import { useOptimizerRunStore } from '../optimizerRunStore'
 
 class WorkerStub extends EventTarget {
   postMessage = vi.fn()
@@ -51,5 +52,5 @@ it('does not start a worker after cancelling while the optimizer module loads', 
   useAppStore.getState().cnclOpt()
   await new Promise((resolve) => setTimeout(resolve, 0))
   expect(workers).not.toHaveBeenCalled()
-  expect(useAppStore.getState().optimizer.status).toBe('cancelled')
+  expect(useOptimizerRunStore.getState().status).toBe('cancelled')
 })

@@ -53,7 +53,7 @@ import {
   TOGGLES,
   COMBO_N,
 } from '@/engine/optimizer/config/constants.ts'
-import { getTuneLevel } from '@/engine/formulas/tuneRupture.ts'
+import { getEnemyMaxOffTune, getTuneLevel } from '@/engine/formulas/tuneRupture.ts'
 import { encSkllId } from '@/engine/optimizer/encode/skillId.ts'
 import {
   calcJingranFireOfLifeMultiplier,
@@ -296,19 +296,6 @@ function buildMeta1(comboCount: number): number {
   return comboCount >>> 0
 }
 
-// tune rupture uses enemy class scaling
-function classMult(enemyClass: number): number {
-  if (enemyClass === 3 || enemyClass === 4) {
-    return 14
-  }
-
-  if (enemyClass === 2) {
-    return 3
-  }
-
-  return 1
-}
-
 // build the pre-scaled base multiplier for negative-effect archetypes
 function mkNegFfctBas(compiled: CompTargetSkill): number {
   const prmrStck = compiled.archetype === ARCH_SPECTRO
@@ -422,7 +409,7 @@ export function packTargetCtx(options: {
       pckdMltp =
           compiled.hitScale *
           getTuneLevel(compiled.level) *
-          classMult(compiled.enemyClass)
+          getEnemyMaxOffTune(compiled.enemyClass)
       pckdFlatDmg = 0
       pckdDmgBns = 1 + (compiled.statDmgBonus / 100)
       pckdMplf = 1 + (compiled.statAmp / 100)

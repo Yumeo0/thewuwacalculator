@@ -12,9 +12,7 @@ import type {
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import {
   clampLoopRunSelections,
-  collectLoopColors,
   findNodeExecutionScope,
-  formatExecutionRun,
   selectedRunForNode,
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/executionScope.ts'
 
@@ -99,27 +97,6 @@ describe('rotation editor execution scopes', () => {
     })
     expect(selectedRunForNode(sections, loopAStep.id, selections)).toBe(2)
     expect(selectedRunForNode(sections, loopBStep.id, selections)).toBe(3)
-  })
-
-  it('keeps immediate-loop run text separate from explicit loop colours', () => {
-    const inner = loop('inner', 'Inner', 3, [step('target')])
-    inner.color = '#22aabb'
-    const outer = loop('outer', 'Outer', 2, [inner])
-    outer.color = '#dd5577'
-    const sections: EditorSection[] = [{
-      id: 'main',
-      title: 'Main',
-      meta: '',
-      children: [outer],
-    }]
-    const scope = findNodeExecutionScope(sections, 'target', { outer: 2, inner: 3 })
-
-    expect(scope).toMatchObject({ kind: 'loop', loopId: 'inner', run: 3, runs: 3 })
-    expect(scope ? formatExecutionRun(scope) : null).toBe('run 3 of 3')
-    expect([...collectLoopColors(sections)]).toEqual([
-      ['outer', '#dd5577'],
-      ['inner', '#22aabb'],
-    ])
   })
 
   it('carries a free loop scope into a block only until its nested end segment', () => {

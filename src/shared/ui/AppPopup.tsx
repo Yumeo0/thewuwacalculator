@@ -92,6 +92,9 @@ interface AnchoredAppPopupProps extends AppPopupSurfaceProps {
 }
 
 /** Writes portal-relative placement before paint without storing transient geometry in React. */
+// Shared popup and modal scaling must use the same screen-to-layout ratio.
+const PHONE_POPUP_SCALE = 1.3
+
 export function AnchoredAppPopup({
   visible,
   anchorRef,
@@ -139,28 +142,42 @@ export function AnchoredAppPopup({
     const viewportHeight = window.innerHeight
     const availableWidth = Math.max(0, viewportWidth - viewportPadding * 2)
 
+    // Geometry is measured in screen pixels while the portalled surface may be
+    // scaled from its top-left. Divide authored sizes by the scale but retain
+    // positions; browser zoom produces inconsistent element measurements.
+    const phone = document.documentElement.classList.contains('mui')
+    const zoom = phone ? PHONE_POPUP_SCALE : 1
+    const css = (px: number) => `${px / zoom}px`
+    surface.style.scale = phone ? String(zoom) : ''
+    surface.style.transformOrigin = phone ? '0 0' : ''
+
     // Clear prior placement geometry before measuring authored minimum sizing.
     surface.style.width = ''
     surface.style.minWidth = ''
     surface.style.maxWidth = ''
-    const authoredMinWidth = Number.parseFloat(window.getComputedStyle(surface).minWidth) || 0
+    const authoredMinWidth = (Number.parseFloat(window.getComputedStyle(surface).minWidth) || 0) * zoom
 
     surface.style.position = 'fixed'
     surface.style.right = 'auto'
     surface.style.bottom = 'auto'
     surface.style.width = anchorWidth === 'exact'
-      ? `${Math.min(anchorRect.width, availableWidth)}px`
+      ? css(Math.min(anchorRect.width, availableWidth))
       : ''
     const anchoredMinWidth = anchorWidth === 'content' ? 0 : anchorRect.width
     const resolvedMinWidth = Math.max(minWidth, anchoredMinWidth, authoredMinWidth)
     surface.style.minWidth = resolvedMinWidth > 0
-      ? `${Math.min(resolvedMinWidth, availableWidth)}px`
+      ? css(Math.min(resolvedMinWidth, availableWidth))
       : ''
-    surface.style.maxWidth = `${availableWidth}px`
+    surface.style.maxWidth = css(availableWidth)
+    // Scaled surfaces consume the unscaled width while retaining screen-space anchors.
+    if (phone) {
+      surface.style.width = css(availableWidth)
+      surface.style.minWidth = ''
+    }
 
     const spaceBelow = viewportHeight - anchorRect.bottom - viewportPadding - offset
     const spaceAbove = anchorRect.top - viewportPadding - offset
-    const desiredHeight = Math.min(surface.scrollHeight, maxHeight)
+    const desiredHeight = Math.min(surface.scrollHeight * zoom, maxHeight)
     const flipThreshold = flipBelowHeight ?? desiredHeight
     const openUpward = preferredPlacement === 'up'
       || (preferredPlacement === 'auto' && spaceBelow < flipThreshold && spaceAbove > spaceBelow)
@@ -171,9 +188,11 @@ export function AnchoredAppPopup({
       Math.min(maxHeight, availableHeight),
     )
 
-    surface.style.maxHeight = `${resolvedMaxHeight}px`
+    surface.style.maxHeight = css(resolvedMaxHeight)
 
-    const surfaceRect = surface.getBoundingClientRect()
+    // The layout box times the scale: a bounding rect would include the
+    // entrance animation's in-flight transform and place it slightly off.
+    const surfaceRect = { width: surface.offsetWidth * zoom, height: surface.offsetHeight * zoom }
     const alignedLeft = align === 'end'
       ? anchorRect.right - surfaceRect.width
       : anchorRect.left

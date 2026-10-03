@@ -7,7 +7,9 @@
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { CSSProperties as CssProps, HTMLAttributes as HtmlAttrs, KeyboardEvent as KeyboardEvent, MouseEvent as RctMsVnt, ReactNode } from 'react'
-import {ArrowBigDownDash as ArrowDownIcon, Check, ChevronLeft, ChevronRight, Clipboard, Copy, Maximize2, Minimize2, Pencil, Plus, Rows3, Scissors, Search, Trash2, X} from 'lucide-react'
+import {ArrowBigDownDash as ArrowDownIcon, Check, ChevronLeft, ChevronRight, Clipboard, Copy, Maximize2, Minimize2, Pencil, Plus, Rows3, Scissors, Search, SlidersHorizontal, Gem, Trash2, X} from 'lucide-react'
+import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import type { SavedEcho, SavedBuild } from '@/domain/entities/inventoryStorage'
 import type { EchoInstance, WeaponState } from '@/domain/entities/runtime'
 import { equalBuildSnapshots } from '@/domain/entities/inventoryStorage'
@@ -52,13 +54,12 @@ import {
   resolveInventoryPaste,
   writeEchoClip,
 } from '@/modules/simulation/features/echoes/lib/clipboard.ts'
-import { EchoQpCmprdn } from '@/modules/simulation/features/echoes/lib/EchoEquipComparePreview.tsx'
+import { EchoCardPreview, EchoQpCmprdn } from '@/modules/simulation/features/echoes/lib/EchoEquipComparePreview.tsx'
 import { mkSrchTkns, mtchSrchTkns } from '@/modules/simulation/features/echoes/lib/search.ts'
 import { useSel } from '@/modules/simulation/lib/sel.tsx'
 import { getInvEchoCt } from '@/modules/simulation/features/inventory/lib/ctx.tsx'
 import {useAppStore} from "@/application/state";
 import { useAppCtxMen } from '@/application/context-menu/AppContextMenu'
-import { EchoStatPreview } from '@/modules/simulation/features/echoes/ui/EchoStatPreview'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
 import { rarityVars } from '@/modules/simulation/model/display.ts'
 
@@ -699,6 +700,7 @@ export function InvMdl({
   const persistedGrouped = useAppStore((state) => state.ui.groupInv)
   const setGrouped = useAppStore((state) => state.setGrpInv)
 
+  const mobile = useMobileUi()
   const [compact, setCmpcInv] = useState(prssCmpcInv)
   const [gridSwtc, setGridSwtc] = useState(false)
   const cmpcTglTmrRe = useRef<number | null>(null)
@@ -1096,11 +1098,12 @@ export function InvMdl({
   }, [confirmation, copyChsToClp, onRmvInvChs, showToast])
 
   const mkInvEchoCtx = useCallback((entry: SavedEcho, slotFitStates: InvSlotFitSt[]) => {
+    if (selMode) return echoSel.contextItemsFor(entry.id)
     return getInvEchoCt({
       menu: menu.simulation.echo,
       entry,
       previewNode: (
-        <EchoStatPreview echo={entry.echo} />
+        <EchoCardPreview echo={entry.echo} />
       ),
       fits: slotFitStates.map((fitState, index) => ({
         fits: fitState.fits,
@@ -1143,6 +1146,7 @@ export function InvMdl({
     onQpInvEcho,
     onRmvInvEcho,
     pstClpbIntoI,
+    selMode,
   ])
 
   const openTileMenu = useCallback((entry: SavedEcho, slotFitStates: InvSlotFitSt[], event: RctMsVnt<HTMLElement> | KeyboardEvent<HTMLElement>) => {
@@ -1172,8 +1176,6 @@ export function InvMdl({
     const opened = contextMenu.open(pstnVnt, {
       ariaLabel: `${definition?.name ?? 'Echo'} actions`,
       items,
-      omitGlblTms: true,
-      force: true,
       onClose: () => setFcsdTileI(null),
     })
     if (!opened) {
@@ -1440,7 +1442,7 @@ export function InvMdl({
           <div className="inv-bench">
             {benchSlots.map(({ slotIndex, echo, definition, savedId }) => (
               <button
-                key={`workspace-${slotIndex}`}
+                key={`wk-${slotIndex}`}
                 type="button" className="inv-bench__row"
                 disabled={!savedId}
                 style={echo ? { '--inv-tone': sntTone(echo.set) } as CssProps : undefined}
@@ -1566,18 +1568,7 @@ export function InvMdl({
     </>
   )
 
-  return (
-    <>
-      <AppModal
-        state={{ visible, open, closing }}
-        variant="inventory"
-        ariaLabelBy={titleId}
-          onClose={onClose}
-      >
-        <div className="amdl inv-modal"
-          onClick={(event) => event.stopPropagation()}
-          {...(activeTab === 'echoes' ? echoSel.focusProps : { tabIndex: 0 })}
-        >
+  const mHeader = (
           <ModalHeader over="Library" title={<h2 id={titleId}>Inventory</h2>} onClose={onClose}>
             <div className="amdl__gauge inv-head">
               {headTabs}
@@ -1612,15 +1603,31 @@ export function InvMdl({
               </button>
             </div>
           </ModalHeader>
+  )
 
-          <div className="inv-stage">
+  const mRail = (
             <nav className="amdl__rail pkr-rail" aria-label="Inventory filters">
               {railFilters}
               <div className="amdl__rail-foot">
                 {actCollCnt} of {ttlCollCnt} {activeTab === 'echoes' ? 'echoes' : 'builds'}
               </div>
             </nav>
+  )
 
+  const mPane = (
+            <ContextTrigger
+              asChild
+              ariaLabel="Inventory space actions"
+              getItems={(event) => {
+                const target = event.target
+                if (activeTab !== 'echoes' || (target instanceof Element && target.closest('button, input, select, textarea, [role="button"]'))) return []
+                if (selMode) return echoSel.contextItemsFor()
+                return [
+                  { id: 'inventory:space:add-echo', label: 'Add Echo', icon: <Plus size="1em" />, onSelect: addEchoModal.show },
+                  { id: 'inventory:space:paste', label: 'Paste Echoes', icon: <Clipboard size="1em" />, onSelect: () => { void pstClpbIntoI() } },
+                ]
+              }}
+            >
             <div
               className={`inv-body${compact && activeTab === 'echoes' && previewEntry ? ' inv-body--readout' : ''}`}
               ref={modalBodyRef}
@@ -1807,8 +1814,48 @@ export function InvMdl({
                 )
               )}
             </div>
+            </ContextTrigger>
+  )
+
+
+  return (
+    <>
+      <AppModal
+        state={{ visible, open, closing }}
+        variant="inventory"
+        ariaLabelBy={titleId}
+          onClose={onClose}
+      >
+        {mobile ? (
+          <MobilePages
+            className="inv-modal"
+            head={mHeader}
+            onClick={(event) => event.stopPropagation()}
+            pages={[
+              {
+                id: 'list',
+                label: activeTab === 'echoes' ? 'Echoes' : 'Builds',
+                icon: <Gem />,
+                badge: actCollCnt,
+                node: <div className="inv-mlist" {...(activeTab === 'echoes' ? echoSel.focusProps : { tabIndex: 0 })}>{mPane}</div>,
+              },
+              { id: 'filters', label: 'Filters', icon: <SlidersHorizontal />, badge: actFltrCnt || undefined, node: mRail },
+            ]}
+          />
+        ) : (
+        <div className="amdl inv-modal"
+          onClick={(event) => event.stopPropagation()}
+          {...(activeTab === 'echoes' ? echoSel.focusProps : { tabIndex: 0 })}
+        >
+          {mHeader}
+
+          <div className="inv-stage">
+            {mRail}
+
+            {mPane}
           </div>
         </div>
+        )}
       </AppModal>
 
       {addEchoModal.visible ? (

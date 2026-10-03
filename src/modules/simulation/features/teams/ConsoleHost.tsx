@@ -17,6 +17,7 @@ import { useAppStore } from '@/application/state'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
 import { holdResonatorData } from '@/data/gameData'
 import { useResonatorData } from '@/application/hooks/useResonatorData'
+import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay'
 
 // Defer the member-editor module while keeping modal lifecycle state in this host.
 const MemberStage = lazy(async () => ({
@@ -31,12 +32,14 @@ export function TeamConsoleHost() {
     : null)
   const ready = useResonatorData(scenario?.team.members.map((member) => member.resonatorId) ?? [])
 
-  if (!target || !ready) {
+  if (!target) {
     return null
   }
 
+  if (!ready) return <AppLoaderOverlay mode="scrim" text="Loading teammate..." />
+
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<AppLoaderOverlay mode="scrim" text="Loading teammate editor..." />}>
       <ConsoleView
         resonatorId={target.resonatorId}
         scenarioId={target.scenarioId}

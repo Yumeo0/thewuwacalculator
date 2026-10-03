@@ -388,7 +388,7 @@ export function RotationConsole({ model, members, decimals, selectedId, onSelect
         ref={setPlot} className="rcon__plot"
         tabIndex={0}
         role="group"
-        aria-label="Rotation console"
+        aria-label="Rotation timeline"
         onMouseMove={(event) => setProbe(at(event))}
         onMouseLeave={() => setProbe(null)}
         onBlur={() => setProbe(null)}
@@ -451,7 +451,7 @@ export function RotationConsole({ model, members, decimals, selectedId, onSelect
               <BandCell key={band.key} band={band} edgeOf={geo.edgeOf} y={geo.laneY(band.depth)} />
             ))}
 
-            {label(geo.fieldY + 14, 'Field')}
+            {label(geo.fieldY + 14, 'Active')}
             {model.spans.map((span) => {
               const x = xOf(span.a) - slot / 2
               const width = (span.b - span.a + 1) * slot

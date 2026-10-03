@@ -25,6 +25,7 @@ import {
   type ImportApplyVariant,
   type ImportReview,
 } from '@/application/imports/types.ts'
+import { ImportReceived } from './ImportReceived.tsx'
 import { useRotationImportHandler } from './rotationImport.ts'
 
 interface ImportSurfaceApi {
@@ -62,11 +63,13 @@ export function ImportSurfaceProvider({ children }: { children: ReactNode }) {
   const showToast = useTstStr((state) => state.show)
   const modal = useAppModal()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const applyingRef = useRef(false)
 
   const [phase, setPhase] = useState<Phase>({ mode: 'input' })
   const [inputText, setInputText] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [applying, setApplying] = useState(false)
 
   const resolve = useCallback(async (raw: string): Promise<ResolvedImport | null> => {
     const text = await resolveShareText(raw)
@@ -155,12 +158,17 @@ export function ImportSurfaceProvider({ children }: { children: ReactNode }) {
   }, [toReview])
 
   const runApply = useCallback(async (variant: ImportApplyVariant) => {
-    if (phase.mode !== 'review') return
+    if (phase.mode !== 'review' || applyingRef.current) return
+    applyingRef.current = true
+    setApplying(true)
     try {
       await phase.resolved.apply(variant)
       modal.hide()
     } catch {
       showToast({ content: 'Could not apply the imported data. Please try again.', variant: 'error' })
+    } finally {
+      applyingRef.current = false
+      setApplying(false)
     }
   }, [modal, phase, showToast])
 
@@ -172,59 +180,69 @@ export function ImportSurfaceProvider({ children }: { children: ReactNode }) {
   return (
     <ImportSurfaceCtx.Provider value={api}>
       {children}
-      <ConfirmModal
-        visible={modal.dialogProps.visible}
-        open={modal.dialogProps.open}
-        closing={modal.dialogProps.closing}
-        portalTarget={mainPortal()}
-        title={review ? review.title : 'Import'}
-        message={
-          review ? (
-            review.summary
-          ) : (
-            <>
-              Paste a share token, or choose an exported file.
-              <div className="import-surface-token">
-                <input className="import-surface-token__input"
-                  placeholder="Paste a share token"
-                  value={inputText}
-                  onChange={(event) => {
-                    setInputText(event.target.value)
-                    if (error) setError(null)
-                  }}
-                />
-                <button
-                  type="button" className="import-surface-token__paste"
-                  onClick={() => void onPasteToken()}
-                >
-                  {createElement(ClipboardPaste, { size: '0.85rem' })}
-                  Paste
-                </button>
-              </div>
-              {error ? <div className="import-surface-error">{error}</div> : null}
-            </>
-          )
-        }
-        confirmLabel={review ? review.primaryLabel : 'Continue'}
-        confirmDisabled={review ? false : !inputText.trim() || busy}
-        secondaryLabel={review ? review.secondaryLabel : 'Choose file'}
-        cancelLabel="Cancel"
-        onConfirm={() => {
-          if (review) {
-            void runApply('primary')
-          } else {
-            void toReview(inputText)
+      {review?.take ? (
+        <ImportReceived
+          state={modal.dialogProps}
+          take={review.take}
+          busy={applying}
+          onTake={(pick) => void runApply(pick)}
+          onCancel={modal.hide}
+        />
+      ) : (
+        <ConfirmModal
+          visible={modal.dialogProps.visible}
+          open={modal.dialogProps.open}
+          closing={modal.dialogProps.closing}
+          portalTarget={mainPortal()}
+          title={review ? review.title : 'Import'}
+          message={
+            review ? (
+              review.summary
+            ) : (
+              <>
+                Paste a share token, or choose an exported file.
+                <div className="ims-token">
+                  <input className="ims-token__input"
+                    placeholder="Paste a share token"
+                    value={inputText}
+                    onChange={(event) => {
+                      setInputText(event.target.value)
+                      if (error) setError(null)
+                    }}
+                  />
+                  <button
+                    type="button" className="ims-token__paste"
+                    onClick={() => void onPasteToken()}
+                  >
+                    {createElement(ClipboardPaste, { size: '0.85rem' })}
+                    Paste
+                  </button>
+                </div>
+                {error ? <div className="ims-error">{error}</div> : null}
+              </>
+            )
           }
-        }}
-        onSecondary={
-          review
-            ? review.secondaryLabel
-              ? () => void runApply('secondary')
-              : undefined
-            : () => fileInputRef.current?.click()
-        }
-        onCancel={modal.hide}
-      />
+          confirmLabel={review ? review.primaryLabel : 'Continue'}
+          confirmDisabled={review ? false : !inputText.trim() || busy}
+          secondaryLabel={review ? review.secondaryLabel : 'Choose file'}
+          cancelLabel="Cancel"
+          onConfirm={() => {
+            if (review) {
+              void runApply('primary')
+            } else {
+              void toReview(inputText)
+            }
+          }}
+          onSecondary={
+            review
+              ? review.secondaryLabel
+                ? () => void runApply('secondary')
+                : undefined
+              : () => fileInputRef.current?.click()
+          }
+          onCancel={modal.hide}
+        />
+      )}
       <input
         ref={fileInputRef}
         type="file"

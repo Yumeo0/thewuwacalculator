@@ -11,9 +11,9 @@ import type { SkillDamageEntry, SkillDef } from '@/domain/entities/stats'
 import type { EffectScope, FormExpr, SrcPkg } from '@/domain/gameData/contracts'
 import { mkGameDataRe } from '@/data/gameData/registry'
 import { applySkllOp } from '@/engine/effects/dataEffects'
-import { evalForm } from '@/engine/effects/evaluator'
-import { resolveSkill } from '@/engine/pipeline/resolveSkill'
-import { makeCustomBuff } from '@/engine/runtime/defaults'
+import { evalCond, evalForm } from '@/engine/effects/evaluator'
+import { isSkllVsbl, resolveSkill } from '@/engine/pipeline/resolveSkill'
+import { makeCustomBuff, makeModBuff } from '@/engine/runtime/defaults'
 import resonatorDamageEntriesRaw from '../../../../public/data/beta/resonators/damage-entries.json?raw'
 import resonatorDetailsRaw from '../../../../public/data/beta/resonators/details.json?raw'
 import resonatorSourcesRaw from '../../../../public/data/beta/resonators/sources.json?raw'
@@ -185,6 +185,34 @@ describe('resonator source invariants', () => {
     }
   })
 
+  it('adds Phoebe Starflash Absolution to Amplify without scaling its hits', () => {
+    const sources = JSON.parse(resonatorSourcesRaw) as SrcPkg[]
+    const phoebe = sources.find((source) => source.source.id === '1506')
+    const starflash = phoebe?.skills?.find((skill) => skill.id === '1506026')
+    const effect = phoebe?.effects?.find((entry) => entry.id === '1506:absolution:starflash')
+    expect(starflash?.hits).toEqual([{ count: 3, multiplier: 0.41590000000000005 }])
+    expect(effect?.operations).toEqual([{
+      type: 'add_skill_mod',
+      mod: 'amplify',
+      match: { skillIds: ['1506026'] },
+      value: { type: 'const', value: 256 },
+    }])
+    if (!starflash || !effect) throw new Error('Phoebe Starflash source data is incomplete')
+
+    const scope = {} as EffectScope
+    const withExistingAmplify: SkillDef = {
+      ...starflash,
+      skillBuffs: { ...makeModBuff(), amplify: 38 },
+    }
+    const prepared = effect.operations.reduce(
+      (skill, operation) => applySkllOp(skill, operation, scope),
+      withExistingAmplify,
+    )
+    expect(prepared.multiplier).toBeCloseTo(starflash.multiplier)
+    expect(prepared.hits).toEqual(starflash.hits)
+    expect(prepared.skillBuffs?.amplify).toBe(294)
+  })
+
   it('links Lynae DamageList packets to hits and resolves authored sequence replacements', () => {
     const sources = JSON.parse(resonatorSourcesRaw) as SrcPkg[]
     const allEntries = JSON.parse(resonatorDamageEntriesRaw) as SkillDamageEntry[]
@@ -305,6 +333,39 @@ describe('resonator source invariants', () => {
           value: { type: 'const', value: 1.7 },
         }],
       })
+  })
+
+  it('keeps Lynae Spectral Analysis exclusive to its resonance mode', () => {
+    const sources = JSON.parse(resonatorSourcesRaw) as SrcPkg[]
+    const details = (JSON.parse(resonatorDetailsRaw) as Record<string, ResDtls>)['1509']
+    const lynae = sources.find((source) => source.source.id === '1509')
+    const response = lynae?.skills?.find((skill) => skill.id === '1509032')
+    const strainEffect = lynae?.effects?.find((effect) => effect.id === '1509:spectral-analysis')
+    const modes = details?.stateGraph?.groups?.find((group) => group.id === 'mode')?.modes
+    const strainControl = details?.stateGraph?.nodes?.find((node) => node.key === 'resonator:1509:spectral_analysis:active')
+
+    expect(modes?.map((mode) => mode.id)).toEqual(['tune_rupture', 'tune_strain'])
+    expect(modes?.every((mode) => mode.icon?.startsWith('/assets/game/resonators/skills/1509/modes/'))).toBe(true)
+    expect(strainControl?.unlockWhen).toMatchObject({ type: 'eq', value: 'tune_strain' })
+    expect(response?.visibleWhen).toMatchObject({ type: 'eq', value: 'tune_rupture' })
+
+    for (const mode of ['tune_rupture', 'tune_strain']) {
+      const runtime = {
+        id: '1509',
+        build: { team: [] },
+        state: { controls: {
+          'resonator:1509:mode:value': mode,
+          'resonator:1509:spectral_analysis:active': true,
+        } },
+      } as unknown as ResRuntime
+      expect(isSkllVsbl(
+        runtime,
+        response as SkillDef,
+        (condition) => evalCond(condition, { sourceRuntime: runtime } as EffectScope),
+      )).toBe(mode === 'tune_rupture')
+      expect(evalCond(strainEffect?.condition, { sourceRuntime: runtime } as EffectScope))
+        .toBe(mode === 'tune_strain')
+    }
   })
 
   it('converts Sanhua Daybreak Radiance stacks to 10% team ATK each', () => {

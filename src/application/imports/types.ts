@@ -4,6 +4,7 @@
 */
 
 import type { ReactNode } from 'react'
+import type { RotationImportLoad, RotationImportPick } from '@/domain/entities/preferences.ts'
 
 export interface ImportReview {
   title: string
@@ -12,9 +13,27 @@ export interface ImportReview {
   // Secondary is another import mutation, not cancel; absence keeps a single
   // commit path for payload kinds that have no meaningful split.
   secondaryLabel?: string
+  // Present only when the payload exposes independently applicable parts.
+  take?: ImportTake
 }
 
-export type ImportApplyVariant = 'primary' | 'secondary'
+// Load and library-retention choices share the persisted rotation-import contract.
+export type ImportLoad = RotationImportLoad
+export type ImportPick = RotationImportPick
+
+export interface ImportTake {
+  name: string
+  resonatorName: string
+  // Multiple entries may be retained, but application always targets the first.
+  count: number
+  steps: number
+  level: number
+  profile: string
+  weaponIcon: string | null
+  savedCount: number
+}
+
+export type ImportApplyVariant = 'primary' | 'secondary' | ImportPick
 
 // Detection and application are split so every payload is reviewed before any
 // domain state changes, even when it arrived from a URL.

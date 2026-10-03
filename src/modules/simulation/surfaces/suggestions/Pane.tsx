@@ -1154,7 +1154,31 @@ export function Suggestions({
     </div>
   )
 
+  const surfaceItems = viewMode === 'substats' ? [] : [
+    ...(viewMode !== 'mainStats' ? [{
+      id: 'suggestions:config', label: 'Config',
+      icon: <SlidersHorizontal size="1em" />,
+      onSelect: viewMode === 'setPlans' ? setCnfgMdl.show
+        : viewMode === 'weapons' ? wpnCnfgMdl.show : randCnfgMdl.show,
+    }] : []),
+    {
+      id: 'suggestions:inspect', label: 'Inspect selected',
+      icon: <Search size="1em" />,
+      disabled: viewMode === 'mainStats' ? !selMainStatP
+        : viewMode === 'setPlans' ? !selSetPlan
+          : viewMode === 'weapons' ? !selWpnCard : !selRandPlan,
+      onSelect: inspectModal.show,
+    },
+    ...(viewMode === 'random' ? [{
+      id: 'suggestions:regenerate', label: 'Regenerate',
+      icon: <RefreshCw size="1em" />,
+      disabled: rnnnRand,
+      onSelect: () => { void runRandom(true) },
+    }] : []),
+  ]
+
   return (
+    <ContextTrigger asChild ariaLabel="Suggestions actions" items={surfaceItems}>
     <div className="suggestions-pane">
       <div className="echoes-pane-header suggestions-pane-header">
         <div className="echoes-pane-title weapon-effect__bar">
@@ -1233,8 +1257,17 @@ export function Suggestions({
                   const isCurrent = recipeSig(plan.recipes) === curMainStatS
 
                   return (
-                    <div
+                    <ContextTrigger
                       key={`main-${index}`}
+                      asChild
+                      ariaLabel={`Main stat suggestion ${index + 1} actions`}
+                      items={[
+                        { id: `suggestions:main:${index}:select`, label: 'Select', onSelect: () => setSelMainSt(index) },
+                        { id: `suggestions:main:${index}:inspect`, label: 'Inspect', icon: <Search size="1em" />, onSelect: () => { setSelMainSt(index); inspectModal.show() } },
+                        { id: `suggestions:main:${index}:apply`, label: 'Apply', icon: <Check size="1em" />, disabled: isCurrent, onSelect: () => applyEchoes(applyMainSta(plan.recipes, runtime.build.echoes)) },
+                      ]}
+                    >
+                    <div
                       className={`spx-row${selMainStatN === index ? ' is-selected' : ''}${isCurrent ? ' spx-row--equipped' : ''}`}
                       style={{ '--row': index } as CssProps}
                       data-mode={viewMode}
@@ -1261,6 +1294,7 @@ export function Suggestions({
                       </div>
                       <SpxResult value={formatCompactNum(plan.damage)} isCurrent={isCurrent} diff={percentDiff(plan.damage, baseDamage)} />
                     </div>
+                    </ContextTrigger>
                   )
                 })}
               </div>
@@ -1293,8 +1327,17 @@ export function Suggestions({
                   const displayPlan = getSetPlanDisplay(plan)
 
                   return (
-                    <div
+                    <ContextTrigger
                       key={`set-${index}`}
+                      asChild
+                      ariaLabel={`Sonata suggestion ${index + 1} actions`}
+                      items={[
+                        { id: `suggestions:set:${index}:select`, label: 'Select', onSelect: () => setSelSetPla(index) },
+                        { id: `suggestions:set:${index}:inspect`, label: 'Inspect', icon: <Search size="1em" />, onSelect: () => { setSelSetPla(index); inspectModal.show() } },
+                        { id: `suggestions:set:${index}:apply`, label: 'Apply', icon: <Check size="1em" />, disabled: isCurrent, onSelect: () => applyEchoes(applySetPlan(plan.setPlan, runtime.build.echoes)) },
+                      ]}
+                    >
+                    <div
                       className={`spx-row${selSetPlanNd === index ? ' is-selected' : ''}${isCurrent ? ' spx-row--equipped' : ''}`}
                       style={{ '--row': index } as CssProps}
                       data-mode={viewMode}
@@ -1330,6 +1373,7 @@ export function Suggestions({
                       </div>
                       <SpxResult value={formatCompactNum(plan.avgDamage)} isCurrent={isCurrent} diff={percentDiff(plan.avgDamage, baseDamage)} />
                     </div>
+                    </ContextTrigger>
                   )
                 })}
               </div>
@@ -1381,8 +1425,17 @@ export function Suggestions({
                   const subIconStyle = statIconStyle(targetPlan.statKey)
 
                   return (
-                    <div
+                    <ContextTrigger
                       key={`weapon-${card.id}`}
+                      asChild
+                      ariaLabel={`${targetPlan.name} suggestion actions`}
+                      items={[
+                        { id: `suggestions:weapon:${card.id}:select`, label: 'Select', onSelect: () => setSelWpnNd(index) },
+                        { id: `suggestions:weapon:${card.id}:inspect`, label: 'Inspect', icon: <Search size="1em" />, onSelect: () => { setSelWpnNd(index); inspectModal.show() } },
+                        { id: `suggestions:weapon:${card.id}:apply`, label: 'Apply', icon: <Check size="1em" />, disabled: isCurrent, onSelect: () => applyWeapon(targetPlan) },
+                      ]}
+                    >
+                    <div
                       className={`ws-card${selWpnNdx === index ? ' sel' : ''}`}
                       style={{ ...(rarityVars(targetPlan.rarity, false, '--rar') ?? {}), '--row': index } as CssProps}
                       {...selectableProps(selWpnNdx === index, () => setSelWpnNd(index))}
@@ -1447,6 +1500,7 @@ export function Suggestions({
                         </div>
                       </div>
                     </div>
+                    </ContextTrigger>
                   )
                 })}
               </div>
@@ -1475,8 +1529,17 @@ export function Suggestions({
                   const grpdSbst = mkGrpdSbst(plan.echoes).slice(0, 6)
 
                   return (
-                    <div
+                    <ContextTrigger
                       key={`random-${index}`}
+                      asChild
+                      ariaLabel={`Random build ${index + 1} actions`}
+                      items={[
+                        { id: `suggestions:random:${index}:select`, label: 'Select', onSelect: () => setSelRandNd(index) },
+                        { id: `suggestions:random:${index}:inspect`, label: 'Inspect', icon: <Search size="1em" />, onSelect: () => { setSelRandNd(index); inspectModal.show() } },
+                        { id: `suggestions:random:${index}:apply`, label: 'Apply', icon: <Check size="1em" />, disabled: isCurrent, onSelect: () => applyEchoes(plan.echoes) },
+                      ]}
+                    >
+                    <div
                       className={`spx-row${selRandNdx === index ? ' is-selected' : ''}${isCurrent ? ' spx-row--equipped' : ''}`}
                       style={{ '--row': index } as CssProps}
                       data-mode={viewMode}
@@ -1517,6 +1580,7 @@ export function Suggestions({
                       </div>
                       <SpxResult value={formatCompactNum(plan.damage)} isCurrent={isCurrent} diff={percentDiff(plan.damage, baseDamage)} />
                     </div>
+                    </ContextTrigger>
                   )
                 })}
               </div>
@@ -1565,7 +1629,7 @@ export function Suggestions({
 
       <SuggsMdl
         {...inspectModal}
-        xtrClssName={viewMode === 'weapons' ? undefined : 'suggestions-modal--echoes'}
+        xtrClssName={viewMode === 'weapons' ? undefined : 'sgm--echoes'}
         title={
           viewMode === 'setPlans'
             ? 'Inspect Suggested Sonata Sets'
@@ -1637,7 +1701,7 @@ export function Suggestions({
                     key={item.key}
                     asChild
                     ariaLabel={`${item.echo.mainEcho ? 'Main echo' : 'Echo'} actions`}
-                    items={echoSrfcMenu.buildReadOnlyMenu({
+                    items={nspcSel.selectionMode ? nspcSel.contextItemsFor(itemId) : echoSrfcMenu.buildReadOnlyMenu({
                       id: itemId,
                       echo: item.echo,
                       onSelect: () => {
@@ -1690,7 +1754,7 @@ export function Suggestions({
                   <div className="echo-set-bonus-tiers">
                     <div className="echo-set-tier">
                       <span className="echo-set-tier-tag">{entry.pieces}pc</span>
-                      <RichDscr description={desc ?? 'Active set bonus.'} className="echo-set-tier-desc" />
+                      <RichDscr description={desc ?? 'Active set bonus.'} className="est-desc" />
                     </div>
                   </div>
                 </div>
@@ -1736,7 +1800,7 @@ export function Suggestions({
         {...randCnfgMdl}
         title="Config - Random Echoes"
         onClose={randCnfgMdl.hide}
-        xtrClssName="suggestions-modal--narrow"
+        xtrClssName="sgm--narrow"
       >
         <div className="rc-panel">
           <div className="rc-section">
@@ -1931,5 +1995,6 @@ export function Suggestions({
         onClose={randMainEcho.hide}
       />
     </div>
+    </ContextTrigger>
   )
 }

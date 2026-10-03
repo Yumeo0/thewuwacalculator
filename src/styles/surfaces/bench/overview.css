@@ -1,0 +1,166 @@
+.simulation-stage {
+  height: 100%;
+  overflow-y: hidden;
+}
+
+.overview-stats-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: var(--ov-r-card);
+  border: 1px solid color-mix(in srgb, var(--ov-accent) 14%, var(--border));
+  background: var(--item-bg);
+  overflow: hidden;
+}
+
+.overview-stats-tree > .overview-cell-label {
+  margin: 0 0.85rem;
+  border: none;
+  padding: 0.4rem 0;
+}
+
+.overview-stats-tree > .ovt-children {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-left: 0;
+}
+
+.overview-stats-tree > .ovt-children::before {
+  display: none;
+}
+
+.ovt-children {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding-left: 1rem;
+}
+
+.ovt-children::before {
+  content: '';
+  position: absolute;
+  left: 0.25rem;
+  top: 0;
+  bottom: 0.6rem;
+  width: 1px;
+  background: color-mix(in srgb, var(--resonator-accent) 18%, var(--box-border));
+}
+
+.ovt-children--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 1px;
+  padding-left: 0;
+}
+
+.ovt-children--grid::before,
+.ovt-children--fixed-grid::before {
+  display: none;
+}
+
+.ovt-children--fixed-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  padding-left: 0;
+}
+
+.ovt-children--grid > .ovt-leaf::before,
+.ovt-children--grid > .ovt-branch > .ovt-branch-head::before {
+  display: none;
+}
+
+.ovt-children--grid > .ovt-leaf {
+  padding: 0.4rem 0.7rem;
+  background: color-mix(in srgb, var(--ov-accent) 5%, var(--item-bg));
+}
+
+.ovt-children--grid > .ovt-branch {
+  background: color-mix(in srgb, var(--ov-accent) 5%, var(--item-bg));
+  padding: 0.5rem 0.7rem;
+}
+
+.ovt-children--grid > .ovt-branch > .ovt-children {
+  padding-left: 1rem;
+}
+
+.ovt-branch {
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-stats-tree > .ovt-children > .ovt-branch {
+  border-top: 1px solid color-mix(in srgb, var(--ov-accent) 10%, var(--item-border));
+}
+
+.ovt-branch-head {
+  --tree-accent: var(--ov-accent);
+  position: relative;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 0.45rem 0.85rem;
+  color: color-mix(in srgb, var(--tree-accent) 68%, var(--muted));
+}
+
+.ovt-children--grid .ovt-branch-head {
+  padding: 0 0 0.3rem;
+  margin-bottom: 0.3rem;
+  font-size: 0.6rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--ov-accent) 22%, var(--item-border));
+}
+
+.ovt-branch .ovt-branch-head::before {
+  content: '';
+  position: absolute;
+  left: -0.78rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 1px;
+  background: color-mix(in srgb, var(--resonator-accent) 18%, var(--box-border));
+}
+
+.ovt-leaf {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  padding: 0.15rem 0;
+}
+
+.ovt-branch .ovt-leaf::before {
+  content: '';
+  position: absolute;
+  left: -0.75rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 1px;
+  background: color-mix(in srgb, var(--resonator-accent) 14%, var(--box-border));
+}
+
+.ovt-leaf-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--text) 70%, var(--muted));
+}
+
+.ovt-leaf-value {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.effect-label-main,
+.effect-label-mod,
+.effect-label-value {
+  display: inline;
+}
+
+.effect-label-mod {
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}

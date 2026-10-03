@@ -109,7 +109,6 @@ describe('rotation editor palette node construction', () => {
           sourceNode: {
             type: 'condition',
             enabled: true,
-            label: choice.label,
             changes: [{
               type: 'set',
               path: choice.state.path,
@@ -121,6 +120,7 @@ describe('rotation editor palette node construction', () => {
         expect(node.sourceNode?.type).toBe('condition')
         if (node.sourceNode?.type === 'condition') {
           expect(node.sourceNode.resonatorId).toBeUndefined()
+          expect(node.sourceNode).not.toHaveProperty('label')
         }
       }
 
@@ -133,7 +133,6 @@ describe('rotation editor palette node construction', () => {
       const [rotationNode] = serialized.items
       expect(rotationNode).toMatchObject({
         type: 'condition',
-        label: choice.label,
         changes: [{
           type: 'set',
           path: choice.state.path,
@@ -141,6 +140,7 @@ describe('rotation editor palette node construction', () => {
         }],
       })
       expect('enabled' in rotationNode ? rotationNode.enabled : undefined).not.toBe(false)
+      expect(rotationNode).not.toHaveProperty('label')
       if (rotationNode.type === 'condition') {
         expect(rotationNode.resonatorId).toBeUndefined()
         expect(rotationNode.changes[0]).not.toHaveProperty('resonatorId')
@@ -196,6 +196,47 @@ describe('rotation editor palette node construction', () => {
     }, 'res-a', [])).toBeNull()
   })
 
+  it('preserves an authored condition label only while editing the same state', () => {
+    const originalChoice = conditionChoice('enemy')
+    const nextChoice: CondChoice = {
+      ...originalChoice,
+      id: 'enemy:other',
+      label: 'Other state',
+      state: {
+        ...originalChoice.state,
+        id: 'enemy-other',
+        label: 'Other state',
+        path: 'enemy.other',
+      },
+    }
+    const original = makeConditionNode(originalChoice)
+    if (original.type !== 'condition' || original.sourceNode?.type !== 'condition') {
+      throw new Error('Expected a condition')
+    }
+    const editor = {
+      ...original,
+      label: 'My marker',
+      sourceNode: { ...original.sourceNode, label: 'My marker' },
+    }
+    const sections: EditorSection[] = [{ id: 'main', title: 'Main', meta: '', children: [editor] }]
+    const options = { condChoices: [originalChoice, nextChoice], focusedId: 'res-a', fallbackResId: 'res-a' }
+
+    const sameState = applyConditionChanges(sections, editor.id, [
+      { type: 'set', path: originalChoice.state.path, value: false },
+    ], options)
+    const retained = findNode(sameState.sections, editor.id)
+    expect(retained?.type === 'condition' && retained.sourceNode?.type === 'condition'
+      ? retained.sourceNode.label
+      : undefined).toBe('My marker')
+
+    const newState = applyConditionChanges(sections, editor.id, [
+      { type: 'set', path: nextChoice.state.path, value: true },
+    ], options)
+    const replaced = findNode(newState.sections, editor.id)
+    expect(replaced?.type === 'condition' ? replaced.label : undefined).toBe('Other state')
+    expect(replaced?.sourceNode).not.toHaveProperty('label')
+  })
+
   it('authors the active-resonator state directly as a handoff before running', () => {
     const choice: CondChoice = {
       id: 'rotation:active-resonator',
@@ -243,6 +284,7 @@ describe('rotation editor palette node construction', () => {
       type: 'condition',
       changes: [{ type: 'set', path: ACTIVE_RESONATOR_PATH, value: 'res-b' }],
     })
+    expect(serialized.items[0]).not.toHaveProperty('label')
   })
 
   it('keeps an edited handoff canonical before the next run', () => {
@@ -355,29 +397,6 @@ function editedStep(sections: EditorSection[]): EditorStep {
 }
 
 describe('writes attached to a step', () => {
-  it('names each authored change from the catalog and states its value in display form', () => {
-    expect(attachedWritesOf(stepWithWrites(), ATTACHED_CHOICES)).toEqual([
-      {
-        index: 0,
-        label: 'Amplified',
-        sourceName: 'Forte',
-        state: AMPLIFIED.state,
-        value: 'on',
-        action: 'set',
-        rising: true,
-      },
-      {
-        index: 1,
-        label: 'Stacks',
-        sourceName: 'Forte',
-        state: STACKS.state,
-        value: '3',
-        action: 'set',
-        rising: true,
-      },
-    ])
-  })
-
   it('parses an edited value back against the state it writes, leaving the others alone', () => {
     const edited = setAttachedWriteValue(
       sectionsWithStep(stepWithWrites()),

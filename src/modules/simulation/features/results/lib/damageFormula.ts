@@ -22,7 +22,7 @@ import {
   sumHitScale,
   type DamageFactors,
 } from '@/engine/formulas/damageFactors.ts'
-import { getTuneLevel } from '@/engine/formulas/tuneRupture.ts'
+import { getEnemyMaxOffTune, getTuneLevel } from '@/engine/formulas/tuneRupture.ts'
 import { mergeSkillType } from '@/engine/resolvers/buffPool.ts'
 import { getSkillType, fmtSkllTypeL } from '@/domain/gameData/skillTypes.ts'
 import { formatTrunc, formatTruncCompact, truncTo } from '@/shared/lib/number.ts'
@@ -751,13 +751,10 @@ function tuneBrkd(
   const defenseMult = ignoresEnemy
     ? 1
     : (800 + 8 * level) / (800 + 8 * level + Math.max(0, enemyDefense))
-  const classMult = enemy.class === 3 || enemy.class === 4
-    ? 14
-    : enemy.class === 2
-      ? 3
-      : 1
+  const maxOffTune = getEnemyMaxOffTune(enemy.class)
   const formulaSkillType = finalStats.skillType[kind]
   const kindLabel = kind === 'hack' ? 'Hack' : 'Tune'
+  const appliedAmplify = kind === 'tuneRupture' ? 0 : finalStats.amplify
   const levelScale = getTuneLevel(level)
   const ttlHitScl = sumHitScale(hits)
   const ampPrcn = ttlHitScl * 100
@@ -769,7 +766,7 @@ function tuneBrkd(
     'core',
     `core.level = ${fmtNum(levelScale, 2)}`,
     `core.${kind === 'hack' ? 'hackAmp' : 'tuneAmp'} = ${fmtPct(ampPrcn)} = ${hitSpread(hits, (hit) => fmtPct(hit.multiplier * 100))}`,
-    `enemy.type = ${fmtNum(classMult, 2)}`,
+    `enemy.maxOffTune = ${fmtNum(maxOffTune, 2)}`,
   )
   addSection(
     sections,
@@ -793,7 +790,7 @@ function tuneBrkd(
       { label: 'Skill', value: skillBuffs.dmgVuln },
     ])}`,
     `mod.dmgBonus = ${fmtPct(formulaSkillType.dmgBonus)} = ${kindLabel} ${fmtPct(formulaSkillType.dmgBonus)}`,
-    `mod.amp = ${fmtPct(finalStats.amplify)} = Global ${fmtPct(finalStats.amplify)}`,
+    `mod.amp = ${fmtPct(appliedAmplify)}${kind === 'tuneRupture' ? ' = Tune Break ignores Amplify' : ` = Global ${fmtPct(appliedAmplify)}`}`,
     `mod.finalDmg = ${fmtPct(finalStats.finalDmg)} = Global ${fmtPct(finalStats.finalDmg)}`,
     `mod.tuneBoost = ${fmtTuneBreakBoost(finalStats.tbb)}`,
     `crit.rate = ${fmtPct(critRatePrcn)}`,
@@ -835,19 +832,19 @@ function tuneBrkd(
           ...(nonZero(dmgVuln) ? {} : { expr: 'nothing applied' }),
         },
         {
-          key: 'enemy.type',
-          label: 'Target class',
-          factor: classMult,
-          value: fmtNum(classMult, 2),
+          key: 'enemy.maxOffTune',
+          label: 'Enemy max Off-Tune',
+          factor: maxOffTune,
+          value: fmtNum(maxOffTune, 2),
           expr: `class ${fmtNum(enemy.class, 0)}`,
         },
-        {
+        kind === 'hack' ? {
           key: 'mod.amp',
           label: 'Amplify',
-          factor: 1 + finalStats.amplify / 100,
-          value: fmtPct(100 + finalStats.amplify),
-          terms: srcTerms([{ label: 'Global', value: finalStats.amplify }]),
-        },
+          factor: 1 + appliedAmplify / 100,
+          value: fmtPct(100 + appliedAmplify),
+          terms: srcTerms([{ label: 'Global', value: appliedAmplify }]),
+        } : null,
         {
           key: 'mod.dmgBonus',
           label: 'DMG bonus',
@@ -885,7 +882,7 @@ function tuneBrkd(
     ].join('\n'),
     equation: !ignoresEnemy && baseRes === 100
       ? `out.normal = ${fmtInt(entry.normal)} = 0 (enemy base RES shortcut)`
-      : `out.normal = ${fmtInt(entry.normal)} = ${fmtNum(levelScale, 2)} x ${fmtPct(ampPrcn)} x ${pctMul(defenseMult, 10)} x ${pctMul(resMult, 10)} x (1 + ${fmtPct(dmgVuln)}) x ${fmtNum(classMult, 2)} x (1 + ${fmtPct(finalStats.amplify)}) x (1 + ${fmtPct(formulaSkillType.dmgBonus)}) x (1 + ${fmtTuneBreakBoost(finalStats.tbb)} / 100) x (1 + ${fmtPct(finalStats.finalDmg)})`,
+      : `out.normal = ${fmtInt(entry.normal)} = ${fmtNum(levelScale, 2)} x ${fmtPct(ampPrcn)} x ${pctMul(defenseMult, 10)} x ${pctMul(resMult, 10)} x (1 + ${fmtPct(dmgVuln)}) x ${fmtNum(maxOffTune, 2)}${kind === 'hack' ? ` x (1 + ${fmtPct(appliedAmplify)})` : ''} x (1 + ${fmtPct(formulaSkillType.dmgBonus)}) x (1 + ${fmtTuneBreakBoost(finalStats.tbb)} / 100) x (1 + ${fmtPct(finalStats.finalDmg)})`,
     sections,
   }
 }
@@ -950,6 +947,7 @@ function negBreakdown(
   const ggrgFfctType = mergeSkillType(finalStats.skillType, skill.skillType)
   const negFfctBuff = finalStats.negativeEffect[effectArch as NegEffectKey]
   const skillBuffs = makeSkillBuffs(skill)
+  const effectAmplify = finalStats.skillType[effectArch].amplify + skillBuffs.amplify
   const attributeAll = finalStats.attribute.all
   const attrElement = finalStats.attribute[element]
   const ignoresEnemy = isNoEnemy(enemy)
@@ -1017,7 +1015,7 @@ function negBreakdown(
     'mods',
     `mod.effect = ${fmtMulPct(negFfctMltp)} = ${getSkillType(skill.skillType).label} bonus ${fmtPct(negFfctBuff.multiplier * 100)}`,
     `mod.dmgBonus = ${fmtPct(ggrgFfctType.dmgBonus)} = Effect ${fmtPct(ggrgFfctType.dmgBonus)}`,
-    `mod.amp = ${fmtPct(finalStats.amplify + ggrgFfctType.amplify)} = Global ${fmtPct(finalStats.amplify)} + Effect ${fmtPct(ggrgFfctType.amplify)}`,
+    `mod.amp = ${fmtPct(effectAmplify)} = Effect ${fmtPct(finalStats.skillType[effectArch].amplify)} + Skill ${fmtPct(skillBuffs.amplify)}`,
     `mod.vuln = ${fmtPct(dmgVuln)} = Global ${fmtPct(finalStats.dmgVuln)} + Elem All ${fmtPct(attributeAll.dmgVuln)} + ${element} ${fmtPct(attrElement.dmgVuln)} + Effect ${fmtPct(ggrgFfctType.dmgVuln)}`,
     `mod.finalDmg = ${fmtPct(finalStats.finalDmg)}`,
     `crit.rate = ${fmtPct(critRatePrcn)}`,
@@ -1067,11 +1065,11 @@ function negBreakdown(
         {
           key: 'mod.amp',
           label: 'Amplify',
-          factor: 1 + (finalStats.amplify + ggrgFfctType.amplify) / 100,
-          value: fmtPct(100 + finalStats.amplify + ggrgFfctType.amplify),
+          factor: 1 + effectAmplify / 100,
+          value: fmtPct(100 + effectAmplify),
           terms: srcTerms([
-            { label: 'Global', value: finalStats.amplify },
-            { label: 'Effect', value: ggrgFfctType.amplify },
+            { label: 'Effect', value: finalStats.skillType[effectArch].amplify },
+            { label: 'Skill', value: skillBuffs.amplify },
           ]),
         },
         {
@@ -1107,7 +1105,7 @@ function negBreakdown(
         ? `out.avg = ${fmtInt(entry.avg)} = guaranteed crit`
         : `out.avg = ${fmtInt(entry.avg)} = ${fmtInt(entry.normal)} x (1 + ${fmtPct(critRatePrcn)} x (${fmtPct(critDmgPrcn)} - 1))`,
     ].join('\n'),
-    equation: `out.normal = ${fmtInt(entry.normal)} = ${fmtNum(perStackBase, 2)} x ${fmtPct(ttlHitScl * 100)} x ${fmtMulPct(negFfctMltp)} x ${pctMul(defenseMult, 10)} x ${pctMul(resMult, 10)} x (1 + ${fmtPct(finalStats.amplify + ggrgFfctType.amplify)}) x (1 + ${fmtPct(ggrgFfctType.dmgBonus)}) x (1 + ${fmtPct(dmgVuln)}) x (1 + ${fmtPct(finalStats.finalDmg)})`,
+    equation: `out.normal = ${fmtInt(entry.normal)} = ${fmtNum(perStackBase, 2)} x ${fmtPct(ttlHitScl * 100)} x ${fmtMulPct(negFfctMltp)} x ${pctMul(defenseMult, 10)} x ${pctMul(resMult, 10)} x (1 + ${fmtPct(effectAmplify)}) x (1 + ${fmtPct(ggrgFfctType.dmgBonus)}) x (1 + ${fmtPct(dmgVuln)}) x (1 + ${fmtPct(finalStats.finalDmg)})`,
     sections,
   }
 }

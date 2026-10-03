@@ -15,7 +15,8 @@ export const REFERENCE_STEP_MODEL = {
   maxCopies: MAX_ROLLS_PER_KEY,
   maxRelevantSubstats: 16,
   maxStepIncreases: 32,
-  minimumRelevantFlats: 2,
+  requiredFifthStatCopies: 2,
+  requiredDamageStatRank: 4,
   cappedKeyCount: 2,
   topKeyUpgradeFraction: 0.29,
   lowestKeyUpgradeFraction: 0.5,
@@ -65,7 +66,6 @@ export function prepareStepAllocator(
   const keys = Object.keys(tiers).filter(key => key !== ENERGY_REGEN && tiers[key].length > 0)
   const relevant = new Set(relevantKeys)
   const damageKeys = keys.filter(key => relevant.has(key))
-  const flatKeys = damageKeys.filter(key => ['atkFlat', 'hpFlat', 'defFlat'].includes(key))
   const fillerKeys = keys.filter(key => !relevant.has(key))
   // Get the encoded lane from the canonical writer, without duplicating its
   // stat layout. Equal Float32 totals are identical scoring trials, even when
@@ -106,7 +106,7 @@ export function prepareStepAllocator(
     checkCancel?: () => void,
     refine = false,
   ): StepAllocation | null => {
-    if (flatKeys.length === 0) return null
+    if (damageKeys.length === 0) return null
     let best: StepAllocation | null = null
     // Rebuild a changed lane from its main-stat base and selected legal
     // values. Repeated Float32 tier deltas accumulate error (five 15% CD
@@ -145,6 +145,9 @@ export function prepareStepAllocator(
         working[offset] = previous
         return { key, gain }
       }).sort((a, b) => b.gain - a.gain || a.key.localeCompare(b.key))
+      // If a context has fewer than five damage-affecting stats, keep a
+      // reference possible by using its lowest-ranked available stat.
+      const requiredKey = ranking[Math.min(REFERENCE_STEP_MODEL.requiredDamageStatRank, ranking.length - 1)].key
       const cappedKeys = new Set(ranking.slice(0, REFERENCE_STEP_MODEL.cappedKeyCount).map(entry => entry.key))
       const maxTiers = Object.fromEntries(damageKeys.map(key => [key, cappedKeys.has(key)
         ? Math.floor((tiers[key].length - 1) * REFERENCE_STEP_MODEL.topKeyUpgradeFraction)
@@ -173,12 +176,16 @@ export function prepareStepAllocator(
         relevantCount += 1
         return true
       }
-      // Relevant flats occupy the same relevant-line budget. Either both may be the
-      // same key or they may differ; non-damage filler never satisfies this.
-      for (let count = 0; count < REFERENCE_STEP_MODEL.minimumRelevantFlats; count += 1) {
-        if (!addBestLine(flatKeys)) break
+      // Two copies of this candidate's fifth-ranked damage stat consume the
+      // same relevant-line budget as every other selected damage substat.
+      for (let count = 0; count < REFERENCE_STEP_MODEL.requiredFifthStatCopies; count += 1) {
+        const minimum = tiers[requiredKey][0]
+        const selectedDamage = scoreOneLane(requiredKey, values[requiredKey], minimum)
+        values[requiredKey].push(minimum)
+        writeValues(working, requiredKey, values[requiredKey])
+        damage = selectedDamage
+        relevantCount += 1
       }
-      if (flatKeys.reduce((sum, key) => sum + values[key].length, 0) < REFERENCE_STEP_MODEL.minimumRelevantFlats) continue
       while (relevantCount < REFERENCE_STEP_MODEL.maxRelevantSubstats) {
         if (!addBestLine(damageKeys)) break
       }
@@ -265,7 +272,6 @@ export function prepareStepAllocator(
         for (let pass = 0; pass < stepBudget; pass += 1) {
           checkCancel?.()
           const currentLowest = ranking.filter(({ key }) => values[key].length > 0).at(-1)?.key
-          const currentFlatCount = flatKeys.reduce((sum, key) => sum + values[key].length, 0)
           const floorTier = (key: string) => key === currentLowest
             ? Math.ceil((tiers[key].length - 1) * REFERENCE_STEP_MODEL.lowestKeyUpgradeFraction)
             : 0
@@ -291,13 +297,13 @@ export function prepareStepAllocator(
             for (let fromIndex = 0; fromIndex < values[fromKey].length; fromIndex += 1) {
               const fromValue = values[fromKey][fromIndex]
               const fromTier = tiers[fromKey].indexOf(fromValue)
-              // Keep the two capped keys present, and preserve the mandatory
-              // flat count when moving one relevant line to another key.
+              // Keep the two capped keys present and preserve the mandatory
+              // fifth-ranked stat when moving one relevant line to another key.
               if (!cappedKeys.has(fromKey) || values[fromKey].length > 1) {
                 for (const toKey of damageKeys) {
                   if (toKey === fromKey || values[toKey].length >= REFERENCE_STEP_MODEL.maxCopies || fromTier > maxTier(toKey)) continue
-                  if (flatKeys.includes(fromKey) && !flatKeys.includes(toKey)
-                    && currentFlatCount <= REFERENCE_STEP_MODEL.minimumRelevantFlats) continue
+                  if (fromKey === requiredKey && toKey !== requiredKey
+                    && values[requiredKey].length <= REFERENCE_STEP_MODEL.requiredFifthStatCopies) continue
                   const toValue = tiers[toKey][fromTier]
                   if (toValue == null) continue
                   values[fromKey].splice(fromIndex, 1)
@@ -343,8 +349,10 @@ export function prepareStepAllocator(
           }
           if (!bestMove.commit) break
           bestMove.commit()
+          // A line exchange can empty a stat entirely. Restore its lane to
+          // the main-stat base too, or the removed roll remains as ghost damage.
           for (const key of [...damageKeys, ENERGY_REGEN]) {
-            if (values[key]?.length) writeValues(working, key, values[key])
+            writeValues(working, key, values[key])
           }
           damage = score(working)
         }

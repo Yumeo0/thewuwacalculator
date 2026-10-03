@@ -6,6 +6,7 @@
 
 import { APP_ROUTES, resolveLegacyRoute, surfaceAt } from '@/shared/lib/appRoutes'
 import { createRouteChunk } from '@/shared/navigation/routeChunk'
+import { prefersMobileUi } from '@/shared/navigation/mobileUi'
 import { configureNavigationPreloader } from '@/shared/navigation/navigationPreload'
 import {SIMULATION_SURFACE_CHUNKS} from "@/modules/simulation/api/chunks.ts";
 
@@ -44,6 +45,9 @@ export const notFoundChunk = createRouteChunk(async () => (
 export const homeChunk = createRouteChunk(async () => (
   (await import('@/modules/home/pages/HomePage')).HomePage
 ))
+export const mobileHomeChunk = createRouteChunk(async () => (
+  (await import('@/modules/home/pages/MobileHomePage')).MobileHomePage
+))
 
 interface Warmable {
   warm: () => Promise<void>
@@ -63,6 +67,7 @@ const PAGE_CHUNKS: Array<[string, Warmable[]]> = [
 
 function chunksFor(pathname: string): Warmable[] {
   const canonical = resolveLegacyRoute(pathname) ?? pathname
+  if (canonical === APP_ROUTES.home && prefersMobileUi()) return [mobileHomeChunk]
   const surface = surfaceAt(canonical)
   if (surface) return [simulationChunk, ...SIMULATION_SURFACE_CHUNKS[surface]]
 

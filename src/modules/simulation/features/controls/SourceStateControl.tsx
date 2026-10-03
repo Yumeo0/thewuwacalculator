@@ -126,7 +126,7 @@ export function SourceStateCtrl({
           <RichDscr
             description={display.description}
             params={dscrPrms}
-            className={state.source.type === 'echoSet' ? 'echo-set-tier-desc' : undefined}
+            className={state.source.type === 'echoSet' ? 'est-desc' : undefined}
           />
         ) : null}
         {dsblRsn ? <div className="state-control-reason">{dsblRsn}</div> : null}
@@ -229,7 +229,7 @@ export function SourceStateCtrl({
           <RichDscr
             description={display.description}
             params={dscrPrms}
-            className={state.source.type === 'echoSet' ? 'echo-set-tier-desc' : undefined}
+            className={state.source.type === 'echoSet' ? 'est-desc' : undefined}
           />
         ) : null}
         {dsblRsn ? <div className="state-control-reason">{dsblRsn}</div> : null}
@@ -261,7 +261,7 @@ export function SourceStateCtrl({
         <RichDscr
           description={display.description}
           params={dscrPrms}
-          className={state.source.type === 'echoSet' ? 'echo-set-tier-desc' : undefined}
+          className={state.source.type === 'echoSet' ? 'est-desc' : undefined}
         />
       ) : null}
       {dsblRsn ? <div className="state-control-reason">{dsblRsn}</div> : null}

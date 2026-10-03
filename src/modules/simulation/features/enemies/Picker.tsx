@@ -17,6 +17,7 @@ import {
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display.ts'
 import { PickerModal } from '@/modules/simulation/ui/PickerModal.tsx'
+import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay.tsx'
 
 interface EnemyPckrPrp {
   visible: boolean
@@ -158,10 +159,10 @@ export function EnemyPicker({
         selected: isSelected,
         onSelect: () => onSelect(entry.id),
         leading: (
-          <div className="picker-modal__media-frame">
+          <div className="pkm__media-frame">
             <DisplayImage
               src={entry.icon ?? '/assets/game/default.webp'}
-              alt={entry.name} className="picker-modal__media-image"
+              alt={entry.name} className="pkm__media-image"
               onError={withDefIconM}
             />
           </div>
@@ -170,12 +171,12 @@ export function EnemyPicker({
         tone: attributeKey ? ATTR_COLORS[attributeKey] : undefined,
         meta: (
           <>
-            <span className="picker-modal__spec-item">{ENEMY_CLASS_TXT[entry.class]}</span>
+            <span className="pkm__spec-item">{ENEMY_CLASS_TXT[entry.class]}</span>
             {attributeKey ? (
               <DisplayImage
                 src={`/assets/game/attributes/icons/${attributeKey}.webp`}
                 alt={ENEMY_ELEM_TXT[element!]}
-                title={ENEMY_ELEM_TXT[element!]} className="picker-modal__meta-icon picker-modal__spec-push"
+                title={ENEMY_ELEM_TXT[element!]} className="pkm__meta-icon pkm__spec-push"
                 style={attributeKey === 'physical' ? { filter: 'grayscale(1) brightness(0.6)' } : undefined}
                 onError={withDefIconM}
               />
@@ -187,7 +188,7 @@ export function EnemyPicker({
   }, [enemies, onSelect, selNmyId])
 
   const emptyState = loading
-    ? <p>Loading enemy catalog…</p>
+    ? <AppLoaderOverlay mode="inline" text="Loading enemy catalog..." />
     : error
       ? <p>{error}</p>
       : <p>No enemies match the current filters.</p>

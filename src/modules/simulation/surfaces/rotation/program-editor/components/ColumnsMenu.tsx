@@ -59,7 +59,8 @@ export function ColumnsMenu({
     },
   })
   const draft = open ? session.draft : { statKeys, groupOrder }
-  const budget = useColumnBudget(draft.statKeys, draft.groupOrder, ceiling)
+  const visibleKeys = draft.statKeys.slice(0, ceiling)
+  const budget = useColumnBudget(visibleKeys, draft.groupOrder, ceiling)
   const close = useCallback(() => {
     onOpenChange(false)
     session.finish()
@@ -119,7 +120,7 @@ export function ColumnsMenu({
         </AppPopupHeader>
 
         <ColumnRack
-          statKeys={draft.statKeys}
+          statKeys={visibleKeys}
           onStatKeys={(next) => session.update((current) => ({
             ...current,
             statKeys: next,

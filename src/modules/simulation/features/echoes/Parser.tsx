@@ -10,7 +10,7 @@ import type { ReactNode } from 'react'
 import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime.ts'
 import { getResAccent, getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
 import { getEchoById, listEchoes } from '@/data/catalog/echoCatalogService.ts'
-import { useEchoScores } from '@/engine/evaluation/useEchoScoringRevision.ts'
+import { useEchoScores } from '@/application/hooks/useEchoScoringRevision.ts'
 import { AppModal } from '@/shared/ui/AppModal'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
@@ -389,7 +389,7 @@ export function Parser({
 
                   return (
                     <button
-                      type="button" className="workspace-echo-ctl"
+                      type="button" className="wk-echo-ctl"
                       title={canSave ? 'Save to bag' : 'Already in the bag'}
                       aria-label={canSave ? `Save ${echoName} to bag` : `${echoName} is already in the bag`}
                       data-saved={canSave ? undefined : 'true'}
@@ -435,7 +435,7 @@ export function Parser({
                       key={item.key}
                       asChild
                       ariaLabel={`${item.echo.mainEcho ? 'Main echo' : 'Echo'} actions`}
-                      items={menuHelpers.buildReadOnlyMenu({
+                      items={selection.selectionMode ? selection.contextItemsFor(itemId) : menuHelpers.buildReadOnlyMenu({
                         id: itemId,
                         echo: item.echo,
                         onSelect: () => {

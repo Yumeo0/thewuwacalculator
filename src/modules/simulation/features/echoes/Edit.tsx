@@ -10,15 +10,7 @@ import type { CSSProperties as CssProps, KeyboardEvent as ReactKeyEvt, PointerEv
 import { X } from 'lucide-react'
 import type { EchoDef } from '@/domain/entities/catalog.ts'
 import type { EchoInstance } from '@/domain/entities/runtime.ts'
-import { makeEchoUid } from '@/domain/entities/runtime.ts'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
-import {
-  ECHO_MAIN_STATS,
-  ECHO_SIDE_STATS,
-  SUBSTAT_KEYS,
-  getSbstStepP,
-  snapToNrstSb,
-} from '@/data/gameData/catalog/echoStats.ts'
+import { SUBSTAT_KEYS, getSbstStepP } from '@/data/gameData/catalog/echoStats.ts'
 import { getSntSetNam, getSntSetIco, getSntSetClr } from '@/data/gameData/catalog/sonataSets.ts'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback'
 import { AppModal } from '@/shared/ui/AppModal'
@@ -26,10 +18,12 @@ import { AnchoredAppPopup } from '@/shared/ui/AppPopup'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { EchoPicker } from '@/modules/simulation/features/echoes/Picker.tsx'
 import { StatGlyph } from '@/modules/simulation/workspace/ui.tsx'
-import { truncTo } from '@/shared/lib/number.ts'
 import { formatStatKeyLabel } from '@/modules/simulation/model/statsView.ts'
+import { MAX_SUBSTATS, carryTier, fmtStatValue, stepIndex, useEchoDraft } from '@/modules/simulation/features/echoes/lib/echoDraft.ts'
+import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { MobileEchoEdit } from '@/modules/simulation/features/echoes/mobile/MobileEchoEdit.tsx'
 
-const MAX_SUBSTATS = 5
+export { carryTier }
 
 // Accepted aliases resolve to canonical stat keys before committing an edit.
 const STAT_ALIASES: Record<string, string[]> = {
@@ -50,41 +44,6 @@ const STAT_ALIASES: Record<string, string[]> = {
 
 function fmtStatKey(key: string): string {
   return formatStatKeyLabel(key)
-}
-
-function fmtStatValue(key: string, value: number): string {
-  if (key.endsWith('Flat')) {
-    return String(Math.round(value))
-  }
-
-  if (key === 'tuneBreakBoost') {
-    const truncated = truncTo(value, 2)
-    return Number.isInteger(truncated) ? String(truncated) : truncated.toFixed(2).replace(/\.?0+$/, '')
-  }
-
-  return `${value}%`
-}
-
-// Map an arbitrary stored value to its nearest legal roll index.
-function stepIndex(key: string, value: number): number {
-  const steps = getSbstStepP(key)
-  let best = 0
-  steps.forEach((step, index) => {
-    if (Math.abs(step - value) < Math.abs(steps[best] - value)) best = index
-  })
-  return best
-}
-
-// Preserve relative roll quality when stat families have different tier counts.
-export function carryTier(fromKey: string, fromValue: number, toKey: string): number {
-  const to = getSbstStepP(toKey)
-  if (!to.length) return 0
-
-  const from = getSbstStepP(fromKey)
-  if (from.length < 2) return to[0]
-
-  const fraction = stepIndex(fromKey, fromValue) / (from.length - 1)
-  return to[Math.round(fraction * (to.length - 1))]
 }
 
 function matchStats(query: string, options: string[]): string[] {
@@ -420,113 +379,82 @@ export function Edit({
   onClear,
   onClose,
 }: EchoEditMdlP) {
-  // Catalog replacement stays local until the caller receives the saved draft.
-  const [echoId, setEchoId] = useState(echo.id)
-  const [mainStatKey, setMainStatK] = useState(echo.mainStats.primary.key)
-  const [selectedSet, setSelSet] = useState(echo.set)
-  const [lclSbst, setLclSbst] = useState<Array<[string, number]>>(
-    Object.entries(echo.substats),
-  )
+  const draft = useEchoDraft(echo, echoes)
+  const {
+    echoId,
+    definition,
+    canRecast,
+    cost,
+    mainStatKey,
+    setMainStatK,
+    selectedSet,
+    setSelSet,
+    lclSbst,
+    primaryOptions,
+    primaryKeys,
+    setOptions,
+    usedKeys,
+    setSubValue,
+    removeSubstat,
+    critValue,
+    topRolls,
+  } = draft
 
   const picker = useAppModal()
   const reelRefs = useRef<Array<HTMLDivElement | null>>([])
+  const mobile = useMobileUi()
 
-  // Reset local state when echo changes
-  useEffect(() => {
-    setEchoId(echo.id)
-    setMainStatK(echo.mainStats.primary.key)
-    setSelSet(echo.set)
-    setLclSbst(Object.entries(echo.substats))
-  }, [echo])
-
-  const definition = getEchoById(echoId)
-  const canRecast = echoes.length > 0
-  const cost = definition?.cost ?? 0
-  const primaryOptions = useMemo(() => ECHO_MAIN_STATS[cost] ?? {}, [cost])
-  const primaryKeys = useMemo(() => Object.keys(primaryOptions), [primaryOptions])
-  const secondaryStat = ECHO_SIDE_STATS[cost]
-  const setOptions = definition?.sets ?? []
-  const usedKeys = useMemo(() => new Set(lclSbst.map(([key]) => key)), [lclSbst])
-
-// Retain only stats legal for the replacement piece, matching slot initialization.
+  const { recast, pickSubstat: pickDraft } = draft
   const onEchoSel = useCallback((nextId: string) => {
-    const nextDef = getEchoById(nextId)
-    if (!nextDef) return
+    if (recast(nextId)) picker.hide()
+  }, [recast, picker])
 
-    const nextPrimary = ECHO_MAIN_STATS[nextDef.cost] ?? {}
-    const nextKeys = Object.keys(nextPrimary)
-
-    setEchoId(nextId)
-    setSelSet((prev) => (nextDef.sets.includes(prev) ? prev : nextDef.sets[0] ?? 0))
-    setMainStatK((prev) => (nextKeys.includes(prev) ? prev : nextKeys[0] ?? ''))
-    picker.hide()
-  }, [picker])
-
-  const setSubValue = useCallback((index: number, next: number) => {
-    setLclSbst((prev) => prev.map((entry, position) => (
-      position === index ? [entry[0], next] as [string, number] : entry
-    )))
-  }, [])
-
-// Empty slots append a stat; occupied slots replace it while retaining roll quality.
   const pickSubstat = useCallback((index: number, key: string) => {
-    setLclSbst((prev) => {
-      if (prev.some(([used], position) => used === key && position !== index)) return prev
-
-      const steps = getSbstStepP(key)
-      if (index >= prev.length) {
-        return prev.length >= MAX_SUBSTATS ? prev : [...prev, [key, steps[0] ?? 0]]
-      }
-
-      const [fromKey, fromValue] = prev[index]
-      return prev.map((entry, position) => (
-        position === index ? [key, carryTier(fromKey, fromValue, key)] as [string, number] : entry
-      ))
-    })
-
+    pickDraft(index, key)
     window.requestAnimationFrame(() => reelRefs.current[index]?.focus())
-  }, [])
-
-  const removeSubstat = useCallback((index: number) => {
-    setLclSbst((prev) => prev.filter((_, position) => position !== index))
-  }, [])
+  }, [pickDraft])
 
   if (!visible || !portalTarget || !definition) return null
 
   const handleSave = () => {
-    if (!mainStatKey) return
-
-    const primaryValue = primaryOptions[mainStatKey] ?? 0
-
-    const vldtSbst = lclSbst.map(([key, value]) => {
-      return [key, snapToNrstSb(key, value)] as [string, number]
-    })
-
-    onSave({
-      ...echo,
-      uid: makeEchoUid(),
-      id: definition.id,
-      set: selectedSet,
-      mainStats: {
-        primary: { key: mainStatKey, value: primaryValue },
-        secondary: secondaryStat
-          ? { key: secondaryStat.key, value: secondaryStat.value }
-          : echo.mainStats.secondary,
-      },
-      substats: Object.fromEntries(vldtSbst),
-    })
+    const built = draft.build()
+    if (built) onSave(built)
   }
 
-  const critValue = lclSbst.reduce((total, [key, value]) => {
-    if (key === 'critRate') return total + value * 2
-    if (key === 'critDmg') return total + value
-    return total
-  }, 0)
+  const recastPicker = canRecast && picker.visible ? (
+    <EchoPicker
+      visible={picker.visible}
+      open={picker.open}
+      closing={picker.closing}
+      portalTarget={portalTarget}
+      echoes={echoes}
+      selEchoId={echoId}
+      slotIndex={slotIndex}
+      maxCost={maxCost}
+      onSelect={onEchoSel}
+      onClear={() => {
+        picker.hide()
+        onClear?.()
+      }}
+      onClose={() => picker.hide()}
+    />
+  ) : null
 
-  const topRolls = lclSbst.filter(([key, value]) => {
-    const steps = getSbstStepP(key)
-    return steps.length > 0 && value === steps[steps.length - 1]
-  }).length
+  if (mobile) {
+    return (
+      <>
+        <MobileEchoEdit
+          state={{ visible, open, closing: closing ?? false }}
+          draft={draft}
+          mainEcho={Boolean(echo.mainEcho)}
+          onRecast={canRecast ? () => picker.show() : undefined}
+          onSave={handleSave}
+          onClose={onClose}
+        />
+        {recastPicker}
+      </>
+    )
+  }
 
   return (
     <>
@@ -704,24 +632,7 @@ export function Edit({
         </div>
       </AppModal>
 
-      {canRecast && picker.visible ? (
-        <EchoPicker
-          visible={picker.visible}
-          open={picker.open}
-          closing={picker.closing}
-          portalTarget={portalTarget}
-          echoes={echoes}
-          selEchoId={echoId}
-          slotIndex={slotIndex}
-          maxCost={maxCost}
-          onSelect={onEchoSel}
-          onClear={() => {
-            picker.hide()
-            onClear?.()
-          }}
-          onClose={() => picker.hide()}
-        />
-      ) : null}
+      {recastPicker}
     </>
   )
 }

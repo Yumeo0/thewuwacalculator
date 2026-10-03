@@ -191,43 +191,43 @@ export function WeaponPicker({
       bis: isBis,
       onSelect: () => onSelect(entry.id),
       leading: (
-        <div className="picker-modal__media-frame picker-modal__media-frame--inset"
+        <div className="pkm__media-frame pkm__media-frame--inset"
           style={rarityVars(entry.rarity) as CssProps}
         >
           <DisplayImage
             src={entry.icon}
-            alt={entry.name} className="picker-modal__media-image"
+            alt={entry.name} className="pkm__media-image"
             onError={withDefWpnMg}
           />
         </div>
       ),
       trailing: isBis ?
-          <span className="picker-modal__spec-item" title="Best in slot" aria-label="Best in slot weapon">
+          <span className="pkm__spec-item" title="Best in slot" aria-label="Best in slot weapon">
             <FaStar size="0.75rem" />
           </span>
         : isRecommended ? (
-          <span className="picker-modal__spec-item" title="Recommended" aria-label="Recommended weapon">
+          <span className="pkm__spec-item" title="Recommended" aria-label="Recommended weapon">
             <ThumbsUp size="0.75rem" />
           </span>
       ) : null,
       cornerNote: isSelected ? 'Equipped' : null,
       meta: (
         <>
-          <span className="picker-modal__spec-item picker-modal__spec-item--rarity">{entry.rarity}★</span>
-          <span className="picker-modal__spec-item" title="Base ATK" aria-label={`ATK ${formatTruncCompact(entry.baseAtk, 1)}`}>
+          <span className="pkm__spec-item pkm__spec-item--rarity">{entry.rarity}★</span>
+          <span className="pkm__spec-item" title="Base ATK" aria-label={`ATK ${formatTruncCompact(entry.baseAtk, 1)}`}>
             <DisplayImage
               src={WPN_STAT_CNS.atk}
               alt=""
-              aria-hidden="true" className="picker-modal__meta-icon picker-modal__meta-icon--theme-contrast"
+              aria-hidden="true" className="pkm__meta-icon pkm__meta-icon--theme-contrast"
             />
             <span aria-hidden="true">{formatTruncCompact(entry.baseAtk, 1)}</span>
           </span>
-          <span className="picker-modal__spec-item picker-modal__spec-push" title={statLabel} aria-label={`${statLabel} ${statDisplay}`}>
+          <span className="pkm__spec-item pkm__spec-push" title={statLabel} aria-label={`${statLabel} ${statDisplay}`}>
             {statIcon ? (
               <DisplayImage
                 src={statIcon}
                 alt=""
-                aria-hidden="true" className="picker-modal__meta-icon picker-modal__meta-icon--theme-contrast"
+                aria-hidden="true" className="pkm__meta-icon pkm__meta-icon--theme-contrast"
               />
             ) : null}
             <span aria-hidden="true">{statDisplay}</span>

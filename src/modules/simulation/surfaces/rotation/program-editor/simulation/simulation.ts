@@ -39,6 +39,8 @@ import {
   prepareRotationProgram,
 } from '@/engine/rotation/execute.ts'
 import { orderStoredRotationProgram } from '@/engine/rotation/programOrder.ts'
+import { collectResonatorIds } from '@/application/persistence/resonatorScope.ts'
+import { ensureResonatorData, holdResonatorData } from '@/data/gameData'
 
 function editedRotationSections(
   runtime: ResRuntime | null | undefined,
@@ -422,11 +424,30 @@ export function prepareSavedRotationBatch(
   }
 }
 
+async function runWithSavedRotationData<T>(
+  entries: readonly SavedRotation[],
+  run: () => Promise<T>,
+): Promise<T> {
+  // A saved scenario can name resonators outside the currently open team.
+  // Keep those kits resident through the run so a partial score is never cached.
+  const ids = collectResonatorIds(entries)
+  if (ids.length === 0) return run()
+
+  const release = holdResonatorData(ids)
+  try {
+    await ensureResonatorData(ids)
+    return await run()
+  } finally {
+    release()
+  }
+}
+
 export function runPreparedSavedRotationBatch(
   batch: SavedRotationBatch,
   options: { signal?: AbortSignal } = {},
 ): Promise<Map<string, SavedRotationComparisonResult | null>> {
-  return savedRotationRunner.run(batch.jobs, options)
+  return runWithSavedRotationData(batch.jobs.map((job) => job.input.entry),
+    () => savedRotationRunner.run(batch.jobs, options))
 }
 
 export function runSavedRotationBatch(
@@ -451,11 +472,12 @@ export function runSavedRotationDetailBatch(
   entries: readonly SavedRotation[],
   options: { signal?: AbortSignal } = {},
 ): Promise<Map<string, RunResult | null>> {
-  return savedRotationDetailRunner.run(entries.map((entry) => ({
-    id: entry.id,
-    key: `${savedRotationSimulationKey(entry)}\u0000detail`,
-    input: { entry, mode: 'detail' as const },
-  })), options)
+  return runWithSavedRotationData(entries, () => savedRotationDetailRunner.run(
+    entries.map((entry) => ({
+      id: entry.id,
+      key: `${savedRotationSimulationKey(entry)}\u0000detail`,
+      input: { entry, mode: 'detail' as const },
+    })), options))
 }
 
 export function savedRotationSummary(

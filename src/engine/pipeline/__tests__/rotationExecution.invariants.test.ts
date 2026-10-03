@@ -272,12 +272,12 @@ describe('rotation execution invariants', () => {
 
     /* unmarked, the break holds three features after it and the fourth counts */
     expect(result.entries.map((entry) => entry.effectiveStats?.offTune)).toEqual([
-      '930/38.4',
-      '0/38.4',
-      '0/38.4',
-      '0/38.4',
-      '0/38.4',
-      '46.5/38.4',
+      '930/39.2',
+      '0/39.2',
+      '0/39.2',
+      '0/39.2',
+      '0/39.2',
+      '46.5/39.2',
     ])
     expect(result.entries.map((entry) => entry.effectiveStats?.offTuneTrace?.sealed)).toEqual([
       false,
@@ -301,6 +301,20 @@ describe('rotation execution invariants', () => {
       { label: 'Manual Off-Tune rate', value: 0.5 },
     ])
 
+    for (const [enemyClass, maxOffTune] of [[1, 2.8], [2, 8.4], [3, 39.2], [4, 39.2]]) {
+      const classResult = runDetailedResRotation(
+        runtime,
+        offTuneSeed,
+        { ...makeEnemy(), class: enemyClass },
+        {},
+        {},
+        { items },
+      )
+      expect(classResult.entries[0]?.effectiveStats?.offTune).toBe(`930/${maxOffTune}`)
+      expect(classResult.entries[0]?.effectiveStats?.offTuneTrace?.max).toBe(maxOffTune)
+      expect(classResult.entries[0]?.effectiveStats?.offTuneTrace?.crest).toBe(true)
+    }
+
     const marked = runDetailedResRotation(runtime, offTuneSeed, makeEnemy(), {}, {}, {
       items: items.map((item) => (item.id === 'build-3'
         ? { ...item, offTuneResume: true }
@@ -309,12 +323,12 @@ describe('rotation execution invariants', () => {
 
     /* the mark governs, so the hold is one feature shorter than the default */
     expect(marked.entries.map((entry) => entry.effectiveStats?.offTune)).toEqual([
-      '930/38.4',
-      '0/38.4',
-      '0/38.4',
-      '46.5/38.4',
-      '93/38.4',
-      '139.5/38.4',
+      '930/39.2',
+      '0/39.2',
+      '0/39.2',
+      '46.5/39.2',
+      '93/39.2',
+      '139.5/39.2',
     ])
 
     const looped = runDetailedResRotation(runtime, offTuneSeed, makeEnemy(), {}, {}, {
@@ -330,12 +344,12 @@ describe('rotation execution invariants', () => {
 
     /* the break at the end of pass one seals entries at the start of pass two */
     expect(looped.entries.map((entry) => entry.effectiveStats?.offTune)).toEqual([
-      '46.5/38.4',
-      '93/38.4',
-      '0/38.4',
-      '0/38.4',
-      '0/38.4',
-      '0/38.4',
+      '46.5/39.2',
+      '93/39.2',
+      '0/39.2',
+      '0/39.2',
+      '0/39.2',
+      '0/39.2',
     ])
 
     const loopedMarked = runDetailedResRotation(runtime, offTuneSeed, makeEnemy(), {}, {}, {
@@ -359,12 +373,12 @@ describe('rotation execution invariants', () => {
 
     /* a moved landing beyond the default is also honored across the pass boundary */
     expect(loopedMarked.entries.slice(6).map((entry) => entry.effectiveStats?.offTune)).toEqual([
-      '0/38.4',
-      '0/38.4',
-      '0/38.4',
-      '0/38.4',
-      '46.5/38.4',
-      '0/38.4',
+      '0/39.2',
+      '0/39.2',
+      '0/39.2',
+      '0/39.2',
+      '46.5/39.2',
+      '0/39.2',
     ])
 
     const attached = runDetailedResRotation(runtime, offTuneSeed, makeEnemy(), {}, {}, {
@@ -392,12 +406,12 @@ describe('rotation execution invariants', () => {
 
     /* attached hits share their parent's hold and do not consume another slot */
     expect(attached.entries.map((entry) => entry.effectiveStats?.offTune)).toEqual([
-      '0/38.4',
-      '0/38.4',
-      '0/38.4',
-      '0/38.4',
-      '0/38.4',
-      '46.5/38.4',
+      '0/39.2',
+      '0/39.2',
+      '0/39.2',
+      '0/39.2',
+      '0/39.2',
+      '46.5/39.2',
     ])
 
     const setupNested = runDetailedResRotation(runtime, offTuneSeed, makeEnemy(), {}, {}, {
@@ -429,10 +443,10 @@ describe('rotation execution invariants', () => {
 
     /* setup-only nested branches carry their cooldown state into the body */
     expect(setupNested.entries.map((entry) => entry.effectiveStats?.offTune)).toEqual([
-      '0/38.4',
-      '0/38.4',
-      '0/38.4',
-      '46.5/38.4',
+      '0/39.2',
+      '0/39.2',
+      '0/39.2',
+      '46.5/39.2',
     ])
   })
 

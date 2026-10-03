@@ -2,7 +2,7 @@
 
 ## Summary
 
-This document covers the ranking and search systems that sit on top of the shared runtime engine. Use it when changing target skill suggestions, set suggestions, random echo generation, worker behavior, optimizer compilation, or CPU and GPU search execution.
+This document covers how Suggestions and Optimizer rank builds using the shared runtime engine. Use it when changing suggestion types, Echo generation, workers, optimizer preparation, or CPU and GPU search.
 
 ## Shared Runtime Assumption
 
@@ -34,16 +34,16 @@ Top level suggestion families:
 - random echo generation
 - substat priority
 
-Main-stat, set-plan, and weapon ranking are durable engine systems. Random Echo generation and substat priority are calculator-surface algorithms: they live under `surfaceAlgorithms`, may be replaced or deleted with those surfaces, and must not become dependencies of shared engine, scoring, or optimizer code. Random generation uses its own worker because it can perform heavier synthetic exploration work.
+Main-stat, set-plan, and weapon ranking are shared engine systems. Random Echo generation and substat priority belong to the Suggestions feature under `surfaceAlgorithms`. They may be replaced with that feature and must not become dependencies of shared engine, scoring, or optimizer code. Random generation uses its own worker for its larger searches.
 
-Suggestions are shaped by:
+Suggestion results depend on:
 
 - selected target skill
 - current runtime state
 - set conditional state
 - prepared scoring or ranking inputs
 
-Main stat and set plan suggestions keep the current Echo identities fixed, but they do not let the current main Echo passive buff participate in the comparison. Their candidate rows and current-build baselines are both scored with neutral main-Echo bonus rows so the result answers only the axis being suggested: main stats or set membership.
+Main Stat and Set Plan suggestions keep the equipped Echoes. Both proposed builds and the current-build baseline exclude main-Echo passive bonuses, so the comparison measures only the main-stat or Sonata change.
 
 Set plan suggestion rows are display-grouped after scoring. Plans with the same damage and the same contributing set-effect shape are collapsed into one row, set names are omitted, and the UI renders the grouped set icons with their piece counts. Set effects that do not change the scored damage are excluded from the visible plan even when they were present in one of the raw generated plans.
 
@@ -80,7 +80,7 @@ The compile stage is responsible for turning app state into packed execution inp
 - result limits
 - packed context structures for target or rotation search
 
-This stage is where many optimizer shape bugs actually originate because the search layers depend on these packed assumptions.
+Search errors can originate here because CPU and GPU execution both depend on the prepared data and constraints.
 
 ## CPU And GPU Execution
 
@@ -105,6 +105,9 @@ Worker orchestration decides when those paths are available and how progress is 
 Primary files:
 
 - [src/engine/optimizer/workers/pool.ts](../src/engine/optimizer/workers/pool.ts)
+- [src/engine/optimizer/workers/poolScheduler.ts](../src/engine/optimizer/workers/poolScheduler.ts)
+- [src/engine/optimizer/workers/progressTracker.ts](../src/engine/optimizer/workers/progressTracker.ts)
+- [src/engine/optimizer/workers/jobPreparation.ts](../src/engine/optimizer/workers/jobPreparation.ts)
 - [src/engine/optimizer/workers/compile.worker.ts](../src/engine/optimizer/workers/compile.worker.ts)
 - [src/engine/optimizer/workers/task.worker.ts](../src/engine/optimizer/workers/task.worker.ts)
 
@@ -131,6 +134,8 @@ Primary files:
 
 - [src/application/state/storeOptimizerRuntime.ts](../src/application/state/storeOptimizerRuntime.ts)
 - [src/application/state/store.ts](../src/application/state/store.ts)
+- [src/application/state/optimizerSlice.ts](../src/application/state/optimizerSlice.ts)
+- [src/application/state/optimizerRunStore.ts](../src/application/state/optimizerRunStore.ts)
 
 The store layer owns:
 

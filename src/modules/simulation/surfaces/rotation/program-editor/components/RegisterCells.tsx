@@ -68,7 +68,7 @@ export function registerVars(register: RegisterLayout): CSSProperties {
 export function bandCells(
   register: RegisterLayout,
   damage: ReactNode,
-  cell: (key: StatKey, column: number) => ReactNode,
+  cell: (key: StatKey, column: number, group: RegisterGroup) => ReactNode,
 ): ReactNode[] {
   const out: ReactNode[] = []
   let column = 0
@@ -85,7 +85,7 @@ export function bandCells(
       out.push(<Fragment key="damage">{damage}</Fragment>)
     }
     for (const key of band.keys) {
-      out.push(cell(key, column))
+      out.push(cell(key, column, band.group))
       column += 1
     }
   }
@@ -139,9 +139,9 @@ export function RegisterHead({
         <span>{stepLabel}</span>
         {bandCells(
           register,
-          <span className="is-num rte-cols__dmg">Avg</span>,
-          (key, column) => (
-            <span key={key} className="is-num" style={columnVar(column)}>
+          <span className="is-num rte-cols__dmg" data-band={register.bands.find((band) => band.leadsDamage)?.group}>Avg</span>,
+          (key, column, group) => (
+            <span key={key} className="is-num" data-band={group} style={columnVar(column)}>
               {fmtStatHeading(key, percentDisplay)}
             </span>
           ),

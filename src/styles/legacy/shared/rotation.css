@@ -1,0 +1,116 @@
+.soft-empty {
+  position: relative;
+  border-radius: 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--resonator-accent) 14%, var(--inner-border));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 1%, transparent), transparent 72%),
+    var(--inner-bg);
+
+}
+
+.soft-empty {
+  padding: 0.78rem 0.85rem;
+}
+
+.rotation-item {
+  position: relative;
+  --rotation-item-accent: var(--resonator-accent);
+  --ui-inner-bg: color-mix(in srgb, var(--item-bg) 56%, var(--inner-bg));
+  --ui-inner-border-color: color-mix(in srgb, var(--text) 5%, transparent);
+  --ui-inner-radius: 0.82rem;
+  --ui-inner-padding: 0.58rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--text) 5%, transparent);
+  border-radius: 0.72rem;
+  background:
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--resonator-accent) 3%, transparent),
+      transparent 40%),
+    color-mix(in srgb, var(--surface-2) 62%, transparent);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex-grow: 1;
+  padding: 0.5rem 0.75rem 0.5rem calc(0.65rem + 3px);
+  transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.rotation-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 22%;
+  bottom: 22%;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: color-mix(in srgb, var(--rotation-item-accent) 35%, transparent);
+  transition: background 180ms ease, top 180ms ease, bottom 180ms ease;
+  z-index: 1;
+}
+
+.rotation-item:not(:has(.expanded)):hover {
+  border-color: color-mix(in srgb, var(--rotation-item-accent) 18%, var(--item-border));
+  background:
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--rotation-item-accent) 6%, transparent),
+      transparent 50%),
+    color-mix(in srgb, var(--surface-2) 78%, transparent);
+  box-shadow: 0 0.15rem 0.5rem color-mix(in srgb, var(--rotation-item-accent) 8%, transparent);
+}
+
+.rotation-item:not(:has(.expanded)):hover::before {
+  background: color-mix(in srgb, var(--rotation-item-accent) 72%, transparent);
+  top: 14%;
+  bottom: 14%;
+}
+
+.block-entries-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.rotation-collapse-button,
+.block-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 1px solid color-mix(in srgb, var(--rotation-item-accent) 16%, var(--item-border));
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.rotation-collapse-button:hover,
+.block-icon-button:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--rotation-item-accent) 34%, var(--item-border));
+}
+
+.block-icon-button.power:hover {
+  color: color-mix(in srgb, red 72%, var(--text));
+}
+
+.block-icon-button.delete:hover {
+  color: color-mix(in srgb, var(--danger) 82%, var(--text));
+}
+
+.soft-empty {
+  color: var(--muted);
+}
+
+.soft-empty.compact {
+  padding: 0.42rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.rotation-item.selection-mode {
+  cursor: pointer;
+}

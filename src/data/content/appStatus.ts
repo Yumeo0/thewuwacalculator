@@ -36,7 +36,7 @@ export const STATUS_DATA = {
     'Where you\'re reading this from looks different doesn\'t it? so does a lot of other stuff~! As you may have noticed the whole interface looks way WAY different now..',
     'A series of visual changes that would affect your experience (positively yes?) while using this have been made while some not so visual changes have been made as well to have stuff run' +
     ' more smoothly.',
-    'IMPORTANT: As a lot has been changed, if you feel like there\'s something missing or something you don\t quite like, please POLITELY let me know in the discord server. It\'s not like i don\'t' +
+    'IMPORTANT: As a lot has been changed, if you feel like there\'s something missing or something you don\'t quite like, please POLITELY let me know in the discord server. It\'s not like i don\'t' +
     ' listen and/or act on your feedback. I\'m very active i promise.',
   ],
   // Consumers join these status records with live catalog counts by key.

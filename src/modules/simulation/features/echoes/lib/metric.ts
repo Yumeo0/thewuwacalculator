@@ -78,7 +78,7 @@ export function cmptEchoCritAll(echo: EchoInstance): number {
 
 export function getScrBdgCls(score: number): string {
   const tier = getTier(score, SCORE_TIERS)
-  return `echo-score-badge echo-score-badge--stage-${tier.stage} echo-score-badge--${tier.tone}`
+  return `esb esb--stage-${tier.stage} esb--${tier.tone}`
 }
 
 export function getScrTone(score: number): ScoreTone {
@@ -100,7 +100,7 @@ export function getCvToneColor(cv: number, maxCv = MAX_CV): string {
 
 export function getCvBdgClss(cv: number, maxCv = MAX_CV): string {
   const tier = getTier(getPrcnFromC(cv, maxCv), SCORE_TIERS)
-  return `echo-cv-badge echo-cv-badge--stage-${tier.stage} echo-cv-badge--${tier.tone}`
+  return `ecv ecv--stage-${tier.stage} ecv--${tier.tone}`
 }
 
 // Remove a 44-CV main-stat allowance for up to two four-cost Echoes, then

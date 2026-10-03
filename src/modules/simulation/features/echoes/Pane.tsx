@@ -32,7 +32,7 @@ import {
   mkDefEchoNst,
 } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
 import { cmptTtlEchoC } from '@/modules/simulation/features/echoes/lib/echoes.ts'
-import { useEchoScores } from '@/engine/evaluation/useEchoScoringRevision.ts'
+import { useEchoScores } from '@/application/hooks/useEchoScoringRevision.ts'
 import type { RtUpdHnd } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
 import { ConfirmHost } from '@/shared/ui/ConfirmationModal.tsx'
 import { useAppModal, useAppModalValue } from '@/shared/ui/useAppModal.ts'
@@ -677,7 +677,7 @@ export function Echoes({
       <ContextTrigger
           asChild
           ariaLabel="Echoes pane actions"
-          items={mkEchoPaneCt()}
+          items={selMode ? selection.contextItemsFor() : mkEchoPaneCt()}
       >
         <section
             className={`calc-pane echoes-pane${selMode ? ' selection-mode' : ''}`}
@@ -763,7 +763,7 @@ export function Echoes({
                     <ContextTrigger
                         asChild
                         ariaLabel={`${getEchoById(runtime.build.echoes[0].id)?.name ?? 'Echo'} actions`}
-                        items={mkEchoSlotCt(0, runtime.build.echoes[0])}
+                        items={selMode ? selection.contextItemsFor(0) : mkEchoSlotCt(0, runtime.build.echoes[0])}
                     >
                       <EchoSlot
                           key="echo-slot-0"
@@ -787,7 +787,7 @@ export function Echoes({
                     <ContextTrigger
                         asChild
                         ariaLabel="Empty echo slot actions"
-                        items={mkMptySlotCt(0)}
+                        items={selMode ? selection.contextItemsFor() : mkMptySlotCt(0)}
                     >
                       <EchoSlot
                           key="echo-slot-0"
@@ -836,7 +836,7 @@ export function Echoes({
                             <ContextTrigger
                                 asChild
                                 ariaLabel={`${getEchoById(runtime.build.echoes[1].id)?.name ?? 'Echo'} actions`}
-                                items={mkEchoSlotCt(1, runtime.build.echoes[1])}
+                                items={selMode ? selection.contextItemsFor(1) : mkEchoSlotCt(1, runtime.build.echoes[1])}
                             >
                               <EchoSlot
                                   echo={runtime.build.echoes[1]}
@@ -856,7 +856,7 @@ export function Echoes({
                             <ContextTrigger
                                 asChild
                                 ariaLabel="Empty echo slot actions"
-                                items={mkMptySlotCt(1)}
+                                items={selMode ? selection.contextItemsFor() : mkMptySlotCt(1)}
                             >
                               <EchoSlot
                                   echo={runtime.build.echoes[1]}
@@ -891,7 +891,7 @@ export function Echoes({
                           <ContextTrigger
                               asChild
                               ariaLabel={`${getEchoById(echo.id)?.name ?? 'Echo'} actions`}
-                              items={mkEchoSlotCt(index, echo)}
+                              items={selMode ? selection.contextItemsFor(index) : mkEchoSlotCt(index, echo)}
                           >
                             <EchoSlot
                                 echo={echo}
@@ -911,7 +911,7 @@ export function Echoes({
                           <ContextTrigger
                               asChild
                               ariaLabel="Empty echo slot actions"
-                              items={mkMptySlotCt(index)}
+                              items={selMode ? selection.contextItemsFor() : mkMptySlotCt(index)}
                           >
                             <EchoSlot
                                 echo={echo}

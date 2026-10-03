@@ -1,0 +1,136 @@
+.app-shell {
+  --bg: #f6f7fb;
+  --bg-alt: #edf1f8;
+  --surface: rgba(255, 255, 255, 0.85);
+  --surface-2: rgba(255, 255, 255, 0.95);
+  --panel: rgba(255, 255, 255, 0.85);
+  --border: rgba(25, 51, 83, 0.14);
+  --ui-panel-card-divider-color: var(--border);
+  --floating-bg: color-mix(in srgb, var(--surface-2, var(--panel, #1c2330)) 88%, transparent);
+  --text: #1f2b3f;
+  --text-a: var(--text);
+  --muted: #5b6b85;
+  --accent: #20bfb9;
+  --accent-2: #149fa9;
+  --danger: crimson;
+  --ok: #1eab62;
+  --toolbar-bg: rgba(255, 255, 255, 0.9);
+  --sidebar-bg: rgba(255, 255, 255, 0.9);
+  --hover: rgba(0, 0, 0, 0.05);
+  --shadow: 0 12px 28px rgba(17, 33, 66, 0.16);
+
+  --chrome-height: 3rem;
+  --chrome-accent: var(--accent);
+  --chrome-wash-soft: color-mix(in srgb, var(--chrome-accent) 6.7%, transparent);
+  --chrome-line: color-mix(in srgb, var(--item-border) 95%, var(--text));
+  min-height: 100%;
+  color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.app-wallpaper {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.frosted-aurora.app-shell .app-wallpaper {
+  background-image: var(--background-wallpaper-image, none);
+}
+
+.frosted-aurora.app-shell:not(.blur-off) .app-wallpaper {
+  filter: blur(10px);
+  transition: filter 0.3s ease;
+}
+
+.frosted-aurora.app-shell.blur-off .app-wallpaper {
+  filter: none;
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+}
+
+.layout.collapsed-mode {
+  overflow-y: auto;
+}
+
+.main-content {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+.split {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+}
+
+.gutter {
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+}
+
+.subhit {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.damage-tooltip-wrapper {
+  display: inline-block;
+}
+
+:is(.no-entrance-anim, .reduce-animation) .page-hero,
+:is(.no-entrance-anim, .reduce-animation) .page-bento > .page-tile,
+:is(.no-entrance-anim, .reduce-animation) .not-found-center,
+:is(.no-entrance-anim, .reduce-animation) .rer-band,
+:is(.no-entrance-anim, .reduce-animation) .rer-in,
+:is(.no-entrance-anim, .reduce-animation) .pkm__grid > *,
+:is(.no-entrance-anim, .reduce-animation) .app-status-card,
+:is(.no-entrance-anim, .reduce-animation) .settings-pref-branch[data-open="true"] .settings-pref-branch__option,
+:is(.no-entrance-anim, .reduce-animation) .rotation-loop-card,
+:is(.no-entrance-anim, .reduce-animation) .app-loader-fallback,
+:is(.no-entrance-anim, .reduce-animation) .app-loader-scrim,
+:is(.no-entrance-anim, .reduce-animation) .app-loader-overlay,
+:is(.no-entrance-anim, .reduce-animation) .app-loader-stage,
+:is(.no-entrance-anim, .reduce-animation) .app-loader-seed,
+:is(.no-entrance-anim, .reduce-animation) .app-loader-figure,
+:is(.no-entrance-anim, .reduce-animation) .app-loader-aside,
+:is(.no-entrance-anim, .reduce-animation) .app-loader-bloom,
+:is(.no-entrance-anim, .reduce-animation) .app-loader-bloom::before,
+:is(.no-entrance-anim, .reduce-animation) .app-loader-pool,
+:is(.no-entrance-anim, .reduce-animation) .app-loader-mascot {
+
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+:is(.no-entrance-anim, .reduce-animation) .settings-pref-branch,
+:is(.no-entrance-anim, .reduce-animation) .settings-pref-branch[data-open="true"] {
+  transition: opacity 0.12s ease, grid-template-rows 0.12s ease !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+:is(.no-entrance-anim, .reduce-animation) :is(.app-loader-mascot, .rer-sprite) {
+  background-image: var(--loader-mascot-still);
+}
+
+:is(.no-entrance-anim, .reduce-animation) .app-loader-dust {
+  display: none;
+}

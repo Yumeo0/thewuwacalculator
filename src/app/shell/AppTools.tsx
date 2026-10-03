@@ -26,7 +26,7 @@ export function AppTools({ simulating = true }: { simulating?: boolean }) {
           <Tooltip content={target} placement="bottom">
             <button
               type="button" className="ax-g ax-g--target"
-              aria-label={`Open the target console. ${target}`}
+              aria-label={`Open target settings. ${target}`}
               onClick={openEnemyCnsl}
             >
               <DisplayImage className="ax-face" src={icon} alt="" onError={withDefIconM} />

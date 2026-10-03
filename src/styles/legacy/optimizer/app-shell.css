@@ -1,0 +1,9 @@
+:is(.no-entrance-anim, .reduce-animation) .optimizer-pane > .sticky-wrapper,
+:is(.no-entrance-anim, .reduce-animation) .optimizer-pane > .optimizer-details,
+:is(.no-entrance-anim, .reduce-animation) .optimizer-details > .optimizer-character-settings,
+:is(.no-entrance-anim, .reduce-animation) .optimizer-details > .optimizer-search-results {
+
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+}

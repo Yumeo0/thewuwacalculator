@@ -48,7 +48,7 @@ export function usePickerMotion(
     const body = bodyRef.current
     if (!body) return
     // Once snapshots control card movement, disable the one-time grid animation.
-    body.closest('.picker-modal__frame')?.classList.add('is-live')
+    body.closest('.pkm__frame')?.classList.add('is-live')
     if (calm()) return
     const list = body.querySelectorAll<HTMLElement>('[data-pick-id]')
     if (list.length > MAX_CARDS) return
@@ -103,7 +103,7 @@ export function usePickerMotion(
       ghost.removeAttribute('data-pick-id')
       ghost.setAttribute('aria-hidden', 'true')
       ghost.inert = true
-      ghost.classList.add('picker-modal__leaving')
+      ghost.classList.add('pkm__leaving')
       Object.assign(ghost.style, {
         left: `${rect.left - view.left + body.scrollLeft}px`,
         top: `${rect.top - view.top + body.scrollTop}px`,

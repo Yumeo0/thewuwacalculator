@@ -14,7 +14,7 @@ import { DEF_SHOWCASE_HIDE } from '@/domain/entities/preferences'
 import { spriteVars } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display'
 import { getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
-import { getEvaluationSpinePlacement } from './ui.tsx'
+import { getEvaluationSpinePlacement } from '@/shared/spine/placement'
 import { BuildRail, type BuildRailModel } from '@/modules/simulation/workspace/BuildRail.tsx'
 
 export function RailCardPreview({ resId, animated }: { resId: string; animated: boolean }) {

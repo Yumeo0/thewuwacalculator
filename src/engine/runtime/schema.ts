@@ -819,6 +819,7 @@ const scenarioEnvironmentSchm = z.lazy(() => z.strictObject({
       z.strictObject({ kind: z.literal('attribute'), attributes: z.array(ttrbSchm) }),
       z.strictObject({ kind: z.literal('weaponType'), weaponTypes: z.array(z.number()) }),
     ]),
+    excludedMemberIds: z.optional(z.array(z.string())),
     buffs: mnlBffsSchm,
   })).check(z.refine((effects) => new Set(effects.map((effect) => effect.id)).size === effects.length, 'Environment effect ids must be unique')),
   targetModifiers: z.strictObject({
@@ -1212,6 +1213,10 @@ const uiPersistSchema = z.strictObject({
       weapon: z._default(z.boolean(), DEF_UI_PREFS.echoImportBands.weapon),
       echoes: z._default(z.boolean(), DEF_UI_PREFS.echoImportBands.echoes),
     }), DEF_UI_PREFS.echoImportBands),
+    rotationImportPick: z._default(z.object({
+      load: z._default(z.enum(['rotation', 'build', 'none']), DEF_UI_PREFS.rotationImportPick.load),
+      save: z._default(z.boolean(), DEF_UI_PREFS.rotationImportPick.save),
+    }), DEF_UI_PREFS.rotationImportPick),
   }), DEF_UI_PREFS)),
   leftPaneView: z.enum([
     'resonators',

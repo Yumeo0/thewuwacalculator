@@ -1,0 +1,23 @@
+
+
+html.mui .eqs .eqs-band {
+  grid-template-columns: minmax(0, 1fr);
+  padding-block: 0.2rem;
+}
+
+html.mui .eqs .eqs-slot {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--amdl-line-soft);
+}
+
+html.mui .eqs .eqs-slot:first-child {
+  border-top: 0;
+}
+
+html.mui .eqs .eqs-bank {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  row-gap: 0.8rem;
+}

@@ -410,7 +410,7 @@ export interface EditorBlock extends EditorNodeBase {
 export type EditorNode = EditorNote | EditorStep | EditorCondition | EditorHandoff | EditorBlock
 
 export function editorNodeLabel(node: EditorNode): string {
-  if (node.type === 'swap') return 'Handoff'
+  if (node.type === 'swap') return 'Switch resonator'
   if (node.type === 'note') return node.label?.trim() || 'Note'
   return node.label
 }

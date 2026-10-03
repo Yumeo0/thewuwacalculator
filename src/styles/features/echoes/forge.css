@@ -1,0 +1,443 @@
+.eqs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.eqs-head {
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.eqs-id {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.2rem 0.35rem;
+  margin: -0.2rem -0.35rem;
+  border-radius: 0.55rem;
+  text-align: left;
+  transition: background 160ms ease;
+}
+
+.eqs-id:hover {
+  background: color-mix(in srgb, var(--amdl-text) 5%, transparent);
+}
+
+.eqs-lead {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--amdl-line-soft);
+  background: var(--amdl-sunk);
+  color: var(--amdl-muted);
+}
+
+.eqs-lead img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.eqs-lead em {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 0.06rem 0;
+  text-align: center;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  font: 500 0.44rem/1.35 var(--amdl-mono);
+  font-style: normal;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--amdl-accent) 70%, var(--amdl-text));
+  opacity: 0.6;
+  transition: opacity 160ms ease;
+}
+
+.eqs-id:is(:hover, :focus-visible) .eqs-lead em {
+  opacity: 1;
+}
+
+.eqs-id.is-invalid .eqs-lead {
+  border-color: color-mix(in srgb, var(--amdl-warn) 70%, transparent);
+}
+
+.eqs-lead__warn {
+  position: absolute;
+  top: 0.12rem;
+  right: 0.12rem;
+  display: grid;
+  place-items: center;
+  width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 50%;
+  background: var(--amdl-warn);
+  color: var(--bg);
+}
+
+.eqs-plate {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.eqs-name {
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: var(--amdl-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eqs-sets {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: none;
+  margin-left: 0.5rem;
+}
+
+.eqs-set {
+  position: relative;
+}
+
+.eqs-set__mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--amdl-text) 7%, transparent);
+  transition: background 160ms ease;
+}
+
+.eqs-set__mark:hover {
+  background: color-mix(in srgb, var(--amdl-text) 12%, transparent);
+}
+
+.eqs-set__mark img {
+  width: 1.3rem;
+  height: 1.3rem;
+  object-fit: contain;
+}
+
+.eqs-set__mark i {
+  position: absolute;
+  right: -0.3rem;
+  bottom: -0.3rem;
+  display: grid;
+  place-items: center;
+  min-width: 0.95rem;
+  height: 0.95rem;
+  padding: 0 0.15rem;
+  border-radius: 0.3rem;
+  background: var(--bg);
+  font: 500 0.54rem/1 var(--amdl-mono);
+  font-style: normal;
+  color: var(--amdl-text);
+}
+
+.eqs-set__drop {
+  position: absolute;
+  top: -0.42rem;
+  right: -0.42rem;
+  display: grid;
+  place-items: center;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--amdl-line);
+  color: var(--amdl-muted);
+  opacity: 0;
+  transition: opacity 140ms ease, color 140ms ease;
+}
+
+.eqs-set:hover .eqs-set__drop,
+.eqs-set__drop:focus-visible {
+  opacity: 1;
+}
+
+.eqs-set__drop:hover {
+  color: var(--amdl-bad);
+}
+
+.eqs-addset.app-select {
+  width: auto;
+}
+
+.eqs-addset .eqs-addset__trigger {
+  display: grid;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  min-width: 0;
+  height: 1.8rem;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0.4rem;
+  background: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amdl-text) 14%, transparent);
+  color: var(--amdl-muted);
+}
+
+.eqs-addset .eqs-addset__trigger:is(:hover, [aria-expanded='true']) {
+  color: var(--amdl-text);
+  box-shadow: inset 0 0 0 1px var(--amdl-accent);
+}
+
+.eqs-k {
+  font-size: 0.7rem;
+  color: var(--amdl-muted);
+}
+
+.eqs-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex: none;
+}
+
+.eqs-ul {
+  display: inline-flex;
+  gap: 0.6rem;
+  font: 400 0.74rem/1 var(--amdl-mono);
+  color: var(--amdl-muted);
+}
+
+.eqs-ul button {
+  position: relative;
+  padding: 0.2rem 0.05rem 0.3rem;
+}
+
+.eqs-ul button:disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+
+.eqs-ul button[aria-pressed='true'] {
+  color: var(--amdl-text);
+}
+
+.eqs-ul button[aria-pressed='true']::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: var(--amdl-text);
+}
+
+.eqs-ul button:not(:disabled):not([aria-pressed='true']):hover {
+  color: var(--amdl-text);
+}
+
+.eqs-pill--over .amdl__pill-value {
+  color: var(--amdl-warn);
+}
+
+.eqs-band {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 0.55rem 0.85rem 0.65rem;
+  border-bottom: 1px solid var(--amdl-line-soft);
+}
+
+.eqs-slot {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0 0.6rem;
+}
+
+.eqs-slot:first-child {
+  padding-left: 0;
+}
+
+.eqs-slot:last-child {
+  padding-right: 0;
+}
+
+.eqs-slot + .eqs-slot {
+  border-left: 1px solid var(--amdl-line-soft);
+}
+
+.eqs-slot.is-off {
+  opacity: 0.3;
+}
+
+.eqs-slot__top {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.eqs-pos {
+  font: 500 0.55rem/1 var(--amdl-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--amdl-text) 38%, transparent);
+}
+
+.eqs-pos.is-lead {
+  color: var(--eec-ink);
+}
+
+.eqs-slot__val {
+  font: 500 0.7rem/1 var(--amdl-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--eec-ink);
+}
+
+.eqs-ul--cost {
+  gap: 0.45rem;
+  margin-left: auto;
+  font-size: 0.62rem;
+}
+
+.eqs-ul--cost button {
+  padding: 0.1rem 0.05rem 0.2rem;
+}
+
+.eqs-slot__main {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.eqs-slot__idle {
+  font: 400 0.66rem/1.6 var(--amdl-mono);
+  color: color-mix(in srgb, var(--amdl-text) 30%, transparent);
+}
+
+.eqs-slot__clear {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 0.3rem;
+  color: color-mix(in srgb, var(--amdl-text) 40%, transparent);
+  opacity: 0;
+  transition: opacity 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.eqs-slot:hover .eqs-slot__clear,
+.eqs-slot__clear:focus-visible {
+  opacity: 1;
+}
+
+.eqs-slot__clear:hover {
+  color: var(--amdl-bad);
+  background: color-mix(in srgb, var(--amdl-bad) 14%, transparent);
+}
+
+.eqs-tabs {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 0.85rem 0;
+}
+
+.eqs-ul--tabs {
+  gap: 1rem;
+  font-size: 0.72rem;
+}
+
+.eqs-ul--tabs b {
+  margin-left: 0.3rem;
+  font-weight: 500;
+  color: var(--amdl-muted);
+}
+
+.eqs-ul--tabs button[aria-pressed='true'] b {
+  color: var(--eec-ink);
+}
+
+.eqs-apply {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-left: auto;
+}
+
+.eqs-mult {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font: 500 0.74rem/1 var(--amdl-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--eec-ink);
+}
+
+.eqs-mult button {
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 0.25rem;
+  color: var(--amdl-muted);
+}
+
+.eqs-mult button:hover:not(:disabled) {
+  color: var(--amdl-text);
+  background: var(--amdl-sunk);
+}
+
+.eqs-mult button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.eqs-tpl-drop {
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.32rem;
+  color: color-mix(in srgb, var(--amdl-text) 40%, transparent);
+  transition: color 140ms ease, background 140ms ease;
+}
+
+.eqs-tpl-drop:hover {
+  color: var(--amdl-bad);
+  background: color-mix(in srgb, var(--amdl-bad) 14%, transparent);
+}
+
+.eqs-bank {
+  padding-top: 0.6rem;
+}
+
+.eqs-empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.6rem;
+  min-height: 9rem;
+  padding: 0.85rem;
+  font-size: 0.8rem;
+  color: var(--amdl-muted);
+}
+
+.eqs .amdl__act {
+  white-space: nowrap;
+}
+
+.eqs .amdl__act:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.reduce-animation :is(.eqs-id, .eqs-lead em, .eqs-set__mark, .eqs-set__drop, .eqs-slot__clear, .eqs-tpl-drop) {
+  transition: none;
+}

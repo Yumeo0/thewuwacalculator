@@ -1,0 +1,35 @@
+@media (max-width: 1070px) {
+
+  .calculator-workspace,
+.calculator-stage--workspace {
+    overflow: auto;
+    max-height: calc(100vh - 3rem);
+  }
+
+  .calculator-workspace .split {
+    flex-direction: column;
+    gap: 0.8rem;
+    height: auto;
+    overflow: visible;
+  }
+
+  .split.resizable-split .split-panel {
+    flex: none !important;
+    width: 100% !important;
+  }
+
+  .calc-pane,
+.pane-section {
+    height: auto;
+    min-height: auto;
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .analysis-overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trace-icons {
+    grid-template-columns: repeat(3, 1fr);
+  }}

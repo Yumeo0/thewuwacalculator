@@ -47,7 +47,7 @@ const SUBSTAT_GROUPS: SubstatGroup[] = [
   {
     title: 'Per-step change (gain / loss)',
     columns: [
-      { col: 'addRoll', label: '+ dmg', title: 'Damage gained by adding the chosen number of steps of this substat (lands exactly at the five-slot value ceiling once it is full)', kind: 'gain', format: 'damage', presentOnly: false },
+      { col: 'addRoll', label: '+ dmg', title: 'Damage gained by adding the chosen number of substat value steps, capped at the maximum value across five Echo slots', kind: 'gain', format: 'damage', presentOnly: false },
       { col: 'addRollPct', label: '+ dmg %', title: 'That damage gain as a percent of current damage', kind: 'gain', format: 'percent', presentOnly: false },
       { col: 'addAmount', label: '+ value', title: 'Stat value added by the chosen number of steps (clamped to the five-slot value ceiling); superscript = steps actually applied', kind: 'gain', format: 'statval', presentOnly: false },
       { col: 'removeRoll', label: '− dmg', title: 'Damage lost by removing the chosen number of steps (capped at the value the build actually has)', kind: 'loss', format: 'damage', presentOnly: true },
@@ -187,14 +187,14 @@ function buildSubstatNote(row: SubstatViewRow, group: SubstatGroup, steps: numbe
   if (row.present && columns.has('total')) {
     lines.push({
       cells: 'Total',
-      text: `The raw amount carried on your build is ${cell('total')}, gathered from ${owned}, the small superscript on that cell.`,
+      text: `Your build has ${cell('total')} from ${owned}. The superscript shows how many slots contribute.`,
     })
   }
 
   if (row.present && columns.has('quality')) {
     lines.push({
       cells: 'Quality',
-      text: `Those slots are landing at ${cell('quality')} of the best value possible for ${owned}.`,
+      text: `Those ${owned} provide ${cell('quality')} of their maximum possible value.`,
     })
   }
 

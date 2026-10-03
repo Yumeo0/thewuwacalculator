@@ -1,0 +1,1273 @@
+body,
+:root,
+.app-shell {
+  --c-white: white;
+  --c-black: black;
+  --c-transparent: transparent;
+  --c-magenta: magenta;
+
+  --shadow: none;
+  --danger: crimson;
+  --ok: #1eab62;
+  --avg-base: orange;
+
+  --bg-alt: var(--bg);
+  --panel: var(--surface);
+  --surface-2: color-mix(in srgb, var(--surface) 86%, var(--surface-boost, var(--c-white)));
+  --surface-soft: color-mix(in srgb, var(--surface) 88%, var(--accent));
+  --muted: color-mix(in srgb, var(--text) var(--m-muted, 72%), var(--m-muted-target, var(--accent)));
+  --accent-2: color-mix(in srgb, var(--accent) 74%, var(--text));
+  --highlight: var(--accent);
+
+  --box-border: var(--border);
+  --grid-border: color-mix(in srgb, var(--border) 78%, var(--c-transparent));
+  --row-even: color-mix(in srgb, var(--muted) 5%, var(--c-transparent));
+  --row-odd: color-mix(in srgb, var(--surface-2) 92%, var(--c-transparent));
+  --inner-bg: color-mix(in srgb, var(--surface) 66%, var(--c-transparent));
+  --inner-border: color-mix(in srgb, var(--border) 82%, var(--c-transparent));
+  --inner-shadow: inset 0 1px 1px color-mix(in srgb, var(--c-black) 16%, var(--c-transparent));
+  --item-bg: color-mix(in srgb, var(--surface-2) 86%, var(--c-transparent));
+  --item-border: color-mix(in srgb, var(--border) 85%, var(--c-transparent));
+  --input-bg: color-mix(in srgb, var(--surface-2) 88%, var(--bg));
+  --input-border: color-mix(in srgb, var(--border) 72%, var(--surface));
+  --input-color: var(--text);
+  --slider-empty: color-mix(in srgb, var(--muted) 18%, var(--c-transparent));
+  --hdr-bg: color-mix(in srgb, var(--surface-2) 68%, var(--c-transparent));
+  --hdr-border: color-mix(in srgb, var(--border) 82%, var(--c-transparent));
+  --focus-ring: color-mix(in srgb, var(--resonator-accent, var(--accent)) 18%, var(--c-transparent));
+  --hover: color-mix(in srgb, var(--hover-color, var(--c-white)) var(--a-hover, 6%), var(--c-transparent));
+
+  --shell-bg-1: var(--shell, var(--surface));
+  --shell-bg-2: var(--shell-bg-1);
+  --box-bg-1: var(--surface-2);
+  --box-bg-2: var(--box-bg-1);
+  --toast-bg-1: color-mix(in srgb, var(--toast-surface, var(--surface-2)) 94%, var(--c-transparent));
+  --toast-bg-2: var(--toast-bg-1);
+  --loader-bg-1: color-mix(in srgb, var(--loader-surface, var(--surface-2)) 94%, var(--c-transparent));
+  --loader-bg-2: var(--loader-bg-1);
+  --ctrl-bg-1: var(--ctrl-surface, color-mix(in srgb, var(--surface-2) 88%, var(--accent)));
+  --ctrl-bg-2: var(--ctrl-bg-1);
+  --chip-bg-1: color-mix(in srgb, var(--surface-2) 90%, var(--text) 10%);
+  --chip-bg-2: var(--chip-bg-1);
+  --ctrl-on-bg-1: var(--highlight);
+  --ctrl-on-bg-2: var(--accent);
+  --ctrl-on-bg-3: var(--ctrl-on-bg-2);
+  --cb-bg-1: var(--surface);
+  --cb-bg-2: var(--cb-bg-1);
+  --cb-on-bg-1: var(--cb-on-seed-bg, var(--accent));
+  --cb-on-bg-2: var(--cb-on-bg-1);
+  --cb-on-bg-3: var(--cb-on-bg-2);
+  --hl-bg-1: var(--c-transparent);
+  --hl-bg-2: var(--hl-bg-1);
+  --hl-bg-3: var(--hl-bg-1);
+  --trace-bg-1: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+  --trace-bg-2: var(--trace-bg-1);
+  --trace-bg-3: var(--trace-bg-1);
+  --menu-hover-1: color-mix(in srgb, var(--menu-hover-color, var(--accent)) var(--a-menu-hover, 12%), var(--c-transparent));
+  --menu-hover-2: var(--menu-hover-1);
+
+  --shell-bg: linear-gradient(180deg, var(--shell-bg-1), var(--shell-bg-2));
+  --toolbar-bg: var(--shell-bg);
+  --sidebar-bg: var(--shell-bg);
+  --box-bg: linear-gradient(200deg, var(--box-bg-1), var(--box-bg-2));
+  --toast-bg: linear-gradient(145deg, var(--toast-bg-1), var(--toast-bg-2));
+  --loader-bg: linear-gradient(145deg, var(--loader-bg-1), var(--loader-bg-2));
+  --ctrl-bg: linear-gradient(145deg, var(--ctrl-bg-1), var(--ctrl-bg-2));
+  --chip-bg: linear-gradient(145deg, var(--chip-bg-1), var(--chip-bg-2));
+  --ctrl-on-bg: linear-gradient(145deg, var(--ctrl-on-bg-1), var(--ctrl-on-bg-2), var(--ctrl-on-bg-3));
+  --cb-bg: linear-gradient(135deg, var(--cb-bg-1), var(--cb-bg-2));
+  --cb-on-bg: linear-gradient(145deg, var(--cb-on-bg-1), var(--cb-on-bg-2), var(--cb-on-bg-3));
+  --hl-bg: linear-gradient(0deg, var(--hl-bg-1), var(--hl-bg-2), var(--hl-bg-3));
+  --trace-bg: linear-gradient(145deg, var(--trace-bg-1), var(--trace-bg-2), var(--trace-bg-3));
+  --menu-hover-bg: linear-gradient(145deg, var(--menu-hover-1), var(--menu-hover-2));
+
+  --box-shadow-inner: var(--c-transparent);
+  --box-shadow-outer: var(--c-transparent);
+  --toast-shadow-drop: color-mix(in srgb, var(--toast-shadow-color, var(--c-black)) var(--a-toast-shadow, 8%), var(--c-transparent));
+  --toast-shadow-glow: color-mix(in srgb, var(--c-black) var(--a-toast-shadow-2, 5%), var(--c-transparent));
+  --loader-shadow-c: color-mix(in srgb, var(--c-black) var(--a-loader-shadow, 28%), var(--c-transparent));
+  --cb-on-shadow-c: color-mix(in srgb, var(--accent) 28%, var(--c-transparent));
+  --hl-shadow-1: var(--c-transparent);
+  --hl-shadow-2: var(--c-transparent);
+  --trace-shadow-c: color-mix(in srgb, var(--accent) 15%, var(--c-transparent));
+  --trace-hv-shadow-c: color-mix(in srgb, var(--c-black) 40%, var(--c-transparent));
+  --trace-on-shadow-c: color-mix(in srgb, var(--c-black) 13%, var(--c-transparent));
+  --ctrl-on-shadow-1: color-mix(in srgb, var(--c-white) 22%, var(--c-transparent));
+  --ctrl-on-shadow-2: color-mix(in srgb, var(--resonator-accent, var(--accent)) 18%, var(--c-transparent));
+  --chip-hv-shadow-1: color-mix(in srgb, var(--c-white) 22%, var(--c-transparent));
+  --chip-hv-shadow-2: color-mix(in srgb, var(--resonator-accent, var(--accent)) 16%, var(--c-transparent));
+  --menu-section-shadow-c: color-mix(in srgb, var(--c-black) 8%, var(--c-transparent));
+  --menu-icon-filter-c: var(--accent);
+
+  --box-shadow: inset 0 0 10px var(--box-shadow-inner), 0 0 15px var(--box-shadow-outer);
+  --toast-shadow: 0 4px 24px var(--toast-shadow-drop), 0 1px 4px var(--toast-shadow-glow);
+  --loader-shadow: 0 10px 24px var(--loader-shadow-c);
+  --cb-on-shadow: 0 0 10px var(--cb-on-shadow-c);
+  --hl-shadow: 0 0 6px var(--hl-shadow-1), 0 0 10px var(--hl-shadow-2);
+  --trace-shadow: 0 0 10px var(--trace-shadow-c);
+  --trace-hv-shadow: 0 2px 6px var(--trace-hv-shadow-c);
+  --trace-on-shadow: 0 1px 4px var(--trace-on-shadow-c);
+  --ctrl-on-shadow: inset 0 1px 0 var(--ctrl-on-shadow-1), 0 .1rem 1.8rem var(--ctrl-on-shadow-2);
+  --chip-hv-shadow: inset 0 1px 0 var(--chip-hv-shadow-1), 0 .1rem 1.8rem var(--chip-hv-shadow-2);
+  --menu-section-shadow: 0 8px 18px var(--menu-section-shadow-c);
+  --menu-type-icon-filter: drop-shadow(0 0 6px color-mix(in srgb, var(--menu-icon-filter-c) 35%, var(--c-transparent)));
+
+  --ctrl-border: color-mix(in srgb, var(--resonator-accent, var(--accent)) 28%, var(--border));
+  --ctrl-color: var(--text);
+  --ctrl-on-border: color-mix(in srgb, var(--resonator-accent, var(--accent)) 56%, var(--item-border));
+  --ctrl-on-color: var(--bg);
+  --ctrl-on-fw: 600;
+  --ctrl-on-text-shadow: none;
+
+  --chip-border: color-mix(in srgb, var(--border-seed, var(--accent)) var(--a-chip-border, 25%), var(--c-transparent));
+  --chip-color: var(--text);
+  --chip-shadow: var(--ui-pill-shadow);
+  --chip-hv-bg: var(--chip-bg);
+  --chip-hv-border: color-mix(in srgb, var(--resonator-accent, var(--accent)) 42%, var(--item-border));
+  --chip-hv-color: var(--chip-color);
+
+  --hl-color: var(--highlight);
+  --hl-fill: var(--c-transparent);
+
+  --modal-bg: color-mix(in srgb, color-mix(in srgb, var(--text) 3%, var(--c-transparent)) 12%, var(--bg));
+  --modal-border: var(--ctrl-border);
+  --modal-color: var(--text);
+  --modal-shadow: none;
+  --modal-backdrop: none;
+
+  --cb-border: color-mix(in srgb, var(--border-seed, var(--accent)) 30%, var(--c-transparent));
+  --cb-on-border: var(--cb-on-seed-border, var(--accent-2));
+
+  --toast-highlight: var(--highlight);
+  --toast-text: var(--text);
+  --toast-muted: var(--muted);
+  --toast-border: color-mix(in srgb, var(--border-seed, var(--accent)) var(--a-toast-border, 20%), var(--c-transparent));
+
+  --loader-dim-opacity: 0.52;
+  --loader-border: color-mix(in srgb, var(--border-seed, var(--accent)) var(--a-loader-border, 25%), var(--c-transparent));
+  --loader-text: var(--text);
+  --loader-spin-track: color-mix(in srgb, var(--spin-track, var(--border-seed, var(--accent))) var(--a-spin-track, 22%), var(--c-transparent));
+  --loader-spin-accent: var(--slider-color, var(--spin-accent, var(--accent)));
+
+  --trace-backdrop: none;
+
+  --menu-bg: var(--surface);
+  --menu-border: 1px solid var(--ctrl-border);
+  --menu-color: var(--text);
+  --menu-shadow: none;
+  --menu-backdrop: none;
+  --menu-section-bg: color-mix(in srgb, var(--picker-modal-surface, var(--box-bg)) 97%, var(--c-white) 3%);
+  --menu-section-border: color-mix(in srgb, var(--picker-modal-text, var(--text)) 6%, var(--c-transparent));
+  --menu-label-bg: color-mix(in srgb, var(--picker-modal-text, var(--text)) 4%, var(--c-transparent));
+  --menu-label-border: color-mix(in srgb, var(--picker-modal-text, var(--text)) 7%, var(--c-transparent));
+  --menu-label-accent: color-mix(in srgb, var(--accent) 28%, var(--border));
+  --menu-item-bg: color-mix(in srgb, var(--picker-modal-text, var(--text)) 4%, var(--c-transparent));
+  --menu-item-border: color-mix(in srgb, var(--picker-modal-text, var(--text)) 7%, var(--c-transparent));
+  --menu-marker-bg: var(--ctrl-bg);
+
+  --avg: color-mix(in srgb, var(--avg-base) 82%, var(--text));
+}
+
+.light-text {
+  --theme: white;
+  --surface-boost: var(--c-white);
+  --hover-color: var(--c-black);
+  --a-hover: 3%;
+  --a-toast-shadow: 8%;
+  --a-toast-shadow-2: 5%;
+  --a-loader-shadow: 10%;
+  --a-menu-hover: 18%;
+  --loader-bg-1: color-mix(in srgb, var(--c-white) 90%, var(--c-transparent));
+  --loader-bg-2: var(--loader-bg-1);
+  --loader-border: color-mix(in srgb, var(--c-black) 14%, var(--c-transparent));
+  --loader-shadow-c: color-mix(in srgb, var(--c-black) 12%, var(--c-transparent));
+  --loader-text: color-mix(in srgb, var(--c-black) 94%, var(--c-transparent));
+  --loader-spin-track: color-mix(in srgb, var(--c-black) 20%, var(--c-transparent));
+  --toast-bg-1: color-mix(in srgb, var(--c-white) 92%, var(--c-transparent));
+  --toast-bg-2: var(--toast-bg-1);
+  --toast-shadow-drop: color-mix(in srgb, var(--c-black) 10%, var(--c-transparent));
+  --toast-shadow-glow: color-mix(in srgb, var(--c-black) 6%, var(--c-transparent));
+}
+
+.dark-text {
+  --theme: black;
+  --surface-boost: var(--c-white);
+  --hover-color: var(--c-white);
+  --a-hover: 6%;
+  --ui-pill-border-color: transparent;
+  --toast-shadow-color: var(--c-black);
+  --a-toast-shadow: 40%;
+  --a-toast-shadow-2: 20%;
+  --a-loader-shadow: 38%;
+  --menu-hover-color: var(--c-white);
+  --a-menu-hover: 5%;
+  text-rendering: optimizeLegibility;
+}
+
+.light {
+  --bg: #f9f9f9;
+  --surface: rgba(255, 255, 255, 0.86);
+  --text: #1f2b3f;
+  --accent: #20bfb9;
+
+  --shell: rgba(255, 255, 255, 0.9);
+  --border-seed: #193353;
+  --highlight: #d19c4e;
+  --warm: unset;
+  --cool: unset;
+  --decor: unset;
+  --accent-2-seed: #149fa9;
+  --muted-seed: #5b6b85;
+  --surface-2-seed: rgba(255, 255, 255, 0.95);
+
+  --accent-2: var(--accent-2-seed);
+  --muted: var(--muted-seed);
+  --surface-2: var(--surface-2-seed);
+  --a-border: 14%;
+}
+
+.pastel-pink {
+  --bg: #ffe4e9;
+  --surface: var(--bg);
+  --text: #521d2f;
+  --accent: #ff6884;
+
+  --shell: var(--bg);
+  --highlight: var(--accent);
+  --warm: unset;
+  --cool: unset;
+  --decor: #ff0080;
+  --border-seed: color-mix(in srgb, var(--decor) 60%, var(--text));
+  --avg-seed: #05d4ea;
+
+  --avg-base: var(--avg-seed);
+  --bg-alt: color-mix(in srgb, var(--bg) 82%, var(--accent));
+  --surface-2: color-mix(in srgb, var(--surface) 78%, var(--c-white));
+  --m-muted-target: var(--bg);
+  --ctrl-surface: color-mix(in srgb, var(--surface-2) 85%, var(--accent));
+  --cb-on-seed-bg: var(--decor);
+  --cb-on-seed-border: color-mix(in srgb, var(--decor) 78%, var(--text));
+  --a-border: 25%;
+  --a-toast-border: 20%;
+  --a-loader-border: 30%;
+  --a-spin-track: 23%;
+  --a-chip-border: 42%;
+  --menu-hover-color: var(--accent);
+  --a-menu-hover: 28%;
+}
+
+.pastel-blue {
+  --bg: #e4f2ff;
+  --surface: var(--bg);
+  --text: #143056;
+  --accent: #338bff;
+
+  --shell: var(--bg);
+  --highlight: var(--warm);
+  --warm: saddlebrown;
+  --cool: darkgoldenrod;
+  --decor: #ff0000;
+  --border-seed: color-mix(in srgb, var(--accent) 55%, var(--text));
+  --avg-seed: #3509ba;
+
+  --avg-base: var(--avg-seed);
+  --bg-alt: color-mix(in srgb, var(--bg) 84%, var(--accent));
+  --surface-2: color-mix(in srgb, var(--surface) 78%, var(--c-white));
+  --ctrl-surface: color-mix(in srgb, var(--surface-2) 88%, var(--accent));
+  --loader-text: var(--warm);
+  --chip-border: var(--warm);
+  --cb-on-seed-bg: var(--decor);
+  --cb-on-seed-border: color-mix(in srgb, var(--decor) 45%, var(--c-white));
+  --menu-marker-bg: var(--cool);
+  --spin-accent: color-mix(in srgb, var(--accent) 78%, var(--c-white));
+  --m-muted: 70%;
+  --a-border: 25%;
+  --a-toast-border: 18%;
+  --a-loader-border: 25%;
+  --a-spin-track: 25%;
+  --menu-hover-color: var(--accent);
+  --a-menu-hover: 22%;
+}
+
+.vibrant-citrus {
+  --bg: #fff2d7;
+  --surface: color-mix(in srgb, var(--bg) 78%, var(--c-white));
+  --text: #4d2f12;
+  --accent: #ff5ea8;
+
+  --shell: var(--surface);
+  --highlight: color-mix(in srgb, #7ed102 82%, var(--accent-tint));
+  --warm: #ff8400;
+  --cool: #00d4aa;
+  --decor: #0045da;
+  --border-seed: var(--warm);
+  --accent-tint: #ff008f;
+  --accent-2-tint: #ff006f;
+  --avg-seed: forestgreen;
+  --menu-hover-seed: black;
+
+  --avg-base: var(--avg-seed);
+  --bg-alt: color-mix(in srgb, var(--bg) 82%, var(--warm));
+  --surface-2: color-mix(in srgb, var(--surface) 76%, var(--c-white));
+  --m-muted-target: var(--warm);
+  --accent-2: color-mix(in srgb, var(--accent) 78%, var(--accent-2-tint));
+  --ctrl-surface: color-mix(in srgb, var(--surface-2) 88%, var(--c-white));
+  --loader-text: color-mix(in srgb, var(--warm) 58%, var(--text));
+  --chip-border: var(--warm);
+  --cb-on-seed-bg: var(--cool);
+  --cb-on-seed-border: color-mix(in srgb, var(--cool) 82%, var(--text));
+  --spin-accent: var(--warm);
+  --menu-hover-color: var(--menu-hover-seed);
+  --menu-label-accent: color-mix(in srgb, var(--decor) 25%, var(--c-transparent));
+  --a-border: 40%;
+  --a-toast-border: 22%;
+  --a-loader-border: 33%;
+  --a-spin-track: 26%;
+  --a-menu-hover: 1%;
+}
+
+.dark {
+  --bg: #131922;
+  --surface: color-mix(in srgb, var(--surface-base) 86%, var(--c-transparent));
+  --text: #dddddd;
+  --accent: #20bfb9;
+
+  --shell: #1f2937;
+  --highlight: blanchedalmond;
+  --warm: #444444;
+  --cool: #6366f1;
+  --decor: coral;
+  --border-seed: var(--warm);
+  --surface-base: #161e2c;
+  --toast-tint: #161e2c;
+  --toast-border-seed: #646e82;
+  --loader-tint: #161a24;
+  --loader-border-seed: #979797;
+  --ctrl-tint: #646464;
+  --chip-border-tint: var(--c-white);
+  --menu-color-seed: lightgray;
+
+  --surface-2: color-mix(in srgb, var(--bg) 77%, var(--c-transparent));
+  --avg-base: var(--decor);
+  --toast-surface: var(--toast-tint);
+  --toast-border: color-mix(in srgb, var(--toast-border-seed) 28%, var(--c-transparent));
+  --loader-bg-1: color-mix(in srgb, var(--loader-tint) 82%, var(--c-transparent));
+  --loader-bg-2: var(--loader-bg-1);
+  --loader-border: color-mix(in srgb, var(--loader-border-seed) 25%, var(--c-transparent));
+  --loader-text: color-mix(in srgb, var(--text) 92%, var(--c-white));
+  --spin-track: var(--c-white);
+  --ctrl-bg-1: color-mix(in srgb, var(--ctrl-tint) 30%, var(--c-transparent));
+  --ctrl-bg-2: var(--ctrl-bg-1);
+  --chip-bg-1: var(--ctrl-bg-1);
+  --chip-bg-2: var(--chip-bg-1);
+  --chip-border: var(--warm);
+  --cb-on-seed-bg: var(--cool);
+  --cb-on-seed-border: var(--cool);
+  --menu-color: var(--menu-color-seed);
+  --a-border: 44%;
+  --m-muted: 72%;
+  --a-toast-shadow: 35%;
+  --a-spin-track: 20%;
+}
+
+.dark-alt {
+  --bg: #000000;
+  --surface: #000000;
+  --text: #dddddd;
+  --accent: #2ab6ab;
+
+  --shell: var(--bg);
+  --highlight: lightgoldenrodyellow;
+  --warm: #555555;
+  --cool: #60fffa;
+  --decor: #a015f3;
+  --border-seed: var(--warm);
+  --surface-base: #131417;
+  --toast-tint: #0a0a0e;
+  --ctrl-tint: #646464;
+  --chip-border-tint: var(--c-white);
+  --border-tint: var(--c-white);
+  --avg-seed: orangered;
+
+  --surface-2: color-mix(in srgb, var(--surface-base) 38%, var(--c-transparent));
+  --border: color-mix(in srgb, var(--border-tint) 6%, var(--c-transparent));
+  --avg-base: var(--avg-seed);
+  --toast-surface: var(--toast-tint);
+  --toast-border: color-mix(in srgb, var(--warm) 30%, var(--c-transparent));
+  --loader-bg-1: color-mix(in srgb, var(--c-black) 74%, var(--c-transparent));
+  --loader-bg-2: var(--loader-bg-1);
+  --loader-border: color-mix(in srgb, var(--warm) 35%, var(--c-transparent));
+  --ctrl-bg-1: color-mix(in srgb, var(--ctrl-tint) 30%, var(--c-transparent));
+  --ctrl-bg-2: var(--ctrl-bg-1);
+  --chip-bg-1: var(--surface-2);
+  --chip-bg-2: var(--chip-bg-1);
+  --chip-border: color-mix(in srgb, var(--chip-border-tint) 10%, var(--c-transparent));
+  --cb-on-seed-bg: var(--decor);
+  --cb-on-seed-border: var(--decor);
+  --spin-track: var(--cool);
+  --spin-accent: color-mix(in srgb, var(--cool) 90%, var(--c-transparent));
+  --m-muted: 70%;
+  --a-toast-shadow: 50%;
+  --a-toast-shadow-2: 30%;
+  --a-spin-track: 25%;
+}
+
+.cosmic-rainbow {
+  --bg: rgb(8, 8, 21);
+  --surface: radial-gradient(circle at 25% 25%, #130027 0%, #0c0724 50%, #030a20 100%);
+  --text: #e4e7ff;
+  --accent: #8bdfff;
+
+  --shell: rgb(10, 10, 25);
+  --highlight: #ff6ee7;
+  --warm: gold;
+  --cool: #49eaff;
+  --decor: #1b0030;
+  --border-seed: rgb(140, 180, 255);
+  --shell-2: rgb(25, 25, 45);
+  --panel-tint: rgb(20, 20, 45);
+  --tint-blue-soft: #96c8ff;
+  --tint-blue-mid: #96b4ff;
+  --tint-blue-warm: #7896ff;
+  --tint-grid: #c8c8ff;
+  --tint-purple-deep: #19142d;
+  --tint-purple-mid: #371e46;
+  --tint-panel-a: #141932;
+  --tint-panel-b: #232846;
+  --tint-input: #0f1423;
+  --tint-shadow-slot: #283c64;
+  --tint-hdr: #0a0f1e;
+  --tint-ctrl-a: #463c64;
+  --tint-ctrl-b: #1e1e3c;
+  --tint-chip-a: #1e233c;
+  --tint-chip-b: #3c3c64;
+  --tint-cb-a: #240060;
+  --tint-cb-b: #320080;
+  --tint-cb-border: #be96ff;
+  --tint-on-blue: #00b4ff;
+  --tint-on-cyan: #00d4ff;
+  --tint-on-yellow: #ffe066;
+  --tint-toast-a: #14162d;
+  --tint-toast-b: #232341;
+  --tint-loader-a: #0f0f23;
+  --tint-loader-b: #1e1e37;
+  --tint-shell-b: rgb(25, 25, 45);
+  --tint-hl-glow-1: #ffaeFB;
+  --tint-hl-mid: #ffeea6;
+  --tint-trace-c: #ff64ff;
+  --tint-icon-filter: #ffb4ff;
+
+  --avg-base: var(--warm);
+  --surface-2: color-mix(in srgb, var(--text) 3%, var(--c-transparent));
+  --border: color-mix(in srgb, var(--tint-blue-soft) 7%, var(--c-transparent));
+  --a-border: 25%;
+  --m-muted: 78%;
+  --a-hover: 8%;
+  --a-spin-track: 24%;
+  --shell-bg-1: color-mix(in srgb, var(--shell) 90%, var(--c-transparent));
+  --shell-bg-2: color-mix(in srgb, var(--tint-shell-b) 95%, var(--c-transparent));
+  --toast-bg-1: color-mix(in srgb, var(--tint-toast-a) 94%, var(--c-transparent));
+  --toast-bg-2: color-mix(in srgb, var(--tint-toast-b) 94%, var(--c-transparent));
+  --toast-border: color-mix(in srgb, var(--border-seed) 18%, var(--c-transparent));
+  --toast-shadow-drop: color-mix(in srgb, var(--c-black) 45%, var(--c-transparent));
+  --toast-shadow-glow: color-mix(in srgb, var(--border-seed) 6%, var(--c-transparent));
+  --loader-bg-1: color-mix(in srgb, var(--tint-loader-a) 90%, var(--c-transparent));
+  --loader-bg-2: color-mix(in srgb, var(--tint-loader-b) 95%, var(--c-transparent));
+  --loader-border: color-mix(in srgb, var(--border-seed) 25%, var(--c-transparent));
+  --loader-text: color-mix(in srgb, var(--text) 94%, var(--c-white));
+  --spin-track: var(--tint-blue-soft);
+  --spin-accent: color-mix(in srgb, var(--accent) 70%, var(--c-white));
+  --box-bg-1: var(--shell);
+  --box-bg-2: var(--panel-tint);
+  --box-border: color-mix(in srgb, var(--border-seed) 38%, var(--bg));
+  --box-shadow-inner: var(--c-transparent);
+  --box-shadow-outer: var(--c-transparent);
+  --grid-border: color-mix(in srgb, var(--tint-grid) 10%, var(--c-transparent));
+  --row-even: color-mix(in srgb, var(--c-white) 2%, var(--c-transparent));
+  --row-odd: color-mix(in srgb, var(--c-white) 4%, var(--c-transparent));
+  --inner-bg: color-mix(in srgb, var(--tint-purple-deep) 50%, var(--c-transparent));
+  --inner-border: color-mix(in srgb, var(--tint-blue-mid) 15%, var(--c-transparent));
+  --item-bg: color-mix(in srgb, var(--tint-panel-a) 65%, var(--c-transparent));
+  --item-border: color-mix(in srgb, var(--tint-blue-soft) 15%, var(--c-transparent));
+  --input-bg: color-mix(in srgb, var(--tint-input) 60%, var(--c-transparent));
+  --input-border: color-mix(in srgb, var(--border-seed) 25%, var(--c-transparent));
+  --input-color: color-mix(in srgb, var(--text) 92%, var(--c-white));
+  --slider-empty: color-mix(in srgb, var(--tint-shadow-slot) 40%, var(--c-transparent));
+  --hdr-bg: color-mix(in srgb, var(--tint-hdr) 60%, var(--c-transparent));
+  --hdr-border: color-mix(in srgb, var(--tint-blue-warm) 25%, var(--c-transparent));
+  --ctrl-bg-1: color-mix(in srgb, var(--tint-ctrl-a) 70%, var(--c-transparent));
+  --ctrl-bg-2: color-mix(in srgb, var(--tint-ctrl-b) 80%, var(--c-transparent));
+  --ctrl-color: color-mix(in srgb, var(--text) 90%, var(--c-white));
+  --chip-bg-1: color-mix(in srgb, var(--tint-chip-a) 70%, var(--c-transparent));
+  --chip-bg-2: color-mix(in srgb, var(--tint-chip-b) 75%, var(--c-transparent));
+  --chip-border: color-mix(in srgb, var(--tint-blue-soft) 20%, var(--c-transparent));
+  --chip-color: color-mix(in srgb, var(--text) 90%, var(--c-white));
+  --ctrl-on-bg-1: color-mix(in srgb, var(--highlight) 90%, var(--c-transparent));
+  --ctrl-on-bg-2: color-mix(in srgb, var(--tint-on-blue) 90%, var(--c-transparent));
+  --ctrl-on-bg-3: var(--ctrl-on-bg-2);
+  --ctrl-on-color: var(--decor);
+  --cb-bg-1: var(--tint-cb-a);
+  --cb-bg-2: var(--tint-cb-b);
+  --cb-border: color-mix(in srgb, var(--tint-cb-border) 40%, var(--c-transparent));
+  --cb-on-bg-1: color-mix(in srgb, var(--c-magenta) 73%, var(--c-transparent));
+  --cb-on-bg-2: color-mix(in srgb, var(--tint-on-cyan) 70%, var(--c-transparent));
+  --cb-on-bg-3: color-mix(in srgb, var(--tint-on-yellow) 66%, var(--c-transparent));
+  --cb-on-border: color-mix(in srgb, var(--c-white) 25%, var(--c-transparent));
+  --cb-on-shadow-c: color-mix(in srgb, var(--tint-hl-glow-1) 40%, var(--c-transparent));
+  --hl-bg-1: var(--highlight);
+  --hl-bg-2: var(--tint-hl-mid);
+  --hl-bg-3: var(--cool);
+  --hl-color: var(--c-transparent);
+  --hl-fill: var(--c-transparent);
+  --hl-shadow-1: color-mix(in srgb, var(--tint-hl-glow-1) 60%, var(--c-transparent));
+  --hl-shadow-2: color-mix(in srgb, var(--c-magenta) 20%, var(--c-transparent));
+  --trace-bg-1: var(--decor);
+  --trace-bg-2: color-mix(in srgb, var(--tint-shadow-slot) 85%, var(--c-transparent));
+  --trace-bg-3: color-mix(in srgb, var(--tint-trace-c) 34%, var(--c-transparent));
+  --menu-hover-1: color-mix(in srgb, var(--c-white) 6%, var(--c-transparent));
+  --menu-hover-2: color-mix(in srgb, var(--c-white) 4%, var(--c-transparent));
+  --menu-icon-filter-c: var(--tint-icon-filter);
+}
+
+.scarlet-nebula {
+  --bg: rgb(15, 0, 0);
+  --surface: var(--bg);
+  --text: #ffeaea;
+  --accent: #ff8f84;
+
+  --shell: var(--bg);
+  --highlight: #fd5878;
+  --warm: rgb(200, 100, 80);
+  --cool: rgb(170, 255, 252);
+  --decor: rgb(255, 154, 255);
+  --border-seed: var(--warm);
+  --warm-soft: rgb(200, 110, 90);
+  --apricot: rgb(255, 185, 158);
+  --tint-shell-b: #1e0505;
+  --tint-toast-a: #190808;
+  --tint-toast-b: #2d0c0c;
+  --tint-loader-a: #140505;
+  --tint-loader-b: #400000;
+  --tint-box-a: rgb(28, 0, 0);
+  --tint-box-b: rgb(14, 0, 0);
+  --tint-box-border: #c8645a;
+  --tint-box-glow: #ffa0ff;
+  --tint-grid: #dc8264;
+  --tint-inner-bg: #2a0000;
+  --tint-inner-border: #96b4ff;
+  --tint-item-bg: #250101;
+  --tint-input-bg: #3a213a;
+  --tint-input-border: #b4503c;
+  --tint-slider-empty: #3c0000;
+  --tint-spin-track: #dc8264;
+  --tint-ctrl-a: #ff96ff;
+  --tint-ctrl-b: #7e4433;
+  --tint-chip-a: #ff91ff;
+  --tint-chip-b: #ff8a67;
+  --tint-cb-border: #be96ff;
+  --tint-cb-on-a: #ff6644;
+  --tint-cb-on-b: #ff5c5c;
+  --tint-cb-on-c: #ffc47a;
+  --tint-trace-bg-a: #b50000;
+  --tint-trace-bg-b: #420000;
+  --tint-trace-shadow: #ff9d9d;
+  --tint-hl-glow: #ffaeFB;
+  --tint-icon-filter: #ffb4ff;
+  --avg-seed: #cfd60f;
+  --ctrl-color-seed: #e6e6ff;
+  --chip-color-seed: #e3e5ff;
+  --ctrl-on-color-seed: #444444;
+  --spin-tip: #ff4500;
+
+  --avg-base: var(--avg-seed);
+  --surface-2: color-mix(in srgb, var(--text) 3%, var(--c-transparent));
+  --a-border: 9%;
+  --m-muted: 82%;
+  --a-hover: 7%;
+  --a-spin-track: 23%;
+  --shell-bg-1: color-mix(in srgb, var(--bg) 90%, var(--c-transparent));
+  --shell-bg-2: color-mix(in srgb, var(--tint-shell-b) 95%, var(--c-transparent));
+  --toast-bg-1: color-mix(in srgb, var(--tint-toast-a) 94%, var(--c-transparent));
+  --toast-bg-2: color-mix(in srgb, var(--tint-toast-b) 94%, var(--c-transparent));
+  --toast-border: color-mix(in srgb, var(--warm-soft) 20%, var(--c-transparent));
+  --toast-shadow-drop: color-mix(in srgb, var(--c-black) 45%, var(--c-transparent));
+  --toast-shadow-glow: color-mix(in srgb, var(--warm) 5%, var(--c-transparent));
+  --loader-bg-1: color-mix(in srgb, var(--tint-loader-a) 90%, var(--c-transparent));
+  --loader-bg-2: color-mix(in srgb, var(--tint-loader-b) 66%, var(--c-transparent));
+  --loader-border: color-mix(in srgb, var(--warm-soft) 24%, var(--c-transparent));
+  --loader-text: color-mix(in srgb, var(--text) 94%, var(--accent));
+  --spin-track: var(--tint-spin-track);
+  --spin-accent: color-mix(in srgb, var(--accent) 74%, var(--spin-tip));
+  --box-bg-1: var(--tint-box-a);
+  --box-bg-2: var(--tint-box-b);
+  --box-border: color-mix(in srgb, var(--tint-box-border) 12%, var(--c-transparent));
+  --box-shadow-inner: color-mix(in srgb, var(--warm) 5%, var(--c-transparent));
+  --box-shadow-outer: color-mix(in srgb, var(--tint-box-glow) 9%, var(--c-transparent));
+  --grid-border: color-mix(in srgb, var(--tint-grid) 10%, var(--c-transparent));
+  --row-even: color-mix(in srgb, var(--c-white) 2%, var(--c-transparent));
+  --row-odd: color-mix(in srgb, var(--c-white) 4%, var(--c-transparent));
+  --inner-bg: color-mix(in srgb, var(--tint-inner-bg) 8%, var(--c-transparent));
+  --inner-border: color-mix(in srgb, var(--tint-inner-border) 15%, var(--c-transparent));
+  --item-bg: color-mix(in srgb, var(--tint-item-bg) 95%, var(--c-transparent));
+  --item-border: color-mix(in srgb, var(--warm) 15%, var(--c-transparent));
+  --input-bg: color-mix(in srgb, var(--tint-input-bg) 18%, var(--c-transparent));
+  --input-border: color-mix(in srgb, var(--tint-input-border) 25%, var(--c-transparent));
+  --slider-empty: color-mix(in srgb, var(--tint-slider-empty) 29%, var(--c-transparent));
+  --hdr-bg: color-mix(in srgb, var(--tint-input-bg) 18%, var(--c-transparent));
+  --hdr-border: color-mix(in srgb, var(--tint-box-border) 12%, var(--c-transparent));
+  --ctrl-bg-1: color-mix(in srgb, var(--tint-ctrl-a) 45%, var(--c-transparent));
+  --ctrl-bg-2: color-mix(in srgb, var(--tint-ctrl-b) 40%, var(--c-transparent));
+  --ctrl-color: var(--ctrl-color-seed);
+  --chip-bg-1: color-mix(in srgb, var(--tint-chip-a) 18%, var(--c-transparent));
+  --chip-bg-2: color-mix(in srgb, var(--tint-chip-b) 18%, var(--c-transparent));
+  --chip-border: color-mix(in srgb, var(--warm) 20%, var(--c-transparent));
+  --chip-color: var(--chip-color-seed);
+  --ctrl-on-bg-1: var(--decor);
+  --ctrl-on-bg-2: var(--apricot);
+  --ctrl-on-bg-3: var(--ctrl-on-bg-2);
+  --ctrl-on-color: var(--ctrl-on-color-seed);
+  --cb-bg-1: color-mix(in srgb, var(--tint-input-bg) 18%, var(--c-transparent));
+  --cb-bg-2: var(--cb-bg-1);
+  --cb-border: color-mix(in srgb, var(--tint-cb-border) 40%, var(--c-transparent));
+  --cb-on-bg-1: var(--tint-cb-on-a);
+  --cb-on-bg-2: var(--tint-cb-on-b);
+  --cb-on-bg-3: var(--tint-cb-on-c);
+  --cb-on-border: color-mix(in srgb, var(--c-white) 25%, var(--c-transparent));
+  --cb-on-shadow-c: color-mix(in srgb, var(--tint-hl-glow) 40%, var(--c-transparent));
+  --hl-bg-1: var(--highlight);
+  --hl-bg-2: var(--cool);
+  --hl-bg-3: var(--hl-bg-2);
+  --hl-color: var(--c-transparent);
+  --hl-fill: var(--c-transparent);
+  --hl-shadow-1: color-mix(in srgb, var(--tint-hl-glow) 60%, var(--c-transparent));
+  --hl-shadow-2: color-mix(in srgb, var(--c-magenta) 20%, var(--c-transparent));
+  --trace-bg-1: color-mix(in srgb, var(--tint-trace-bg-a) 13%, var(--c-transparent));
+  --trace-bg-2: color-mix(in srgb, var(--tint-trace-bg-b) 40%, var(--c-transparent));
+  --trace-bg-3: var(--trace-bg-2);
+  --trace-shadow-c: color-mix(in srgb, var(--tint-trace-shadow) 28%, var(--c-transparent));
+  --menu-hover-1: color-mix(in srgb, var(--c-white) 6%, var(--c-transparent));
+  --menu-hover-2: color-mix(in srgb, var(--c-white) 4%, var(--c-transparent));
+  --menu-icon-filter-c: var(--tint-icon-filter);
+}
+
+.emerald-forest {
+  --bg: rgb(2, 12, 8);
+  --surface: color-mix(in srgb, rgb(2, 12, 8) 72%, var(--c-white));
+  --text: #e0f0e8;
+  --accent: #5eeaaa;
+
+  --shell: var(--bg);
+  --highlight: var(--accent);
+  --warm: peru;
+  --cool: #60fffa;
+  --decor: #e8c95a;
+  --border-seed: rgb(80, 180, 120);
+  --tint-surface-a: #0a321e;
+  --tint-surface-b: #142d37;
+  --tint-shell-b: #081912;
+  --tint-toast-a: #06160f;
+  --tint-toast-b: #0e2a1e;
+  --tint-loader-a: #04120c;
+  --tint-loader-b: #0a281c;
+  --tint-box-a: rgb(4, 18, 12);
+  --tint-box-glow-inset: #28a05a;
+  --tint-box-glow-outer: #3cc882;
+  --tint-inner-bg: #051e12;
+  --tint-item-bg: #04160e;
+  --tint-input-bg: #05190f;
+  --tint-slider-empty: #0f3723;
+  --tint-ctrl-a: #0f3723;
+  --tint-ctrl-b: #143237;
+  --tint-cb-bg-a: #062015;
+  --tint-cb-bg-b: #0a3020;
+  --tint-cb-on-a: #3cdc8c;
+  --tint-cb-on-b: #32b4c8;
+  --tint-cb-on-c-blue: #40b8d0;
+  --tint-cb-shadow: #3cdc8c;
+  --tint-trace-a: #0a321e;
+  --tint-trace-b: #0f2832;
+  --tint-hl-glow-yellow: #edd03e;
+  --tint-hl-glow-red: #ba0d0d;
+  --ctrl-on-color-seed: #021a0e;
+
+  --avg-base: var(--warm);
+  --surface-2-1: color-mix(in srgb, var(--tint-surface-a) 26%, var(--c-transparent));
+  --surface-2-2: color-mix(in srgb, var(--tint-surface-b) 35%, var(--c-transparent));
+  --surface-2: linear-gradient(145deg, var(--surface-2-1), var(--surface-2-2));
+  --a-border: 9%;
+  --m-muted: 68%;
+  --a-spin-track: 20%;
+  --shell-bg-1: color-mix(in srgb, var(--bg) 90%, var(--c-transparent));
+  --shell-bg-2: color-mix(in srgb, var(--tint-shell-b) 95%, var(--c-transparent));
+  --toast-bg-1: color-mix(in srgb, var(--tint-toast-a) 94%, var(--c-transparent));
+  --toast-bg-2: color-mix(in srgb, var(--tint-toast-b) 94%, var(--c-transparent));
+  --toast-border: color-mix(in srgb, var(--border-seed) 18%, var(--c-transparent));
+  --toast-shadow-drop: color-mix(in srgb, var(--c-black) 45%, var(--c-transparent));
+  --toast-shadow-glow: color-mix(in srgb, var(--accent) 5%, var(--c-transparent));
+  --loader-bg-1: color-mix(in srgb, var(--tint-loader-a) 90%, var(--c-transparent));
+  --loader-bg-2: color-mix(in srgb, var(--tint-loader-b) 80%, var(--c-transparent));
+  --loader-border: color-mix(in srgb, var(--border-seed) 24%, var(--c-transparent));
+  --spin-track: var(--accent);
+  --spin-accent: var(--accent);
+  --box-bg-1: var(--tint-box-a);
+  --box-bg-2: var(--bg);
+  --box-border: color-mix(in srgb, var(--border-seed) 12%, var(--c-transparent));
+  --box-shadow-inner: color-mix(in srgb, var(--tint-box-glow-inset) 4%, var(--c-transparent));
+  --box-shadow-outer: color-mix(in srgb, var(--tint-box-glow-outer) 6%, var(--c-transparent));
+  --grid-border: color-mix(in srgb, var(--border-seed) 10%, var(--c-transparent));
+  --row-even: color-mix(in srgb, var(--c-white) 2%, var(--c-transparent));
+  --row-odd: color-mix(in srgb, var(--c-white) 4%, var(--c-transparent));
+  --inner-bg: color-mix(in srgb, var(--tint-inner-bg) 40%, var(--c-transparent));
+  --inner-border: color-mix(in srgb, var(--border-seed) 15%, var(--c-transparent));
+  --item-bg: color-mix(in srgb, var(--tint-item-bg) 90%, var(--c-transparent));
+  --item-border: color-mix(in srgb, var(--border-seed) 15%, var(--c-transparent));
+  --input-bg: color-mix(in srgb, var(--tint-input-bg) 60%, var(--c-transparent));
+  --input-border: color-mix(in srgb, var(--border-seed) 25%, var(--c-transparent));
+  --slider-empty: color-mix(in srgb, var(--tint-slider-empty) 40%, var(--c-transparent));
+  --hdr-bg: color-mix(in srgb, var(--tint-input-bg) 60%, var(--c-transparent));
+  --hdr-border: color-mix(in srgb, var(--border-seed) 20%, var(--c-transparent));
+  --ctrl-bg-1: color-mix(in srgb, var(--tint-ctrl-a) 50%, var(--c-transparent));
+  --ctrl-bg-2: color-mix(in srgb, var(--tint-ctrl-b) 45%, var(--c-transparent));
+  --ctrl-color: color-mix(in srgb, var(--text) 88%, var(--accent));
+  --chip-bg-1: color-mix(in srgb, var(--tint-surface-a) 40%, var(--c-transparent));
+  --chip-bg-2: color-mix(in srgb, var(--tint-surface-b) 35%, var(--c-transparent));
+  --chip-border: color-mix(in srgb, var(--border-seed) 20%, var(--c-transparent));
+  --ctrl-on-bg-1: color-mix(in srgb, var(--tint-cb-on-a) 85%, var(--c-transparent));
+  --ctrl-on-bg-2: color-mix(in srgb, var(--tint-cb-on-b) 80%, var(--c-transparent));
+  --ctrl-on-bg-3: var(--ctrl-on-bg-2);
+  --ctrl-on-color: var(--ctrl-on-color-seed);
+  --cb-bg-1: var(--tint-cb-bg-a);
+  --cb-bg-2: var(--tint-cb-bg-b);
+  --cb-border: color-mix(in srgb, var(--border-seed) 40%, var(--c-transparent));
+  --cb-on-bg-1: var(--accent-2);
+  --cb-on-bg-2: var(--tint-cb-on-c-blue);
+  --cb-on-bg-3: var(--decor);
+  --cb-on-border: color-mix(in srgb, var(--c-white) 25%, var(--c-transparent));
+  --cb-on-shadow-c: color-mix(in srgb, var(--tint-cb-shadow) 35%, var(--c-transparent));
+  --hl-bg-1: var(--accent);
+  --hl-bg-2: var(--decor);
+  --hl-bg-3: var(--cool);
+  --hl-color: var(--c-transparent);
+  --hl-fill: var(--c-transparent);
+  --hl-shadow-1: color-mix(in srgb, var(--tint-hl-glow-yellow) 90%, var(--c-transparent));
+  --hl-shadow-2: color-mix(in srgb, var(--tint-hl-glow-red) 89%, var(--c-transparent));
+  --trace-bg-1: color-mix(in srgb, var(--tint-trace-a) 40%, var(--c-transparent));
+  --trace-bg-2: color-mix(in srgb, var(--tint-trace-b) 35%, var(--c-transparent));
+  --trace-bg-3: var(--trace-bg-2);
+  --trace-shadow-c: color-mix(in srgb, var(--accent) 20%, var(--c-transparent));
+  --menu-hover-1: color-mix(in srgb, var(--c-white) 5%, var(--c-transparent));
+  --menu-hover-2: color-mix(in srgb, var(--c-white) 3%, var(--c-transparent));
+  --menu-icon-filter-c: var(--accent);
+}
+
+.graphite-pop {
+  --bg: #101010;
+  --surface: #2a2a2a;
+  --text: #e8e8e8;
+  --accent: #f5a742;
+
+  --shell: #222222;
+  --highlight: #ff6a00;
+  --warm: lightsalmon;
+  --cool: #ff4081;
+  --decor: #ffea00;
+  --border-seed: var(--accent);
+  --toast-tint: #262626;
+  --ctrl-tint: #3a3a3a;
+  --chip-tint: #333333;
+  --border-tint: #676767;
+  --ctrl-on-color-seed: #111111;
+
+  --avg-base: var(--warm);
+  --bg-alt: color-mix(in srgb, var(--bg) 72%, var(--c-white));
+  --surface-2: color-mix(in srgb, var(--text) 3%, var(--c-transparent));
+  --border: color-mix(in srgb, var(--border-tint) 7%, var(--c-transparent));
+  --muted: color-mix(in srgb, var(--text) 62%, var(--surface));
+  --toast-surface: var(--toast-tint);
+  --loader-bg-1: var(--surface);
+  --loader-bg-2: var(--loader-bg-1);
+  --ctrl-bg-1: var(--ctrl-tint);
+  --ctrl-bg-2: var(--ctrl-bg-1);
+  --ctrl-color: color-mix(in srgb, var(--text) 78%, var(--surface));
+  --ctrl-on-bg-1: var(--cool);
+  --ctrl-on-bg-2: var(--accent);
+  --ctrl-on-bg-3: var(--ctrl-on-bg-2);
+  --ctrl-on-color: var(--ctrl-on-color-seed);
+  --chip-bg-1: var(--chip-tint);
+  --chip-bg-2: var(--chip-bg-1);
+  --chip-border: var(--border);
+  --cb-bg-1: var(--surface);
+  --cb-bg-2: var(--cb-bg-1);
+  --cb-border: color-mix(in srgb, var(--accent) 30%, var(--c-transparent));
+  --cb-on-bg-1: var(--cool);
+  --cb-on-bg-2: var(--accent);
+  --cb-on-bg-3: var(--decor);
+  --cb-on-border: color-mix(in srgb, var(--c-white) 20%, var(--c-transparent));
+  --cb-on-shadow-c: color-mix(in srgb, var(--accent) 35%, var(--c-transparent));
+  --hl-bg-1: var(--highlight);
+  --hl-bg-2: var(--decor);
+  --hl-bg-3: var(--hl-bg-2);
+  --hl-color: var(--c-transparent);
+  --hl-fill: var(--c-transparent);
+  --trace-bg-1: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+  --trace-bg-2: var(--trace-bg-1);
+  --trace-bg-3: var(--trace-bg-1);
+  --trace-shadow-c: color-mix(in srgb, var(--accent) 15%, var(--c-transparent));
+  --a-toast-border: 12%;
+  --a-toast-shadow: 40%;
+  --a-toast-shadow-2: 0%;
+  --a-loader-border: 15%;
+  --a-spin-track: 15%;
+  --spin-accent: var(--accent);
+}
+
+.glassy-rainbow {
+  --bg: #ffffff;
+  --bg-alt: #e5d1ff;
+  --inner-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.16);
+  --surface: transparent;
+  --surface-2: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.88),
+      rgba(240, 250, 255, 0.93),
+      rgba(255, 245, 255, 0.88)
+  );
+  --border: rgba(150, 100, 255, 0.25);
+  --text: #222222;
+  --muted: #333333;
+  --accent: #ff00c8;
+  --accent-2: #00d4ff;
+  --toolbar-bg: transparent;
+  --sidebar-bg: transparent;
+  --hover: linear-gradient(145deg, rgba(255, 198, 255, 0.7), rgba(196, 255, 255, 0.75));
+  --avg: color-mix(in srgb, #37a300 82%, var(--text));
+  --shadow: 0 0 15px rgba(150, 100, 255, 0.15);
+  background:
+      linear-gradient(
+          145deg,
+          #ffffff 0%,
+          #ffebed 20%,
+          #e0fff1 45%,
+          #ffece0 70%,
+          #e5d1ff 100%
+      ),
+      radial-gradient(
+          circle at 30% 40%,
+          rgba(255, 200, 255, 0.35),
+          rgba(180, 255, 255, 0.35),
+          rgba(255, 255, 210, 0.35)
+      );
+  background-blend-mode: soft-light;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  isolation: isolate;
+  --box-bg: transparent;
+  --box-border: rgba(150, 100, 255, 0.25);
+  --box-shadow:
+      inset 0 0 8px rgba(255, 255, 255, 0.2),
+      0 0 15px rgba(120, 160, 255, 0.1);
+  --grid-border: rgba(180, 180, 255, 0.25);
+  --row-even: linear-gradient(90deg, rgba(255, 250, 240, 0.45), rgba(240, 255, 255, 0.45));
+  --row-odd: linear-gradient(90deg, rgba(255, 245, 255, 0.45), rgba(240, 255, 250, 0.45));
+  --inner-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(240, 250, 255, 0.7));
+  --inner-border: rgba(100, 160, 255, 0.25);
+  --item-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.65), rgba(240, 250, 255, 0.7));
+  --item-border: rgba(120, 180, 255, 0.25);
+  --input-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.75), rgba(235, 245, 255, 0.9));
+  --input-border: rgba(100, 160, 255, 0.3);
+  --input-color: #003350;
+  --slider-empty: rgba(0, 212, 255, 0.13);
+  --hdr-bg: rgba(255, 255, 255, 0.35);
+  --hdr-border: rgba(150, 100, 255, 0.25);
+  --toast-highlight: #ff00c8;
+  --toast-bg: rgba(245, 248, 255, 0.92);
+  --toast-border: rgba(150, 100, 255, 0.2);
+  --toast-shadow: 0 4px 24px rgba(150, 100, 255, 0.1), 0 1px 4px rgba(0, 0, 0, 0.05);
+  --loader-dim-opacity: 0.5;
+  --loader-bg: rgba(235, 245, 255, 0.95);
+  --loader-border: rgba(150, 120, 255, 0.25);
+  --loader-text: #003350;
+  --loader-spin-track: rgba(0, 51, 80, 0.16);
+  --loader-spin-accent: var(--slider-color, #00d4ff);
+  --modal-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(240, 250, 255, 0.93), rgba(255, 245, 255, 0.88));
+  --modal-shadow: 0 0 15px rgba(150, 100, 255, 0.15), inset 0 0 12px rgba(255, 255, 255, 0.2);
+  --modal-backdrop: blur(12px) saturate(160%);
+  --ctrl-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(240, 250, 255, 0.9));
+  --ctrl-border: rgba(180, 150, 255, 0.3);
+  --ctrl-color: #002244;
+  --chip-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(235, 245, 255, 0.9));
+  --chip-border: rgba(150, 120, 255, 0.25);
+  --chip-color: #002244;
+  --ctrl-on-bg: linear-gradient(145deg, #00d4ff, #ff00c6, #ffe066);
+  --ctrl-on-color: floralwhite;
+  --ctrl-on-shadow: 0 0 8px rgba(150, 100, 255, 0.25);
+  --ctrl-on-text-shadow: 0 0 6px floralwhite;
+  --cb-bg: linear-gradient(145deg, #ffffff, #f5f8ff);
+  --cb-border: rgba(0, 150, 255, 0.3);
+  --cb-on-bg: var(--ctrl-on-bg);
+  --cb-on-border: rgba(150, 80, 255, 0.5);
+  --ui-slider-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  --hl-color: #ff00c8;
+  --hl-shadow: 0 0 6px rgba(255, 105, 255, 0.6), 0 0 10px rgba(0, 190, 255, 0.3);
+  --trace-bg: linear-gradient(135deg, #ffebf8, #e6faff, #fff9e6);
+  --menu-label-accent: rgba(0, 168, 255, 0.25);
+}
+
+.sunlit-haze {
+  --bg: #e8f4fd;
+  --bg-alt: #ddeefa;
+  --inner-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.1);
+  --surface: transparent;
+  --surface-2: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.85),
+      rgba(240, 248, 255, 0.9),
+      rgba(255, 250, 235, 0.85)
+  );
+  --border: rgba(200, 170, 80, 0.2);
+  --text: #2c3e50;
+  --muted: #5a7080;
+  --accent: #c8960c;
+  --accent-2: #a67c00;
+  --avg: color-mix(in srgb, #8400ff 82%, var(--text));
+  --danger: crimson;
+  --ok: #1eab62;
+  --toolbar-bg: transparent;
+  --sidebar-bg: transparent;
+  --hover: linear-gradient(145deg, rgba(255, 248, 220, 0.6), rgba(220, 240, 255, 0.5));
+  --shadow: 0 0 15px rgba(180, 150, 60, 0.1);
+  background:
+      linear-gradient(
+          155deg,
+          #e8f4fd 0%,
+          #d4ecff 25%,
+          #e6f2ff 45%,
+          #fef8ea 65%,
+          #fde8c8 85%,
+          #f8ddb0 100%
+      ),
+      radial-gradient(
+          ellipse at 20% 30%,
+          rgba(200, 225, 255, 0.5),
+          rgba(255, 245, 220, 0.4),
+          rgba(200, 230, 255, 0.3)
+      );
+  background-blend-mode: soft-light;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  isolation: isolate;
+  --box-bg: transparent;
+  --box-border: rgba(200, 170, 80, 0.18);
+  --box-shadow:
+      inset 0 0 8px rgba(255, 255, 255, 0.15),
+      0 0 12px rgba(180, 150, 60, 0.06);
+  --grid-border: rgba(200, 170, 80, 0.15);
+  --row-even: linear-gradient(90deg, rgba(255, 252, 240, 0.4), rgba(240, 248, 255, 0.4));
+  --row-odd: linear-gradient(90deg, rgba(245, 250, 255, 0.4), rgba(255, 248, 230, 0.4));
+  --inner-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(255, 250, 235, 0.6));
+  --inner-border: rgba(200, 170, 80, 0.2);
+  --item-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.6), rgba(255, 250, 235, 0.65));
+  --item-border: rgba(200, 170, 80, 0.18);
+  --input-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(250, 248, 235, 0.85));
+  --input-border: rgba(200, 170, 80, 0.25);
+  --input-color: #2c3e50;
+  --slider-empty: rgba(200, 170, 80, 0.12);
+  --hdr-bg: rgba(255, 255, 255, 0.3);
+  --hdr-border: rgba(200, 170, 80, 0.2);
+  --toast-highlight: #b8860b;
+  --toast-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 250, 235, 0.92));
+  --toast-border: rgba(200, 170, 80, 0.18);
+  --toast-shadow: 0 4px 24px rgba(200, 150, 12, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --loader-dim-opacity: 0.5;
+  --loader-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 250, 235, 0.92));
+  --loader-border: rgba(200, 170, 80, 0.2);
+  --loader-text: #2c3e50;
+  --loader-spin-track: rgba(200, 150, 12, 0.15);
+  --loader-spin-accent: var(--slider-color, #c8960c);
+  --modal-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.85), rgba(245, 250, 255, 0.9), rgba(255, 250, 235, 0.85));
+  --modal-shadow: 0 0 15px rgba(180, 150, 60, 0.1), inset 0 0 10px rgba(255, 255, 255, 0.15);
+  --modal-backdrop: blur(12px) saturate(140%);
+  --ctrl-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 250, 235, 0.85));
+  --ctrl-border: rgba(200, 170, 80, 0.22);
+  --ctrl-color: #3a2e1a;
+  --chip-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.75), rgba(255, 250, 235, 0.85));
+  --chip-border: rgba(200, 170, 80, 0.2);
+  --chip-color: #2c3e50;
+  --ctrl-on-bg: linear-gradient(145deg, #c8960c, #daa520, #e6b422);
+  --ctrl-on-color: #ffffff;
+  --ctrl-on-shadow: 0 0 8px rgba(200, 150, 12, 0.3);
+  --ctrl-on-text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+  --cb-bg: linear-gradient(145deg, #ffffff, #fef8ea);
+  --cb-border: rgba(200, 170, 80, 0.3);
+  --cb-on-bg: var(--ctrl-on-bg);
+  --cb-on-border: rgba(160, 120, 0, 0.5);
+  --cb-on-shadow: 0 0 6px rgba(200, 150, 12, 0.3);
+  --ui-slider-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+  --hl-color: #b8860b;
+  --hl-shadow: 0 0 6px rgba(200, 150, 12, 0.4), 0 0 10px rgba(218, 165, 32, 0.2);
+}
+
+.frosted-aurora {
+  --floating-bg: transparent;
+  --bg-alt: #c9ddf8;
+  --surface: transparent;
+  --surface-2: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(245, 248, 255, 0.29));
+  --border: rgba(255, 255, 255, 0.25);
+  --text: #001f37;
+  --muted: #274c6b;
+  --accent: #2f9fd6;
+  --accent-2: #1587bf;
+  --toolbar-bg: transparent;
+  --sidebar-bg: transparent;
+  --hover: rgba(255, 255, 255, 0.3);
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --box-bg: rgba(255, 255, 255, 0.12);
+  --box-border: rgba(255, 255, 255, 0.25);
+  --box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.08),
+      0 0 15px rgba(120, 160, 255, 0.1);
+  --grid-border: rgba(255, 255, 255, 0.49);
+  --row-even: rgba(255, 255, 255, 0.1);
+  --row-odd: rgba(255, 255, 255, 0.19);
+  --inner-bg: rgba(255, 255, 255, 0.16);
+  --inner-border: rgba(255, 255, 255, 0.25);
+  --item-bg: rgba(255, 255, 255, 0.12);
+  --item-border: rgba(255, 255, 255, 0.25);
+  --input-bg: rgba(255, 255, 255, 0.1);
+  --input-border: rgba(255, 255, 255, 0.21);
+  --input-color: #001f37;
+  --slider-empty: rgba(255, 255, 255, 0.25);
+  --hdr-bg: rgba(255, 255, 255, 0.2);
+  --hdr-border: rgba(255, 255, 255, 0.25);
+  --toast-highlight: white;
+  --toast-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(240, 250, 255, 0.85));
+  --toast-border: rgba(255, 255, 255, 0.3);
+  --toast-shadow: 0 4px 24px rgba(0, 40, 80, 0.1), 0 1px 4px rgba(0, 0, 0, 0.05);
+  --loader-dim-opacity: 0.5;
+  --loader-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(240, 250, 255, 0.86));
+  --loader-border: rgba(255, 255, 255, 0.3);
+  --loader-text: #003350;
+  --loader-spin-track: rgba(0, 51, 80, 0.14);
+  --loader-spin-accent: var(--slider-color, #61e8ff);
+  --modal-bg: linear-gradient(145deg, color-mix(in srgb, var(--bg-main-color, rgba(255, 255, 255, 0.4)) 24%, rgba(255, 255, 255, 0.28)), rgba(235, 245, 255, 0.24));
+  --modal-shadow: var(--shadow);
+  --modal-backdrop: blur(20px) saturate(160%);
+  --theme-skills-modal-bg: linear-gradient(145deg, color-mix(in srgb, var(--bg-main-color, rgba(255, 255, 255, 0.42)) 22%, rgba(255, 255, 255, 0.3)), rgba(235, 245, 255, 0.24));
+  --ctrl-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(235, 245, 255, 0.9));
+  --ctrl-border: rgba(255, 255, 255, 0.3);
+  --chip-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(245, 248, 255, 0.29));
+  --chip-border: rgba(255, 255, 255, 0.11);
+  --chip-color: #001f37;
+  --ctrl-on-bg: linear-gradient(145deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.58));
+  --ctrl-on-text-shadow: 0 0 6px floralwhite;
+  --cb-bg: linear-gradient(145deg, #ffffff, #f5f8ff);
+  --cb-border: rgba(0, 150, 255, 0.3);
+  --cb-on-bg: linear-gradient(145deg, #00d4ff, #ff00c6, #ffe066);
+  --cb-on-border: rgba(150, 80, 255, 0.5);
+  --ui-slider-shadow: var(--shadow);
+  --trace-bg: linear-gradient(135deg, rgba(255, 235, 248, 0.42), rgba(230, 250, 255, 0.46), rgba(255, 249, 230, 0.79));
+  --trace-backdrop: blur(20px) saturate(160%);
+  --menu-bg: transparent;
+  --menu-backdrop: blur(20px) saturate(160%);
+  --menu-hover-bg: linear-gradient(145deg, rgba(255, 245, 255, 0.34), rgba(230, 255, 250, 0.4));
+  --menu-label-accent: rgba(0, 168, 255, 0.25);
+  --hl-color: whitesmoke;
+  --hl-shadow: 0 0 2px rgb(89, 89, 89), 0 0 2px rgba(0, 0, 0, 0.62);
+  --trace-active-bg: linear-gradient(135deg,#ffebf86b,#e6faff75,#fff9e6c9);
+}
+
+.frosted-aurora .dark-text,
+.frosted-aurora.dark-text {
+  --toast-highlight: rgba(255, 176, 75, 0.89);
+  --toast-bg: linear-gradient(145deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.65));
+  --toast-border: rgba(255, 255, 255, 0.1);
+  --toast-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.25);
+  --loader-bg: linear-gradient(145deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.58));
+  --loader-border: rgba(255, 255, 255, 0.11);
+  --loader-text: #e8eefc;
+  --input-color: #e8eefc;
+  --loader-spin-track: rgba(255, 255, 255, 0.24);
+}
+
+body.frosted-aurora,
+.frosted-aurora {
+  --floating-bg: var(--bg-main-color, rgba(255, 255, 255, 0.14));
+  --box-bg: rgba(255, 255, 255, 0.25);
+  --inner-bg: rgba(255, 255, 255, 0.2);
+}
+
+.frosted-aurora *,
+.frosted-aurora .app-loader-overlay {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.frosted-aurora .wk-card {
+  --workspace-bg: transparent;
+}
+
+.frosted-aurora #root,
+.frosted-aurora body,
+.frosted-aurora.app-shell {
+  background: none !important;
+}
+
+html.frosted-aurora {
+  background-color: var(--bg-main-color, white) !important;
+}
+
+.app-shell.frosted-aurora {
+  background-color: color-mix(in srgb, var(--bg-main-color, #fefeff) 22%, rgba(255, 255, 255, 0.9));
+  background-image:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--bg-main-color, #fefeff) 24%, rgba(255, 255, 255, 0.34)),
+      rgba(235, 245, 255, 0.18)
+    );
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+.glassy-rainbow h1,
+.glassy-rainbow h2,
+.glassy-rainbow h3,
+.glassy-rainbow h4,
+.glassy-rainbow h5 {
+  color: var(--muted);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.35);
+}
+
+.sunlit-haze::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.02;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sunlit-haze h1,
+.sunlit-haze h2,
+.sunlit-haze h3,
+.sunlit-haze h4,
+.sunlit-haze h5 {
+  color: var(--text);
+  text-shadow: 0 0 8px rgba(255, 245, 220, 0.5);
+}
+
+.frosted-aurora.light-text body,
+.app-shell.frosted-aurora.light-text {
+  --text: #001f37;
+  --picker-modal-text: #001f37;
+  --muted: #274c6b;
+}
+
+.frosted-aurora.dark-text body,
+.app-shell.frosted-aurora.dark-text {
+  --text: floralwhite;
+  --picker-modal-text: floralwhite;
+  --muted: floralwhite;
+  --chip-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(235, 245, 255, 0.31));
+  --chip-border: rgba(255, 255, 255, 0.11);
+  --chip-color: floralwhite;
+}
+
+.glassy-rainbow .toolbar,
+.glassy-rainbow .sidebar {
+  background: transparent;
+  border-color: transparent;
+  backdrop-filter: blur(20px) saturate(160%);
+}
+
+.glassy-rainbow .partition {
+  background: transparent;
+}
+
+.sunlit-haze .toolbar,
+.sunlit-haze .sidebar {
+  background: transparent;
+  border-color: transparent;
+  backdrop-filter: blur(16px) saturate(140%);
+}
+
+.sunlit-haze .partition {
+  background: transparent;
+}
+
+.frosted-aurora .toolbar,
+.frosted-aurora .sidebar {
+  background: transparent;
+}
+
+.frosted-aurora .toolbar {
+  border-bottom-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+}
+
+.frosted-aurora .sidebar {
+  border-right-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+}
+
+.frosted-aurora .partition {
+  background: transparent;
+}
+
+.frosted-aurora .layout {
+  background: transparent;
+}
+
+:is(.app-modal-panel, .echo-edit-panel) {
+  background: var(--modal-bg);
+  border-color: var(--modal-border);
+  color: var(--modal-color);
+  box-shadow: var(--modal-shadow, var(--shadow, none));
+  backdrop-filter: var(--modal-backdrop, none);
+  -webkit-backdrop-filter: var(--modal-backdrop, none);
+}
+
+:is(.highlight, .echo-slot-title, .echo-name) {
+  color: var(--hl-color) !important;
+  background: var(--hl-bg);
+  text-shadow: var(--hl-shadow) !important;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.dark-text :is(.rich-description, .trace-node-tooltip .formula-code) {
+  color: var(--text);
+}
+
+.frosted-aurora .ui-surface-card,
+.frosted-aurora .echo-slot,
+.frosted-aurora .page-tile,
+.frosted-aurora .overview-stats-tree,
+.frosted-aurora .toolbar,
+.frosted-aurora .sidebar {
+  background-color: color-mix(in srgb, var(--bg-main-color, rgba(255, 255, 255, 0.24)) 55%, rgba(255, 255, 255, 0.09)) !important;
+}
+
+.dark-text.frosted-aurora button {
+  color: floralwhite;
+}
+
+.frosted-aurora .skills-modal-content-area,
+.frosted-aurora .tst,
+.frosted-aurora .skill-menu-panel,
+.frosted-aurora .app-modal-panel,
+.frosted-aurora .echo-edit-panel,
+.frosted-aurora .app-popup,
+.frosted-aurora .opt-results-header,
+.frosted-aurora .opt-pagination,
+.frosted-aurora .rsl-row.is-selected,
+.frosted-aurora :is(:is(.rte-row, .rte-cond, .rte-swap).is-selected, :is(.rte-row, .rte-cond, .rte-swap).is-selected:hover) {
+  background: var(--bg-main-color, rgba(255, 255, 255, 0.14));
+}
+
+.frosted-aurora {
+  --bg: var(--bg-main-color, rgba(255, 255, 255, 0.14));
+}

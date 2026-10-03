@@ -19,7 +19,7 @@ import type {
 } from '@/domain/entities/stats'
 import { getNegEffectDef, NEG_EFFECT_ELEM } from '@/engine/gameData/negativeEffects'
 import { getNegBase } from '@/engine/formulas/negativeEffects'
-import { getTuneLevel } from '@/engine/formulas/tuneRupture'
+import { getEnemyMaxOffTune, getTuneLevel } from '@/engine/formulas/tuneRupture'
 import {
   compileSkillRecord,
   FIELD_AMPLIFY,
@@ -468,7 +468,7 @@ export function resolveNumericEffectiveStats(
         }
         : {}),
       bonus: numericSkillType(lane, skill.archetype, 'dmgBonus'),
-      amplify: numericTop(lane, 'amplify'),
+      amplify: skill.archetype === 'tuneRupture' ? 0 : numericTop(lane, 'amplify'),
       defIgnore: type('defIgnore') + skillBuff('defIgnore'),
     }
   }
@@ -481,7 +481,7 @@ export function resolveNumericEffectiveStats(
       critDmg: ((skill.negativeEffectCritDmg ?? 1) * 100)
         + numericFinal(lane, finalNegativeCell(archetype, 'critDmg')),
       bonus: type('dmgBonus'),
-      amplify: numericTop(lane, 'amplify') + type('amplify'),
+      amplify: numericSkillType(lane, archetype, 'amplify') + skillBuff('amplify'),
       defIgnore: type('defIgnore') + skillBuff('defIgnore'),
       defShred: numericTop(lane, 'defShred') + attr('defShred') + type('defShred'),
       dmgVuln: numericTop(lane, 'dmgVuln') + attr('dmgVuln') + type('dmgVuln'),
@@ -717,13 +717,13 @@ function runNumericDamageKernel(
     const enemyDefense = ((8 * enemy.level) + 792) * defenseReduction(defIgnore, defShred)
     const defenseMult = (800 + 8 * level) /
       (800 + 8 * level + Math.max(0, enemyDefense))
-    const classMult = enemy.class === 3 || enemy.class === 4 ? 14 : enemy.class === 2 ? 3 : 1
+    const maxOffTune = getEnemyMaxOffTune(enemy.class)
     const perHit =
       resistMult(baseRes - numericLayer(lane, skill, 'resShred')) *
       defenseMult *
       (1 + (numericTop(lane, 'dmgVuln') + numericLayer(lane, skill, 'dmgVuln')) / 100) *
-      classMult *
-      (1 + numericTop(lane, 'amplify') / 100) *
+      maxOffTune *
+      (kind === 'tuneRupture' ? 1 : 1 + numericTop(lane, 'amplify') / 100) *
       (1 + numericSkillType(lane, kind, 'dmgBonus') / 100) *
       (1 + numericTop(lane, 'tuneBreakBoost') / 100) *
       (1 + numericTop(lane, 'finalDmg') / 100)
@@ -787,8 +787,8 @@ function runNumericDamageKernel(
       : 0)
   const multiplier =
     perStack *
-    (1 + numericTop(lane, 'amplify') / 100) *
-    (1 + numericSkillTypes(lane, skill.skillType, 'amplify') / 100) *
+    (1 + (numericSkillType(lane, archetype, 'amplify')
+      + (skill.skillBuffs?.amplify ?? 0)) / 100) *
     (1 + numericSkillTypes(lane, skill.skillType, 'dmgBonus') / 100) *
     (1 + numericTop(lane, 'finalDmg') / 100) *
     (noEnemy

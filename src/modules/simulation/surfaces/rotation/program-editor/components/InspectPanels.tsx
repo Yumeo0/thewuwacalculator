@@ -491,7 +491,7 @@ function ClipActs({ actions }: { actions: ScopedNodeActions }) {
       <ActBtn
         icon={<CopyPlus size="0.8rem" />}
         label="Duplicate"
-        hint={actions.canCopy ? 'Stand a copy right after this one' : 'This loop is drawn in segments and cannot be copied whole'}
+        hint={actions.canCopy ? 'Insert a copy after this item' : 'This loop is drawn in segments and cannot be copied whole'}
         disabled={!actions.canCopy}
         onPress={actions.onDuplicate}
       />
@@ -1388,14 +1388,14 @@ function HandoffInspector({
           <ClipActs actions={actions} />
           <ActBtn
             icon={disabled ? <PowerOff size="0.8rem" /> : <Power size="0.8rem" />}
-            label={disabled ? 'Enable handoff' : 'Disable handoff'}
+            label={disabled ? 'Enable resonator switch' : 'Disable resonator switch'}
             onPress={actions.onToggleEnabled}
           />
           <ActBtn icon={<Trash2 size="0.8rem" />} label="Delete" danger onPress={actions.onDelete} />
         </div>
       </InspectorSection>
 
-      <InspectorSection label={<>History . {history.length} {history.length === 1 ? 'handoff' : 'handoffs'}</>}>
+      <InspectorSection label={<>History . {history.length} {history.length === 1 ? 'resonator switch' : 'resonator switches'}</>}>
         {history.length > 0 ? (
           <NodeReferenceList
             rows={historyRows}
@@ -1403,7 +1403,7 @@ function HandoffInspector({
             onNavigateNode={onNavigateNode}
           />
         ) : (
-          <p className="rte-palette__empty">Nothing hands over the field.</p>
+          <p className="rte-palette__empty">No resonator switches yet.</p>
         )}
       </InspectorSection>
     </>
@@ -2083,6 +2083,34 @@ function readBuild(echoes: Array<EditorEcho | null>) {
   }
 }
 
+export interface BuildActions {
+  onResonator: (memberId: string) => void
+  onEchoes: (memberId: string) => void
+  onWeapon: (memberId: string) => void
+}
+
+function BuildAction({
+  className,
+  style,
+  label,
+  onClick,
+  children,
+}: {
+  className: string
+  style?: React.CSSProperties
+  label: string
+  onClick?: () => void
+  children: ReactNode
+}) {
+  return onClick ? (
+    <button type="button" className={className} style={style} aria-label={label} onClick={onClick}>
+      {children}
+    </button>
+  ) : (
+    <div className={className} style={style}>{children}</div>
+  )
+}
+
 /*
   A band names the resonator it is about, unless it is already standing under
   one: the saved ledger opens a build inside the take it belongs to, so the
@@ -2092,9 +2120,11 @@ function readBuild(echoes: Array<EditorEcho | null>) {
 export function BuildBand({
   member,
   identified = true,
+  actions,
 }: {
   member: EditorMember
   identified?: boolean
+  actions?: BuildActions
 }) {
   const { cells, runs, slots, empty, cost } = readBuild(member.echoes)
   const attribute = getAttributeIconSrc(member.attribute)
@@ -2104,7 +2134,8 @@ export function BuildBand({
     <div className="rte-bld__band"
       style={{ '--rte-bld-m': ATTR_COLORS[member.attribute] } as React.CSSProperties}
     >
-      <div className="rte-bld__id">
+      <BuildAction className="rte-bld__id" label={`Configure ${member.name}`}
+        onClick={actions ? () => actions.onResonator(member.id) : undefined}>
         {identified ? (
           <>
             <DisplayImage className="rte-bld__face"
@@ -2142,9 +2173,11 @@ export function BuildBand({
             />
           </span>
         </span>
-      </div>
+      </BuildAction>
 
-      <div className="rte-bld__strip" style={columns}>
+      <BuildAction className="rte-bld__strip" style={columns}
+        label={`Configure ${member.name}'s Echoes`}
+        onClick={actions ? () => actions.onEchoes(member.id) : undefined}>
         {cells.map((echo, index) => (
           <span
             key={`${echo.id}:${index}`}
@@ -2166,10 +2199,12 @@ export function BuildBand({
         {Array.from({ length: Math.max(0, empty) }, (_, index) => (
           <span key={`empty:${index}`} className="rte-bld__cell is-empty" title="Empty slot" />
         ))}
-      </div>
+      </BuildAction>
 
       {runs.length > 0 ? (
-        <div className="rte-bld__ties" style={columns}>
+        <BuildAction className="rte-bld__ties" style={columns}
+          label={`Configure ${member.name}'s Echoes`}
+          onClick={actions ? () => actions.onEchoes(member.id) : undefined}>
           {runs.map((run) => {
             const icon = getSntSetIco(run.setId)
             const name = getSntSetNam(run.setId)
@@ -2210,11 +2245,13 @@ export function BuildBand({
               </span>
             )
           })}
-        </div>
+        </BuildAction>
       ) : null}
 
       {member.weapon.id ? (
-        <div className="rte-bld__wpn"
+        <BuildAction className="rte-bld__wpn"
+          label={`Configure ${member.name}'s weapon: ${member.weapon.name || 'Weapon'}`}
+          onClick={actions ? () => actions.onWeapon(member.id) : undefined}
           style={rarityVars(member.weapon.rarity, false, '--rte-bld-w') as React.CSSProperties}
         >
           <DisplayImage className="rte-bld__wart"
@@ -2251,11 +2288,13 @@ export function BuildBand({
               </span>
             ) : null}
           </span>
-        </div>
+        </BuildAction>
       ) : (
-        <div className="rte-bld__wpn is-void">
+        <BuildAction className="rte-bld__wpn is-void"
+          label={`Configure ${member.name}'s weapon`}
+          onClick={actions ? () => actions.onWeapon(member.id) : undefined}>
           <span className="rte-bld__wname">No weapon equipped</span>
-        </div>
+        </BuildAction>
       )}
     </div>
   )
@@ -2270,9 +2309,11 @@ export function BuildBand({
 export function BuildsSection({
   members,
   defaultOpen = false,
+  actions,
 }: {
   members: EditorMember[]
   defaultOpen?: boolean
+  actions?: BuildActions
 }) {
   if (members.length === 0) {
     return null
@@ -2282,7 +2323,7 @@ export function BuildsSection({
     <InspectorSection label={<>Builds . {members.length}</>} defaultOpen={defaultOpen}>
       <div className="rte-bld">
         {members.map((member) => (
-          <BuildBand key={member.id} member={member} />
+          <BuildBand key={member.id} member={member} actions={actions} />
         ))}
       </div>
     </InspectorSection>
@@ -2294,10 +2335,12 @@ export function RotationTotalsInspector({
   members = [],
   decimals,
   defaultOpen = {},
+  buildActions,
 }: {
   summary: RotationSummary
   members?: EditorMember[]
   decimals: number
+  buildActions?: BuildActions
   /*
     what each fold does when the panel first draws, straight through to the
     section. a saved take opens on its builds and leaves the rest shut: the
@@ -2350,7 +2393,7 @@ export function RotationTotalsInspector({
         />
       </InspectorSection>
 
-      <BuildsSection members={members} defaultOpen={defaultOpen.builds ?? false} />
+      <BuildsSection members={members} defaultOpen={defaultOpen.builds ?? false} actions={buildActions} />
 
       <InspectorSection defaultOpen={defaultOpen.breakdown ?? true}
         label={(
@@ -2556,7 +2599,7 @@ export function SelectionInspector({
             <ActBtn
               icon={<CopyPlus size="0.8rem" />}
               label="Duplicate"
-              hint="Stand a copy of each right after it"
+              hint="Insert a copy after each selected item"
               disabled={!actions.canCopy}
               onPress={actions.onDuplicate}
             />
@@ -2604,11 +2647,13 @@ export function RotationTotalsPanel({
   summary,
   members,
   decimals,
+  buildActions,
 }: {
   open: boolean
   summary: RotationSummary
   members: EditorMember[]
   decimals: number
+  buildActions?: BuildActions
 }) {
   return (
     <aside
@@ -2634,7 +2679,7 @@ export function RotationTotalsPanel({
         </div>
       </div>
       <div className="rte-inspector__mid rte-scroll">
-        <RotationTotalsInspector summary={summary} members={members} decimals={decimals} />
+        <RotationTotalsInspector summary={summary} members={members} decimals={decimals} buildActions={buildActions} />
       </div>
     </aside>
   )
@@ -2676,6 +2721,7 @@ export function Inspector({
   onAccent,
   noteActions,
   showTotalsView = true,
+  buildActions,
 }: {
   note: EditorNote | null
   step: EditorStep | null
@@ -2720,6 +2766,7 @@ export function Inspector({
   noteActions?: NoteActions | null
   /** flat execution keeps totals in their own side panel */
   showTotalsView?: boolean
+  buildActions?: BuildActions
 }) {
   /*
     selection mode outranks whatever node was last inspected: the panel is
@@ -2793,7 +2840,7 @@ export function Inspector({
   const itemNodeType = step?.sourceNode?.type
     ?? condition?.sourceNode?.type
     ?? block?.sourceNode?.type
-    ?? (note ? 'note' : step ? 'feature' : condition ? 'condition' : handoff ? 'handoff' : block?.type)
+    ?? (note ? 'note' : step ? 'feature' : condition ? 'condition' : handoff ? 'resonator switch' : block?.type)
   const itemTabLabel = selection
     ? 'Selection'
     : itemNodeType
@@ -3080,7 +3127,7 @@ export function Inspector({
 
       <div className="rte-inspector__mid rte-scroll">
         {activeView === 'totals' ? (
-          <RotationTotalsInspector summary={summary} members={members} decimals={decimals} />
+          <RotationTotalsInspector summary={summary} members={members} decimals={decimals} buildActions={buildActions} />
         ) : selection ? (
           <SelectionInspector summary={selection} actions={selectionActions} />
         ) : (

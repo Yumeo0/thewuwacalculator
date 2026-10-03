@@ -21,12 +21,12 @@ const EXIT_MS = 240
 const DEF_LIFE = 4000
 
 const PSTN_CLSS: Record<TstPstn, string> = {
-  'top-left': 'toast-container--top-left',
-  'top-center': 'toast-container--top-center',
-  'top-right': 'toast-container--top-right',
-  'bottom-left': 'toast-container--bottom-left',
-  'bottom-center': 'toast-container--bottom-center',
-  'bottom-right': 'toast-container--bottom-right',
+  'top-left': 'tst-stack--top-left',
+  'top-center': 'tst-stack--top-center',
+  'top-right': 'tst-stack--top-right',
+  'bottom-left': 'tst-stack--bottom-left',
+  'bottom-center': 'tst-stack--bottom-center',
+  'bottom-right': 'tst-stack--bottom-right',
 }
 
 const VAR_CNS: Record<ToastVariant, typeof Info> = {
@@ -50,7 +50,7 @@ function withFigures(content: ReactNode): ReactNode {
   const parts = content.split(/(\d[\d,]*)/g)
   return parts.map((part, index) => (
     /^\d/.test(part)
-      ? <span className="toast-item__n" key={index}>{part}</span>
+      ? <span className="tst__n" key={index}>{part}</span>
       : part
   ))
 }
@@ -95,13 +95,13 @@ function ToastItem({ toast }: { toast: Toast }) {
   const body = useMemo(() => withFigures(toast.content), [toast.content])
 
   const classes = [
-    'toast-item',
-    `toast-item--${variant}`,
-    isTop ? 'toast-item--top' : 'toast-item--bottom',
-    entered && !toast.exiting ? 'toast-item--active' : '',
-    toast.exiting ? 'toast-item--exiting' : '',
-    held ? 'toast-item--held' : '',
-    toast.onClick ? 'toast-item--clickable' : '',
+    'tst',
+    `tst--${variant}`,
+    isTop ? 'tst--top' : 'tst--bottom',
+    entered && !toast.exiting ? 'tst--active' : '',
+    toast.exiting ? 'tst--exiting' : '',
+    held ? 'tst--held' : '',
+    toast.onClick ? 'tst--clickable' : '',
   ].filter(Boolean).join(' ')
 
   return (
@@ -114,13 +114,13 @@ function ToastItem({ toast }: { toast: Toast }) {
       onKeyDown={toast.onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') handleClick() } : undefined}
       style={{ '--toast-life': `${life}ms` } as CSSProperties}
     >
-      <span className="toast-item__icon" aria-hidden="true">
+      <span className="tst__icon" aria-hidden="true">
         <Icon size="0.92rem" strokeWidth={2} />
       </span>
-      <div className="toast-item__content">{body}</div>
+      <div className="tst__content">{body}</div>
       {toast.action && (
         <button
-          type="button" className="toast-item__action"
+          type="button" className="tst__action"
           onClick={(e) => {
             e.stopPropagation()
             toast.action!.onClick()
@@ -132,7 +132,7 @@ function ToastItem({ toast }: { toast: Toast }) {
       )}
       {!toast.onClick && (
         <button
-          type="button" className="toast-item__dismiss"
+          type="button" className="tst__dismiss"
           aria-label="Dismiss"
           onClick={onDsms}
         >
@@ -161,7 +161,7 @@ export function NtfcTstCntn() {
       {Array.from(grouped.entries()).map(([position, items]) => (
         <div
           key={position}
-          className={`toast-container ${PSTN_CLSS[position]}`}
+          className={`tst-stack ${PSTN_CLSS[position]}`}
           aria-label="Notifications"
         >
           {items.map((toast) => (

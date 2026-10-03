@@ -15,6 +15,7 @@ import {
   docsChunk,
   guidesChunk,
   homeChunk,
+  mobileHomeChunk,
   notFoundChunk,
   privacyChunk,
   calibrationChunk,
@@ -34,6 +35,7 @@ import {
   whatsNewHref,
 } from '@/shared/lib/appRoutes'
 import type { SimulationSurfaceHandle } from '@/modules/simulation/api/route'
+import { useMobileUi } from '@/shared/navigation/mobileUi'
 
 const SimulationPage = simulationChunk.Mount
 const CalibrationPage = calibrationChunk.Mount
@@ -44,6 +46,7 @@ const PrvcPlcyPage = privacyChunk.Mount
 const TrmsOfSrvcPa = termsChunk.Mount
 const NotFoundPage = notFoundChunk.Mount
 const HomePage = homeChunk.Mount
+const MobileHomePage = mobileHomeChunk.Mount
 
 const routeFallback = (
   <AppLdrVrly
@@ -59,6 +62,10 @@ function lazyRoute(node: ReactNode) {
 function PreserveLocationRedirect({ to }: { to: string }) {
   const location = useLocation()
   return <Navigate to={{ pathname: to, search: location.search, hash: location.hash }} replace />
+}
+
+function HomeEntry() {
+  return useMobileUi() ? <MobileHomePage /> : <HomePage />
 }
 
 // Preserve legacy What's New hashes when redirecting to the home release section.
@@ -94,7 +101,7 @@ export const rootRoutes: RouteObject[] = [
         // the failed route branch.
         errorElement: <RouteErrorPage />,
         children: [
-          { index: true, element: lazyRoute(<HomePage />) },
+          { index: true, element: lazyRoute(<HomeEntry />) },
           simulationRoute,
           { path: LEGACY_HOME_ROUTE, element: <PreserveLocationRedirect to={APP_ROUTES.home} /> },
           { path: LEGACY_PROGRESSION_ALIAS, element: <PreserveLocationRedirect to={SIMULATION_ROUTES.modulation} /> },

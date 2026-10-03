@@ -19,6 +19,7 @@ import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import { projectScenarioUiRuntimes } from '@/engine/runtime/scenarioRuntime.ts'
 import { holdResonatorData } from '@/data/gameData'
+import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay'
 
 // Load picker and editor modules only when a slot request needs them.
 const EchoPicker = lazy(async () => ({
@@ -41,7 +42,7 @@ export function EchoConsoleHost() {
   }
 
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<AppLoaderOverlay mode="scrim" text="Loading Echo editor..." />}>
       <EchoConsole
         key={`${target.scenarioId ?? 'selected'}:${target.resonatorId}:${target.slotIndex}`}
         resonatorId={target.resonatorId}

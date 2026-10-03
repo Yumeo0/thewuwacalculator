@@ -2,11 +2,11 @@
 
 ## Summary
 
-This document explains how checked in runtime data is shaped, how it is loaded into catalogs and the registry, and how checked in content and build scripts support production behavior. Use it when changing runtime JSON shape, registry bootstrapping, authored content, or data generation contracts.
+This document explains the format of runtime data, how the app loads it into catalogs and the registry, and which scripts produce it. Use it when changing runtime JSON, registry initialization, authored content, or data generation.
 
 ## Checked In Runtime Data
 
-Runtime JSON lives under `public/data`:
+Runtime JSON is stored under `public/data`:
 
 - `resonator-catalog.json`
 - `resonator-details.json`
@@ -35,7 +35,7 @@ Initialization sequence:
 4. construct the game data registry from those source packages
 5. cache the registry globally for later access
 
-The registry is the executable layer. The catalogs are direct lookup layers.
+Catalogs provide direct lookups. The registry provides skill, state, effect, and rotation definitions used during simulation.
 
 ## Catalogs Versus Registry
 
@@ -44,7 +44,7 @@ Catalog responsibilities:
 - direct lookup by id
 - display metadata
 - static tables
-- details used by UI surfaces and runtime assembly
+- details used by the UI and runtime initialization
 
 Registry responsibilities:
 
@@ -56,13 +56,13 @@ Registry responsibilities:
 - rotations
 - skill level and execution metadata
 
-This split lets the app keep display data and executable behavior related, but not collapsed into one flat structure.
+This keeps display data separate from executable definitions while allowing the app to connect them by ID.
 
-## Generated Output Shape
+## Generated Output Formats
 
 Some upstream producers are not fully present in git, but the outputs they feed into this repo are central to shipped behavior.
 
-Important output shapes:
+Important output formats:
 
 - resonator source packages that resolve into feature, effect, rotation, state, and skill definitions
 - weapon runtime data that can be turned into registry participating source packages
@@ -85,7 +85,7 @@ Important checked in flows:
 - sync resonator images
 - apply authored resonator overrides
 
-These scripts matter because they are the visible maintenance path for refreshing or reshaping runtime data that the production app loads.
+These scripts refresh or change the runtime data loaded by the production app.
 
 ## Authored Overrides
 
@@ -95,7 +95,7 @@ When documenting or debugging data behavior, treat authored overrides as source 
 
 ## Authored App Content
 
-Checked in content also lives in `src/data/content`:
+Authored app content is stored in `src/data/content`:
 
 - guides content
 - changelog entries
@@ -106,7 +106,7 @@ This content is production content, not support material. It ships with the app 
 
 If a change alters:
 
-- the shape of runtime JSON
+- the format of runtime JSON
 - the meaning of a source package
 - how a catalog is initialized
 - how overrides apply

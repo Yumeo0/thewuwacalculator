@@ -1,0 +1,13 @@
+.ui-pill-button:hover {
+  transform: translateY(-1px);
+}
+
+.calculator-results-pane > .soft-empty {
+  animation: results-section-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calculator-results-pane > .soft-empty {
+    animation: none;
+  }
+}

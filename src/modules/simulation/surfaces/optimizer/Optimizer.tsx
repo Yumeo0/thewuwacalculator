@@ -31,6 +31,7 @@ import {getWpnById} from '@/data/catalog/weaponCatalogService'
 import { listWpnsByTy } from '@/data/catalog/weaponCatalogService'
 import { makeRuntimeMap, mkPartRtLkp } from '@/engine/runtime/runtimeAdapters'
 import {useAppStore} from '@/application/state'
+import { useOptimizerRunStore } from '@/application/state/optimizerRunStore'
 import {
   selActTgtSlc,
   selEnemyProf,
@@ -118,9 +119,41 @@ import { useTstStr } from '@/shared/util/toastStore.ts'
 import { useEchoSrfcM } from '@/modules/simulation/features/echoes/lib/useEchoSurfaceMenu.tsx'
 import { qpEchoAtSlot } from '@/modules/simulation/features/echoes/lib/equip.ts'
 import { Copy } from 'lucide-react'
-import { useCtxBuilder } from '@/modules/simulation/shell/context-menu/useContextMenuBuilder.ts'
 import { useSel } from '@/modules/simulation/lib/sel.tsx'
-import { getOptCtx } from '@/modules/simulation/surfaces/optimizer/lib/ctx.tsx'
+import { useMenuContributions } from '@/application/context-menu/AppContextMenu'
+import type { MenuContribution } from '@/application/context-menu/menuContributions'
+
+interface OptimizerSurfaceMenuContext {
+  running: boolean
+  pending: boolean
+  hasResults: boolean
+  run: () => void
+  halt: () => void
+  clear: () => void
+  openInventory: () => void
+  openRules: () => void
+}
+
+const optimizerSurfaceMenu: MenuContribution<OptimizerSurfaceMenuContext>[] = [
+  {
+    id: 'optimizer-run-controls',
+    group: '1_primary',
+    build: ({ running, pending, hasResults, run, halt, clear }) => [
+      running
+        ? { id: 'optimizer-halt', label: 'Halt search', onSelect: halt }
+        : { id: 'optimizer-run', label: 'Run search', disabled: pending, onSelect: run },
+      ...(hasResults ? [{ id: 'optimizer-clear', label: 'Clear results', onSelect: clear }] : []),
+    ],
+  },
+  {
+    id: 'optimizer-tools',
+    group: '2_tools',
+    build: ({ openInventory, openRules }) => [
+      { id: 'optimizer-inventory', label: 'Inventory filter', onSelect: openInventory },
+      { id: 'optimizer-rules', label: 'Optimizer rules', onSelect: openRules },
+    ],
+  },
+]
 
 // The legacy route retains the retired layout; canonical routes use the shared workspace.
 export type OptimizerVariant = 'embedded' | 'legacy'
@@ -157,9 +190,9 @@ function settleBand(band: HTMLElement | null): Promise<unknown> {
 }
 
 export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant }) {
+  useMenuContributions('optimizer.surface', optimizerSurfaceMenu)
   const showToast = useTstStr((state) => state.show)
   const navigate = useNavX()
-  const menu = useCtxBuilder()
   const activeTarget = useAppStore(selActTgtSlc)
   const enemyProfile = useAppStore(selEnemyProf)
   const scenario = useAppStore((state) => selectedCombatScenario(state.combat))
@@ -189,18 +222,18 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       ...preserveToggles(storedOptSets),
     })
   }, [activeTarget, enemyProfile, needsTargetDefaults, optRt, optRuntimesById, storedOptSets])
-  const optStts = useAppStore((state) => state.optimizer.status)
-  const optResults = useAppStore((state) => (
-    Array.isArray(state.optimizer.results)
-      ? state.optimizer.results
+  const optStts = useOptimizerRunStore((state) => state.status)
+  const optResults = useOptimizerRunStore((state) => (
+    Array.isArray(state.results)
+      ? state.results
       : []
   ) as Array<OptBagResult | LegOptRsltEn | TheoryResult | CompactTheoryResult | TheoryResultRow>)
-  const optRrr = useAppStore((state) => state.optimizer.error)
-  const optBtchSize = useAppStore((state) => state.optimizer.batchSize)
-  const optResultData = useAppStore((state) => state.optimizer.resPay)
-  const optResultEchoes = useAppStore((state) => (
-    Array.isArray(state.optimizer.resultEchoes)
-      ? state.optimizer.resultEchoes
+  const optRrr = useOptimizerRunStore((state) => state.error)
+  const optBtchSize = useOptimizerRunStore((state) => state.batchSize)
+  const optResultData = useOptimizerRunStore((state) => state.resPay)
+  const optResultEchoes = useOptimizerRunStore((state) => (
+    Array.isArray(state.resultEchoes)
+      ? state.resultEchoes
       : []
   ))
   const invEchoEnts = useAppStore((state) => state.library.echoes)
@@ -1618,63 +1651,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     cnclOpt()
   }, [cnclOpt])
 
-  const optCtxMenuTm = useMemo(() => getOptCtx({
-    pane: menu.simulation.optimizer.pane,
-    targetMode,
-    skillGroups,
-    comboOptions,
-    tgtSkllId: targetSkillId,
-    tgtCmbId: optSets.targetComboSourceId,
-    enableGpu: optSets.enableGpu,
-    comboAvailable,
-    isSprite,
-    isLoading,
-    pending: isThryMode,
-    onPickRes: () => openResPckr('active'),
-    onTargetMode: onTgtModeChn,
-    onSkill: (value) => {
-      updOptSets((settings) => ({
-        ...settings,
-        targetSkillId: value,
-      }))
-    },
-    onCombo: (value) => {
-      updOptSets((settings) => ({
-        ...settings,
-        targetComboSourceId: value,
-      }))
-    },
-    onGpu: (value) => {
-      updOptSets((settings) => ({
-        ...settings,
-        enableGpu: value,
-      }))
-    },
-    onSprite: setIsSprite,
-    onRun: onRunOpt,
-    onHalt: handleHalt,
-    onClear: clearRun,
-  }), [
-    comboOptions,
-    comboAvailable,
-    handleHalt,
-    onRunOpt,
-    onTgtModeChn,
-    isThryMode,
-    isLoading,
-    isSprite,
-    menu.simulation.optimizer,
-    openResPckr,
-    optSets.enableGpu,
-    optSets.targetComboSourceId,
-    targetSkillId,
-    clearRun,
-    setIsSprite,
-    skillGroups,
-    targetMode,
-    updOptSets,
-  ])
-
   function handleEquip() {
     if (isLoading || !optResults[actRsltNdx]) {
       return
@@ -1792,7 +1768,8 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
           ) : (
             <>
               <OptimizerResultRows rows={rows} indices={pageOrigIndices} selected={selPrvwNdx}
-                baseDamage={baseResult.damage} rotationMode={rotationMode} showWeapon={showWeapon} onSelect={showRsltPrvw} />
+                baseDamage={baseResult.damage} rotationMode={rotationMode} showWeapon={showWeapon}
+                onSelect={showRsltPrvw} onEquip={applyOptRslt} />
 
               {optRrr ? (
                 <div className="opt-result-row is-base">
@@ -1919,7 +1896,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
               key={`preview-echo-menu-${index}`}
               asChild
               ariaLabel={`${getEchoById(echo.id)?.name ?? 'Echo'} actions`}
-              items={echoSrfcMenu.buildReadOnlyMenu({
+              items={prvwSel.selectionMode ? prvwSel.contextItemsFor(itemId) : echoSrfcMenu.buildReadOnlyMenu({
                 id: itemId,
                 echo,
                 onSelect: () => {
@@ -1968,6 +1945,21 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
         rslvPrvwTgt.kind === 'result' ? rslvPrvwTgt.index : null,
       )}
     >
+      <ContextTrigger
+        asChild
+        ariaLabel="Optimizer actions"
+        location="optimizer.surface"
+        context={{
+          running: isLoading,
+          pending: isThryMode,
+          hasResults: resultsOnBoard,
+          run: onRunOpt,
+          halt: handleHalt,
+          clear: clearRun,
+          openInventory: optInvMdl.show,
+          openRules: openRlsMdl,
+        }}
+      >
       <div className="opb-surface rte-scope">
         {resultsOnBoard ? (
           <div className="opb-results">
@@ -2040,6 +2032,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
           onRules={openRlsMdl}
         />
       </div>
+      </ContextTrigger>
     </OptimizerLab>
   )
 
@@ -2061,7 +2054,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
         ariaLabel="Optimizer rules"
         onClose={clsRlsMdl}
       >
-        {rulesModal.visible ? <Suspense fallback={null}><Rules onClose={clsRlsMdl} /></Suspense> : null}
+        {rulesModal.visible ? <Suspense fallback={<AppLdrVrly mode="inline" text="Loading optimizer rules..." />}><Rules onClose={clsRlsMdl} /></Suspense> : null}
       </AppModal>
 
       <SetCond
@@ -2073,7 +2066,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
         onSetCondsrx={(updater) => updResSetCon(optResId, updater)}
       />
 
-      {wpnCondMdl.visible ? <Suspense fallback={null}>
+      {wpnCondMdl.visible ? <Suspense fallback={<AppLdrVrly mode="scrim" text="Loading weapon settings..." />}>
       <WpnCfgMdl
         {...wpnCondMdl}
         title="Config - Weapon Search"
@@ -2085,11 +2078,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       </Suspense> : null}
 
       {variant === 'embedded' ? labSurface : (
-        <Suspense fallback={null}><ContextTrigger
-          asChild
-          ariaLabel="Optimizer actions"
-          items={optCtxMenuTm}
-        >
+        <Suspense fallback={<AppLdrVrly mode="inline" text="Loading optimizer controls..." />}>
           <div className={`optimizer-pane ${isWide ? '' : 'compact'}`}>
             {isWide ? <ControlBox isWide {...controlProps} /> : null}
 
@@ -2247,10 +2236,10 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
               {!isWide ? <ControlBox isWide={false} {...controlProps} /> : null}
             </div>
           </div>
-        </ContextTrigger></Suspense>
+        </Suspense>
       )}
 
-      {mainEchoPckr.visible ? <Suspense fallback={null}>
+      {mainEchoPckr.visible ? <Suspense fallback={<AppLdrVrly mode="scrim" text="Loading Echo picker..." />}>
       <EchoPckrMdl
         visible={mainEchoPckr.visible}
         open={mainEchoPckr.open}
@@ -2318,7 +2307,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       />
       </Suspense> : null}
 
-      {optInvMdl.visible ? <Suspense fallback={null}>
+      {optInvMdl.visible ? <Suspense fallback={<AppLdrVrly mode="scrim" text="Loading optimizer inventory..." />}>
       <OptimizerInventoryModal
         visible={optInvMdl.visible}
         open={optInvMdl.open}
@@ -2331,7 +2320,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       />
       </Suspense> : null}
 
-      {resPckr.visible ? <Suspense fallback={null}>
+      {resPckr.visible ? <Suspense fallback={<AppLdrVrly mode="scrim" text="Loading Resonator picker..." />}>
       <ResPckrMdl
         visible={resPckr.visible}
         open={resPckr.open}
@@ -2371,7 +2360,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       />
       </Suspense> : null}
 
-      {weaponPicker.visible ? <Suspense fallback={null}>
+      {weaponPicker.visible ? <Suspense fallback={<AppLdrVrly mode="scrim" text="Loading weapon picker..." />}>
       <WpnPckrMdl
         visible={weaponPicker.visible}
         open={weaponPicker.open}

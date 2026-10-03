@@ -1,69 +1,32 @@
 /*
   Author: Runor Ewhro
-  Description: Owns the settings data-import worker lifecycle and transfers
-               file buffers with request-id correlation and worker failure cleanup.
+  Description: Owns the settings data-import worker lifecycle and file transfers.
 */
 
 import { getGameDataMode } from '@/data/gameData'
 import type { PersistedState } from '@/domain/entities/appState'
+import { WorkerChannel } from '@/shared/lib/WorkerChannel'
 import type { DataImportJob, DataImportResult, DataImportSource } from './dataImport'
 import type { DataImportWorkerRequest, DataImportWorkerResponse } from './dataImport.worker'
 
-let worker: Worker | null = null
-let nextJobId = 1
-let idleTimer: ReturnType<typeof setTimeout> | null = null
-const IDLE_TEARDOWN_MS = 2_000
+class DataImportClient {
+  private readonly channel = new WorkerChannel<DataImportWorkerRequest, DataImportWorkerResponse>({
+    createWorker: () => new Worker(new URL('./dataImport.worker.ts', import.meta.url), { type: 'module' }),
+    idleMs: 2_000,
+    errorMessage: 'Data import worker failed unexpectedly.',
+  })
 
-const pendingJobs = new Map<number, {
-  resolve: (value: DataImportResult) => void
-  reject: (error: Error) => void
-}>()
-
-function clearIdleTeardown(): void {
-  if (idleTimer !== null) clearTimeout(idleTimer)
-  idleTimer = null
-}
-
-function scheduleIdleTeardown(): void {
-  if (pendingJobs.size > 0 || !worker) return
-  clearIdleTeardown()
-  idleTimer = setTimeout(() => {
-    idleTimer = null
-    if (pendingJobs.size > 0) return
-    worker?.terminate()
-    worker = null
-  }, IDLE_TEARDOWN_MS)
-  ;(idleTimer as unknown as { unref?: () => void }).unref?.()
-}
-
-function ensureWorker(): Worker {
-  clearIdleTeardown()
-  if (worker) return worker
-
-  worker = new Worker(new URL('./dataImport.worker.ts', import.meta.url), { type: 'module' })
-  worker.onmessage = (event: MessageEvent<DataImportWorkerResponse>) => {
-    const message = event.data
-    // Multiple imports share one worker; replies resolve only their matching job.
-    const pending = pendingJobs.get(message.id)
-    if (!pending) return
-
-    pendingJobs.delete(message.id)
-    if (message.ok) pending.resolve(message.result)
-    else pending.reject(new Error(message.error))
-    scheduleIdleTeardown()
+  async run(job: DataImportJob, transfer: Transferable[]): Promise<DataImportResult> {
+    const response = await this.channel.request(
+      (id) => ({ id, gameDataMode: getGameDataMode(), job }),
+      { transfer },
+    )
+    if (!response.ok) throw new Error(response.error)
+    return response.result
   }
-  worker.onerror = (event) => {
-    const error = new Error(event.message || 'Data import worker failed unexpectedly.')
-    // A worker failure invalidates every outstanding job. The next request
-    // creates a fresh worker rather than leaving those promises pending.
-    for (const pending of pendingJobs.values()) pending.reject(error)
-    pendingJobs.clear()
-    worker?.terminate()
-    worker = null
-    clearIdleTeardown()
-  }
-  return worker
 }
+
+const client = new DataImportClient()
 
 async function makeSource(source: string | File): Promise<DataImportSource> {
   return typeof source === 'string'
@@ -88,9 +51,7 @@ export async function runDataImport(
   const resolvedSource = await makeSource(source)
   let job: DataImportJob
   if (kind === 'snapshot') {
-    if (!currentState) {
-      throw new Error('Current app state is required for snapshot imports.')
-    }
+    if (!currentState) throw new Error('Current app state is required for snapshot imports.')
     job = { kind, source: resolvedSource, currentState }
   } else {
     job = { kind, source: resolvedSource }
@@ -102,22 +63,6 @@ export async function runDataImport(
     return runDataImportJob(job)
   }
 
-  return new Promise((resolve, reject) => {
-    const id = nextJobId++
-    pendingJobs.set(id, { resolve, reject })
-    const message: DataImportWorkerRequest = {
-      id,
-      gameDataMode: getGameDataMode(),
-      job,
-    }
-    // Transfer ownership of file bytes; this detaches the client-side buffer.
-    const transfer = resolvedSource.kind === 'bytes' ? [resolvedSource.bytes] : []
-    try {
-      ensureWorker().postMessage(message, transfer)
-    } catch (error) {
-      pendingJobs.delete(id)
-      reject(error instanceof Error ? error : new Error('Could not start the data import worker.'))
-      scheduleIdleTeardown()
-    }
-  })
+  const transfer = resolvedSource.kind === 'bytes' ? [resolvedSource.bytes] : []
+  return client.run(job, transfer)
 }

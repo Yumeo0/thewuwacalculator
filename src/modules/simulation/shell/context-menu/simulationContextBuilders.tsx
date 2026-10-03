@@ -148,8 +148,6 @@ function ppndMoreMenu(
     moreEntries: MenuEntry[],
     id: string,
 ): MenuEntry[] {
-  // feature-specific menus append route/workspace entries through one consistent "more" submenu instead of duplicating
-  // global actions in every builder.
   if (moreEntries.length === 0) {
     return items
   }
@@ -210,8 +208,6 @@ export const simulationMenuBuilder = {
             onOpenSklleu: onOpenSkllDa,
             moreEntries,
           }: SimulationDamageRowBuilder): MenuEntry[] {
-        // damage rows always keep formula access first; optional skill data and global more actions are appended after
-        // row-local visibility controls.
         return ppndMoreMenu([
           {
             id: `formula:${rowId}`,

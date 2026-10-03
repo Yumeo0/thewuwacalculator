@@ -42,32 +42,32 @@ export function ShowcaseCssEditorDock({
   }
 
   return (
-    <div className="workspace-css-dock" data-phase="in">
-      <header className="workspace-css-dock-head">
-        <span className="workspace-css-dock-eyebrow">
+    <div className="wk-css-dock" data-phase="in">
+      <header className="wk-css-dock-head">
+        <span className="wk-css-dock-eyebrow">
           Custom CSS
         </span>
-        <div className="workspace-css-dock-actions">
+        <div className="wk-css-dock-actions">
           <button
-            type="button" className="workspace-css-dock-pick"
+            type="button" className="wk-css-dock-pick"
             onClick={() => colorInputRef.current?.click()}
             aria-label={copied ? `Copied ${pickedColor}` : 'Pick a color and copy its hex'}
           >
-            <span className="workspace-css-dock-swatch" style={{ background: pickedColor }} aria-hidden="true" />
-            <span className="workspace-css-dock-pick-label">{copied ? `${pickedColor} copied` : 'Pick color'}</span>
+            <span className="wk-css-dock-swatch" style={{ background: pickedColor }} aria-hidden="true" />
+            <span className="wk-css-dock-pick-label">{copied ? `${pickedColor} copied` : 'Pick color'}</span>
             {copied
               ? <Check size="0.8125rem" aria-hidden="true" />
               : <Pipette size="0.8125rem" aria-hidden="true" />}
           </button>
           <input
             ref={colorInputRef}
-            type="color" className="workspace-css-dock-color-input"
+            type="color" className="wk-css-dock-color-input"
             value={pickedColor}
             onChange={handlePickColor}
             tabIndex={-1}
             aria-hidden="true"
           />
-          <button type="button" className="workspace-css-dock-close" onClick={onClose} aria-label="Collapse editor">
+          <button type="button" className="wk-css-dock-close" onClick={onClose} aria-label="Collapse editor">
             <X size="0.875rem" aria-hidden="true" />
           </button>
         </div>
@@ -78,10 +78,10 @@ export function ShowcaseCssEditorDock({
         extensions={CSS_EXTENSIONS}
         basicSetup={EDITOR_SETUP}
         theme={isDark ? 'dark' : 'light'}
-        onChange={onChange} className="workspace-css-dock-editor"
+        onChange={onChange} className="wk-css-dock-editor"
       />
-      <p className="workspace-css-dock-note">
-        Live, scoped to this card. Frame with <code>.workspace-rail</code>; reach any inner class like <code>.showcase-echo-name</code>.
+      <p className="wk-css-dock-note">
+        CSS changes update this card immediately. Use <code>.workspace-rail</code> as the root selector, then target elements such as <code>.showcase-echo-name</code>.
       </p>
     </div>
   )

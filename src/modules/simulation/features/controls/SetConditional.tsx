@@ -7,7 +7,9 @@
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, CSSProperties as CssProps } from 'react'
-import { ChevronRight, Search } from 'lucide-react'
+import { ChevronRight, Layers, Search, SlidersHorizontal } from 'lucide-react'
+import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import { withDefIconM } from '@/shared/lib/imageFallback'
 import { AppModal } from '@/shared/ui/AppModal'
 import { ModalHeader } from '@/shared/ui/AppModalShell'
@@ -141,6 +143,7 @@ export function SetCond(props: {
     onFtrChng: onFtrChng,
   } = props
 
+  const mobile = useMobileUi()
   const [query, setQuery] = useState('')
   const [pieceFilter, setPcFltr] = useState<PieceFilter>('all')
   const [sortBy, setSortBy] = useState<SortOption>('idAsc')
@@ -305,14 +308,7 @@ export function SetCond(props: {
     return counts
   }, [sets, query])
 
-  return (
-    <AppModal
-      state={{ visible, open, closing: closing ?? false }}
-      variant="set-conditionals"
-      ariaLabel={title}
-      onClose={close}
-    >
-      <div className="amdl ssc-root">
+  const header = (
         <ModalHeader over="Simulation" title={<h2>{title}</h2>} onClose={close}>
           <div className="amdl__gauge">
             <div className="amdl__pill">
@@ -325,8 +321,9 @@ export function SetCond(props: {
             </div>
           </div>
         </ModalHeader>
+  )
 
-        <div className="amdl__body sscr-body">
+  const rail = (
           <div className="amdl__rail sscr-rail">
             <label className="amdl__find">
               <Search size="0.8125rem" />
@@ -369,7 +366,9 @@ export function SetCond(props: {
               </div>
             </div>
           </div>
+  )
 
+  const pane = (
           <div className="amdl__pane">
             {filtered.length === 0 ? (
               <div className="sscr-empty">No sets match the current filters.</div>
@@ -471,8 +470,33 @@ export function SetCond(props: {
 
             <p className="amdl__prose sscr-hint">Toggle each set effect part to consider during optimization.</p>
           </div>
+  )
+
+  return (
+    <AppModal
+      state={{ visible, open, closing: closing ?? false }}
+      variant="set-conditionals"
+      ariaLabel={title}
+      onClose={close}
+    >
+      {mobile ? (
+        <MobilePages
+          className="ssc-root"
+          head={header}
+          pages={[
+            { id: 'sets', label: 'Sets', icon: <Layers />, badge: filtered.length, node: pane },
+            { id: 'filter', label: 'Filter', icon: <SlidersHorizontal />, badge: `${stats.checked}/${stats.total}`, node: rail },
+          ]}
+        />
+      ) : (
+        <div className="amdl ssc-root">
+          {header}
+          <div className="amdl__body sscr-body">
+            {rail}
+            {pane}
+          </div>
         </div>
-      </div>
+      )}
     </AppModal>
   )
 }

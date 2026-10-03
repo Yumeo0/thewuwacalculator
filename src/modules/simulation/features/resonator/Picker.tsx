@@ -338,7 +338,7 @@ export function useResPickerView({
       ? (
           <>
             {rcmmFrqn ? (
-              <span className="picker-modal__spec-item" title={rcmmFrqn.label}>
+              <span className="pkm__spec-item" title={rcmmFrqn.label}>
                 <Flame size="0.75rem" />
                 {frqnResCnts[entry.id] ?? 0}
               </span>
@@ -371,7 +371,7 @@ export function useResPickerView({
         })
       },
       leading: (
-        <div className="picker-modal__media-frame"
+        <div className="pkm__media-frame"
           style={rarityVars(entry.rarity) as CssProps}
         >
           <img
@@ -379,7 +379,7 @@ export function useResPickerView({
             data-full-src={entry.sprite}
             loading="lazy"
             decoding="async"
-            alt={entry.displayName} className="picker-modal__media-image"
+            alt={entry.displayName} className="pkm__media-image"
             onError={withPickerImageFallback}
           />
         </div>
@@ -388,11 +388,11 @@ export function useResPickerView({
       trailing: isSelected && slctLbl ? slctLbl : rcmmBadge,
       meta: (
         <>
-          <span className="picker-modal__spec-item picker-modal__spec-item--rarity">{entry.rarity}★</span>
+          <span className="pkm__spec-item pkm__spec-item--rarity">{entry.rarity}★</span>
           <DisplayImage
             src={`/assets/game/attributes/icons/${entry.attribute}.webp`}
             alt=""
-            aria-hidden="true" className="picker-modal__meta-icon"
+            aria-hidden="true" className="pkm__meta-icon"
             title={toTitle(entry.attribute)}
             style={entry.attribute === 'physical' ? { filter: 'grayscale(1) brightness(0.6)' } : undefined}
             onError={withDefIconM}
@@ -400,12 +400,12 @@ export function useResPickerView({
           <DisplayImage
             src={`/assets/game/weapons/types/${WPNTYPETOKEY[entry.weaponType]}.webp`}
             alt=""
-            aria-hidden="true" className="picker-modal__meta-icon picker-modal__meta-icon--theme-contrast"
+            aria-hidden="true" className="pkm__meta-icon pkm__meta-icon--theme-contrast"
             title={toTitle(WPNTYPETOKEY[entry.weaponType])}
             onError={withDefIconM}
           />
           {tags.length > 0 ? (
-            <span className="picker-modal__spec-group picker-modal__spec-push">
+            <span className="pkm__spec-group pkm__spec-push">
               {tags.slice(0, 3).map((tag) => (
                 <div
                   key={tag.id}
@@ -413,7 +413,7 @@ export function useResPickerView({
                   style={{
                     WebkitMaskImage: `url(/assets/game/resonators/tags/${tag.id}.webp)`,
                     maskImage: `url(/assets/game/resonators/tags/${tag.id}.webp)`,
-                  } as CssProps} className="picker-modal__tag-icon"
+                  } as CssProps} className="pkm__tag-icon"
                 />
               ))}
             </span>

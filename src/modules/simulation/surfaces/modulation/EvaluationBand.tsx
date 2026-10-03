@@ -3,7 +3,6 @@
   Description: Shared evaluation score band used by every build-analysis page.
 */
 
-import type { ReactNode } from 'react'
 import { GRADE_LADDER } from '@/engine/evaluation/evaluation/grades.ts'
 import type { EvaluationSummary } from '@/engine/evaluation/buildEvaluationWorkerTypes'
 import {
@@ -56,13 +55,11 @@ export function EvaluationBand({
   score,
   grade,
   tone,
-  banner,
 }: {
   report: { evaluation: Omit<EvaluationSummary, 'percent'> } | null
   score: number | null
   grade: string | null
   tone: string
-  banner?: ReactNode
 }) {
   const evaluation = report?.evaluation ?? null
   // The band remains mounted while a run is pending. Unknown readings go quiet
@@ -71,24 +68,22 @@ export function EvaluationBand({
   const pct = reading ? 0 : Math.max(0, Math.min(100, score / 2))
 
   return (
-    <section className="workspace-band workspace-card workspace-span"
+    <section className="wk-band wk-card wk-span"
       data-state={reading ? 'reading' : undefined}
       data-emoji={reading ? undefined : getBuildEvaluationEmoji(grade)}
       data-score={reading ? undefined : Math.floor(score)}
-      data-banner={banner ? 'true' : undefined}
       style={{
         ...(reading ? {} : { '--grade': tone, '--pos': `${pct}%` }),
         '--grade-scale': GRADE_SCALE_GRADIENT,
       } as CssVars}
     >
-      {banner}
-      <div className="workspace-band-core">
-        <div className="workspace-band-score">
-          <span className="workspace-eyebrow">Build Score</span>
-          <strong className="workspace-band-figure">
+      <div className="wk-band-core">
+        <div className="wk-band-score">
+          <span className="wk-eyebrow">Build Score</span>
+          <strong className="wk-band-figure">
             {reading ? null : formatBuildEvaluationScore(score)}
           </strong>
-          <span className="workspace-band-score-sub">
+          <span className="wk-band-score-sub">
             {reading ? 'scoring... hang tight!' : (
               <>
                 <em>{formatCompactNum(evaluation.userDamage)}</em> avg dmg
@@ -98,52 +93,52 @@ export function EvaluationBand({
         </div>
       </div>
 
-      <div className="workspace-band-gauge">
-        <div className="workspace-ruler-top">
-          <span className="workspace-ruler-dmg">
+      <div className="wk-band-gauge">
+        <div className="wk-ruler-top">
+          <span className="wk-ruler-dmg">
             <em>{evaluation ? formatCompactNum(evaluation.baselineDamage) : NO_READING}</em>
             <span>Baseline · 0%</span>
           </span>
-          <span className="workspace-ruler-dmg workspace-ruler-dmg--mid">
+          <span className="wk-ruler-dmg wk-ruler-dmg--mid">
             <em>{evaluation ? formatCompactNum(evaluation.referenceDamage) : NO_READING}</em>
             <span>Reference · 100%</span>
           </span>
-          <span className="workspace-ruler-dmg workspace-ruler-dmg--end">
+          <span className="wk-ruler-dmg wk-ruler-dmg--end">
             <em>{evaluation ? formatCompactNum(evaluation.maximumDamage) : NO_READING}</em>
             <span>Maximum · 200%</span>
           </span>
         </div>
 
-        <div className="workspace-track">
-          <span className="workspace-track-bar">
-            <span className="workspace-track-scale" />
-            <span className="workspace-track-fill" />
+        <div className="wk-track">
+          <span className="wk-track-bar">
+            <span className="wk-track-scale" />
+            <span className="wk-track-fill" />
             {GRADE_MARKS.map((mark) => (
               <span
-                key={`${mark.threshold}:${mark.label}`} className="workspace-track-notch"
+                key={`${mark.threshold}:${mark.label}`} className="wk-track-notch"
                 style={{ '--at': `${mark.pos}%` } as CssVars}
               />
             ))}
           </span>
-          <span className="workspace-track-tick workspace-track-tick--mid" style={{ '--at': '50%' } as CssVars} />
-          <span className="workspace-track-marker">
-            {reading ? null : <span className="workspace-track-marker-flag">{grade}</span>}
+          <span className="wk-track-tick wk-track-tick--mid" style={{ '--at': '50%' } as CssVars} />
+          <span className="wk-track-marker">
+            {reading ? null : <span className="wk-track-marker-flag">{grade}</span>}
           </span>
         </div>
 
-        <div className="workspace-ruler-tiers">
-          <span className="workspace-ruler-cap workspace-ruler-cap--start">0%</span>
+        <div className="wk-ruler-tiers">
+          <span className="wk-ruler-cap wk-ruler-cap--start">0%</span>
           {MILESTONE_MARKS.map((mark) => (
             <span
               key={`${mark.threshold}:${mark.label}`}
-              className={`workspace-ruler-tier${mark.pos <= pct ? ' is-reached' : ''}`}
+              className={`wk-ruler-tier${mark.pos <= pct ? ' is-reached' : ''}`}
               style={{ '--at': `${mark.pos}%`, '--tier-color': mark.color } as CssVars}
             >
-              <i className="workspace-ruler-tier-stem" aria-hidden="true" />
+              <i className="wk-ruler-tier-stem" aria-hidden="true" />
               <b>{mark.label}</b>
             </span>
           ))}
-          <span className="workspace-ruler-cap workspace-ruler-cap--end">200%</span>
+          <span className="wk-ruler-cap wk-ruler-cap--end">200%</span>
         </div>
       </div>
     </section>

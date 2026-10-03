@@ -1,0 +1,302 @@
+.enemy-banner-card {
+  display: grid;
+  gap: 1rem;
+  padding: 0 0.5rem;
+}
+
+.enr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(5.25rem, 1fr));
+  gap: 0.4rem;
+}
+
+.enr-cell {
+  --el: var(--resonator-accent);
+  --tone: var(--el);
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.46rem 0.5rem 0.42rem 0.62rem;
+  border: 1px solid color-mix(in srgb, var(--el) 12%, var(--item-border));
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--el) 5%, var(--box-bg));
+  overflow: hidden;
+  transition: border-color 300ms ease, background 300ms ease;
+}
+
+.enr-cell[data-sign='vuln'] { --tone: #ef4444; }
+.enr-cell[data-sign='zero'] { --tone: var(--muted); }
+
+.enr-cell:hover {
+  border-color: color-mix(in srgb, var(--el) 67%, var(--item-border));
+  background: color-mix(in srgb, var(--el) 9%, var(--box-bg));
+}
+
+.enr-cell:hover::after {
+  opacity: 1;
+}
+
+.enr-cell::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: var(--el);
+  opacity: 0.67;
+  transition: opacity 300ms ease;
+}
+
+.enr-cell__ghost {
+  position: absolute;
+  z-index: 0;
+  right: -0.5rem;
+  bottom: -0.6rem;
+  width: 2.6rem;
+  height: 2.6rem;
+  object-fit: contain;
+  opacity: 0.1;
+  pointer-events: none;
+  filter: saturate(1.1);
+}
+
+.enr-cell[data-sign='zero'] .enr-cell__ghost,
+.enr-cell__ghost.is-phys {
+  filter: grayscale(1);
+  opacity: 0.08;
+}
+
+.enr-cell > :not(.enr-cell__ghost) {
+  position: relative;
+  z-index: 1;
+}
+
+.enr-cell__head {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  transform-origin: left center;
+  transition: opacity 600ms ease, transform 600ms ease;
+}
+
+.enr-cell__icon {
+  width: 0.7rem;
+  height: 0.7rem;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.enr-cell__icon.is-phys {
+  filter: grayscale(1) brightness(0.7);
+}
+
+.enr-cell__label {
+  font-family: var(--display-font);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--el) 52%, var(--text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.enr-cell__res,
+.enr-cell__mult {
+  min-height: 1rem;
+  transform-origin: left center;
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    font-size 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 300ms ease,
+    opacity 300ms ease;
+}
+
+.enr-cell__res {
+  display: flex;
+  align-items: center;
+  gap: 0.26rem;
+  font-family: var(--display-font);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.enr-cell__res[data-shifted='true']::after {
+  content: '';
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 999px;
+  background: var(--tone);
+}
+
+.enr-cell__mult {
+  display: flex;
+  align-items: center;
+  gap: 0.06rem;
+  font-family: var(--display-font);
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--tone) 55%, var(--text));
+}
+
+.enr-cell__mult-x {
+  font-size: 0.6rem;
+  opacity: 0.7;
+}
+
+.enr-cell:not(:has(input)):hover .enr-cell__mult {
+  font-size: 1rem;
+  font-weight: 800;
+  transform: translateY(-1.15rem) scale(1.5);
+  color: color-mix(in srgb, var(--tone) 64%, var(--text));
+}
+
+.enr-cell:not(:has(input)):hover .enr-cell__res {
+  font-size: 0.6rem;
+  font-weight: 700;
+  opacity: 0.25;
+  transform: translateY(1.15rem) scale(0.95);
+}
+
+.enr-cell:hover .enr-cell__head {
+  opacity: 0.25;
+  transform: scale(0.95);
+}
+
+.enr-grid .enr-cell input[type='number'] {
+  width: 100%;
+  max-width: 3rem;
+  min-width: 0;
+  text-align: center;
+  padding: 0.1rem 0.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes enemy-res-cell-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.enr-cell {
+  animation: enemy-res-cell-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.enr-cell:nth-child(1) { animation-delay: 40ms; }
+.enr-cell:nth-child(2) { animation-delay: 80ms; }
+.enr-cell:nth-child(3) { animation-delay: 120ms; }
+.enr-cell:nth-child(4) { animation-delay: 160ms; }
+.enr-cell:nth-child(5) { animation-delay: 200ms; }
+.enr-cell:nth-child(6) { animation-delay: 240ms; }
+.enr-cell:nth-child(7) { animation-delay: 280ms; }
+
+:is(.no-entrance-anim, .reduce-animation) .enr-cell {
+  animation: none;
+}
+
+.stack-gauge__icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.stack-gauge__value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: color-mix(in srgb, var(--gauge) 50%, var(--text));
+}
+
+.combat-tune-card {
+  --tune-accent: #c9b35d;
+  display: grid;
+  gap: 0.62rem;
+  padding: 0.95rem 0.1rem;
+}
+
+.combat-tune-card + .combat-tune-card {
+  border-top: 1px solid var(--item-border);
+}
+
+.res-combat-control {
+  display: grid;
+  gap: 0.36rem;
+  min-width: min(100%, 12rem);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.res-combat-control.is-disabled {
+  opacity: 0.58;
+}
+
+.res-combat-switch {
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.48rem;
+  min-height: 2.15rem;
+  border: 1px solid color-mix(in srgb, var(--tune-accent, var(--resonator-accent)) 20%, var(--item-border));
+  border-radius: 0.28rem;
+  background: color-mix(in srgb, var(--tune-accent, var(--resonator-accent)) 8%, var(--inner-bg));
+  color: var(--text);
+  padding: 0.34rem 0.48rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.res-combat-switch:disabled {
+  cursor: not-allowed;
+}
+
+.res-combat-switch__mark {
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--tune-accent, var(--resonator-accent)) 58%, var(--muted));
+  transform: rotate(45deg);
+  background: transparent;
+}
+
+.res-combat-control.is-active .res-combat-switch__mark {
+  background: var(--tune-accent, var(--resonator-accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tune-accent, var(--resonator-accent)) 18%, transparent);
+}
+
+.res-combat-switch__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 750;
+  color: color-mix(in srgb, var(--text) 92%, var(--tune-accent, var(--resonator-accent)));
+}
+
+.res-combat-switch__state {
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--tune-accent, var(--resonator-accent)) 56%, var(--muted));
+}
+
+.res-combat-plain-card__controls {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.res-combat-plain-card__math {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.55rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}

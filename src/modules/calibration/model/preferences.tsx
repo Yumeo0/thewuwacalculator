@@ -168,7 +168,7 @@ export function mkPrefGrps({
         {
           kind: 'toggle',
           label: 'Update Toasts',
-          description: 'Show changelog update toasts when new app updates land.',
+          description: 'Show a notification when an app update is available.',
           checked: ui.preferences.updateToast,
           onChange: setPdtTst,
         },

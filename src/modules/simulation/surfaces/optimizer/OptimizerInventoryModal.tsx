@@ -7,7 +7,9 @@
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useId, useMemo, useState } from 'react'
 import type { CSSProperties as CssProps, HTMLAttributes as HtmlAttrs, KeyboardEvent as KeyboardEvent, MouseEvent as RctMsVnt } from 'react'
-import { Ban, Check, RotateCcw, Search } from 'lucide-react'
+import { Ban, Check, Gem, RotateCcw, Search, SlidersHorizontal } from 'lucide-react'
+import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import type { SavedEcho } from '@/domain/entities/inventoryStorage'
 import type { OptInventorySelection } from '@/domain/entities/profile'
 import { makeOptInventorySelection } from '@/domain/entities/profile'
@@ -336,6 +338,7 @@ export function OptimizerInventoryModal({
   const titleId = useId()
   const railVisible = useMediaQuery('(min-width: 64rem)')
   const [echoGridRef, echoGridCols] = useGridColumns()
+  const mobile = useMobileUi()
   const [previewId, setPreviewId] = useState<string | null>(null)
   const [echoSearch, setEchoSrch] = useState('')
   const [selectedSet, setSelSet] = useState<number | null>(null)
@@ -475,7 +478,9 @@ export function OptimizerInventoryModal({
     acts: selCtns,
   })
 
-  const mkCtx = useCallback((entry: SavedEcho): MenuEntry[] => [
+  const mkCtx = useCallback((entry: SavedEcho): MenuEntry[] => echoSel.selectionMode
+    ? echoSel.contextItemsFor(entry.id)
+    : [
     {
       id: `opt-inv:${entry.id}:include`,
       label: 'Include',
@@ -506,17 +511,7 @@ export function OptimizerInventoryModal({
   const outCount = validInvChs.length - includedCount
   const showRdt = railVisible && previewEntry !== null
 
-  return (
-    <AppModal
-      state={{ visible, open, closing }}
-      variant="inventory"
-      ariaLabelBy={titleId}
-      onClose={close}
-    >
-      <div className="amdl inv-modal"
-        onClick={(event) => event.stopPropagation()}
-        {...echoSel.focusProps}
-      >
+  const mHeader = (
         <ModalHeader over="Optimizer" title={<h2 id={titleId}>Inventory Search</h2>} onClose={close}>
           <div className="amdl__gauge inv-head">
             <div className="inv-tabs" role="group" aria-label="What picking an echo means">
@@ -562,8 +557,9 @@ export function OptimizerInventoryModal({
             </button>
           </div>
         </ModalHeader>
+  )
 
-        <div className="inv-stage">
+  const mRail = (
           <nav className="amdl__rail pkr-rail" aria-label="Optimizer inventory filters">
             <div className="pkr-rail__lab">The pool</div>
             <div className="opi-pool">
@@ -626,7 +622,9 @@ export function OptimizerInventoryModal({
               {filteredBag.length} of {validInvChs.length} echoes
             </div>
           </nav>
+  )
 
+  const mPane = (
           <div className={`inv-body${showRdt ? ' inv-body--readout' : ''}`}>
             {filteredBag.length === 0 ? (
               <div className="inv-empty">
@@ -680,8 +678,40 @@ export function OptimizerInventoryModal({
               </>
             )}
           </div>
+  )
+
+
+  return (
+    <AppModal
+      state={{ visible, open, closing }}
+      variant="inventory"
+      ariaLabelBy={titleId}
+      onClose={close}
+    >
+      {mobile ? (
+        <MobilePages
+          className="inv-modal"
+          head={mHeader}
+          onClick={(event) => event.stopPropagation()}
+          pages={[
+            { id: 'echoes', label: 'Echoes', icon: <Gem />, badge: filteredBag.length, node: <div className="inv-mlist" {...echoSel.focusProps}>{mPane}</div> },
+            { id: 'filters', label: 'Filters', icon: <SlidersHorizontal />, node: mRail },
+          ]}
+        />
+      ) : (
+      <div className="amdl inv-modal"
+        onClick={(event) => event.stopPropagation()}
+        {...echoSel.focusProps}
+      >
+        {mHeader}
+
+        <div className="inv-stage">
+          {mRail}
+
+          {mPane}
         </div>
       </div>
+      )}
     </AppModal>
   )
 }

@@ -113,10 +113,10 @@ export function viewCondVlFl(
     const checked = value === true
 
     return (
-      <div className="feature-condition-boolean-stack" role="group" aria-label={`${definition.label} value`}>
+      <div className="fcb" role="group" aria-label={`${definition.label} value`}>
         <button
           type="button"
-          className={`feature-condition-boolean-stack__btn${checked ? ' is-active' : ''}`}
+          className={`fcb__btn${checked ? ' is-active' : ''}`}
           aria-pressed={checked}
           onClick={() => onChange(true)}
         >
@@ -124,7 +124,7 @@ export function viewCondVlFl(
         </button>
         <button
           type="button"
-          className={`feature-condition-boolean-stack__btn${!checked ? ' is-active' : ''}`}
+          className={`fcb__btn${!checked ? ' is-active' : ''}`}
           aria-pressed={!checked}
           onClick={() => onChange(false)}
         >
@@ -328,7 +328,6 @@ export function makeRawCondition(
         : change.resonatorId
           ?? (choice && (!choice.changeTarget || choice.changeTarget === 'runtime') ? choice.resonatorId : undefined)
           ?? options.fallbackResId,
-    label: choice?.label,
     enabled: options.enabled ?? true,
     changes: [change],
   }

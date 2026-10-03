@@ -13,6 +13,8 @@ import { useShowcaseAnalysis } from '@/modules/simulation/surfaces/showcase/useS
 import type { ShowcaseAnalysisInput } from '@/engine/evaluation/showcaseAnalysis'
 import { computeShowcaseStats } from '@/engine/evaluation/showcaseStats'
 import { useAppStore } from '@/application/state'
+import { useInventoryUiStore } from '@/application/state/inventoryUiStore'
+import { useOptimizerRunStore } from '@/application/state/optimizerRunStore'
 import {
   selActResId,
   selWorkDrvd,
@@ -27,6 +29,7 @@ import {
 } from '@/engine/runtime/scenarioRuntime.ts'
 import { getSntSetNam } from '@/data/gameData/catalog/sonataSets'
 import { useEchoSrfcM } from '@/modules/simulation/features/echoes/lib/useEchoSurfaceMenu.tsx'
+import { parseEchoClip, pasteEchoes, readEchoClip, type EchoClipPayload } from '@/modules/simulation/features/echoes/lib/clipboard.ts'
 import { qpEchoAtSlot } from '@/modules/simulation/features/echoes/lib/equip.ts'
 import { openEchoCnsl } from '@/modules/simulation/features/echoes/lib/echoConsoleStore.ts'
 
@@ -52,7 +55,9 @@ import {
 } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
 import { makeStatsTree, makeStatsView } from '@/modules/simulation/model/statsView.ts'
 import { getMaxEchoSc } from '@/engine/evaluation/echoScoring.ts'
-import { useEchoScores } from '@/engine/evaluation/useEchoScoringRevision.ts'
+import { makeEvaluationKey } from '@/engine/evaluation/buildEvaluationKey.ts'
+import { peekEvaluationReport } from '@/engine/evaluation/buildEvaluationClient.ts'
+import { useEchoScores } from '@/application/hooks/useEchoScoringRevision.ts'
 import { getBuildStats } from '@/engine/pipeline/buildStats.ts'
 import { mkPrepWork, type PrepWork } from '@/engine/pipeline/preparedWorkspace.ts'
 import { selLiveRun } from '@/modules/simulation/model/selectors.ts'
@@ -63,15 +68,15 @@ import {
   prepareEchoMainStatScoring,
 } from '@/engine/evaluation/echoMainStatProfile.ts'
 import { resResBaseSt } from '@/data/catalog/resonatorSeedService.ts'
-import { useMediaQuery } from '@/shared/hooks/useMediaQuery'
-
 import { useTstStr } from '@/shared/util/toastStore.ts'
+import { isDtblVntTgt } from '@/shared/lib/isEditableEventTarget.ts'
+import { lastWorkspaceClipboardText } from '@/shared/lib/workspaceClipboardCache.ts'
 import { useImportLanding } from '@/modules/simulation/features/echoes/lib/importLanding.ts'
 import { useConfirm } from '@/shared/hooks/useConfirmation.ts'
 import { mainPortal } from '@/shared/lib/portalTarget'
 import { ConfirmHost } from '@/shared/ui/ConfirmationModal'
 import type { EvaluationBuildSnapshot } from '@/engine/evaluation/buildEvaluation.ts'
-import { Copy } from 'lucide-react'
+import { Clipboard, Copy } from 'lucide-react'
 import { useSel } from '@/modules/simulation/lib/sel.tsx'
 import {
   EVALUATION_RAIL_ENTER_MS, EVALUATION_RAIL_EXIT_MS,
@@ -87,9 +92,9 @@ import { type BuildRailModel } from '@/modules/simulation/workspace/BuildRail.ts
 import { makeRailModel as buildRailModel } from '@/modules/simulation/workspace/railModel.ts'
 import { makeRosterEntries } from '@/modules/simulation/workspace/rosterModel.ts'
 import { useResonatorProfileOps } from '@/modules/simulation/workspace/useResonatorProfileOps.ts'
+import { parseProfClip, readProfClip } from '@/modules/simulation/workspace/profileClipboard.ts'
 import { ModulationReport } from '@/modules/simulation/surfaces/modulation/ModulationReport.tsx'
 import type { MemberAnalysisSource } from '@/modules/simulation/surfaces/modulation/lib/memberSim.ts'
-import { NarrowEvaluationBanner } from '@/modules/simulation/workspace/NarrowEvaluationBanner.tsx'
 import { ScoreWarning } from '@/modules/simulation/workspace/ScoreWarning.tsx'
 import { getEvaluationStageCtx } from '@/modules/simulation/workspace/context.tsx'
 import { makeEchoSlot } from '@/modules/simulation/workspace/echoSlot.ts'
@@ -100,6 +105,20 @@ import AppLdrVrly from '@/shared/ui/AppLoaderOverlay.tsx'
 const EMPTY_ECHO_LOADOUT: Array<EchoInstance | null> = []
 const EMPTY_RUNTIME_MAP: Record<string, ResRuntime> = Object.freeze({})
 const EMPTY_TARGETS: Record<string, string | null> = Object.freeze({})
+function reportSourceIdentity(
+  selectedScenarioId: string,
+  targetScenarioId: string,
+  memberId: string | null,
+  runtime: ResRuntime | null,
+  runtimesById: Record<string, ResRuntime>,
+  targetSelections: Record<string, string | null>,
+  showAllStates: boolean,
+): string | null {
+  return runtime ? makeEvaluationKey({
+    selectedScenarioId, targetScenarioId, memberId,
+    runtime, runtimesById, targetSelections, showAllStates,
+  }) : null
+}
 // Defer report construction beyond the 460ms drawer transition so its worker
 // and lazy module work do not contend with the transition.
 const REPORT_ASIDE_WORK_DELAY_MS = 500
@@ -174,8 +193,8 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   const backgroundTextMode = useAppStore((state) => state.ui.backgroundTextMode)
   const isDarkTheme = themeMode === 'background' ? backgroundTextMode === 'dark' : themeMode === 'dark'
   const animatedPortraits = useAppStore((state) => state.ui.preferences.animatedRailPortraits)
-  const optimizerRunning = useAppStore((state) => state.optimizer.status === 'running')
-  const inventoryOpen = useAppStore((state) => state.invOpen)
+  const optimizerRunning = useOptimizerRunStore((state) => state.status === 'running')
+  const inventoryOpen = useInventoryUiStore((state) => state.open)
   const { prepWork, actRt: runtime, partRtsById, actTgtSels } = useAppStore(selWorkDrvd)
   const updateScenarioRuntime = useAppStore((state) => state.updScenarioResRt)
   const setAnimatedPortraits = useAppStore((state) => state.setAnimatedRailPortraits)
@@ -187,9 +206,12 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   const isModulation = page === 'modulation'
   const isOptimizer = page === 'optimizer'
   const isSuggestions = page === 'suggestions'
+  // Modulation needs target snapshots; the other surfaces request score only.
+  const reportOptions = isModulation
+    ? MODULATION_SUMMARY_REPORT_OPTIONS
+    : SCORE_ONLY_EVALUATION_REPORT_OPTIONS
   const pauseRailPortrait = isOptimizer && optimizerRunning
 
-  const isNarrow = useMediaQuery('(max-width: 80rem)')
   const surfacePhase = 'idle' as const
   const analysisActive = surfacePhase === 'idle' && !inventoryOpen
   const [captureAction, setCaptureAction] = useState<'download' | 'clipboard' | null>(null)
@@ -216,32 +238,6 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   )
   const rosterOps = useResonatorProfileOps(roster)
 
-  const stageContextItems = useMemo(() => getEvaluationStageCtx({
-    canDeleteAll: roster.length > 0,
-    onPaste: () => {
-      void rosterOps.paste()
-    },
-    onDeleteAll: () => {
-      rosterOps.remove(roster.map((entry) => entry.id), {
-        title: 'Remove all context resonators?',
-        message: 'This will remove every scenario represented by the context roster. Build Lab will create a default fallback scenario.',
-        successMessage: `Removed ${roster.length} context resonators from Build Lab.`,
-      })
-    },
-  }), [roster, rosterOps])
-
-  useEffect(() => {
-    if (reportTargetScenarioId === railScenarioId || railPhase !== 'idle') {
-      return undefined
-    }
-
-    return scheduleEvaluationTargetWork(() => {
-      startTransition(() => {
-        setReportTargetScenarioId(railScenarioId)
-      })
-    })
-  }, [railPhase, railScenarioId, reportTargetScenarioId])
-
   const railSeed = railResId ? seedRsntById[railResId] ?? null : null
 
   // Modulation member inspection is local and does not mutate shared profile selection.
@@ -265,9 +261,33 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
       : railScenario ? flattenScenarioRouting(railScenario) : {},
     [actTgtSels, railScenario, railScenarioId, selectedScenarioId],
   )
+  const selectedMemberId = scenarioLibrary.scenariosById[selectedScenarioId]?.team.members
+    .find((member) => member.resonatorId === railRuntime?.id)?.id ?? null
+  const railSourceKey = useMemo(() => reportSourceIdentity(
+    selectedScenarioId, railScenarioId, selectedMemberId,
+    railRuntime, railPartRtsById, railTargets, showAllStates,
+  ), [
+    railPartRtsById, railRuntime, railScenarioId, railTargets,
+    selectedMemberId, selectedScenarioId, showAllStates,
+  ])
+  const cachedRailReport = analysisActive && !isShowcase && !isOptimizer && !isSuggestions && railSourceKey
+    ? peekEvaluationReport(railSourceKey, reportOptions)
+    : undefined
+
+  useLayoutEffect(() => {
+    if (reportTargetScenarioId === railScenarioId) return undefined
+    if (cachedRailReport !== undefined) {
+      // An exact recent result satisfies the target change without restarting the worker.
+      setReportTargetScenarioId(railScenarioId)
+      return undefined
+    }
+    if (railPhase !== 'idle') return undefined
+    return scheduleEvaluationTargetWork(() => {
+      startTransition(() => setReportTargetScenarioId(railScenarioId))
+    })
+  }, [cachedRailReport, railPhase, railScenarioId, reportTargetScenarioId])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- a scenario change invalidates the previous member selection.
     setModulationMemberId(null)
   }, [railScenarioId])
 
@@ -277,7 +297,6 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   useEffect(() => {
     if (!isModulation || !seatAsk || railResId !== seatAsk.contextId) return
     if (!modulationRoster.some((mate) => mate.id === seatAsk.memberId)) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- consume the external import landing request in this workspace.
     setModulationMemberId(seatAsk.memberId)
     useImportLanding.getState().takeSeat()
   }, [isModulation, modulationRoster, railResId, seatAsk])
@@ -346,12 +365,40 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     [evaluationTuneStrain],
   )
   const reportTargets = evaluationInputs.targetSelections
+  // Hash the source state, before deferred simulation, to retrieve a report
+  // from an unchanged prior visit. The worker's full payload key still guards
+  // every cold run and refresh.
+  const reportMemberId = scenarioLibrary.scenariosById[selectedScenarioId]?.team.members
+    .find((member) => member.resonatorId === reportRuntime?.id)?.id ?? null
+  const reportSourceKey = useMemo(() => (
+    reportTargetScenarioId === railScenarioId
+    && reportRuntime === railRuntime
+    && reportParticipants === railPartRtsById
+    && reportTargets === railTargets
+      ? railSourceKey
+      : reportSourceIdentity(
+        selectedScenarioId, reportTargetScenarioId, reportMemberId,
+        reportRuntime, reportParticipants, reportTargets, showAllStates,
+      )
+  ), [
+    railPartRtsById, railRuntime, railScenarioId, railSourceKey, railTargets,
+    reportMemberId, reportParticipants, reportRuntime, reportTargetScenarioId,
+    reportTargets, selectedScenarioId, showAllStates,
+  ])
+  const cachedCurrentReport = reportSourceKey === railSourceKey
+    ? cachedRailReport
+    : analysisActive && !isShowcase && !isOptimizer && !isSuggestions && reportSourceKey
+      ? peekEvaluationReport(reportSourceKey, reportOptions)
+      : undefined
+  const needsReportSimulation = cachedCurrentReport === undefined || (isModulation && reportOpen)
+  const reportCalculationEnabled = analysisActive
+    && !isShowcase && !isSuggestions && !isOptimizer && needsReportSimulation
   const showcaseStats = useMemo(() => isShowcase && evaluationRuntime
     ? computeShowcaseStats({ runtime: evaluationRuntime, runtimesById: evaluationReportRuntimesById, enemy: evaluationEnemy, selectedTargets: reportTargets })
     : null, [evaluationEnemy, evaluationReportRuntimesById, evaluationRuntime, isShowcase, reportTargets])
   const reportTarget = useEvaluationTarget({
-    targetRuntime: analysisActive && !isShowcase && !isSuggestions && !isOptimizer ? evaluationRuntime : null,
-    targetSeed: analysisActive && !isShowcase && !isSuggestions && !isOptimizer ? reportSeed : null,
+    targetRuntime: reportCalculationEnabled ? evaluationRuntime : null,
+    targetSeed: reportCalculationEnabled ? reportSeed : null,
     targetSelections: isSuggestions ? EMPTY_TARGETS : reportTargets,
     // Evaluation scoring has its own normalized runtime/enemy assumptions, so
     // it must not reuse the live active prep even when evaluating the active resonator.
@@ -360,7 +407,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     initializedRuntimesById: isSuggestions ? EMPTY_RUNTIME_MAP : evaluationReportRuntimesById,
     enemy: evaluationEnemy,
     showAllStates: isSuggestions ? false : showAllStates,
-    deferHeavyWork: true,
+    deferHeavyWork: reportCalculationEnabled,
   })
   const showcaseInput = useMemo<ShowcaseAnalysisInput | null>(() => {
     if (!isShowcase || !evaluationRuntime || !railRuntime || !railScenario) return null
@@ -482,6 +529,69 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     onQpEchoAtjg: equipEvaluationEcho,
   })
   const { buildReadOnlyMenu, canSaveEcho, copyEchoesToClipboard } = echoSurfaceMenu
+  const pasteEchoAt = useCallback((slotIndex: number, payload: EchoClipPayload) => {
+    if (!echoRuntime) return
+    const result = pasteEchoes(echoLoadout, payload, slotIndex)
+    if (result.pastedCount > 0) setEchoLoadout(result.nextEchoes)
+    showToast({
+      content: result.pastedCount === 0
+        ? 'Nothing valid to paste here.'
+        : result.skippedCount > 0
+          ? `Pasted ${result.pastedCount} echo${result.pastedCount === 1 ? '' : 'es'} (${result.skippedCount} skipped).`
+          : `Pasted ${result.pastedCount} echo${result.pastedCount === 1 ? '' : 'es'}.`,
+      variant: result.pastedCount === 0 ? 'warning' : 'success',
+      duration: result.pastedCount === 0 ? 3200 : 2400,
+    })
+  }, [echoLoadout, echoRuntime, setEchoLoadout, showToast])
+  const pasteWorkspaceItem = useCallback(async (slotIndex?: number, pastedText?: string) => {
+    // A stage paste can receive either workspace clipboard type. Read the text
+    // once so both parsers inspect the same system clipboard value.
+    let raw: string | null = pastedText ?? null
+    if (raw == null) {
+      try {
+        raw = await navigator.clipboard?.readText() ?? null
+      } catch { /* Fall back to the same-session clipboard caches below. */ }
+    }
+    raw ??= lastWorkspaceClipboardText()
+
+    const profile = raw == null ? await readProfClip() : parseProfClip(raw)
+    if (profile) {
+      await rosterOps.paste(profile)
+      return
+    }
+
+    const echo = raw == null ? await readEchoClip() : parseEchoClip(raw)
+    if (echo && echoRuntime) {
+      const firstEmpty = echoLoadout.findIndex((entry) => entry == null)
+      pasteEchoAt(slotIndex ?? (firstEmpty >= 0 ? firstEmpty : 0), echo)
+      return
+    }
+
+    showToast({
+      content: 'Clipboard does not contain an Echo or resonator profile for this workspace.',
+      variant: 'warning',
+      duration: 3200,
+    })
+  }, [echoLoadout, echoRuntime, pasteEchoAt, rosterOps, showToast])
+  const stageContextItems = useMemo(() => getEvaluationStageCtx({
+    onPaste: () => { void pasteWorkspaceItem() },
+  }), [pasteWorkspaceItem])
+  useEffect(() => {
+    const onPaste = (event: ClipboardEvent) => {
+      if (event.defaultPrevented || isDtblVntTgt(event.target) || inventoryOpen
+        || document.querySelector('[role="dialog"][data-state="open"], [role="menu"][data-state="open"]')) {
+        return
+      }
+
+      const raw = event.clipboardData?.getData('text/plain') ?? ''
+      if (!raw || (!parseProfClip(raw) && !parseEchoClip(raw))) return
+      event.preventDefault()
+      void pasteWorkspaceItem(undefined, raw)
+    }
+
+    window.addEventListener('paste', onPaste)
+    return () => window.removeEventListener('paste', onPaste)
+  }, [inventoryOpen, pasteWorkspaceItem])
   const evaluationEchoItems = useMemo(
     () => echoLoadout
       .map((echo, index) => (echo ? { id: `evaluation:${echoRuntime?.id ?? 'unknown'}:echo:${index}`, val: echo } : null))
@@ -505,7 +615,20 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
         })
       }
     },
-  }], [copyEchoesToClipboard, showToast])
+  }, {
+    id: 'evaluation-echo:paste',
+    key: 'paste' as const,
+    icon: <Clipboard size="1em" />,
+    label: 'Paste',
+    title: 'Paste a workspace item (Ctrl/Cmd+V)',
+    float: false,
+    run: async ({ ids }: { ids: string[] }) => {
+      const selectedSlot = ids.length > 0 ? Number(ids[0]?.split(':').at(-1)) : null
+      const firstEmpty = echoLoadout.findIndex((echo) => echo == null)
+      await pasteWorkspaceItem(selectedSlot != null && Number.isInteger(selectedSlot)
+        ? selectedSlot : firstEmpty >= 0 ? firstEmpty : 0)
+    },
+  }], [copyEchoesToClipboard, echoLoadout, pasteWorkspaceItem, showToast])
   const evaluationEchoSelection = useSel({
     surfaceId: `evaluation:${echoRuntime?.id ?? 'unknown'}:echoes`,
     ariaLabel: 'Evaluation echo selection actions',
@@ -516,26 +639,40 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   })
   const focusEvaluationEchoSurface = evaluationEchoSelection.focusSurface
   const addEvaluationEchoToSelection = evaluationEchoSelection.addToSelection
+  const evaluationEchoSelectionMode = evaluationEchoSelection.selectionMode
+  const getEvaluationSelectionItems = evaluationEchoSelection.contextItemsFor
   const getEvaluationEchoId = useCallback(
     (slotIndex: number) => `evaluation:${echoRuntime?.id ?? 'unknown'}:echo:${slotIndex}`,
     [echoRuntime?.id],
   )
   const getEvaluationEchoItems = useCallback((itemId: string, echo: EchoInstance) => (
-    buildReadOnlyMenu({
+    evaluationEchoSelectionMode ? getEvaluationSelectionItems(itemId) : [...buildReadOnlyMenu({
       id: itemId,
       echo,
       onSelect: () => {
         focusEvaluationEchoSurface()
         addEvaluationEchoToSelection(itemId)
       },
-    })
-  ), [addEvaluationEchoToSelection, buildReadOnlyMenu, focusEvaluationEchoSurface])
+    }), {
+      id: `${itemId}:paste`,
+      label: 'Paste',
+      icon: <Clipboard size="1em" />,
+      onSelect: () => { void pasteWorkspaceItem(Number(itemId.split(':').at(-1))) },
+    }]
+  ), [addEvaluationEchoToSelection, buildReadOnlyMenu, evaluationEchoSelectionMode, focusEvaluationEchoSurface, getEvaluationSelectionItems, pasteWorkspaceItem])
+  const getEmptyEvaluationEchoItems = useCallback((slotIndex: number) => evaluationEchoSelectionMode ? getEvaluationSelectionItems() : [{
+    id: `evaluation-echo:empty:${slotIndex}:paste`,
+    label: 'Paste',
+    icon: <Clipboard size="1em" />,
+    onSelect: () => { void pasteWorkspaceItem(slotIndex) },
+  }], [evaluationEchoSelectionMode, getEvaluationSelectionItems, pasteWorkspaceItem])
   const echoSelection = useMemo<EvaluationEchoSelection>(() => ({
     selectionMode: evaluationEchoSelection.selectionMode,
     isSelected: evaluationEchoSelection.isSelected,
     buildClickCapture: evaluationEchoSelection.buildClickCapture,
     getId: getEvaluationEchoId,
     getItems: getEvaluationEchoItems,
+    getEmptyItems: getEmptyEvaluationEchoItems,
     surfaceProps: evaluationEchoSelection.surfaceProps,
   }), [
     evaluationEchoSelection.buildClickCapture,
@@ -544,6 +681,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     evaluationEchoSelection.surfaceProps,
     getEvaluationEchoId,
     getEvaluationEchoItems,
+    getEmptyEvaluationEchoItems,
   ])
 
   const echoActions = useWorkspaceEchoActions({
@@ -554,12 +692,6 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     onEchoLoadoutChange: setEchoLoadout,
   })
 
-  // Modulation requests target snapshots for its summary and defers feature and
-  // upgrade sections until detail is requested. Other consumers retain score only.
-  const reportOptions = isModulation
-    ? MODULATION_SUMMARY_REPORT_OPTIONS
-    : SCORE_ONLY_EVALUATION_REPORT_OPTIONS
-
   const { report, loading, error } = useEvaluationReport({
     runtime: evaluationRuntime,
     simulation,
@@ -568,6 +700,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     enabled: analysisActive && !isShowcase && !isSuggestions && !isOptimizer,
     clearOnDisable: isShowcase || isSuggestions || isOptimizer,
     identityKey: reportTargetScenarioId,
+    sourceKey: reportSourceKey,
     reportOptions,
   })
 
@@ -597,12 +730,10 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   })
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- cancel the old scenario report at the ownership boundary.
     closeEvaluationReport()
   }, [closeEvaluationReport, reportTargetScenarioId, evaluationRuntime?.id])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- opening Inventory cancels the report drawer and its deferred work.
     if (inventoryOpen) closeEvaluationReport()
   }, [closeEvaluationReport, inventoryOpen])
 
@@ -750,9 +881,9 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   }), [actResId, partRtsById, runtime])
   const incomingRailAssetUrls = useMemo(() => {
     return [
-      { src: incomingRailModel.portraitSrc, selector: '.workspace-portrait-img' },
-      { src: incomingRailModel.attrIcon, selector: '.workspace-portrait-elem, .seal-id-attr' },
-      { src: incomingRailModel.weaponIcon, selector: '.workspace-weapon-icon, .seal-bloom-gun' },
+      { src: incomingRailModel.portraitSrc, selector: '.wk-portrait-img' },
+      { src: incomingRailModel.attrIcon, selector: '.wk-portrait-elem, .seal-id-attr' },
+      { src: incomingRailModel.weaponIcon, selector: '.wk-weapon-icon, .seal-bloom-gun' },
     ].filter((asset): asset is { src: string; selector: string } => Boolean(asset.src))
   }, [incomingRailModel])
 
@@ -806,20 +937,12 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     return () => window.clearTimeout(handle)
   }, [railPhase, railScenarioId])
 
-  const evaluationBanner = !isShowcase && isNarrow ? (
-    <NarrowEvaluationBanner
-      portraitSrc={railModel.portraitSrc}
-      spriteCss={railModel.spriteCss}
-      backdropSrc={railModel.portraitSrc}
-    />
-  ) : null
-
   return (
     <>
       <ScoreWarning active={score != null} />
       <div className="simulation-stage">
       <div className={`simulation-workspace${isOptimizer ? ' opt-lab' : ''}${isSuggestions ? ' sgl-lab' : ''}`} style={{ '--resonator-accent': accent, '--grade': tone } as CssVars}>
-        {!isShowcase && error ? <div className="workspace-notice workspace-notice--error">{error.message}</div> : null}
+        {!isShowcase && error ? <div className="wk-notice wk-notice--error">{error.message}</div> : null}
 
         {runtime ? (
             <BuildWorkspacePresentation
@@ -883,7 +1006,6 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
                   score={score}
                   grade={grade}
                   tone={tone}
-                  banner={evaluationBanner}
                   detailBuildKey={detailBuildKey}
                   setDetailBuildKey={setDetailBuildKey}
                   mainStackRef={mainStackRef}

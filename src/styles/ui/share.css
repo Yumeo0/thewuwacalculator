@@ -1,0 +1,101 @@
+.rot-share-modal {
+  --amdl-w: 30rem;
+}
+
+.rot-share {
+  --rs-accent: var(--resonator-accent, var(--accent, #20bfb9));
+}
+
+.rot-share__code--link {
+  color: var(--amdl-muted);
+}
+
+.ims-token {
+  display: flex;
+  align-items: stretch;
+  margin-top: 0.75rem;
+  border: 1px solid var(--picker-modal-border, var(--item-border, rgba(27, 36, 53, 0.14)));
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--picker-modal-text, var(--text, #1b2435)) 3%, transparent);
+  overflow: hidden;
+  transition: border-color 160ms ease;
+}
+
+.ims-token:focus-within {
+  border-color: color-mix(in srgb, var(--confirm-accent, var(--accent)) 55%, transparent);
+}
+
+.ims-token__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.6rem 0.7rem;
+  border: 0;
+  background: transparent;
+  color: var(--picker-modal-text, var(--text, #1b2435));
+  font-family: var(--mono-font);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-align: left;
+}
+
+.ims-token__input:focus {
+  outline: none;
+}
+
+.ims-token__input::placeholder {
+  color: var(--picker-modal-muted, var(--muted, rgba(27, 36, 53, 0.6)));
+  letter-spacing: normal;
+}
+
+.ims-token__paste {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.85rem;
+  border: 0;
+  border-left: 1px solid var(--picker-modal-border, var(--item-border, rgba(27, 36, 53, 0.14)));
+  background: color-mix(in srgb, var(--picker-modal-text, var(--text, #1b2435)) 4%, transparent);
+  color: var(--picker-modal-text, var(--text, #1b2435));
+  font-family: var(--mono-font);
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.ims-token__paste:hover,
+.ims-token__paste:focus-visible {
+  background: color-mix(in srgb, var(--confirm-accent, var(--accent)) 16%, transparent);
+  color: color-mix(in srgb, var(--confirm-accent, var(--accent)) 88%, var(--picker-modal-text, var(--text)));
+  outline: none;
+}
+
+.rot-share__take {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.rot-share__take .amdl__act {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: none;
+}
+
+.rot-share__code {
+  min-width: 0;
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0.32rem 0.5rem;
+  border: 1px solid var(--amdl-line-soft);
+  border-radius: 0.45rem;
+  background: var(--amdl-sunk);
+  font: 500 0.7rem/1.2 var(--amdl-mono);
+  color: var(--amdl-text);
+}

@@ -4,6 +4,8 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
+import { ListChevronsDownUp, ListChevronsUpDown, ScanSearch } from 'lucide-react'
 import { observeSelectionPip } from '@/shared/lib/observeSelectionPip'
 import { Fragment, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
@@ -365,7 +367,7 @@ function ScopeDrawer({ addends, open }: { addends: ScopedAddend[]; open: boolean
         >
           <span className="pgd-sub-lb">{addend.scopeLabel}</span>
           <span />
-          <span />
+          <span className="pst-sub-gain" />
           <span className="pgd-sub-v pst-sub-v">{addend.displayValue}</span>
           <span />
         </div>
@@ -425,6 +427,24 @@ function StatRow({
 
   return (
     <>
+    <ContextTrigger
+      asChild
+      ariaLabel={`${row.label} stat actions`}
+      items={[
+        {
+          id: `modulation:stat:${row.key}:resolve`,
+          label: 'Show sources',
+          icon: <ScanSearch size="1em" />,
+          onSelect: onPick,
+        },
+        ...(hasScopes ? [{
+          id: `modulation:stat:${row.key}:scopes`,
+          label: open ? 'Hide scopes' : 'Show scopes',
+          icon: open ? <ListChevronsDownUp size="1em" /> : <ListChevronsUpDown size="1em" />,
+          onSelect: onOpen,
+        }] : []),
+      ]}
+    >
     <div
       className={classes}
       data-row={row.key}
@@ -475,7 +495,12 @@ function StatRow({
         <span className={`pgd-v pst-num pst-gain${flat ? ' is-nil' : ''}`}>
           {flat ? '–' : signedStatValue(row.key, displayBonus)}
         </span>
-        <span className="pgd-v pst-num pst-total">{formatStatKeyValue(row.key, row.total)}</span>
+        <span className="pgd-v pst-num pst-total">
+          {formatStatKeyValue(row.key, row.total)}
+          {!flat ? (
+            <sup className="pst-add pst-add--current">{signedStatValue(row.key, displayBonus)}</sup>
+          ) : null}
+        </span>
         {evaluationReady.b100 ? (
           <span className={`pgd-v pst-num pst-b100${same100 ? ' is-same' : ''}`}>
             {b100 ? formatStatKeyValue(row.key, b100.total) : '–'}
@@ -495,6 +520,7 @@ function StatRow({
         <span className={hasScopes ? 'pgd-car' : 'pgd-car is-off'} aria-hidden="true" />
       </button>
     </div>
+    </ContextTrigger>
     {hasScopes ? <ScopeDrawer addends={scoped} open={open} /> : null}
     </>
   )
@@ -862,7 +888,7 @@ function ResidueGroup({
         ) : (
           <>
             <span className="pgd-gkey pst-gkey">Base</span>
-            <span className="pgd-gkey pst-gkey">Gain</span>
+            <span className="pgd-gkey pst-gkey is-gain">Gain</span>
             <span className="pgd-gkey pst-gkey is-total">Total</span>
             {evaluationReady.b100 ? <span className="pgd-gkey pst-gkey is-b100">100%</span> : null}
             {evaluationReady.b200 ? <span className="pgd-gkey pst-gkey is-b200">200%</span> : null}
@@ -1012,7 +1038,7 @@ function StatGroup({
         ) : (
           <>
             <span className="pgd-gkey pst-gkey">Base</span>
-            <span className="pgd-gkey pst-gkey">Gain</span>
+            <span className="pgd-gkey pst-gkey is-gain">Gain</span>
             <span className="pgd-gkey pst-gkey is-total">Total</span>
             {evaluationReady.b100 ? (
               <span className="pgd-gkey pst-gkey is-b100">100%</span>

@@ -18,7 +18,7 @@
     "seo:sync": "node tools/seo/writeStaticRoutes.mjs --sync-public",
     "lint": "eslint .",
     "check:architecture": "node tools/architecture/checkImports.mjs",
-    "bench:import": "node tools/analysis/importCardBench.mjs",
+    "bench:import": "node scripts/analysis/importCardBench.mjs",
     "preview": "vite preview",
     "dev:cloudflare": "wrangler dev",
     "deploy:cloudflare": "npm run build && wrangler deploy",
@@ -39,7 +39,7 @@
     "ingest:spine-slugs": "node scripts/ingest/fetch/nanoka/slugManifest.mjs",
     "ingest:spine": "node scripts/ingest/fetch/nanoka/spine.mjs && npm run assets:spine-atlas",
     "assets:spine-atlas": "node scripts/assets/downscaleSpineAtlas.mjs",
-    "ingest:spine:encore": "node scripts/ingest/fetch/encore/spine.mjs && npm run assets:spine-atlas",
+    "ingest:spine:encore": "node scripts/ingest/fetch/encore/run.mjs",
     "ingest:sequence-icons": "node scripts/ingest/fetch/nanoka/sequenceIcons.mjs",
     "ingest:node-icons": "node scripts/ingest/fetch/nanoka/skillNodeIcons.mjs",
     "render:spine-setup": "node scripts/assets/renderSpineSetup.mjs",
@@ -50,8 +50,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "benchmark:rotation": "vitest bench src/engine/rotation/__benchmarks__/rotation.bench.ts --run",
-    "analyze:substats": "node tools/analysis/evaluationSubstatWeights.mjs",
-    "generate:char-stat-weights": "node tools/analysis/generateCharStatWeights.mjs"
+    "analyze:substats": "node scripts/analysis/evaluationSubstatWeights.mjs",
+    "generate:char-stat-weights": "node scripts/analysis/generateCharStatWeights.mjs"
   },
   "dependencies": {
     "@codemirror/lang-css": "^6.3.1",
@@ -89,6 +89,8 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "postcss": "^8.5.28",
+    "postcss-selector-parser": "^7.1.6",
     "sharp": "^0.34.5",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",

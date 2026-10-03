@@ -127,7 +127,7 @@ export function ReadInspector({
             in the rotation it stands */}
         <div className="rte-readline">
           <i className="rte-readline__dot" aria-hidden="true" />
-          <span>Read . {node.kindLabel}</span>
+          <span>Details . {node.kindLabel}</span>
           {node.address ? <span className="rte-readline__at">{node.address}</span> : null}
         </div>
 

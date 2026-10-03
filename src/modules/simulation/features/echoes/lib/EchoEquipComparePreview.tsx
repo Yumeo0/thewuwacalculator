@@ -6,11 +6,22 @@
 
 import type { EchoInstance } from '@/domain/entities/runtime.ts'
 import { ArrowRight } from 'lucide-react'
-import { EchoCard } from '@/modules/simulation/features/echoes/ui/EchoGrid.tsx'
+import { EchoCard } from '@/modules/simulation/workspace/ui.tsx'
+import { makeEchoSlot } from '@/modules/simulation/workspace/echoSlot.ts'
 
 interface EchoQpCmprPr {
   currentEcho: EchoInstance | null
   nextEcho: EchoInstance
+}
+
+export function EchoCardPreview({ echo }: { echo: EchoInstance }) {
+  return (
+    <div className="eep">
+      <div className="eep__card">
+        <EchoCard echo={makeEchoSlot(echo)} index={0} />
+      </div>
+    </div>
+  )
 }
 
 export function EchoQpCmprdn({
@@ -18,28 +29,18 @@ export function EchoQpCmprdn({
   nextEcho,
 }: EchoQpCmprPr) {
   return (
-    <div className="echo-equip-preview">
-      <div className="echo-equip-preview__lane">
-        <div className="echo-equip-preview__card">
-          <span className="echo-equip-preview__label">Current</span>
-          <EchoCard
-            echo={currentEcho}
-            variant="compact"
-            showSubstats={true}
-            showImage
-          />
+    <div className="eep">
+      <div className="eep__lane">
+        <div className="eep__card">
+          <span className="eep__label">Current</span>
+          <EchoCard echo={currentEcho ? makeEchoSlot(currentEcho) : null} index={0} />
         </div>
-        <div className="echo-equip-preview__arrow" aria-hidden="true">
+        <div className="eep__arrow" aria-hidden="true">
           <ArrowRight size="1em" />
         </div>
-        <div className="echo-equip-preview__card">
-          <span className="echo-equip-preview__label">Equip</span>
-          <EchoCard
-            echo={nextEcho}
-            variant="compact"
-            showSubstats={true}
-            showImage
-          />
+        <div className="eep__card">
+          <span className="eep__label">Equip</span>
+          <EchoCard echo={makeEchoSlot(nextEcho)} index={1} />
         </div>
       </div>
     </div>

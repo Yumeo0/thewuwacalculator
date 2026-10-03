@@ -64,6 +64,7 @@ import {
   negEffectsFor,
 } from '@/engine/gameData/negativeEffects'
 import { getTuneStrainMaxForTeam } from '@/engine/gameData/tuneStrain'
+import { getEnemyMaxOffTune } from '@/engine/formulas/tuneRupture'
 import { getSrcNumMax } from '@/engine/gameData/controlOptions'
 import { readRtPath, writeBjctPat, writeRtPath } from '@/domain/gameData/runtimePath'
 import { getOwnForKey, listStatesFor } from '@/data/catalog/gameDataService'
@@ -517,8 +518,6 @@ function sumSkillHits(skill: Pick<SkillDef, 'hits'>): number {
   return skill.hits.reduce((total, hit) => total + hit.multiplier * hit.count, 0)
 }
 
-export const OFF_TUNE_MAX = 38.4
-
 const EMPTY_SCALAR_WRITES: readonly SkillScalarWrite[] = []
 const EMPTY_RATE_WRITES: readonly ContributionWrite[] = []
 
@@ -543,8 +542,8 @@ function resolvedOffTune(
   return base + (skill.offTune ?? 0) + (formula?.offTuneAdd ?? 0)
 }
 
-function formatOffTune(value: number): string {
-  return `${value}/${OFF_TUNE_MAX}`
+function formatOffTune(value: number, max: number): string {
+  return `${value}/${max}`
 }
 
 /*
@@ -564,6 +563,7 @@ function traceOffTune(
   casterName: string,
   formula: RotFormulaStats | undefined,
   rate: number,
+  max: number,
   repeats: number,
   before: number,
   after: number,
@@ -645,13 +645,13 @@ function traceOffTune(
   return {
     before,
     after,
-    max: OFF_TUNE_MAX,
+    max,
     reset,
     sealed,
     afterBreak,
     resume,
-    crest: !reset && !sealed && after >= OFF_TUNE_MAX && before < OFF_TUNE_MAX,
-    held: !reset && !sealed && after >= OFF_TUNE_MAX && before >= OFF_TUNE_MAX,
+    crest: !reset && !sealed && after >= max && before < max,
+    held: !reset && !sealed && after >= max && before >= max,
     hits,
     hitTotal,
     pre,
@@ -2881,6 +2881,7 @@ function runFeatBody(
     ? applyFormulaToFinalPlane(lclFeatStt, participant.lane, scaledSkill)
     : null
   const enemy = getActEnemy(lclFeatStt)
+  const maxOffTune = getEnemyMaxOffTune(enemy.class)
   const effectiveStatsBase = captureCurrentNode && (lclFeatStt.captureEntries || lclFeatStt.nspcNtrs)
     ? resolveNumericEffectiveStats(
       lclFeatStt.numericTeam,
@@ -2934,7 +2935,7 @@ function runFeatBody(
   const effectiveStats = effectiveStatsBase
     ? {
       ...effectiveStatsBase,
-      offTune: formatOffTune(lclFeatStt.offTune),
+      offTune: formatOffTune(lclFeatStt.offTune, maxOffTune),
       offTuneTrace: traceOffTune(
         scaledSkill,
         skillScalarWrites,
@@ -2945,6 +2946,7 @@ function runFeatBody(
         participant.seed.name || participant.seed.id,
         formulaStats,
         buildupRate,
+        maxOffTune,
         nodeState.multiplier,
         offTuneBefore,
         lclFeatStt.offTune,

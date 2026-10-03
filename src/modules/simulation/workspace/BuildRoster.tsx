@@ -91,6 +91,7 @@ export function BuildRoster({
   reads,
   onContextChange,
   onAddResonator,
+  backgroundItems,
   selection,
   mates = [],
   onOpenMember,
@@ -102,6 +103,7 @@ export function BuildRoster({
   reads: RosterReads
   onContextChange: (id: string) => void
   onAddResonator?: () => void
+  backgroundItems?: MenuEntry[]
   selection?: BuildRosterSelection
   /** The context resonator's teammates, shown in its capsule. */
   mates?: CapsuleMate[]
@@ -114,6 +116,7 @@ export function BuildRoster({
   const findTimer = useRef(0)
   const [folded, setFolded] = useState<ReadonlySet<AttributeKey>>(() => new Set())
   const [previewId, setPreviewId] = useState<string | null>(null)
+  const [pinnedId, setPinnedId] = useState<string | null>(null)
   const [geom, setGeom] = useState<{ id: string; x: number; y: number } | null>(null)
   const [find, setFind] = useState('')
   const releaseTimer = useRef(0)
@@ -160,53 +163,77 @@ export function BuildRoster({
     })
   }, [beadOf, contextEntry, folded])
 
-  const holdPreview = useCallback(() => window.clearTimeout(releaseTimer.current), [])
   const releasePreview = useCallback((id?: string) => {
     window.clearTimeout(releaseTimer.current)
     releaseTimer.current = window.setTimeout(() => {
-      const capsule = columnRef.current?.querySelector<HTMLElement>('.blm-capsule:not([data-phase="out"])')
-      if (capsule && (capsule.matches(':hover') || capsule.contains(document.activeElement))) return
       setPreviewId((current) => (id == null || current === id ? null : current))
     }, 160)
   }, [])
 
-  // A capsule is only worth growing where there is something to say: the lead
-  // always has its team, anyone else only once a rotation has been written.
-  const capsuleEntry = useMemo(() => {
-    if (reads !== 'rotation' || !previewId) return null
-    const entry = roster.find((item) => item.id === previewId) ?? null
-    if (!entry) return null
-    return entry.id === contextEntry?.id || entry.rotationNodes > 0 ? entry : null
-  }, [contextEntry, previewId, reads, roster])
+  const hasSpark = useCallback((entry: BuildRosterEntry) => (
+    reads === 'rotation' && (entry.id === contextEntry?.id || entry.rotationNodes > 0)
+  ), [contextEntry, reads])
 
-  const measureFor = useCallback((id: string) => {
+  const capsuleEntry = useMemo(() => {
+    if (!pinnedId) return null
+    const entry = roster.find((item) => item.id === pinnedId) ?? null
+    return entry && hasSpark(entry) ? entry : null
+  }, [hasSpark, pinnedId, roster])
+
+  const measureFor = useCallback((id: string): boolean => {
     const bead = beadOf(id)
     const column = columnRef.current
     const box = scrollRef.current
-    if (!bead || !column || !box) return
+    if (!bead || !column || !box) return false
     const b = bead.getBoundingClientRect()
     const c = column.getBoundingClientRect()
     const view = box.getBoundingClientRect()
     const mid = b.top + b.height / 2
     if (mid < view.top + 8 || mid > view.bottom - 8) {
       setGeom(null)
-      return
+      return false
     }
     const next = { id, x: b.left + b.width / 2 - c.left, y: mid - c.top }
     setGeom((prev) => (
       prev && prev.id === next.id && prev.x === next.x && prev.y === next.y ? prev : next
     ))
+    return true
   }, [beadOf])
 
   const measure = useCallback(() => {
-    if (capsuleEntry) measureFor(capsuleEntry.id)
+    if (capsuleEntry && !measureFor(capsuleEntry.id)) setPinnedId(null)
   }, [capsuleEntry, measureFor])
 
-  const pointAt = useCallback((id: string, grow = true) => {
+  const togglePin = useCallback((id: string) => {
+    if (pinnedId === id) {
+      setPinnedId(null)
+      return
+    }
+    if (measureFor(id)) setPinnedId(id)
+  }, [measureFor, pinnedId])
+
+  useEffect(() => {
+    if (!pinnedId) return undefined
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target
+      if (target instanceof Element && target.closest('.blm-capsule, .blm-spark, [data-bead][data-active]')) return
+      setPinnedId(null)
+    }
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') setPinnedId(null)
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [pinnedId])
+
+  const pointAt = useCallback((id: string) => {
     window.clearTimeout(releaseTimer.current)
     setPreviewId(id)
-    if (grow && reads === 'rotation') measureFor(id)
-  }, [measureFor, reads])
+  }, [])
 
   useEffect(() => {
     const box = scrollRef.current
@@ -223,6 +250,7 @@ export function BuildRoster({
 
   const onCapsuleFace = useCallback((entry: BuildRosterEntry) => {
     if (entry.id !== contextEntry?.id || selection?.selectionMode || !onOpenMember) {
+      setPinnedId(null)
       beadOf(entry.id)?.click()
       return
     }
@@ -320,6 +348,15 @@ export function BuildRoster({
       focusBead(key === 'Home' ? visibleEntries[0] : visibleEntries[visibleEntries.length - 1])
       return
     }
+    if (key === ' ' && reads === 'rotation') {
+      const id = (document.activeElement as HTMLElement | null)?.dataset.resId
+      const entry = id ? visibleEntries.find((item) => item.id === id) : undefined
+      if (entry && hasSpark(entry)) {
+        event.preventDefault()
+        togglePin(entry.id)
+        return
+      }
+    }
     if (key.length === 1 && key !== ' ' && /\S/.test(key)
       && !event.metaKey && !event.ctrlKey && !event.altKey) {
       event.preventDefault()
@@ -327,7 +364,7 @@ export function BuildRoster({
       return
     }
     selection?.surfaceProps.onKeyDown?.(event)
-  }, [focusBead, selection, stepFocus, typeToFind, visibleEntries])
+  }, [focusBead, hasSpark, reads, selection, stepFocus, togglePin, typeToFind, visibleEntries])
 
   const onFocusColumn = useCallback((event: { target: EventTarget | null; currentTarget: HTMLElement }) => {
     if (event.target !== event.currentTarget) return
@@ -335,6 +372,16 @@ export function BuildRoster({
   }, [contextEntry, focusBead])
 
   return (
+    <ContextTrigger
+      asChild
+      ariaLabel="Context roster actions"
+      getItems={(event) => {
+        const target = event.target
+        return target instanceof Element && target.closest('button, a, input, .blm-capsule')
+          ? []
+          : backgroundItems ?? []
+      }}
+    >
     <div className="blm" data-reads={reads} ref={columnRef}>
       <div className="blm-scroll" ref={scrollRef}>
         <nav className="blm-thread"
@@ -382,7 +429,6 @@ export function BuildRoster({
                       const isPicked = selection?.isSelected(entry.id) ?? false
                       const bead = (
                         <button
-                          key={entry.id}
                           type="button"
                           data-bead
                           data-res-id={entry.id}
@@ -404,13 +450,18 @@ export function BuildRoster({
                             reads === 'rotation' ? rotationNote(entry) : '',
                           ].filter(Boolean).join(', ')}
                           data-active={isContext ? 'true' : undefined}
-                          data-marked={entry.rotationNodes > 0 ? 'true' : undefined}
                           data-pointed={previewId === entry.id ? 'true' : undefined}
                           data-selected={isPicked ? 'true' : undefined}
                           data-selection-focus-item="true"
-                          onClick={() => onContextChange(entry.id)}
+                          onClick={() => {
+                            if (isContext && hasSpark(entry) && !selection?.selectionMode) {
+                              togglePin(entry.id)
+                              return
+                            }
+                            onContextChange(entry.id)
+                          }}
                           onClickCapture={selection?.buildClickCapture(entry.id)}
-                          onPointerEnter={(event) => pointAt(entry.id, event.pointerType !== 'touch')}
+                          onPointerEnter={() => pointAt(entry.id)}
                           onPointerLeave={() => releasePreview(entry.id)}
                           onFocus={() => pointAt(entry.id)}
                           onBlur={() => releasePreview(entry.id)}
@@ -425,16 +476,37 @@ export function BuildRoster({
                           </span>
                         </button>
                       )
-                      return selection ? (
-                        <ContextTrigger
-                          key={entry.id}
-                          asChild
-                          ariaLabel={`${entry.name} actions`}
-                          items={selection.getItems(entry.id)}
-                        >
-                          {bead}
-                        </ContextTrigger>
-                      ) : bead
+                      const pinned = pinnedId === entry.id
+                      return (
+                        <Fragment key={entry.id}>
+                          {selection ? (
+                            <ContextTrigger
+                              asChild
+                              ariaLabel={`${entry.name} actions`}
+                              items={selection.getItems(entry.id)}
+                            >
+                              {bead}
+                            </ContextTrigger>
+                          ) : bead}
+                          {hasSpark(entry) ? (
+                            <span className="blm-spark-row">
+                              <button
+                                type="button" className="blm-spark"
+                                style={{ '--row-ink': entry.accent } as CssVars}
+                                data-lead={isContext ? 'true' : undefined}
+                                data-on={pinned ? 'true' : undefined}
+                                tabIndex={-1}
+                                aria-expanded={pinned}
+                                aria-label={`${entry.name}: ${isContext ? 'team and rotation' : 'rotation'}`}
+                                title={isContext ? `${entry.name}: team and rotation` : `${entry.name}: rotation`}
+                                onClick={() => togglePin(entry.id)}
+                              >
+                                <i className="blm-spark-mark" aria-hidden="true" />
+                              </button>
+                            </span>
+                          ) : null}
+                        </Fragment>
+                      )
                     })}
                   </div>
                 </div>
@@ -451,8 +523,6 @@ export function BuildRoster({
           onFace={onCapsuleFace}
           onFaceMenu={onCapsuleMenu}
           onMate={onCapsuleMate}
-          onHold={holdPreview}
-          onRelease={() => releasePreview()}
         />
       ) : null}
 
@@ -489,5 +559,6 @@ export function BuildRoster({
         </div>
       </div>
     </div>
+    </ContextTrigger>
   )
 }

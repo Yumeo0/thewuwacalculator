@@ -1,0 +1,947 @@
+.wk-tune-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.95rem 0.9rem 0.8rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.wk-tune-headline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.wk-tune-reset {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.26rem 0.42rem;
+  border-radius: 0.34rem;
+  border: 1px solid color-mix(in srgb, var(--text) 11%, transparent);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+  font: 600 0.56rem/1 var(--mono-font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.wk-tune-reset:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--text) 22%, transparent);
+}
+
+.reduce-animation .wk-tune-reset {
+  transition: none;
+}
+
+.wk-tune-title {
+  font: 700 0.98rem/1 var(--display-font);
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.wk-tune-sub {
+  font: 600 0.56rem/1 var(--mono-font);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.wk-tune-fixed {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.8rem 0.9rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.wk-tune-fixed .wk-tune-segment {
+  padding: 0;
+}
+
+.wk-tune-ident {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 0.4rem 0.45rem;
+}
+
+.wk-tune-ident-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  min-width: 0;
+}
+
+.wk-tune-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.wk-tune-group {
+  display: flex;
+  flex-direction: column;
+  padding: 0.85rem 0.9rem;
+}
+
+.wk-tune-grouptoggle {
+  margin-bottom: 0;
+  transition: margin-bottom 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wk-tune-group[data-state='open'] .wk-tune-grouptoggle {
+  margin-bottom: 0.6rem;
+}
+
+.wk-tune-group .expandable__content[data-state='closed'] {
+  padding-top: 0;
+}
+
+.wk-tune-group + .wk-tune-group {
+  border-top: 1px solid color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.wk-tune-caret {
+  color: color-mix(in srgb, var(--text) 38%, transparent);
+}
+
+.wk-tune-grouptoggle:hover .wk-tune-caret {
+  color: var(--resonator-accent);
+}
+
+.wk-tune-groupbody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.wk-tune-groupactions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.wk-tune-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font: 700 0.58rem/1 var(--mono-font);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--muted) 45%, var(--text));
+}
+
+.wk-tune-eyebrow::before {
+  content: '';
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 1px;
+  transform: rotate(45deg);
+  background: var(--resonator-accent);
+}
+
+.wk-tune-edit {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.26rem;
+  padding: 0.16rem 0.42rem;
+  border-radius: 0.3rem;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  background: transparent;
+  font: 600 0.54rem/1 var(--mono-font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.wk-tune-edit:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--text) 22%, transparent);
+}
+
+.wk-tune-edit[data-on] {
+  color: color-mix(in srgb, var(--text) 84%, var(--resonator-accent));
+  border-color: color-mix(in srgb, var(--resonator-accent) 50%, transparent);
+  background: color-mix(in srgb, var(--resonator-accent) 14%, transparent);
+}
+
+.reduce-animation .wk-tune-edit {
+  transition: none;
+}
+
+.wk-tune-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.2rem 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.wk-tune-toggle-label {
+  font: 600 0.72rem/1 var(--display-font);
+  color: color-mix(in srgb, var(--text) 55%, transparent);
+  transition: color 160ms ease;
+}
+
+.wk-tune-toggle[data-on] .wk-tune-toggle-label {
+  color: var(--text);
+}
+
+.wk-tune-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 1.85rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.wk-tune-switch i {
+  position: absolute;
+  top: 50%;
+  left: 0.13rem;
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text) 55%, transparent);
+  transform: translateY(-50%);
+  transition: transform 180ms var(--workspace-ease, cubic-bezier(0.22, 1, 0.36, 1)), background 180ms ease;
+}
+
+.wk-tune-toggle[data-on] .wk-tune-switch {
+  background: color-mix(in srgb, var(--resonator-accent) 30%, transparent);
+  border-color: color-mix(in srgb, var(--resonator-accent) 45%, transparent);
+}
+
+.wk-tune-toggle[data-on] .wk-tune-switch i {
+  transform: translate(0.85rem, -50%);
+  background: var(--resonator-accent);
+  box-shadow: 0 0 8px -1px color-mix(in srgb, var(--resonator-accent) 60%, transparent);
+}
+
+.reduce-animation .wk-tune-toggle-label,
+.reduce-animation .wk-tune-switch,
+.reduce-animation .wk-tune-switch i {
+  transition: none;
+}
+
+.wk-tune-segment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.3rem 0 0.1rem;
+}
+
+.wk-tune-segment-label,
+.wk-tune-ident-label {
+  font: 600 0.72rem/1 var(--display-font);
+  color: color-mix(in srgb, var(--text) 55%, transparent);
+}
+
+.wk-tune-segment-track {
+  display: flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.wk-tune-segment-opt {
+  flex: 1 1 0;
+  padding: 0.32rem 0.2rem;
+  border: none;
+  border-radius: 0.36rem;
+  background: transparent;
+  cursor: pointer;
+  font: 600 0.64rem/1 var(--mono-font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text) 50%, transparent);
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.wk-tune-segment-opt[data-on] {
+  background: color-mix(in srgb, var(--resonator-accent) 22%, transparent);
+  color: var(--text);
+}
+
+.reduce-animation .wk-tune-segment-opt {
+  transition: none;
+}
+
+.wk-tune-slots-w {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.wk-tune-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.wk-tune-slot {
+  position: relative;
+  flex: 1 1 auto;
+  padding: 0.34rem 0.3rem;
+  border-radius: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+  cursor: pointer;
+  font: 600 0.66rem/1 var(--mono-font);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text) 55%, transparent);
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.wk-tune-slot[data-on] {
+  border-color: color-mix(in srgb, var(--resonator-accent) 50%, transparent);
+  background: color-mix(in srgb, var(--resonator-accent) 16%, transparent);
+  color: var(--text);
+}
+
+.wk-tune-slot[data-set]::after {
+  content: '';
+  position: absolute;
+  top: 0.26rem;
+  right: 0.28rem;
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 50%;
+  background: var(--resonator-accent);
+}
+
+.wk-tune-slot-clear {
+  align-self: flex-start;
+  padding: 0.26rem 0.5rem;
+  border-radius: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  background: transparent;
+  cursor: pointer;
+  font: 600 0.64rem/1 var(--display-font);
+  color: color-mix(in srgb, var(--text) 60%, transparent);
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.wk-tune-slot-clear:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--text) 26%, transparent);
+}
+
+.wk-tune-textarea {
+  width: 100%;
+  min-height: 7rem;
+  resize: vertical;
+  padding: 0.6rem 0.65rem 0.6rem 0.72rem;
+  border-radius: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--resonator-accent) 22%, #0a0e16);
+  border-left: 2px solid color-mix(in srgb, var(--resonator-accent) 55%, transparent);
+  background: #0b0f17;
+  color: #d7e0ea;
+  text-align: left;
+  font: 500 0.74rem/1.6 var(--mono-font);
+  tab-size: 2;
+  caret-color: var(--resonator-accent);
+}
+
+.wk-tune-textarea::placeholder {
+  color: #46505f;
+}
+
+.wk-tune-textarea::selection {
+  background: color-mix(in srgb, var(--resonator-accent) 35%, transparent);
+}
+
+.wk-tune-textarea:focus-visible {
+  outline: none;
+  border-left-color: var(--resonator-accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--resonator-accent) 22%, transparent);
+}
+
+.wk-tune-note {
+  font: 500 0.66rem/1.4 var(--display-font);
+  color: color-mix(in srgb, var(--text) 50%, transparent);
+}
+
+.sc-echo-sub-meter[data-hidden='true'] {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(0.05rem) scale(0.96);
+}
+
+.reduce-animation .wk-tune-slot,
+.reduce-animation .wk-tune-slot-clear {
+  transition: none;
+}
+
+.wk-board[data-view='showcase'] .wk-rail-body,
+.wk-board[data-view='showcase'] .wk-rail-build,
+.wk-board[data-view='showcase'] .wk-portrait-figure,
+.wk-board[data-view='showcase'] .wk-portrait-grade,
+.wk-board[data-view='showcase'] .wk-seq-rail,
+.wk-board[data-view='showcase'] .sc-echo-sub-meter {
+  transition:
+    opacity 300ms ease,
+    transform 300ms var(--workspace-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    filter 300ms ease,
+    visibility 300s;
+}
+
+.wk-rail[data-edit] .wk-rail-body,
+.wk-rail[data-edit] .wk-rail-build,
+.wk-rail[data-edit='backdrop'] .wk-portrait-figure,
+.wk-rail[data-edit='portrait'] .wk-portrait-grade,
+.wk-rail[data-edit='portrait'] .wk-seq-rail {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 300ms ease,
+    transform 300ms var(--workspace-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    filter 300ms ease,
+    visibility 0s 300ms;
+}
+
+.reduce-animation .wk-board[data-view='showcase'] .wk-rail-body,
+.reduce-animation .wk-board[data-view='showcase'] .wk-rail-build,
+.reduce-animation .wk-board[data-view='showcase'] .wk-portrait-figure,
+.reduce-animation .wk-board[data-view='showcase'] .wk-portrait-grade,
+.reduce-animation .wk-board[data-view='showcase'] .wk-seq-rail {
+  transition: none;
+}
+
+.wk-tune-asset {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.42rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+.wk-tune-thumb {
+  flex-shrink: 0;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  background:
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--text) 7%, transparent) 0 4px,
+      transparent 4px 8px
+    ),
+    color-mix(in srgb, var(--resonator-accent) 8%, transparent);
+}
+
+.wk-tune-asset-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.wk-tune-asset-name {
+  font: 600 0.72rem/1 var(--display-font);
+  color: var(--text);
+}
+
+.wk-tune-asset-hint {
+  font: 500 0.56rem/1 var(--mono-font);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.wk-tune-asset-btn {
+  flex-shrink: 0;
+  padding: 0.24rem 0.46rem;
+  border-radius: 0.34rem;
+  border: 1px solid color-mix(in srgb, var(--resonator-accent) 32%, var(--workspace-line-soft));
+  background: color-mix(in srgb, var(--resonator-accent) 10%, transparent);
+  font: 600 0.56rem/1 var(--mono-font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text) 80%, var(--resonator-accent));
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.wk-tune-asset-btn:hover {
+  background: color-mix(in srgb, var(--resonator-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--resonator-accent) 50%, transparent);
+}
+
+.wk-tune-asset-btn:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.wk-tune-ctl {
+  display: flex;
+  flex-direction: column;
+  gap: 0.34rem;
+}
+
+.wk-tune-subhead {
+  margin-top: 0.2rem;
+  font: 600 0.54rem/1 var(--mono-font);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text) 38%, transparent);
+}
+
+.wk-tune-ctl--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.wk-tune-credit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.wk-tune-ctl-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.wk-tune-ctl-label {
+  font: 600 0.66rem/1 var(--mono-font);
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--text) 72%, transparent);
+  white-space: nowrap;
+}
+
+.wk-tune-ctl-val {
+  font: 700 0.66rem/1 var(--mono-font);
+  font-variant-numeric: tabular-nums;
+  color: var(--resonator-accent);
+}
+
+input[type='range'].wk-tune-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--resonator-accent) 50%, transparent) 0 var(--fill, 50%),
+    color-mix(in srgb, var(--text) 10%, transparent) var(--fill, 50%) 100%
+  );
+  cursor: pointer;
+}
+
+input[type='range'].wk-tune-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2px solid var(--resonator-accent);
+  box-shadow: 0 0 8px -1px color-mix(in srgb, var(--resonator-accent) 60%, transparent);
+}
+
+input[type='range'].wk-tune-range::-moz-range-thumb {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2px solid var(--resonator-accent);
+}
+
+.wk-tune-swatch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.2rem 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+.wk-tune-hex {
+  font: 600 0.6rem/1 var(--mono-font);
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.wk-tune-color {
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
+  border-radius: 0.3rem;
+  background: none;
+  cursor: pointer;
+}
+
+.wk-tune-color::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.wk-tune-color::-webkit-color-swatch {
+  border: none;
+  border-radius: 0.2rem;
+}
+
+.wk-tune-color::-moz-color-swatch {
+  border: none;
+  border-radius: 0.2rem;
+}
+
+input[type='text'].wk-tune-input {
+  --mcc-accent: color-mix(in srgb, var(--resonator-accent) 55%, transparent);
+  --picker-modal-border: var(--border);
+  width: 100% !important;
+  --picker-modal-text: var(--text);
+}
+
+input[type='text'].wk-tune-input::placeholder {
+  color: color-mix(in srgb, var(--text) 38%, transparent);
+}
+
+.wk-tune-hint {
+  font: 500 0.54rem/1.3 var(--mono-font);
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--workspace-down) 85%, var(--text));
+}
+
+.reduce-animation .wk-tune-input {
+  transition: none;
+}
+
+.wk-tune-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.7rem 0.9rem 0.85rem;
+  border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.wk-tune-cap {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 2.1rem;
+  padding: 0;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+  font: 700 0.62rem/1 var(--mono-font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.wk-tune-cap--primary {
+  border-color: color-mix(in srgb, var(--resonator-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--resonator-accent) 16%, transparent);
+  color: color-mix(in srgb, var(--text) 85%, var(--resonator-accent));
+}
+
+.wk-tune-cap:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--resonator-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--resonator-accent) 22%, transparent);
+}
+
+.wk-tune-cap:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.wk-tune-cap:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.reduce-animation .wk-tune-cap,
+.reduce-animation .wk-tune-asset-btn {
+  transition: none;
+}
+
+.wk-css-dock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  flex: 0 1 33rem;
+  min-width: 20rem;
+  max-width: 40vw;
+  height: 100%;
+  min-height: 0;
+  padding: 0.95rem 0.95rem 0.85rem 0;
+  border-right: 1px solid color-mix(in srgb, var(--resonator-accent) 16%, var(--workspace-line));
+}
+
+.wk-css-dock[data-phase='in'] {
+  animation: workspace-surface-fade-in 220ms var(--workspace-ease) both;
+}
+
+.wk-css-dock-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.wk-css-dock-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font: 700 0.64rem/1 var(--mono-font);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text) 76%, var(--resonator-accent));
+}
+
+.wk-css-dock-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wk-css-dock-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 1.85rem;
+  padding: 0 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: 700 0.58rem/1 var(--mono-font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.wk-css-dock-pick:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--text) 26%, transparent);
+}
+
+.wk-css-dock-swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex-shrink: 0;
+  border-radius: 0.28rem;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.35),
+    0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
+}
+
+.wk-css-dock-pick-label {
+  white-space: nowrap;
+}
+
+.wk-css-dock-color-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wk-css-dock-close {
+  display: inline-grid;
+  place-items: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.wk-css-dock-close:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--text) 26%, transparent);
+}
+
+.wk-css-dock-editor {
+  --editor-bg: rgb(255 255 255 / 0.31);
+  --editor-text: var(--text, #1b2435);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  border-radius: 0.6rem;
+  background: var(--editor-bg);
+  color: var(--editor-text);
+}
+
+.dark-text .wk-css-dock-editor {
+  --editor-bg: rgba(17, 17, 17, 0.31);
+  --editor-text: color-mix(in srgb, var(--text, #eaeaea) 90%, #d7eef5 10%);
+}
+
+.wk-css-dock-editor .cm-editor {
+  height: 100%;
+  background: transparent;
+  color: var(--editor-text);
+  font: 500 0.82rem/1.65 var(--mono-font);
+}
+
+.wk-css-dock-editor .cm-gutters {
+  background: transparent;
+  border: none;
+}
+
+.wk-css-dock-editor .cm-scroller {
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  font-family: var(--mono-font);
+}
+
+.wk-css-dock-editor .cm-content {
+  padding: 0.85rem 0.95rem 0.85rem 1.05rem;
+  caret-color: var(--accent);
+  tab-size: 2;
+}
+
+.wk-css-dock-editor .cm-line {
+  padding: 0;
+}
+
+.wk-css-dock-editor .cm-placeholder {
+  color: var(--muted);
+}
+
+.wk-css-dock-editor .cm-selectionBackground,
+.wk-css-dock-editor .cm-focused .cm-selectionBackground {
+  background: color-mix(in srgb, var(--accent) 35%, transparent) !important;
+}
+
+.wk-css-dock-editor .cm-focused {
+  outline: none;
+}
+
+.wk-css-dock-editor:has(.cm-focused) {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.wk-css-dock-editor .cm-cursor {
+  border-left-color: var(--accent);
+}
+
+.wk-css-dock-note {
+  flex-shrink: 0;
+  margin: 0;
+  font: 500 0.7rem/1.45 var(--body-font);
+  color: var(--muted);
+}
+
+.wk-css-dock-note code {
+  font: 600 0.66rem/1 var(--mono-font);
+  color: color-mix(in srgb, var(--text) 80%, var(--resonator-accent));
+}
+
+.wk-board[data-css-expanded] .wk-rail-wrapper {
+  justify-content: center;
+}
+
+.wk-tune[data-docked] {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  z-index: 60;
+  height: auto;
+  max-height: min(45rem, calc(100dvh - 6rem));
+  width: 20rem;
+  max-width: 92vw;
+  overflow: visible;
+  border-radius: 1.1rem 0 0 1.1rem;
+  transform: translate(100%, -50%);
+  transition: transform 320ms var(--workspace-ease);
+  box-shadow: -1.6rem 0 3.4rem -1.6rem rgba(0, 0, 0, 0.62);
+}
+
+.wk-tune[data-docked][data-open] {
+  transform: translate(0, -50%);
+}
+
+.wk-tune-handle {
+  position: absolute;
+  top: 50%;
+  left: -2.5rem;
+  transform: translateY(-50%);
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 3.6rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--resonator-accent) 32%, var(--workspace-line));
+  border-right: none;
+  border-radius: 0.85rem 0 0 0.85rem;
+  background:
+    radial-gradient(130% 90% at 100% 50%, color-mix(in srgb, var(--resonator-accent) 16%, transparent), transparent 70%),
+    color-mix(in srgb, var(--bg) 94%, transparent);
+  color: color-mix(in srgb, var(--text) 80%, var(--resonator-accent));
+  cursor: pointer;
+  box-shadow: -0.9rem 0 2.2rem -1.3rem rgba(0, 0, 0, 0.7);
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.wk-tune-handle:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--resonator-accent) 18%, var(--bg));
+}
+
+.wk-tune-handle svg {
+  transition: transform 320ms var(--workspace-ease);
+}
+
+.wk-tune[data-docked][data-open] .wk-tune-handle svg {
+  transform: rotate(90deg);
+}
+
+.reduce-animation .wk-css-dock,
+.reduce-animation .wk-css-dock-close,
+.reduce-animation .wk-tune[data-docked],
+.reduce-animation .wk-tune-handle,
+.reduce-animation .wk-tune-handle svg {
+  animation: none;
+  transition: none;
+}

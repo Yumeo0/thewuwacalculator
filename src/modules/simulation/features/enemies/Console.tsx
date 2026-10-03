@@ -7,9 +7,12 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 import { useMemo, useState } from 'react'
 import type { CSSProperties as CssProps, ReactNode } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Crosshair, Zap } from 'lucide-react'
+import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import type { EnemyProfile } from '@/domain/entities/appState.ts'
 import type { EnemyClassId, EnemyElemId } from '@/domain/entities/enemy.ts'
 import type { ResRuntime } from '@/domain/entities/runtime.ts'
@@ -226,6 +229,7 @@ export function EnemyConsole({
   onClose,
 }: EnemyConsoleProps) {
   const { catalog, loading, error } = useEnemyCat()
+  const mobile = useMobileUi()
   const [picking, setPicking] = useState(false)
   const [search, setSearch] = useState('')
   const [byElem, setByElem] = useState<EnemyElemId | null>(null)
@@ -442,22 +446,14 @@ export function EnemyConsole({
     row.stat === 'finalDmg' ? 'Final DMG' : null,
   ].filter(Boolean).join(' · ')
 
-  return (
-    <AppModal
-      state={{ visible, open, closing }}
-      variant="enemy-console"
-      ariaLabel="Target"
-      style={{
-        '--modal-accent': enemyColor,
-        '--picker-modal-accent': enemyColor,
-      } as CssProps}
-      onClose={onClose}
-    >
-      <div className="amdl enc">
+  const header = (
         <ModalHeader
           over="Target"
           title={targetName}
           leading={(
+            <ContextTrigger asChild ariaLabel="Target actions" items={[{
+              id: 'enemy:change-target', label: 'Change target', onSelect: () => setPicking(true),
+            }]}>
             <button
               type="button" className="enc-face"
               aria-label="Change target"
@@ -465,6 +461,7 @@ export function EnemyConsole({
             >
               <DisplayImage src={icon} alt="" onError={withDefIconM} />
             </button>
+            </ContextTrigger>
           )}
           onClose={onClose}
         >
@@ -489,8 +486,10 @@ export function EnemyConsole({
             </span>
           )}
         </ModalHeader>
+  )
 
-        <div className="amdl__body enc__body">
+  const core = (
+          <>
           <div className="enc-core">
             <div className="enc-inp">
               <span className="enc-seg" role="group" aria-label="Scenario mode">
@@ -568,7 +567,11 @@ export function EnemyConsole({
               )}
             </div>
           </div>
+          </>
+  )
 
+  const effects = (
+          <>
           {targetRows.length > 0 ? (
             <section className="enc-sec">
               <div className="enc-sec__hd"><span className="amdl__over">Combat Effects</span></div>
@@ -678,8 +681,10 @@ export function EnemyConsole({
           {vulns.finalDmg !== 0 ? (
             <div className="enc-tot"><span>Final DMG</span><b>{fmtPct(vulns.finalDmg)}</b></div>
           ) : null}
-        </div>
+          </>
+  )
 
+  const foot = (
         <div className="amdl__foot enc-foot">
           <span className="amdl__over">Presets</span>
           {ENEMY_PRST.map((preset) => (
@@ -694,7 +699,39 @@ export function EnemyConsole({
           <span className="amdl__fill" />
           <button type="button" className="amdl__act is-go" onClick={onClose}>Done</button>
         </div>
-      </div>
+  )
+
+  return (
+    <AppModal
+      state={{ visible, open, closing }}
+      variant="enemy-console"
+      ariaLabel="Target"
+      style={{
+        '--modal-accent': enemyColor,
+        '--picker-modal-accent': enemyColor,
+      } as CssProps}
+      onClose={onClose}
+    >
+      {mobile ? (
+        <MobilePages
+          className="enc"
+          head={header}
+          foot={foot}
+          pages={[
+            { id: 'target', label: 'Target', icon: <Crosshair />, node: <div className="amdl__body enc__body">{core}</div> },
+            { id: 'effects', label: 'Effects', icon: <Zap />, node: <div className="amdl__body enc__body">{effects}</div> },
+          ]}
+        />
+      ) : (
+        <div className="amdl enc">
+          {header}
+          <div className="amdl__body enc__body">
+            {core}
+            {effects}
+          </div>
+          {foot}
+        </div>
+      )}
 
       <EnemyPicker
         visible={picking}

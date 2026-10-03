@@ -15,7 +15,7 @@ import { weaponStatsAt } from '@/domain/services/weaponPlan.ts'
 import { getSntSetIco } from '@/data/gameData/catalog/sonataSets'
 import { getRarityColor, getRarityInk } from '@/modules/simulation/model/display.ts'
 import { getWpnVisKey } from '@/modules/simulation/workspace/weaponVisual.ts'
-import { useEchoScores } from '@/engine/evaluation/useEchoScoringRevision.ts'
+import { useEchoScores } from '@/application/hooks/useEchoScoringRevision.ts'
 import { cmptEchoCrit, getCvToneColor, getScrTone, SCORE_TONE_COLORS } from '@/modules/simulation/features/echoes/lib/metric.ts'
 import { formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import { formatBuildEvaluationScore } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
@@ -161,7 +161,7 @@ export const SealShowcase = memo(function SealShowcase({
     resize.observe(sealNode)
     const text = new MutationObserver(schedule)
     text.observe(root, { childList: true, characterData: true, subtree: true })
-    const card = root.closest('.workspace-rail')
+    const card = root.closest('.wk-rail')
     const typography = () => { fitted = new WeakMap(); schedule() }
     card?.addEventListener('showcase:typography', typography)
     document.fonts?.addEventListener('loadingdone', typography)
@@ -329,11 +329,11 @@ export const SealShowcase = memo(function SealShowcase({
       </div>
 
       {rows.length ? (
-        <div className="seal-ledger showcase-ladder" data-highlight={statsColumn}>
-          <div className="showcase-ladder-head" aria-hidden="true">
-            <span className="showcase-ladder-head-lead" />
-            <span className="showcase-ladder-col showcase-ladder-col--build">build</span>
-            <span className="showcase-ladder-col showcase-ladder-col--combat">combat</span>
+        <div className="seal-ledger sc-ladder" data-highlight={statsColumn}>
+          <div className="sc-ladder-head" aria-hidden="true">
+            <span className="sc-ladder-head-lead" />
+            <span className="sc-ladder-col sc-ladder-col--build">build</span>
+            <span className="sc-ladder-col sc-ladder-col--combat">combat</span>
           </div>
           <div className="seal-ledger-rows">
             {rows.map((row) => {
@@ -352,7 +352,7 @@ export const SealShowcase = memo(function SealShowcase({
           </div>
         </div>
       ) : (
-        <div className="seal-ledger showcase-ladder showcase-ladder--empty">No stats</div>
+        <div className="seal-ledger sc-ladder sc-ladder--empty">No stats</div>
       )}
 
       {team}

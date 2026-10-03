@@ -1,0 +1,34 @@
+@media (max-width: 1300px) {
+  #left-pane {
+    min-width: 320px;
+  }
+
+  #right-pane {
+    min-width: 420px;
+  }}
+
+@media (max-width: 1070px) {
+  .main-content {
+    height: auto;
+  }
+
+  .split {
+    flex-direction: column;
+    gap: 0.8rem;
+    height: auto;
+    overflow: visible;
+  }
+
+  .gutter {
+    display: none;
+  }
+
+  #left-pane,
+#right-pane {
+    width: 100%;
+    min-width: 100%;
+    min-height: auto;
+    height: auto;
+    max-height: none;
+    overflow-y: visible;
+  }}

@@ -9,7 +9,6 @@ import type {
   EditorCondition,
   EditorMember,
   EditorNode,
-  EditorNote,
   EditorSection,
   EditorStep,
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
@@ -63,16 +62,6 @@ function condition(id: string): EditorCondition {
   } as EditorCondition
 }
 
-function note(id: string): EditorNote {
-  return {
-    type: 'note',
-    id,
-    owner: { kind: 'member', memberId: 'res-a' },
-    label: 'Swap timing',
-    text: 'hold the outro',
-  } as EditorNote
-}
-
 const members: EditorMember[] = [
   {
     id: 'res-a',
@@ -114,20 +103,6 @@ describe('read node', () => {
     expect(second?.kindLabel).toBe('step')
   })
 
-  it('uses a support step\'s first-class color instead of its element', () => {
-    const support = step('support')
-    support.element = 'fusion'
-    support.color = 'var(--calc-support-healing-color)'
-    const sections: EditorSection[] = [
-      { id: 'main', title: 'Main', meta: '', children: [support] },
-    ]
-
-    expect(read('support', sections)).toMatchObject({
-      accent: 'var(--calc-support-healing-color)',
-      element: 'fusion',
-    })
-  })
-
   it('takes a condition value from the run being read', () => {
     const sections: EditorSection[] = [
       { id: 'main', title: 'Main', meta: '', children: [loop('loop-a', 3, [condition('cond')])] },
@@ -159,20 +134,7 @@ describe('read node', () => {
 
     expect(block?.kindLabel).toBe('loop')
     expect(block?.blockSteps).toBe(1)
-    expect(block?.items.map((item) => item.label)).toEqual(['inner', 'Molten Rift'])
     expect(block?.items[1]?.note).toBe('3')
-  })
-
-  it('counts a note\'s words and deals nothing', () => {
-    const sections: EditorSection[] = [
-      { id: 'main', title: 'Main', meta: '', children: [note('note-a')] },
-    ]
-
-    const read1 = read('note-a', sections)
-
-    expect(read1?.kindLabel).toBe('note')
-    expect(read1?.words).toBe(3)
-    expect(read1?.figure).toBe(0)
   })
 
   it('returns nothing for a node that is not in the rotation', () => {

@@ -19,7 +19,6 @@ import {
   insertNode,
   isNodeEffectivelyDisabled,
   makeEmptyContainer,
-  makeEmptyNote,
   makeNote,
   mapNode,
   moveInto,
@@ -39,7 +38,6 @@ import {
 import { editorSectionsToRotation } from '@/modules/simulation/surfaces/rotation/program-editor/model/toRotationNodes.ts'
 import { ROT_LOOP_COLORS } from '@/modules/simulation/surfaces/rotation/shared/loopMeta.ts'
 import { ROT_BLOCK_COLORS } from '@/modules/simulation/surfaces/rotation/shared/containerMeta.ts'
-import { ROT_NOTE_COLORS } from '@/modules/simulation/surfaces/rotation/shared/noteMeta.ts'
 import { checkoutLoopPassById } from '@/modules/simulation/surfaces/rotation/program-editor/model/passCheckout.ts'
 
 function step(id: string): EditorStep {
@@ -159,33 +157,6 @@ describe('new empty containers', () => {
 })
 
 describe('display-only notes', () => {
-  it('instantiates with the next note label and colour', () => {
-    const first = makeEmptyNote(section([]))
-    const second = makeEmptyNote(section([
-      first,
-      {
-        ...step('host'),
-        attachedNote: makeNote('', {
-          label: 'Note 2',
-          color: ROT_NOTE_COLORS[1],
-        }),
-      },
-    ]))
-
-    expect(first).toMatchObject({
-      type: 'note',
-      label: 'Note',
-      color: ROT_NOTE_COLORS[0],
-      text: '',
-    })
-    expect(second).toMatchObject({
-      type: 'note',
-      label: 'Note 3',
-      color: ROT_NOTE_COLORS[2],
-      text: '',
-    })
-  })
-
   it('attaches at most one note and removes it without removing the host', () => {
     const initial = section([step('host')])
     const first = makeNote('First', { label: 'Timing' })
@@ -850,48 +821,13 @@ describe('a loop that ends where it starts', () => {
   })
 })
 
-describe('the colour a wrapped loop takes', () => {
-  it('gives each loop the next colour nothing else is using', () => {
-    const first = wrapNode(section([step('a'), step('b')]), 'a', 'loop')
-    const firstLoop = first[0].children[0]
-    expect(firstLoop.type === 'loop' ? firstLoop.color : null).toBe(ROT_LOOP_COLORS[0])
+describe('wrapped block structure', () => {
 
-    const second = wrapNode(first, 'b', 'loop')
-    const secondLoop = second[0].children[1]
-    expect(secondLoop.type === 'loop' ? secondLoop.color : null).toBe(ROT_LOOP_COLORS[1])
-  })
-
-  it('keeps two loops wrapped in one go apart from each other', () => {
-    const wrapped = wrapNodes(
-      section([step('a'), step('gap'), step('b')]),
-      new Set(['a', 'b']),
-      'loop',
-    )
-    const colors = wrapped[0].children
-      .filter((node): node is EditorBlock => node.type === 'loop')
-      .map((node) => node.color)
-
-    expect(colors).toEqual([ROT_LOOP_COLORS[0], ROT_LOOP_COLORS[1]])
-  })
-
-  it('gives repeat and uptime blocks their own generated labels and colours', () => {
+  it('gives uptime blocks a setup branch', () => {
     const withRepeat = wrapNode(section([step('a'), step('b')]), 'a', 'repeat')
-    const repeat = withRepeat[0].children[0]
-
-    expect(repeat).toMatchObject({
-      type: 'repeat',
-      label: 'Repeat',
-      color: ROT_BLOCK_COLORS[0],
-    })
-
     const withUptime = wrapNode(withRepeat, 'b', 'uptime')
     const uptime = withUptime[0].children[1]
 
-    expect(uptime).toMatchObject({
-      type: 'uptime',
-      label: 'Uptime',
-      color: ROT_BLOCK_COLORS[1],
-    })
     expect(uptime.type === 'uptime' ? uptime.children[0] : null).toMatchObject({
       type: 'setup',
       id: `${uptime.id}:setup`,

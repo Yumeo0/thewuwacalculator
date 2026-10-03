@@ -32,6 +32,11 @@ const COLBDGTPX = 432
 const HVRARMMS = 90
 const RAILSTEPPX = 46
 
+// Rendering may scale the surface, but placement calculations stay in screen pixels.
+function phoneZoom(): number {
+  return document.documentElement.classList.contains('mui') ? 1.3 : 1
+}
+
 export interface CtxOpenEvent {
   clientX: number
   clientY: number
@@ -335,6 +340,10 @@ function CtxRail({
     const element = railRef.current
     if (!element) return
 
+    // Top-left scaling preserves screen-space positions.
+    const zoom = phoneZoom()
+    element.style.scale = zoom === 1 ? '' : String(zoom)
+    element.style.maxWidth = zoom === 1 ? '' : `calc((100vw - 1.5rem) / ${zoom})`
     const spot = place(level, element, col)
 
     element.style.left = `${spot.left}px`
@@ -371,7 +380,7 @@ function CtxRail({
     <>
       {level > 0 ? (
         <span
-          ref={stemRef} className="floating-context-menu__stem"
+          ref={stemRef} className="fcm__stem"
           {...stateAttrs}
           hidden
           aria-hidden="true"
@@ -380,7 +389,7 @@ function CtxRail({
 
     <AppPopupSurface
       ref={railRef}
-      className={`floating-context-menu ${preview ? 'floating-context-menu--preview' : ''} ${className}`.trim()}
+      className={`fcm ${preview ? 'fcm--preview' : ''} ${className}`.trim()}
       open={stateAttrs['data-open'] === 'true'}
       closing={stateAttrs['data-closing'] === 'true'}
       style={style}
@@ -405,14 +414,14 @@ function CtxRail({
       }}
     >
       {preview ? (
-        <div className="floating-context-menu__preview">{preview}</div>
+        <div className="fcm__preview">{preview}</div>
       ) : (
         <>
-          <div className="floating-context-menu__cells">
+          <div className="fcm__cells">
             {groups.map((group, groupIndex) => (
               <Fragment key={`grp:${level}:${groupIndex}`}>
                 {groupIndex > 0 && !col ? (
-                  <span className="floating-context-menu__gap" aria-hidden="true" />
+                  <span className="fcm__gap" aria-hidden="true" />
                 ) : null}
                 {group.map((item, itemIndex) => {
                   const disabled = isItemDsbld(item)
@@ -421,7 +430,7 @@ function CtxRail({
                   return (
                     <button
                       key={item.id}
-                      type="button" className="floating-context-menu__item"
+                      type="button" className="fcm__item"
                       role="menuitem"
                       data-id={item.id}
                       disabled={disabled}
@@ -444,29 +453,29 @@ function CtxRail({
                       onClick={() => onSelectItem(item)}
                     >
                       {item.art ? (
-                        <span className="floating-context-menu__art" aria-hidden="true">
+                        <span className="fcm__art" aria-hidden="true">
                           <DisplayImage src={item.art} alt="" loading="lazy" />
                         </span>
                       ) : null}
 
                       {item.icon && !item.art ? (
-                        <span className="floating-context-menu__icon">{item.icon}</span>
+                        <span className="fcm__icon">{item.icon}</span>
                       ) : null}
 
                       {col || kind === 'text' ? (
-                        <span className="floating-context-menu__label">{item.label}</span>
+                        <span className="fcm__label">{item.label}</span>
                       ) : null}
 
                       {col && item.hint ? (
-                        <span className="floating-context-menu__hint">{item.hint}</span>
+                        <span className="fcm__hint">{item.hint}</span>
                       ) : null}
 
                       {col && item.submenu ? (
-                        <i className="floating-context-menu__chevron" aria-hidden="true" />
+                        <i className="fcm__chevron" aria-hidden="true" />
                       ) : null}
 
                       {!col && branching ? (
-                        <span className="floating-context-menu__dot" aria-hidden="true" />
+                        <span className="fcm__dot" aria-hidden="true" />
                       ) : null}
                     </button>
                   )
@@ -475,7 +484,7 @@ function CtxRail({
             ))}
           </div>
 
-          <div className="floating-context-menu__read"
+          <div className="fcm__read"
             data-idle={col || !readItem ? 'true' : undefined}
             data-danger={!col && readItem?.danger ? 'true' : undefined}
             aria-hidden="true"
@@ -612,8 +621,9 @@ function CtxTree<TData>({
     colsRef.current[level] = col
 
     const pad = vwprPddn
-    const w = element.offsetWidth
-    const h = element.offsetHeight
+    // Convert layout width to screen pixels before boundary checks.
+    const w = element.offsetWidth * phoneZoom()
+    const h = element.offsetHeight * phoneZoom()
     const maxLeft = window.innerWidth - pad - w
     const maxTop = window.innerHeight - pad - h
 
@@ -738,7 +748,7 @@ function CtxTree<TData>({
     if (!rail) return [] as HTMLButtonElement[]
 
     return Array.from(
-      rail.querySelectorAll<HTMLButtonElement>('.floating-context-menu__item:not(:disabled)'),
+      rail.querySelectorAll<HTMLButtonElement>('.fcm__item:not(:disabled)'),
     )
   }, [])
 

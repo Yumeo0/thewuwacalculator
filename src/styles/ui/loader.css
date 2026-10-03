@@ -1,0 +1,299 @@
+@import './loader-assets.generated.css';
+
+:root {
+    --loader-glow: #f8e56c;
+    --loader-spark: color-mix(in srgb, #f8e56c 68%, var(--text, #dddddd));
+   --loader-threshold: 0.1s;
+    --loader-unfold: 0.15s;
+}
+
+.app-loader-host {
+    position: relative;
+    isolation: isolate;
+}
+
+.app-loader-host.running > :not(.app-loader-overlay) {
+    pointer-events: none;
+    opacity: var(--loader-dim-opacity, 0.58);
+}
+
+.app-loader-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1rem, 2vw, 1.6rem);
+    background: transparent;
+    overflow: hidden;
+    --loader-figure: 3.4rem;
+    animation: app-loader-scrim-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.app-loader-fallback {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: max(12rem, 100vh - 4rem);
+    width: 100%;
+    overflow: hidden;
+    --loader-figure: clamp(4.4rem, 8vmin, 6.4rem);
+    animation: app-loader-fade-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: 120ms;
+}
+
+.app-loader-fallback.app-loader-fallback--route {
+    height: 100%;
+    min-height: 12rem;
+}
+
+.app-loader-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: var(--app-loader-inline-min-height, 9rem);
+    padding: 1rem;
+    overflow: hidden;
+    --loader-figure: var(--app-loader-inline-figure, 3.4rem);
+    animation: app-loader-fade-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.app-loader-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    --loader-figure: clamp(5rem, 9vmin, 7.2rem);
+    animation: app-loader-scrim-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.app-loader-grow {
+    --loader-mark: calc(var(--loader-figure) * 0.1);
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: calc(var(--loader-figure) * 0.06);
+    user-select: none;
+}
+
+.app-loader-stage {
+    position: relative;
+    display: block;
+    width: calc(var(--loader-figure) * 2.1);
+    height: calc(var(--loader-mark) * 1.7);
+    animation: app-loader-unfold var(--loader-unfold) cubic-bezier(0.3, 0.9, 0.3, 1) var(--loader-threshold) forwards;
+}
+
+.app-loader-seed {
+    position: absolute;
+    left: 50%;
+    bottom: calc(var(--loader-mark) * 0.35);
+    width: var(--loader-mark);
+    height: var(--loader-mark);
+    margin-left: calc(var(--loader-mark) / -2);
+    clip-path: polygon(50% 0%, 57% 43%, 100% 50%, 57% 57%, 50% 100%, 43% 57%, 0% 50%, 43% 43%);
+    background: var(--loader-spark);
+    filter: drop-shadow(0 0 0.35rem var(--loader-spark));
+    animation: app-loader-seed-beat 1.4s ease-in-out infinite,
+               app-loader-seed-burst 0.45s ease-out var(--loader-threshold) forwards;
+}
+
+.app-loader-bloom {
+    position: absolute;
+    left: 50%;
+    bottom: calc(var(--loader-figure) * 0.18);
+    width: calc(var(--loader-figure) * 2.7);
+    aspect-ratio: 1;
+    translate: -50% 50%;
+    opacity: 0;
+    pointer-events: none;
+    animation: app-loader-bloom-in 0.9s ease-out var(--loader-threshold) forwards;
+}
+
+.app-loader-bloom::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle,
+        color-mix(in srgb, var(--loader-glow) 40%, transparent) 0%,
+        color-mix(in srgb, var(--loader-glow) 7%, transparent) 34%,
+        transparent 64%);
+    animation: app-loader-bloom 5.2s ease-in-out infinite;
+}
+
+.app-loader-dust {
+    position: absolute;
+    inset: 0;
+    display: block;
+}
+
+.app-loader-dust i {
+    position: absolute;
+    left: 50%;
+    bottom: calc(var(--loader-mark) * 0.35);
+    width: var(--loader-mark);
+    height: var(--loader-mark);
+    margin-left: calc(var(--loader-mark) / -2);
+    color: var(--loader-spark);
+    opacity: 0;
+    animation: app-loader-spread var(--loader-unfold) cubic-bezier(0.25, 0.9, 0.3, 1) both;
+    animation-delay: calc(var(--loader-threshold) + var(--spread-delay, 0s));
+}
+
+.app-loader-dust i:nth-child(even) { color: color-mix(in srgb, var(--loader-glow) 76%, white); }
+.app-loader-dust i:nth-child(3n) { color: var(--accent); }
+
+.app-loader-dust i b {
+    display: block;
+    width: 100%;
+    height: 100%;
+    clip-path: polygon(50% 0%, 57% 43%, 100% 50%, 57% 57%, 50% 100%, 43% 57%, 0% 50%, 43% 43%);
+    background: currentColor;
+    filter: drop-shadow(0 0 0.3rem currentColor);
+    animation: app-loader-float 3.1s ease-in-out infinite;
+    animation-delay: var(--float-delay, 0s);
+}
+
+.app-loader-dust i:nth-child(1) { --dx: 0.814; --dy: -0.364; --spread-delay: 0s; --float-delay: 0s; }
+.app-loader-dust i:nth-child(2) { --dx: 0.616; --dy: -0.552; --spread-delay: 0.03s; --float-delay: -0.44s; }
+.app-loader-dust i:nth-child(3) { --dx: 0.331; --dy: -0.677; --spread-delay: 0.06s; --float-delay: -0.88s; }
+.app-loader-dust i:nth-child(4) { --dx: 0; --dy: -0.72; --spread-delay: 0.09s; --float-delay: -1.32s; }
+.app-loader-dust i:nth-child(5) { --dx: -0.331; --dy: -0.677; --spread-delay: 0.06s; --float-delay: -1.76s; }
+.app-loader-dust i:nth-child(6) { --dx: -0.616; --dy: -0.552; --spread-delay: 0.03s; --float-delay: -2.2s; }
+.app-loader-dust i:nth-child(7) { --dx: -0.814; --dy: -0.364; --spread-delay: 0s; --float-delay: -2.64s; }
+
+.app-loader-figure {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: var(--loader-figure);
+    translate: -50% 0;
+    display: grid;
+    justify-items: center;
+    opacity: 0;
+    animation: app-loader-figure-in 0.62s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--loader-threshold) + 0.08s) both;
+}
+
+.app-loader-mascot {
+    width: 100%;
+    aspect-ratio: 282 / 270;
+  margin-bottom: .5rem;
+    background: var(--loader-mascot) center bottom / contain no-repeat;
+    mask-image: linear-gradient(to bottom, #000 80%, rgba(0, 0, 0, 0.35) 90%, transparent 99%);
+    transform-origin: 50% 90%;
+    animation: app-loader-tilt 13s ease-in-out infinite;
+}
+
+.app-loader-pool {
+    width: 76%;
+    height: calc(var(--loader-figure) * 0.11);
+    margin-top: calc(var(--loader-figure) * -0.09);
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center,
+        color-mix(in srgb, var(--loader-glow) 30%, transparent),
+        transparent 70%);
+    animation: app-loader-pool 1.2s ease-in-out infinite;
+}
+
+.app-loader-line {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    max-width: min(24rem, 80%);
+    text-align: center;
+}
+
+.app-loader-say {
+    font-family: var(--mono-font);
+    font-size: calc(var(--loader-figure) * 0.13);
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--loader-glow) 62%, var(--text, currentColor));
+}
+
+.app-loader-aside {
+    font-family: var(--cute-font);
+    font-size: calc(var(--loader-figure) * 0.19);
+    line-height: 1.2;
+    color: color-mix(in srgb, var(--text, currentColor) 44%, transparent);
+    opacity: 0;
+    animation: app-loader-aside-in 0.5s ease-out calc(var(--loader-threshold) + 0.3s) forwards;
+}
+
+@keyframes app-loader-unfold {
+    to { height: calc(var(--loader-figure) * 1.06); }
+}
+
+@keyframes app-loader-seed-beat {
+    0%, 100% { opacity: 0.55; scale: 0.82; }
+    50% { opacity: 1; scale: 1.1; }
+}
+
+@keyframes app-loader-seed-burst {
+    from { opacity: 1; scale: 1; }
+    to { opacity: 0; scale: 2.6; }
+}
+
+@keyframes app-loader-spread {
+    from { transform: translate(0, 0) scale(0.3); opacity: 0; }
+    30% { opacity: 1; }
+    to {
+        transform: translate(calc(var(--loader-figure) * var(--dx)), calc(var(--loader-figure) * var(--dy))) scale(1);
+        opacity: 0.9;
+    }
+}
+
+@keyframes app-loader-figure-in {
+    from { opacity: 0; scale: 0.84; }
+    to { opacity: 1; scale: 1; }
+}
+
+@keyframes app-loader-bloom-in {
+    to { opacity: 0.28; }
+}
+
+@keyframes app-loader-aside-in {
+    to { opacity: 1; }
+}
+
+@keyframes app-loader-scrim-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes app-loader-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes app-loader-bloom {
+    0%, 100% { opacity: 0.72; }
+    50% { opacity: 1; }
+}
+
+@keyframes app-loader-pool {
+    0%, 100% { transform: scale(1.04, 1); opacity: 0.8; }
+    50% { transform: scale(0.92, 1); opacity: 0.62; }
+}
+
+@keyframes app-loader-tilt {
+    0%, 86%, 100% { rotate: 0deg; }
+    90% { rotate: -5deg; }
+    94% { rotate: 3deg; }
+}
+
+@keyframes app-loader-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(calc(var(--loader-figure) * -0.06)); }
+}

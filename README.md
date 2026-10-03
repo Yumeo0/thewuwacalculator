@@ -2,7 +2,7 @@
 
 Fan made tools for planning, simulating, and optimizing builds in *Wuthering Waves*.
 
-This repository is the current production app codebase. Its user-facing hierarchy is `Home > Read / Simulation`; Simulation contains Modulation, Rotation, Showcase, and Optimizer, while Read contains the guides, docs, changelog, and supporting information pages. The codebase also contains checked-in runtime data and the Cloudflare deployment surface used by the live app.
+This repository contains the production app. Its navigation is `Home > Read / Simulation`. Simulation includes Modulation, Rotation, Showcase and Optimizer. Read includes guides, reference docs, the changelog and information pages. The repository also contains runtime data and the Cloudflare Worker used for deployment.
 
 ## Quick Start
 
@@ -53,13 +53,13 @@ Browser side configuration uses `VITE_*` values. Server side OAuth exchange and 
 - `src/infra`
   Persistence, Google Drive sync, OAuth server handlers, cookies, and analytics.
 - `src/modules/home`
-  The product front door.
+  The Home page.
 - `src/modules/read`
   Docs, guides, changelog, and information pages.
 - `src/modules/simulation`
   Modulation, Rotation, Showcase, Optimizer, shared workspace features, and temporary legacy development pages.
-- `src/modules/settings` and `src/modules/system`
-  Preferences, data management, and system fallback pages.
+- `src/modules/calibration` and `src/modules/system`
+  Appearance, app preferences, data management, and system fallback pages.
 - `src/shared`
   Shared UI primitives, shell components, and low level helpers.
 - `public/data`
@@ -67,7 +67,7 @@ Browser side configuration uses `VITE_*` values. Server side OAuth exchange and 
 - `scripts`
   Checked in maintenance workflows for runtime data and assets.
 - `docs`
-  Maintainer handoff documentation for the repo.
+  Documentation for maintainers.
 
 ## Documentation
 
@@ -99,7 +99,7 @@ wrangler secret put GOOGLE_CLIENT_SECRET
 npm run deploy:cloudflare
 ```
 
-Deployment configuration lives in [wrangler.jsonc](./wrangler.jsonc). Cross origin isolation headers are served from [public/_headers](./public/_headers).
+Deployment configuration is in [wrangler.jsonc](./wrangler.jsonc). Cross origin isolation headers are defined in [public/_headers](./public/_headers).
 
 ## License
 

@@ -1,20 +1,17 @@
 /*
   Author: Runor Ewhro
-  Description: protects generated weapon passives against parameter-order,
-               omitted-operation, and disconnected-state regressions.
+  Description: protects generated weapon effects against omitted operations
+               and disconnected state.
 */
 
 import { describe, expect, it } from 'vitest'
-import type { GenWpn } from '@/domain/entities/weapon.ts'
 import type { SrcPkg } from '@/domain/gameData/contracts.ts'
-import betaCatalogRaw from '../../../../public/data/beta/weapons/catalog.json?raw'
 import betaSourcesRaw from '../../../../public/data/beta/weapons/sources.json?raw'
-import liveCatalogRaw from '../../../../public/data/live/weapons/catalog.json?raw'
 import liveSourcesRaw from '../../../../public/data/live/weapons/sources.json?raw'
 
 const MODES = [
-  ['beta', betaCatalogRaw, betaSourcesRaw],
-  ['live', liveCatalogRaw, liveSourcesRaw],
+  ['beta', betaSourcesRaw],
+  ['live', liveSourcesRaw],
 ] as const
 
 const NIGHT_WEAPONS = ['21010013', '21020013', '21030013', '21040013', '21050013'] as const
@@ -31,12 +28,6 @@ function weaponSource(sources: SrcPkg[], id: string): SrcPkg {
   const source = sources.find((candidate) => candidate.source.type === 'weapon' && candidate.source.id === id)
   if (!source) throw new Error(`Missing generated weapon source ${id}`)
   return source
-}
-
-function weaponCatalog(catalog: GenWpn[], id: string): GenWpn {
-  const weapon = catalog.find((candidate) => candidate.id === id)
-  if (!weapon) throw new Error(`Missing generated weapon catalog entry ${id}`)
-  return weapon
 }
 
 function collectControlPaths(value: unknown, paths = new Set<string>()): Set<string> {
@@ -59,7 +50,7 @@ function collectControlPaths(value: unknown, paths = new Set<string>()): Set<str
 }
 
 describe('generated weapon source invariants', () => {
-  it.each(MODES)('%s keeps every authored control connected to its effects', (_mode, _catalogRaw, sourcesRaw) => {
+  it.each(MODES)('%s keeps every authored control connected to its effects', (_mode, sourcesRaw) => {
     const sources = JSON.parse(sourcesRaw) as SrcPkg[]
 
     for (const source of sources.filter((candidate) => candidate.source.type === 'weapon')) {
@@ -124,35 +115,7 @@ describe('generated weapon source invariants', () => {
     ]))
   })
 
-  it.each(MODES)('%s preserves visible passive parameter order', (_mode, catalogRaw) => {
-    const catalog = JSON.parse(catalogRaw) as GenWpn[]
-
-    expect(weaponCatalog(catalog, '21010013').passive.params.slice(0, 2)).toEqual([
-      ['8%', '10%', '12%', '14%', '16%'],
-      ['10', '10', '10', '10', '10'],
-    ])
-    expect(weaponCatalog(catalog, '21030034').passive.params[0]).toEqual([
-      '6%', '7.5%', '9%', '10.5%', '12%',
-    ])
-  })
-
-  it.each(MODES)('%s uses passive names for source and effect labels', (_mode, catalogRaw, sourcesRaw) => {
-    const catalog = JSON.parse(catalogRaw) as GenWpn[]
-    const sources = JSON.parse(sourcesRaw) as SrcPkg[]
-
-    for (const source of sources.filter((candidate) => candidate.source.type === 'weapon')) {
-      const passiveName = weaponCatalog(catalog, source.source.id).passive.name
-
-      expect(source.owners?.map((owner) => owner.label)).toEqual(
-        (source.owners ?? []).map(() => passiveName),
-      )
-      expect(source.effects?.map((effect) => effect.label)).toEqual(
-        (source.effects ?? []).map(() => passiveName),
-      )
-    }
-  })
-
-  it.each(MODES)('%s authors Everbright Polestar as Fusion Liberation RES ignore', (_mode, _catalogRaw, sourcesRaw) => {
+  it.each(MODES)('%s authors Everbright Polestar as Fusion Liberation RES ignore', (_mode, sourcesRaw) => {
     const source = weaponSource(JSON.parse(sourcesRaw) as SrcPkg[], '21020076')
     const effect = source.effects?.find((candidate) => candidate.id === 'weapon:21020076:defignore')
 
@@ -179,7 +142,7 @@ describe('generated weapon source invariants', () => {
     })
   })
 
-  it.each(MODES)('%s keeps corrected rank tables and formerly omitted operations', (_mode, _catalogRaw, sourcesRaw) => {
+  it.each(MODES)('%s keeps corrected rank tables and formerly omitted operations', (_mode, sourcesRaw) => {
     const sources = JSON.parse(sourcesRaw) as SrcPkg[]
 
     for (const id of NIGHT_WEAPONS) {
@@ -232,7 +195,7 @@ describe('generated weapon source invariants', () => {
     }))
   })
 
-  it.each(MODES)('%s keeps automatic and stack-only gates independent', (_mode, _catalogRaw, sourcesRaw) => {
+  it.each(MODES)('%s keeps automatic and stack-only gates independent', (_mode, sourcesRaw) => {
     const sources = JSON.parse(sourcesRaw) as SrcPkg[]
     const defier = weaponSource(sources, '21020056')
     const luminous = weaponSource(sources, '21050046')

@@ -30,7 +30,7 @@
     {
       "path": "/modulation",
       "title": "Wuthering Waves Modulation",
-      "description": "Tune resonator progression, weapons, Echoes, states, and team context while reading live build evaluation results.",
+      "description": "Set resonator levels, weapons, Echoes, effects, and teammates, then view calculated stats, damage, and build scores.",
       "priority": "1.0",
       "socialImage": "/assets/app/social/modulation.png",
       "socialImageAlt": "The Wuwa Calculator Modulation page preview"
@@ -38,7 +38,7 @@
     {
       "path": "/optimizer",
       "title": "Wuthering Waves Build Optimizer",
-      "description": "Search inventory and theory echo builds, compare ranked results, and tune optimizer constraints around your target skill or rotation.",
+      "description": "Search saved or theoretical Echo builds for a skill or rotation, compare results, and set search filters and stat limits.",
       "priority": "0.9",
       "socialImage": "/assets/app/social/optimizer.png",
       "socialImageAlt": "The Wuwa Calculator optimizer page preview"
@@ -70,7 +70,7 @@
     {
       "path": "/guides",
       "title": "Wuthering Waves Calculator Guides",
-      "description": "Read operating guides for Simulation tools, build workflows, optimizer setup, rotations, Modulation, and app behavior.",
+      "description": "Learn how to use Simulation tools, manage builds, run the Optimizer, edit rotations, and change app settings.",
       "priority": "0.8",
       "socialImage": "/assets/app/social/guides.png",
       "socialImageAlt": "The Wuwa Calculator guides page preview"

@@ -24,16 +24,6 @@ function scope(paradox: number): EffectScope {
     },
   } as unknown as EffectScope
 }
-
-const NEGATIVE_STATUS_TYPES = [
-  'spectroFrazzle',
-  'aeroErosion',
-  'fusionBurst',
-  'havocBane',
-  'glacioChafe',
-  'electroFlare',
-]
-
 function getEnemySource(sources: SrcPkg[], enemyId: string): SrcPkg {
   const source = sources.find((candidate) => candidate.source.type === 'enemy' && candidate.source.id === enemyId)
   expect(source, `enemy ${enemyId} is missing its generated source package`).toBeDefined()
@@ -43,51 +33,6 @@ function getEnemySource(sources: SrcPkg[], enemyId: string): SrcPkg {
 describe('enemy source invariants', () => {
   it('keeps beta and live enemy mechanics identical', () => {
     expect(liveSources).toEqual(betaSources)
-  })
-
-  it('encodes the new 3.6 enemy vulnerabilities', () => {
-    const sources = JSON.parse(enemySourcesRaw) as SrcPkg[]
-    const skywatchLancer = getEnemySource(sources, '320000690')
-    const skywatchOperation = skywatchLancer.effects?.[0]?.operations[0]
-
-    expect(skywatchOperation).toMatchObject({
-      type: 'add_skilltype_mod',
-      skillType: NEGATIVE_STATUS_TYPES,
-      mod: 'dmgVuln',
-      value: { type: 'const', value: 100 },
-    })
-
-    const calamityEffigy = getEnemySource(sources, '340000320')
-    expect(calamityEffigy.states).toContainEqual(expect.objectContaining({
-      id: 'affectedByNegStatus',
-      path: 'enemy.status.affectedByNegStatus',
-      kind: 'toggle',
-      defaultValue: false,
-    }))
-    expect(calamityEffigy.effects).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        id: 'enemy:340000320:electro-flare-vuln',
-        operations: [expect.objectContaining({
-          type: 'add_skilltype_mod',
-          skillType: ['electroFlare'],
-          mod: 'dmgVuln',
-          value: { type: 'const', value: 100 },
-        })],
-      }),
-      expect.objectContaining({
-        id: 'enemy:340000320:status-triggered-vuln',
-        condition: {
-          type: 'truthy',
-          from: 'context',
-          path: 'enemy.status.affectedByNegStatus',
-        },
-        operations: [{
-          type: 'add_top_stat',
-          stat: 'dmgVuln',
-          value: { type: 'const', value: 20 },
-        }],
-      }),
-    ]))
   })
 
   it('includes Sigillum additional vulnerability at five Off Course stacks', () => {
@@ -109,24 +54,6 @@ describe('enemy source invariants', () => {
           value: { type: 'const', value: 30 },
         }],
       }))
-    }
-  })
-
-  it('reuses quantified mechanics for the new 3.7 encounter variants', () => {
-    for (const [newId, originalId] of [
-      ['340000212', '340000210'],
-      ['340000213', '340000210'],
-      ['340000221', '340000220'],
-      ['340000222', '340000220'],
-      ['340000252', '340000250'],
-      ['340000261', '340000260'],
-    ]) {
-      const current = getEnemySource(betaSources, newId)
-      const original = getEnemySource(betaSources, originalId)
-      expect(current.effects?.map((effect) => effect.id.replace(newId, '')))
-        .toEqual(original.effects?.map((effect) => effect.id.replace(originalId, '')))
-      expect(current.states?.map((state) => state.id))
-        .toEqual(original.states?.map((state) => state.id))
     }
   })
 

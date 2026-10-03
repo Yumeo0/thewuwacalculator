@@ -611,7 +611,7 @@ export function EvaluationAside({
             ))}
           </>
         ) : (
-          <p className="workspace-empty">No valid main stat or Sonata upgrades are available.</p>
+          <p className="wk-empty">No valid main stat or Sonata upgrades are available.</p>
         )}
       </div>
     </>
@@ -640,19 +640,19 @@ function PathRow({
       <span className="rpt-swap">
         <SwapToken side={group.from} />
         <ChevronRight aria-hidden="true" size="0.75rem" />
-        <span className="workspace-swap-dest-list">
+        <span className="wk-swap-dest-list">
           {group.to.map((side, index) => (
-            <span key={`${side.glyph ?? side.label}:${index}`} className="workspace-swap-dest-item">
-              {index > 0 ? <span className="workspace-swap-divider">/</span> : null}
+            <span key={`${side.glyph ?? side.label}:${index}`} className="wk-swap-dest-item">
+              {index > 0 ? <span className="wk-swap-divider">/</span> : null}
               <SwapToken side={side} />
             </span>
           ))}
-          {group.hiddenCount > 0 ? <span className="workspace-swap-more">+{group.hiddenCount}</span> : null}
+          {group.hiddenCount > 0 ? <span className="wk-swap-more">+{group.hiddenCount}</span> : null}
         </span>
       </span>
       <span className="rpt-cost">{alternative.kind === 'sonataSet' ? '--' : alternative.cost}</span>
       <span className="rpt-num">{formatCompactNum(alternative.damage)}</span>
-      <span className={`rpt-num workspace-num--${deltaSign(alternative.damageDeltaPct)}`}>
+      <span className={`rpt-num wk-num--${deltaSign(alternative.damageDeltaPct)}`}>
         {fmtSignedPct(alternative.damageDeltaPct)}
       </span>
     </div>

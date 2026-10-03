@@ -4,7 +4,7 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
-import { Fragment, type CSSProperties, useMemo, useState } from 'react'
+import { Fragment, type CSSProperties, type MouseEvent, useMemo, useState } from 'react'
 import type { SkillTabKey } from '@/domain/entities/resonator'
 import type { ResRuntime } from '@/domain/entities/runtime'
 import { AppModal } from '@/shared/ui/AppModal'
@@ -20,6 +20,9 @@ import {
   mrgDscrKywr,
   skllLblMap,
 } from '@/modules/simulation/features/resonator/lib/panel.ts'
+import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { MobilePages } from '@/shared/ui/mobile/MobilePages'
+import { BookOpen, List } from 'lucide-react'
 
 const CONCERTO_TABS: SkillTabKey[] = ['introSkill', 'outroSkill']
 
@@ -69,6 +72,13 @@ export function SkillData({
 
   // a single Concerto entry and the pane prints both.
   const [actView, setActView] = useState<SkdView>(() => viewOfTab(requestedTab ?? 'normalAttack'))
+  const mobile = useMobileUi()
+  const [mPage, setMPage] = useState('skill')
+  const railJump = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement
+    if (target.closest('.skd-fold__chev')) return
+    if (target.closest('.amdl__tab, .skd-kid')) setMPage('skill')
+  }
 
   const tabs = useMemo(() => details?.skillTabs ?? [], [details])
   const chains = useMemo(() => details?.resonanceChains ?? [], [details])
@@ -146,18 +156,8 @@ export function SkillData({
     return null
   }
 
-  return (
-    <AppModal
-      state={{ visible, open, closing: closing ?? false }}
-      variant="skills"
-      ariaLabel="Skill data"
-      style={{
-        '--modal-accent': curSldrClr,
-        '--resonator-accent': curSldrClr,
-      } as CSSProperties}
-      onClose={onClose}
-    >
-      <div className="amdl" onClick={(event) => event.stopPropagation()}>
+  const mHeader = (
+    <>
         <ModalHeader over="Skill Data" title={<h2>{resonator?.name ?? resonatorId}</h2>} onClose={onClose}>
             {onSwitchMember && roster.length > 1 ? (
               <div className="mcc-switch skills-modal-switch" role="group" aria-label="Switch resonator view">
@@ -186,8 +186,10 @@ export function SkillData({
               </div>
             ) : null}
         </ModalHeader>
+    </>
+  )
 
-        <div className="amdl__body skill-data__body">
+  const mRail = (
           <nav className="amdl__rail" aria-label="Skills">
             {railEntries.map((entry) => {
               const tab = (
@@ -253,7 +255,9 @@ export function SkillData({
               {chains.length > 0 ? ` · ${chains.length} chain` : ''}
             </span>
           </nav>
+  )
 
+  const mPane = (
           <div className="amdl__pane">
             {rslvView === 'chains' ? (
               /*
@@ -371,8 +375,39 @@ export function SkillData({
               <p className="amdl__prose">No skill data is available for this tab.</p>
             )}
           </div>
+  )
+
+
+  return (
+    <AppModal
+      state={{ visible, open, closing: closing ?? false }}
+      variant="skills"
+      ariaLabel="Skill data"
+      style={{
+        '--modal-accent': curSldrClr,
+        '--resonator-accent': curSldrClr,
+      } as CSSProperties}
+      onClose={onClose}
+    >
+      {mobile ? (
+        <MobilePages
+          className=""
+          head={mHeader}
+          pages={[
+            { id: 'skill', label: 'Skill', icon: <BookOpen />, node: mPane },
+            { id: 'list', label: 'All skills', icon: <List />, node: <div className="skd-mrail" onClick={railJump}>{mRail}</div> },
+          ]} page={mPage} onPage={setMPage}
+          onClick={(event) => event.stopPropagation()}
+        />
+      ) : (
+      <div className="amdl" onClick={(event) => event.stopPropagation()}>
+        {mHeader}
+        <div className="amdl__body skill-data__body">
+          {mRail}
+          {mPane}
         </div>
       </div>
+      )}
     </AppModal>
   )
 }

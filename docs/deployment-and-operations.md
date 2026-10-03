@@ -2,7 +2,7 @@
 
 ## Summary
 
-This document covers local development, Cloudflare deployment, OAuth, persistence operations, and the checked in maintenance workflows that support production runtime data.
+This document covers local development, Cloudflare deployment, OAuth, saved data, and the scripts used to maintain production game data.
 
 ## Local Development
 
@@ -44,9 +44,9 @@ Production uses:
 
 - static assets from `dist`
 - Cloudflare asset serving with SPA fallback
-- a small worker front door for OAuth related `/api/*` endpoints
+- a Cloudflare Worker for the OAuth `/api/*` endpoints
 
-The worker route surface is intentionally narrow:
+The Worker handles only these API routes:
 
 - `/api/exchange-code`
 - `/api/refresh-token`
@@ -81,7 +81,7 @@ Drive sync behavior depends on:
 - persistence snapshot serialization
 - restore and backup actions in settings
 
-Operationally, Drive sync is a backup and restore path over the same persistence domains the local app already uses.
+Drive sync backs up and restores the same data saved locally by the app.
 
 ## Persistence Operations
 
@@ -117,7 +117,7 @@ Important checked in workflows:
 - apply resonator authored overrides
 - sync resonator images
 
-These scripts are not all part of the browser runtime, but they are part of the production maintenance path because they shape the checked in artifacts the app actually loads.
+These scripts generate or update files that the production app loads, even when the scripts do not run in the browser.
 
 ## Operational Boundaries
 

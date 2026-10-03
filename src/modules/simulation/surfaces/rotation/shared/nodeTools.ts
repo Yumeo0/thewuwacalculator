@@ -11,7 +11,7 @@ import type {
 } from "@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts";
 import {createElement as mkElem} from "react";
 import type {MenuEntry} from "@/shared/ui/CtxMenu.tsx";
-import {Clipboard, Copy, CopyPlus, Scissors, SquareDashedMousePointer as SqrDshdMsPnt} from "lucide-react";
+import {ClipboardPaste, Copy, CopyPlus, Scissors, SquareDashedMousePointer as SqrDshdMsPnt} from "lucide-react";
 import type {ResRuntime} from "@/domain/entities/runtime.ts";
 import type {
     FeatDef,
@@ -62,7 +62,7 @@ function editMenu(config: EditConfig = {}): MenuEntry[] {
             : {
                 id: 'paste',
                 label: 'Paste',
-                icon: mkElem(Clipboard, { size: 15 }),
+                icon: mkElem(ClipboardPaste, { size: 15 }),
                 disabled: config.paste?.disabled ?? (!config.paste?.onSelect && !(config.paste?.submenu?.length)),
                 ...(config.paste?.submenu ? { submenu: config.paste.submenu } : {}),
                 onSelect: config.paste?.onSelect,

@@ -1,0 +1,4 @@
+.frosted-aurora .ui-pill-button,
+.frosted-aurora .rotation-item {
+  background-color: color-mix(in srgb, var(--bg-main-color, rgba(255, 255, 255, 0.24)) 55%, rgba(255, 255, 255, 0.09)) !important;
+}

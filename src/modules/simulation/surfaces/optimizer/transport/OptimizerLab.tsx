@@ -3,7 +3,7 @@
   Description: Coordinates optimizer compilation, execution, result selection, preview, and application.
 */
 
-import '@/styles/modules/simulation/surfaces/optimizer/optimizer-transport.css'
+import '@/styles/surfaces/optimizer/transport.css'
 import type { ReactNode, Ref } from 'react'
 import { ATTR_COLORS } from '@/modules/simulation/model/display'
 import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime'
@@ -49,7 +49,7 @@ export function OptimizerLab({
     : subject ? ATTR_COLORS[subject.attribute] : '#20bfb9'
 
   return (
-    <main className="workspace-main" data-phase="idle">
+    <main className="wk-main" data-phase="idle">
       <div ref={bandRef} className="opt-lab-band" data-folded={bandFolded ? '' : undefined}>
         <EvaluationBand report={summary ? { evaluation: summary } : null} score={score} grade={grade} tone={tone} />
       </div>
@@ -66,7 +66,7 @@ export function OptimizerLab({
         />
       ) : null}
 
-      <section className="workspace-section workspace-span opt-lab-run">
+      <section className="wk-section wk-span opt-lab-run">
         {children}
       </section>
     </main>

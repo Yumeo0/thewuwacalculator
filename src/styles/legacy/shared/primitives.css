@@ -1,0 +1,47 @@
+.ui-surface-card--section {
+  padding: var(--ui-surface-padding);
+}
+
+.ui-surface-card--inner {
+  border: transparent;
+  border-radius: var(--ui-inner-radius);
+  background: var(--ui-inner-bg);
+  box-shadow: var(--inner-shadow);
+  padding: var(--ui-inner-padding);
+}
+
+.ui-pill-button.active {
+  transform: translateY(-1px);
+  border-color: var(--ctrl-on-border);
+  background: var(--ctrl-on-bg);
+  color: var(--ctrl-on-color, var(--ui-pill-color));
+  box-shadow: var(--ctrl-on-shadow);
+  font-weight: var(--ctrl-on-fw, 700) !important;
+  text-shadow: var(--ctrl-on-text-shadow, none);
+}
+
+.ui-pill-button.ui-pill-button-danger {
+  color: color-mix(in srgb, var(--danger, #cc3f53) 88%, var(--text)) !important;
+  border-color: color-mix(in srgb, var(--danger, #cc3f53) 46%, var(--item-border)) !important;
+  background: color-mix(in srgb, var(--danger, #cc3f53) 16%, var(--item-bg)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0.7rem 1.2rem color-mix(in srgb, var(--danger, #cc3f53) 12%, transparent);
+}
+
+.ui-pill-button.ui-pill-button-danger:is(:hover, :focus-visible) {
+  color: color-mix(in srgb, var(--danger, #cc3f53) 94%, var(--text)) !important;
+  border-color: color-mix(in srgb, var(--danger, #cc3f53) 62%, var(--item-border)) !important;
+  background: color-mix(in srgb, var(--danger, #cc3f53) 22%, var(--item-bg)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 1rem 1.7rem color-mix(in srgb, var(--danger, #cc3f53) 18%, transparent);
+}
+
+.soft-empty {
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 0.56rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}

@@ -48,7 +48,7 @@ Primary file:
 
 - [src/engine/pipeline/buildCombatContext.ts](../src/engine/pipeline/buildCombatContext.ts)
 
-The combat context is the resolved execution surface used by formulas and simulation. It merges:
+The combat context contains the resolved inputs used by formulas and simulation. It combines:
 
 - active runtime state
 - team sourced effects
@@ -56,7 +56,7 @@ The combat context is the resolved execution surface used by formulas and simula
 - enemy state
 - derived stat and effect maps
 
-If final output looks wrong, the combat context is often the most important seam to inspect because it is the point where stored choices become resolved execution inputs.
+If a result is wrong, inspect the combat context to check how saved choices were converted into calculation inputs.
 
 ## Formulas
 

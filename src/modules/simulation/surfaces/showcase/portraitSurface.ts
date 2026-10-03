@@ -11,8 +11,8 @@ export { DEFAULT_PORTRAIT_SURFACE, surfaceFromPortraitPixels } from '@/shared/li
 
 export function getPortraitSource(card: HTMLElement | null): string | null {
   if (!card) return null
-  for (const selector of ['img.is-override', 'img.spine-setup', 'img.workspace-portrait-img']) {
-    const image = card.querySelector<HTMLImageElement>(`.workspace-portrait-figure ${selector}`)
+  for (const selector of ['img.is-override', 'img.spine-setup', 'img.wk-portrait-img']) {
+    const image = card.querySelector<HTMLImageElement>(`.wk-portrait-figure ${selector}`)
     if (image?.naturalWidth) return image.currentSrc || image.src || null
   }
   return null

@@ -7,6 +7,8 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent as RctKybrVnt, MouseEvent as RctMsVnt, ReactNode, RefCallback } from 'react'
 import { useRdrdSel } from '@/shared/lib/useOrderedSelection.ts'
 import { useFltnSelCt } from '@/shared/ui/FloatingSelectionActions'
+import type { MenuEntry } from '@/shared/ui/CtxMenu'
+import { CheckCheck, Eraser, SquareDashedMousePointer, X } from 'lucide-react'
 
 type SelId = string | number
 
@@ -202,6 +204,32 @@ export function useSel<TId extends SelId, TVal>({
     void act.run(runCtx)
   }, [ctx, ctxFor])
 
+  const contextItemsFor = useCallback((id?: TId): MenuEntry[] => {
+    if (!sel.selectionMode) return []
+    if (id !== undefined && !sel.selectedIdSet.has(id)) {
+      return [
+        { id: `${surfaceId}:context:add`, label: 'Add to selection', icon: <SquareDashedMousePointer size="1em" />, onSelect: () => addToSel(id) },
+        { type: 'separator' },
+        { id: `${surfaceId}:context:all`, label: 'Select all', icon: <CheckCheck size="1em" />, onSelect: selectAll },
+        { id: `${surfaceId}:context:exit`, label: 'Exit selection', icon: <X size="1em" />, onSelect: exitSelMode },
+      ]
+    }
+    return [
+      ...acts.map((act): MenuEntry => ({
+        id: `${surfaceId}:context:${act.id}`,
+        label: pick(act, ctx),
+        icon: act.icon,
+        disabled: dis(act, ctx),
+        danger: act.danger,
+        onSelect: () => exec(act),
+      })),
+      ...(acts.length > 0 ? [{ type: 'separator' } as MenuEntry] : []),
+      { id: `${surfaceId}:context:all`, label: 'Select all', icon: <CheckCheck size="1em" />, onSelect: selectAll },
+      { id: `${surfaceId}:context:clear`, label: 'Clear selection', icon: <Eraser size="1em" />, disabled: !ctx.has, onSelect: deselectAll },
+      { id: `${surfaceId}:context:exit`, label: 'Exit selection', icon: <X size="1em" />, onSelect: exitSelMode },
+    ]
+  }, [acts, addToSel, ctx, deselectAll, exec, exitSelMode, sel.selectedIdSet, sel.selectionMode, selectAll, surfaceId])
+
   const keyAct = useCallback((key: SelAct<TId, TVal>['key']) => (
     acts.find((act) => act.key === key) ?? null
   ), [acts])
@@ -341,6 +369,7 @@ export function useSel<TId extends SelId, TVal>({
     selectedIdsInOrder: ctx.ids,
     selectedIdSet: sel.selectedIdSet,
     selectedVals: ctx.vals,
+    contextItemsFor,
     isSelected: sel.isSelected,
     focusSurface: focus,
     enterSelectionMode: ntrSelMode,

@@ -1,0 +1,64 @@
+.bnm {
+  --amdl-w: 45rem;
+  --amdl-accent: var(--amdl-warn, #c8862a);
+}
+
+.bnm__lead {
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 1px solid var(--amdl-line-soft);
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--amdl-accent) 9%, var(--c-transparent));
+  color: color-mix(in srgb, var(--amdl-accent) 82%, var(--amdl-text));
+}
+
+.bnm__lead svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.bnm__countdown {
+  gap: 0.3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bnm__countdown svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.bnm__body {
+  padding: 0.9rem;
+}
+
+.bnm__intro {
+  padding-top: 0;
+  padding-bottom: 0.9rem;
+}
+
+.bnm__points {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding-left: 1rem;
+  color: color-mix(in srgb, var(--amdl-text) 88%, var(--amdl-muted));
+  font-size: 0.74rem;
+  line-height: 1.55;
+}
+
+.bnm__points li::marker {
+  color: var(--amdl-accent);
+}
+
+.bnm__confirm:disabled {
+  border-color: var(--amdl-line-soft);
+  background: var(--amdl-sunk);
+  color: var(--amdl-muted);
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.bnm__confirm:disabled:hover {
+  border-color: var(--amdl-line-soft);
+  background: var(--amdl-sunk);
+}

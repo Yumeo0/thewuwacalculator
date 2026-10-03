@@ -25,15 +25,15 @@ export function ChngPage() {
         layoutKey="changelog-hero"
         trailing={
           linkedLatestWhatsNew ? (
-            <AxLink to={whatsNewHref()} className="changelog-whatsnew-cta">
-              <span className="changelog-whatsnew-cta__icon" aria-hidden="true">
+            <AxLink to={whatsNewHref()} className="chl-whatsnew-cta">
+              <span className="chl-whatsnew-cta__icon" aria-hidden="true">
                 <Radio size="1.125rem" />
               </span>
-              <span className="changelog-whatsnew-cta__text">
-                <span className="changelog-whatsnew-cta__eyebrow">What's New · on air</span>
-                <span className="changelog-whatsnew-cta__title">{linkedLatestWhatsNew.title}</span>
+              <span className="chl-whatsnew-cta__text">
+                <span className="chl-whatsnew-cta__eyebrow">What's New · latest update</span>
+                <span className="chl-whatsnew-cta__title">{linkedLatestWhatsNew.title}</span>
               </span>
-              <ArrowRight size="1rem" className="changelog-whatsnew-cta__arrow" aria-hidden="true" />
+              <ArrowRight size="1rem" className="chl-whatsnew-cta__arrow" aria-hidden="true" />
             </AxLink>
           ) : undefined
         }
@@ -46,50 +46,50 @@ export function ChngPage() {
           return (
             <React.Fragment key={section.id}>
               {sectionIndex > 0 ? (
-                <div className="changelog-section-divider" aria-label={`${section.label} changelog`}>
-                  <span className="changelog-section-divider__line" />
-                  <div className="changelog-section-divider__content">
-                    <span className="changelog-section-divider__label">{section.label}</span>
-                    <span className="changelog-section-divider__sub">old stuff below...</span>
+                <div className="chl-section-divider" aria-label={`${section.label} changelog`}>
+                  <span className="chl-section-divider__line" />
+                  <div className="chl-section-divider__content">
+                    <span className="chl-section-divider__label">{section.label}</span>
+                    <span className="chl-section-divider__sub">old stuff below...</span>
                   </div>
-                  <span className="changelog-section-divider__line" />
+                  <span className="chl-section-divider__line" />
                 </div>
               ) : null}
 
-            <div className="changelog-section">
+            <div className="chl-section">
               {rvrsEnts.map((log, index) => {
                 const linkedWhatsNew = getLinkedWhatsNew(log)
                 const showWhatsNewLink = Boolean(linkedWhatsNew && linkedWhatsNew.id !== latestWhatsNewId)
 
                 return (
-                  <section key={`${section.id}-${index}`} className="page-tile page-tile--full changelog-entry">
-                    <div className="changelog-header">
+                  <section key={`${section.id}-${index}`} className="page-tile page-tile--full chl-entry">
+                    <div className="chl-header">
                       <div className="tile-icon"><History /></div>
-                      <div className="changelog-header-text">
-                        <h3 className="changelog-date">{log.date}</h3>
+                      <div className="chl-header-text">
+                        <h3 className="chl-date">{log.date}</h3>
                         {log.patchVersion && (
                           <span className="page-pill">{log.patchVersion}</span>
                         )}
                       </div>
                       {showWhatsNewLink && linkedWhatsNew ? (
                         <AxLink
-                          to={whatsNewHref(linkedWhatsNew.id)} className="changelog-whatsnew-cta changelog-whatsnew-cta--entry"
+                          to={whatsNewHref(linkedWhatsNew.id)} className="chl-whatsnew-cta chl-whatsnew-cta--entry"
                         >
-                          <span className="changelog-whatsnew-cta__icon" aria-hidden="true">
+                          <span className="chl-whatsnew-cta__icon" aria-hidden="true">
                             <Radio size="1rem" />
                           </span>
-                          <span className="changelog-whatsnew-cta__text">
-                            <span className="changelog-whatsnew-cta__eyebrow">What's New · archive</span>
-                            <span className="changelog-whatsnew-cta__title">{linkedWhatsNew.title}</span>
+                          <span className="chl-whatsnew-cta__text">
+                            <span className="chl-whatsnew-cta__eyebrow">What's New · earlier update</span>
+                            <span className="chl-whatsnew-cta__title">{linkedWhatsNew.title}</span>
                           </span>
-                          <ArrowRight size="1rem" className="changelog-whatsnew-cta__arrow" aria-hidden="true" />
+                          <ArrowRight size="1rem" className="chl-whatsnew-cta__arrow" aria-hidden="true" />
                         </AxLink>
                       ) : null}
                     </div>
                     {log.shortDesc && (
-                      <HtmlContent html={log.shortDesc} className="changelog-short" as="span" />
+                      <HtmlContent html={log.shortDesc} className="chl-short" as="span" />
                     )}
-                    <ul className="changelog-detail-list">
+                    <ul className="chl-detail-list">
                       {log.entries.map((entry, entryIndex) =>
                         entry.type === 'paragraph' ? (
                           <HtmlContent key={entryIndex} html={entry.content} as="li" />

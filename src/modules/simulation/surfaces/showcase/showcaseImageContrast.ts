@@ -22,22 +22,22 @@ interface ContrastTarget {
 
 const CONTRAST_TARGETS: ContrastTarget[] = [
   {
-    selector: '.workspace-portrait-name',
+    selector: '.wk-portrait-name',
     inkVar: '--showcase-image-name-ink',
     shadowVar: '--showcase-image-name-shadow',
   },
   {
-    selector: '.workspace-portrait-lv',
+    selector: '.wk-portrait-lv',
     inkVar: '--showcase-image-level-ink',
     shadowVar: '--showcase-image-level-shadow',
   },
   {
-    selector: '.workspace-rail-credit',
+    selector: '.wk-rail-credit',
     inkVar: '--showcase-image-credit-ink',
     shadowVar: '--showcase-image-credit-shadow',
   },
   {
-    selector: '.workspace-rail-brand',
+    selector: '.wk-rail-brand',
     inkVar: '--showcase-image-brand-ink',
     shadowVar: '--showcase-image-brand-shadow',
   },
@@ -247,7 +247,7 @@ function sampleTarget(
 }
 
 async function analyzeCardBackdrop(card: HTMLElement, canvas: HTMLCanvasElement, load: typeof loadAnalysisImage, active: () => boolean): Promise<CssVars> {
-  const backdrop = card.querySelector<HTMLElement>('.workspace-portrait-bg')
+  const backdrop = card.querySelector<HTMLElement>('.wk-portrait-bg')
   if (!backdrop) return {}
   const backdropStyle = getComputedStyle(backdrop)
   const url = backgroundImageUrl(backdropStyle.backgroundImage)
@@ -324,7 +324,7 @@ export function useShowcaseImageContrast(cardRef: RefObject<HTMLElement | null>,
       return image
     }
     const signature = () => {
-      const backdrop = card.querySelector<HTMLElement>('.workspace-portrait-bg')
+      const backdrop = card.querySelector<HTMLElement>('.wk-portrait-bg')
       if (!backdrop) return ''
       const style = getComputedStyle(backdrop)
       const rect = card.getBoundingClientRect()

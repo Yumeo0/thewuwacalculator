@@ -138,7 +138,7 @@ function EnemyCombatCtrl({ state, value, onChange }: EnemyCombatCtrlPrps) {
     <>
       <h4>{display.label}</h4>
       {display.description ? <RichDscr description={display.description} /> : null}
-      <div className="sequence-card-footer inherent-skill-footer">
+      <div className="sequence-card-footer ihs-footer">
         <div className="stack">{control}</div>
       </div>
     </>

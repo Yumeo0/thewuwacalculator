@@ -26,7 +26,7 @@ import {
 import { formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { formatTruncCompact } from '@/shared/lib/number.ts'
-import '@/styles/modules/simulation/features/echoes/EchoRows.css'
+import '@/styles/features/echoes/rows.css'
 
 // leaves the spare ones empty rather than letting a short echo reflow
 const SUB_TRACKS = 5
@@ -186,7 +186,7 @@ export function EchoRow({
 
   const rowStyle = setClr ? ({ '--snt': setClr } as CssProps) : undefined
   const gutter = actions ? (
-    <div className="workspace-echo-gut" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
+    <div className="wk-echo-gut" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
       {actions}
     </div>
   ) : null

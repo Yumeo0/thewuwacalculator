@@ -13,6 +13,7 @@ import type { EvaluationReportOpts, BuildEvaluationReport, DefRotEvaluationIn } 
 import {
   runEvaluationReport,
   cancelEvaluationReport,
+  peekEvaluationReport,
   runEvaluationScore,
 } from '@/engine/evaluation/buildEvaluationClient.ts'
 import type { SimResult } from '@/engine/pipeline/types'
@@ -217,6 +218,7 @@ export function useEvaluationReport({
   enabled = true,
   reportOptions,
   identityKey,
+  sourceKey,
   cacheResult = true,
   clearOnDisable = false,
 }: {
@@ -228,6 +230,7 @@ export function useEvaluationReport({
   enabled?: boolean
   reportOptions?: EvaluationReportOpts
   identityKey?: string | null
+  sourceKey?: string | null
   cacheResult?: boolean
   clearOnDisable?: boolean
 }): EvaluationReportSt {
@@ -273,6 +276,10 @@ export function useEvaluationReport({
   const [refreshToken, setRefreshToken] = useState(0)
   const reportRuntimeRef = useRef(resolvedReportIdentityKey)
   const handledRefreshRef = useRef(0)
+  const cachedReport = cacheResult && enabled && runtime && sourceKey
+    ? peekEvaluationReport(sourceKey, resolvedReportOptions)
+    : undefined
+  const hasCachedReport = cachedReport !== undefined
 
   /* eslint-disable react-hooks/set-state-in-effect -- report state tracks the async report worker lifecycle. */
   const refresh = useCallback(() => {
@@ -281,11 +288,20 @@ export function useEvaluationReport({
 
   useEffect(() => {
     let cancelled = false
+    const force = refreshToken !== handledRefreshRef.current
 
     if (reportRuntimeRef.current !== resolvedReportIdentityKey) {
       reportRuntimeRef.current = resolvedReportIdentityKey
       setReport(null)
       setReportIdentityKey(resolvedReportIdentityKey)
+    }
+
+    if (hasCachedReport && !force) {
+      setReport(cachedReport ?? null)
+      setReportIdentityKey(resolvedReportIdentityKey)
+      setLoading(false)
+      setError(null)
+      return () => { cancelled = true }
     }
 
     if (!enabled || !runtime || !simulation) {
@@ -311,7 +327,6 @@ export function useEvaluationReport({
     })
     // refresh forces the worker lane past its report cache while ordinary reruns
     // keep using cached reports for the same payload
-    const force = refreshToken !== handledRefreshRef.current
     handledRefreshRef.current = refreshToken
 
     setLoading(true)
@@ -321,6 +336,7 @@ export function useEvaluationReport({
         force,
         reportOptions: resolvedReportOptions,
         cacheResult,
+        sourceKey: sourceKey ?? undefined,
       })
         .then((nextReport) => {
           if (!cancelled) {
@@ -345,6 +361,7 @@ export function useEvaluationReport({
   }, [
     debounceMs,
     cacheResult,
+    cachedReport,
     clearOnDisable,
     enabled,
     enemy,
@@ -354,14 +371,15 @@ export function useEvaluationReport({
     runtimesById,
     runtime,
     simulation,
+    sourceKey,
+    hasCachedReport,
   ])
   /* eslint-enable react-hooks/set-state-in-effect */
-
   const reportIsCurrent = reportIdentityKey === resolvedReportIdentityKey
   return {
-    report: reportIsCurrent ? report : null,
-    loading: loading || Boolean(enabled && runtime && simulation && !reportIsCurrent),
-    error,
+    report: hasCachedReport ? cachedReport ?? null : reportIsCurrent ? report : null,
+    loading: hasCachedReport ? false : loading || Boolean(enabled && runtime && simulation && !reportIsCurrent),
+    error: hasCachedReport ? null : error,
     refresh,
   }
 }

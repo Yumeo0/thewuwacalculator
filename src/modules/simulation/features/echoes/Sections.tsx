@@ -143,7 +143,7 @@ export function EchoSlot({
                 {setIcon ? (
                   <DisplayImage src={setIcon} alt={getSntSetNam(echo.set)} className="echo-slot-set-icon" loading="lazy" onError={withDefIconM} />
                 ) : null}
-                <span className="echo-slot-cost echo-score-badge">{cost}C</span>
+                <span className="echo-slot-cost esb">{cost}C</span>
                 {echo.mainEcho ? <span className="echo-slot-badge echo-slot-badge--main">Main</span> : null}
                 {score !== null ? (
                   <span className={getScrBdgCls(score)}>
@@ -507,7 +507,7 @@ export function EchoSetBonus({
           {passiveParts.map((part) => (
             <div key={part.key} className="echo-set-tier">
               <span className="echo-set-tier-tag">{tierLabel(part.key)}</span>
-              <RichDscr description={part.description ?? part.label} className="echo-set-tier-desc" />
+              <RichDscr description={part.description ?? part.label} className="est-desc" />
             </div>
           ))}
         </div>

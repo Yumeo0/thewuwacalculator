@@ -1,0 +1,300 @@
+.spx-trays {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+[data-mode="mainStats"] .spx-tray {
+  gap: 0.25rem;
+}
+
+.spx-tray {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0.4rem 0.4rem;
+  border-radius: 0.55rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--spx-set-clr, var(--muted)) 7%, var(--inner-bg)),
+    color-mix(in srgb, var(--spx-set-clr, var(--muted)) 2%, var(--inner-bg))
+  );
+}
+
+.spx-tray::after {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 0.18rem;
+  height: 2px;
+  border-radius: 999px;
+  transition: opacity 0.3s ease;
+  opacity: 0.4;
+  background: var(--spx-set-clr, var(--muted));
+}
+
+.spx-tray__pc {
+  font: 800 0.8rem/1 var(--mono-font);
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--spx-set-clr, var(--text)) 55%, var(--text));
+  white-space: nowrap;
+}
+
+:is([data-mode="mainStats"], [data-mode="random"]) .spx-tray__pc {
+  font-size: 1rem;
+}
+
+:is([data-mode="mainStats"], [data-mode="random"]) .spx-tray__pc small {
+  font-size: 0.8rem;
+}
+
+.spx-tray__pc small {
+  font-size: 0.56rem;
+  font-weight: 700;
+  opacity: 0.72;
+  margin-left: 0.04rem;
+}
+
+.spx-tray__coins {
+  display: inline-flex;
+  gap: 0.28rem;
+}
+
+.spx-tray__coin {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: contain;
+  background: color-mix(in srgb, var(--text) 10%, var(--bg));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 16%, transparent);
+}
+
+.spx-tray__name {
+  display: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: color-mix(in srgb, var(--text) 82%, transparent);
+  white-space: nowrap;
+}
+
+.spx-tray__sup {
+  position: absolute;
+  top: -0.16rem;
+  right: -0.16rem;
+  display: inline-flex;
+  font-size: 0.67rem;
+  font-weight: 800;
+  font-family: var(--mono-font);
+  line-height: 1;
+  letter-spacing: 0;
+  font-feature-settings: 'tnum';
+
+}
+
+.spx-trays--named .spx-tray__name {
+  display: inline;
+}
+
+@keyframes spx-row-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+}
+
+.sst-icon {
+  flex: 0 0 auto;
+  display: inline-block;
+  width: 1.2rem;
+  height: 1.2rem;
+  background-color: color-mix(in srgb, var(--text) 72%, transparent);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+.sst-val {
+  font: 700 0.76rem/1 var(--mono-font);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.sst-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
+  min-width: 0;
+}
+
+.sst-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.sst-line--sub {
+  opacity: 0.65;
+}
+
+.sst-line--sub > * {
+  scale: 0.9;
+}
+
+.sst-sub__icon {
+  flex: 0 0 auto;
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  background-color: color-mix(in srgb, var(--text) 72%, transparent);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+@container suggestions-pane (max-width: 570px) {
+
+  :is([data-mode="mainStats"], [data-mode="random"]) .spx-trays {
+    grid-area: trays;
+    flex-wrap: nowrap;
+    gap: 0.22rem;
+  }
+
+  :is([data-mode="mainStats"], [data-mode="random"]) .spx-tray {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    gap: 0.16rem;
+    padding: 0.18rem 0.2rem 0.34rem;
+  }
+
+  :is([data-mode="mainStats"], [data-mode="random"]) .spx-tray::after {
+    left: 0.28rem;
+    right: 0.28rem;
+  }
+
+  :is([data-mode="mainStats"], [data-mode="random"]) .spx-tray__pc {
+    font-size: 0.78rem;
+  }
+
+  :is([data-mode="mainStats"], [data-mode="random"]) .spx-tray__pc small {
+    font-size: 0.6rem;
+  }
+
+  :is([data-mode="mainStats"], [data-mode="random"]) .sst-line {
+    gap: 0.18rem;
+  }
+
+  :is([data-mode="mainStats"], [data-mode="random"]) .sst-icon {
+    width: 0.86rem;
+    height: 0.86rem;
+  }
+
+  :is([data-mode="mainStats"], [data-mode="random"]) .sst-val {
+    font-size: 0.64rem;
+  }
+}
+
+.main-stat-card:not(.selected):hover {
+  transform: translateX(5px);
+  border-color: color-mix(in srgb, var(--resonator-accent) 28%, var(--item-border));
+  box-shadow: -3px 3px 8px color-mix(in srgb, black 12%, transparent);
+}
+
+.sgm {
+  --amdl-w: 72rem;
+}
+
+.sgm::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--picker-modal-accent, var(--resonator-accent, #6b7cff)) 72%, transparent) 0%,
+    color-mix(in srgb, var(--picker-modal-accent, var(--resonator-accent, #6b7cff)) 22%, transparent) 60%,
+    transparent 100%
+  );
+}
+
+.sgm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 0.85rem;
+  overflow-y: auto;
+  max-height: 72vh;
+}
+
+.sgm--narrow {
+  --amdl-w: 44rem;
+}
+
+.sgm--mid {
+  --amdl-w: 60rem;
+}
+
+.sgm--echoes {
+  --amdl-w: 54rem;
+}
+
+.ws-card {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border-radius: 0.7rem;
+  flex-shrink: 0;
+  border: 1px solid var(--item-border);
+  background: color-mix(in srgb, var(--inner-bg) 50%, transparent);
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  transition: background 0.22s ease, box-shadow 0.22s ease;
+  animation: spx-row-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--row, 0) * 20ms);
+}
+
+.ws-card:hover {
+  box-shadow: 0 6px 18px color-mix(in srgb, #000 22%, transparent);
+}
+
+.ws-card.sel {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rar) 55%, transparent),
+  0 5px 11px color-mix(in srgb, var(--rar) 12%, transparent);
+  background: color-mix(in srgb, var(--rar) 5%, transparent);
+}
+
+.ws-card:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--resonator-accent, var(--accent)) 70%, transparent);
+  outline-offset: -2px;
+}
+
+.no-entrance-anim .ws-card,
+.reduce-animation .ws-card {
+  animation: none;
+}
+
+.wpi__icon {
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+}
+
+@keyframes wcfg-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

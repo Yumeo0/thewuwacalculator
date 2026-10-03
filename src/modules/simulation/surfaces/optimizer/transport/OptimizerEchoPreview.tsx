@@ -6,12 +6,13 @@
 */
 
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
+import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay'
 import { Copy, FileImage, Scissors, Trash2 } from 'lucide-react'
 import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime.ts'
 import { cloneEchoLoadout, sameEchoUid, equalEchoes } from '@/domain/entities/inventoryStorage.ts'
 import { getEchoById, listEchoes } from '@/data/catalog/echoCatalogService.ts'
 import { useAppStore } from '@/application/state'
-import { useEchoScores } from '@/engine/evaluation/useEchoScoringRevision.ts'
+import { useEchoScores } from '@/application/hooks/useEchoScoringRevision.ts'
 import { EchoCard } from '@/modules/simulation/workspace/ui.tsx'
 import { LoadoutHead } from '@/modules/simulation/workspace/LoadoutHead.tsx'
 import { MAX_ECHO_COST } from '@/modules/simulation/features/echoes/lib/echoes.ts'
@@ -48,7 +49,7 @@ export function useOptimizerPreviewForge({
   const showToast = useTstStr((state) => state.show)
   const openForge = useCallback(() => forge.show(), [forge])
   const portal = forge.visible ? (
-    <Suspense fallback={null}><QuickSetup
+    <Suspense fallback={<AppLoaderOverlay mode="scrim" text="Loading Echo forge..." />}><QuickSetup
       visible={forge.visible}
       open={forge.open}
       closing={forge.closing}
@@ -362,6 +363,7 @@ export function OptimizerEchoPreview({
     buildClickCapture: selection.buildClickCapture,
     getId: previewSlotId,
     getItems: (id, echo) => {
+      if (selection.selectionMode) return selection.contextItemsFor(id)
       const slotIndex = slotFromPreviewId(id)
       return slotIndex == null ? [] : slotMenu(slotIndex, echo)
     },
@@ -371,7 +373,7 @@ export function OptimizerEchoPreview({
   const wornHere = useMemo(() => echoes.every((echo, index) => {
     const worn = runtime.build.echoes[index] ?? null
     if (!echo || !worn) return !echo && !worn
-    return sameEchoUid(echo, worn)
+    return sameEchoUid(echo, worn) && echo.mainEcho === worn.mainEcho && equalEchoes(echo, worn)
   }), [echoes, runtime.build.echoes])
 
   const writeLoadout = useCallback((next: Array<EchoInstance | null>) => {
@@ -393,7 +395,7 @@ export function OptimizerEchoPreview({
 
   return (
     <>
-      <section className="workspace-section workspace-span workspace-ink">
+      <section className="wk-section wk-span wk-ink">
         {/* the workspace is never worn until it is equipped, so its head says
             proposed and offers the one write that makes it real */}
         <LoadoutHead
@@ -408,7 +410,7 @@ export function OptimizerEchoPreview({
           onForge={openForge}
           onEquip={loadoutCount > 0 ? () => onEquip(echoes) : undefined}
         />
-        <div className="workspace-echoes" {...echoSelection.surfaceProps}>
+        <div className="wk-echoes" {...echoSelection.surfaceProps}>
           {Array.from({ length: 5 }, (_, index) => {
             const echo = echoes[index] ?? null
             const card = (
@@ -420,7 +422,11 @@ export function OptimizerEchoPreview({
                 selection={echoSelection}
                 actions={actions}
                 score={echoScores?.[index] ?? null}
-                unpainted={Boolean(echo && !sameEchoUid(echo, runtime.build.echoes[index]))}
+                unpainted={Boolean(echo && (
+                  !sameEchoUid(echo, runtime.build.echoes[index])
+                  || echo.mainEcho !== runtime.build.echoes[index]?.mainEcho
+                  || !equalEchoes(echo, runtime.build.echoes[index])
+                ))}
                 onOpen={editable ? () => (echo ? editor.show(index) : picker.show(index)) : undefined}
               />
             )
@@ -430,7 +436,7 @@ export function OptimizerEchoPreview({
                 key={index}
                 asChild
                 ariaLabel={`Echo slot ${index + 1} actions`}
-                items={emptySlotMenu(index)}
+                items={selection.selectionMode ? selection.contextItemsFor() : emptySlotMenu(index)}
               >
                 {card}
               </ContextTrigger>
@@ -440,7 +446,7 @@ export function OptimizerEchoPreview({
       </section>
 
       {pickerSlot != null ? (
-        <Suspense fallback={null}><EchoPicker
+        <Suspense fallback={<AppLoaderOverlay mode="scrim" text="Loading Echo picker..." />}><EchoPicker
           visible={picker.visible}
           open={picker.open}
           closing={picker.closing}
@@ -463,7 +469,7 @@ export function OptimizerEchoPreview({
       ) : null}
 
       {editSlot != null && editEcho ? (
-        <Suspense fallback={null}><Edit
+        <Suspense fallback={<AppLoaderOverlay mode="scrim" text="Loading Echo editor..." />}><Edit
           visible={editor.visible}
           open={editor.open}
           closing={editor.closing}

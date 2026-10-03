@@ -48,32 +48,32 @@ function getVarClss(
     case 'picker':
       return {
         contentClass: [
-          'app-modal-panel amdl-panel amdl-panel--auto picker-modal-panel',
-          size === 'wide' ? 'picker-modal-panel--wide' : '',
+          'app-modal-panel amdl-panel amdl-panel--auto pkm-panel',
+          size === 'wide' ? 'pkm-panel--wide' : '',
         ].filter(Boolean).join(' '),
       }
     case 'confirmation':
       return {
-        contentClass: `app-modal-panel confirmation-modal confirmation-modal--${tone}`,
+        contentClass: `app-modal-panel cfm cfm--${tone}`,
       }
     case 'beta-notice':
       return {
-        contentClass: 'app-modal-panel amdl-panel amdl-panel--auto beta-notice-modal',
+        contentClass: 'app-modal-panel amdl-panel amdl-panel--auto bnm',
       }
     case 'app-status':
       return {
         contentClass: 'app-modal-panel amdl-panel amdl-panel--auto app-status-modal',
       }
     case 'suggestions':
-      return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto suggestions-modal' }
-    case 'suggestions-modal--narrow':
-      return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto suggestions-modal suggestions-modal--narrow' }
-    case 'suggestions-modal--mid':
-      return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto suggestions-modal suggestions-modal--mid' }
-    case 'suggestions-modal--echoes':
-      return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto suggestions-modal suggestions-modal--echoes' }
+      return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto sgm' }
+    case 'sgm--narrow':
+      return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto sgm sgm--narrow' }
+    case 'sgm--mid':
+      return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto sgm sgm--mid' }
+    case 'sgm--echoes':
+      return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto sgm sgm--echoes' }
     case 'suggestions-random':
-      return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto suggestions-modal suggestions-modal--random' }
+      return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto sgm sgm--random' }
     case 'team-config':
       return { contentClass: 'app-modal-panel mcc-modal' }
     case 'weapon-console':
@@ -85,13 +85,13 @@ function getVarClss(
     case 'set-conditionals':
       return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto ssc-modal' }
     case 'optimizer':
-      return { contentClass: 'app-modal-panel optimizer-modal-panel' }
+      return { contentClass: 'app-modal-panel omd-panel' }
     case 'optimizer-rules':
-      return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto optimizer-rules-panel' }
+      return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto orl-panel' }
     case 'manual-buffs':
       return { contentClass: 'app-modal-panel amdl-panel mb-adv-modal' }
     case 'buff-presets':
-      return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto buff-preset-panel' }
+      return { contentClass: 'app-modal-panel amdl-panel buff-preset-panel' }
     case 'echo-edit':
       return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto echo-edit-panel' }
     case 'echo-quick-setup':
@@ -115,23 +115,25 @@ function getVarClss(
     case 'rotation-editor':
       return {
         contentClass: [
-          'app-modal-panel amdl-panel amdl-panel--auto skills-modal-content rotation-editor-modal',
-          size === 'wide' ? 'rotation-editor-modal--wide' : size === 'x-wide' ? 'rotation-editor-modal--x-wide' : '',
+          'app-modal-panel amdl-panel amdl-panel--auto skills-modal-content rem',
+          size === 'wide' ? 'rem--wide' : size === 'x-wide' ? 'rem--x-wide' : '',
         ].filter(Boolean).join(' '),
       }
     case 'feature-conditions':
       return { contentClass: 'app-modal-panel feature-conditions-modal' }
     case 'inventory':
       return {
-        contentClass: 'app-modal-panel amdl-panel amdl-panel--auto picker-modal-panel--wide echo-bag-modal__panel',
+        contentClass: 'app-modal-panel amdl-panel amdl-panel--auto pkm-panel--wide echo-bag-modal__panel',
       }
     case 'saved-rotation-editor':
       return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto saved-rotation-editor-modal' }
     case 'rotation-share':
       return { contentClass: 'app-modal-panel amdl-panel amdl-panel--auto rot-share-modal' }
+    case 'import-received':
+      return { contentClass: 'app-modal-panel irc-band' }
     case 'rotation-action-list':
       return {
-        contentClass: 'app-modal-panel confirmation-modal confirmation-modal--info rotation-action-list-modal',
+        contentClass: 'app-modal-panel cfm cfm--info ralm',
       }
     case 'default':
     default:

@@ -443,6 +443,50 @@
       ]
     }
   },
+  "1311": {
+    "slug": "xin",
+    "slugs": {
+      "portrait": "xin",
+      "luckdraw": "xin"
+    },
+    "portrait": {
+      "skel": "skel.skel",
+      "atlas": "atlas.atlas",
+      "pages": [
+        "texture-0.webp",
+        "texture-1.webp"
+      ]
+    },
+    "luckdraw": {
+      "skel": "skel.skel",
+      "atlas": "atlas.atlas",
+      "pages": [
+        "texture.webp"
+      ]
+    }
+  },
+  "1312": {
+    "slug": "suoming",
+    "slugs": {
+      "portrait": "suoming",
+      "luckdraw": "suoming"
+    },
+    "portrait": {
+      "skel": "skel.skel",
+      "atlas": "atlas.atlas",
+      "pages": [
+        "texture-0.webp",
+        "texture-1.webp"
+      ]
+    },
+    "luckdraw": {
+      "skel": "skel.skel",
+      "atlas": "atlas.atlas",
+      "pages": [
+        "texture.webp"
+      ]
+    }
+  },
   "1402": {
     "slug": "yangyang",
     "portrait": {

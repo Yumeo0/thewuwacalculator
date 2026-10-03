@@ -9,6 +9,13 @@ export type StatsColumnHighlight = 'build' | 'combat' | 'both'
 /** Showcase-only layout selection; Build Lab always uses the classic layout. */
 export type ShowcaseLayout = 'classic' | 'seal'
 
+export type RotationImportLoad = 'rotation' | 'build' | 'none'
+
+export interface RotationImportPick {
+  load: RotationImportLoad
+  save: boolean
+}
+
 /** Semantic text roles shared across showcase regions. */
 export type TextSlot = 'numbers' | 'names' | 'labels' | 'muted' | 'display'
 
@@ -142,6 +149,7 @@ export interface UiPrefs {
     weapon: boolean
     echoes: boolean
   }
+  rotationImportPick: RotationImportPick
 }
 
 export type UploadPersistMode = 'indexeddb' | 'imgbb'
@@ -161,4 +169,5 @@ export const DEF_UI_PREFS: UiPrefs = {
   playerId: '',
   playerUid: '',
   echoImportBands: { resonator: true, weapon: true, echoes: true },
+  rotationImportPick: { load: 'build', save: true },
 }

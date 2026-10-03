@@ -40,6 +40,9 @@ import {
   type CondKind,
   type CondTarget,
 } from '@/modules/simulation/surfaces/rotation/program-editor/components/ConditionBrowser.tsx'
+import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { MobilePages } from '@/shared/ui/mobile/MobilePages'
+import { ListChecks, Users } from 'lucide-react'
 
 export function ModalFrame({
                              visible,
@@ -83,7 +86,7 @@ export function ModalFrame({
         {hdrCtns}
       </ModalHeader>
       <div
-        className={['skills-modal-content-area', 'rotation-editor-modal-body', bodyClssName]
+        className={['skills-modal-content-area', 'rem-body', bodyClssName]
           .filter(Boolean)
           .join(' ')}
       >
@@ -122,6 +125,7 @@ export function Condition({
 
   seedValue?: (choice: CondChoice) => RotationConditionValue
 }) {
+  const mobile = useMobileUi()
   const [rows, setRows] = useState<FeatureConditionDraft[]>([])
   const [activeRowId, setActRowId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
@@ -364,15 +368,7 @@ export function Condition({
     return null
   }
 
-  return (
-    <AppModal
-      state={{ visible, open, closing }}
-      variant="condition-browser"
-      ariaLabel={featureLabel}
-      onClose={onClose}
-    >
-      <div className="amdl cnv">
-
+  const mHeader = (
         <header className="amdl__head">
           <span className="amdl__title">
             <span className="amdl__over">{eyebrow}</span>
@@ -430,8 +426,9 @@ export function Condition({
             <X size="0.95rem" />
           </button>
         </header>
+  )
 
-        <div className="cnv__body">
+  const mRail = (
         <aside className="cnv__rail" aria-label="Filter by source">
           <button
             type="button"
@@ -472,7 +469,9 @@ export function Condition({
             </button>
           ))}
         </aside>
+  )
 
+  const mBrowser = (
         <section className="cnv__browser">
           <div className="cnv__browser-list">
             {choices.length === 0 ? (
@@ -537,7 +536,9 @@ export function Condition({
             </span>
           </footer>
         </section>
+  )
 
+  const mTray = (
         <aside className="cnv__tray">
           <header className="cnv__tray-head">
             <span className="cnv__tray-heading">
@@ -662,8 +663,9 @@ export function Condition({
             )}
           </div>
         </aside>
-        </div>
+  )
 
+  const mFoot = (
         <footer className="amdl__foot">
           <button type="button" className="amdl__act" onClick={onClose}>
             Cancel
@@ -675,7 +677,42 @@ export function Condition({
             Save
           </button>
         </footer>
+  )
+
+
+  return (
+    <AppModal
+      state={{ visible, open, closing }}
+      variant="condition-browser"
+      ariaLabel={featureLabel}
+      onClose={onClose}
+    >
+      {mobile ? (
+        <MobilePages
+          className="cnv"
+          head={mHeader}
+          foot={mFoot}
+          pages={[
+            { id: 'browse', label: 'Browse', icon: <Search />, badge: visibleCount, node: mBrowser },
+            { id: 'picked', label: 'Picked', icon: <ListChecks />, badge: rows.length || undefined, node: mTray },
+            { id: 'sources', label: 'Sources', icon: <Users />, node: mRail },
+          ]}
+        />
+      ) : (
+      <div className="amdl cnv">
+        {mHeader}
+
+        <div className="cnv__body">
+        {mRail}
+
+        {mBrowser}
+
+        {mTray}
+        </div>
+
+        {mFoot}
       </div>
+      )}
     </AppModal>
   )
 }

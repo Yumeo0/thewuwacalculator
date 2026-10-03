@@ -24,7 +24,7 @@ interface ManualSctn {
 
 const MANUAL: ManualSctn[] = [
   {
-    label: 'Readout',
+    label: 'Search counts',
     rows: [
       ['Permutations', 'Every echo loadout the search will score for this resonator.'],
       ['Processed', 'Loadouts scored so far in this run.'],

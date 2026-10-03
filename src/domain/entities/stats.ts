@@ -320,6 +320,8 @@ export interface SkillDef {
   levelSource?: SkillLevelSrc | null
   visible?: boolean
   visibleWhen?: CondExpr
+  /** Team event that adds this response as an attached rotation feature. */
+  triggeredBy?: 'teamTuneBreak'
   skillTypeWhen?: Array<{
     when: CondExpr
     skillType: SkillTypeKey[]

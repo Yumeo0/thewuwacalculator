@@ -5,7 +5,7 @@
 */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ComponentProps, Dispatch, ReactNode, RefObject, SetStateAction } from 'react'
+import type { ComponentProps, Dispatch, RefObject, SetStateAction } from 'react'
 import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime'
 import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
 import type { EvaluationBuildSnapshot, EvaluationEchoSlot, BuildEvaluationReport } from '@/engine/evaluation/buildEvaluation.ts'
@@ -61,7 +61,6 @@ export function ModulationReport({
   score,
   grade,
   tone,
-  banner,
   detailBuildKey,
   setDetailBuildKey,
   mainStackRef,
@@ -107,7 +106,6 @@ export function ModulationReport({
   score: number | null
   grade: string | null
   tone: string
-  banner: ReactNode
   detailBuildKey: DetailBuildKey
   setDetailBuildKey: Dispatch<SetStateAction<DetailBuildKey>>
   mainStackRef: RefObject<HTMLDivElement | null>
@@ -156,24 +154,25 @@ export function ModulationReport({
     }
   }, [modulation, modulationPanel])
   const rotation = report?.rotation ?? null
-  const sequence = useMemo(
-    () => rotation
-      ? mkSqnc({
-          items: rotation.items,
-          resonatorId: rotation.resonatorId,
-        })
-      : null,
-    [rotation],
-  )
   const condChoices = useMemo(
     () => reportRuntime
       ? makeConditionChoices(visibleRotMembers(reportRuntime, reportRuntimesById), reportRuntime, enemyId)
       : [],
     [enemyId, reportRuntime, reportRuntimesById],
   )
+  const sequence = useMemo(
+    () => rotation
+      ? mkSqnc({
+          items: rotation.items,
+          resonatorId: rotation.resonatorId,
+          condChoices,
+        })
+      : null,
+    [condChoices, rotation],
+  )
   const rotationAction = rotation ? (
     <button
-      type="button" className="workspace-rotation-sequence-link"
+      type="button" className="wk-rotation-sequence-link"
       onClick={() => rotationModal.show()}
     >
       Details
@@ -186,7 +185,7 @@ export function ModulationReport({
 
   const viewedMember = modulationRoster.find((mate) => mate.id === modulationMemberId) ?? null
   const echoLoadout = (
-    <section className="workspace-section workspace-span workspace-ink"
+    <section className="wk-section wk-span wk-ink"
       style={modulation ? memberAccent(viewedMember) : undefined}
     >
       <LoadoutHead
@@ -202,7 +201,7 @@ export function ModulationReport({
           <SeatStack roster={modulationRoster} memberId={modulationMemberId} onMember={onModulationMember} />
         ) : null}
       />
-      <div className="workspace-echoes" {...echoSurfaceProps}>
+      <div className="wk-echoes" {...echoSurfaceProps}>
         {Array.from({ length: 5 }, (_, index) => (
           <EchoCard
             key={index}
@@ -221,8 +220,8 @@ export function ModulationReport({
 
   return (
     <>
-      <div className="workspace-main" data-phase={phase}>
-      <EvaluationBand report={report} score={score} grade={grade} tone={tone} banner={banner} />
+      <div className="wk-main" data-phase={phase}>
+      <EvaluationBand report={report} score={score} grade={grade} tone={tone} />
 
       {echoLoadout}
 
@@ -254,22 +253,22 @@ export function ModulationReport({
         ) : null
       ) : !report || !activeBuild ? (
         loading ? null : (
-          <section className="workspace-section workspace-span">
-            <header className="workspace-section-head">
-              <h3 className="workspace-section-title">Evaluation Report</h3>
-              <span className="workspace-section-meta">Unavailable</span>
+          <section className="wk-section wk-span">
+            <header className="wk-section-head">
+              <h3 className="wk-section-title">Evaluation Report</h3>
+              <span className="wk-section-meta">Unavailable</span>
             </header>
-            <p className="workspace-empty">No evaluation report is available for the current resonator.</p>
+            <p className="wk-empty">No evaluation report is available for the current resonator.</p>
           </section>
         )
       ) : (
         <>
-          <div className="workspace-main-body" data-side="on">
-            <div ref={mainStackRef} className="workspace-main-stack">
-              <section className="workspace-section">
-                <header className="workspace-section-head">
-                  <h3 className="workspace-section-title">Build Stats</h3>
-                  <span className="workspace-section-meta">
+          <div className="wk-main-body" data-side="on">
+            <div ref={mainStackRef} className="wk-main-stack">
+              <section className="wk-section">
+                <header className="wk-section-head">
+                  <h3 className="wk-section-title">Build Stats</h3>
+                  <span className="wk-section-meta">
                     Combat stats &amp; Sonata · current / 100% / 200%
                   </span>
                 </header>
@@ -293,15 +292,15 @@ export function ModulationReport({
               </section>
 
               {selectedDetailBuild ? (
-              <section className="workspace-section">
-                <header className="workspace-section-head">
-                  <h3 className="workspace-section-title">Build Details</h3>
-                  <div className="workspace-section-meta workspace-build-toggle" role="group" aria-label="Build detail view">
+              <section className="wk-section">
+                <header className="wk-section-head">
+                  <h3 className="wk-section-title">Build Details</h3>
+                  <div className="wk-section-meta wk-build-toggle" role="group" aria-label="Build detail view">
                     {DETAIL_BUILD_ORDER.map((key) => (
                       <button
                         key={key}
                         type="button"
-                        className={`workspace-build-toggle__btn${detailBuildKey === key ? ' is-active' : ''}`}
+                        className={`wk-build-toggle__btn${detailBuildKey === key ? ' is-active' : ''}`}
                         aria-pressed={detailBuildKey === key}
                         onClick={() => setDetailBuildKey(key)}
                       >
@@ -320,15 +319,15 @@ export function ModulationReport({
               </section>
               ) : null}
 
-              <section className="workspace-section">
-                <header className="workspace-section-head">
-                  <h3 className="workspace-section-title">Upgrade Paths</h3>
-                  <span className="workspace-section-meta">{report.alternatives.length} main stat &amp; Sonata paths</span>
+              <section className="wk-section">
+                <header className="wk-section-head">
+                  <h3 className="wk-section-title">Upgrade Paths</h3>
+                  <span className="wk-section-meta">{report.alternatives.length} main stat &amp; Sonata paths</span>
                 </header>
                 {report.alternatives.length > 0 ? (
                   <AlternativesTable alternatives={report.alternatives} />
                 ) : (
-                  <p className="workspace-empty">No valid main stat or Sonata upgrades are available.</p>
+                  <p className="wk-empty">No valid main stat or Sonata upgrades are available.</p>
                 )}
               </section>
             </div>
@@ -336,7 +335,7 @@ export function ModulationReport({
             <ActiveStateSources
               groups={stateGroups}
               activeResId={reportRuntime?.id ?? null}
-              memberCount={reportRuntime?.build.team.filter(Boolean).length ?? 0} className="workspace-state-sources"
+              memberCount={reportRuntime?.build.team.filter(Boolean).length ?? 0} className="wk-state-sources"
               onImageError={withDefIconM}
             />
           </div>
@@ -350,12 +349,12 @@ export function ModulationReport({
         ariaLabel="Evaluation rotation action sequence"
         onClose={rotationModal.hide}
       >
-        <div className="rotation-action-list-modal__body">
-          <div className="rotation-action-list-modal__head">
-            <h2 className="confirmation-modal__title">{rotation?.name ?? 'Evaluation Rotation'}</h2>
+        <div className="ralm__body">
+          <div className="ralm__head">
+            <h2 className="cfm__title">{rotation?.name ?? 'Evaluation Rotation'}</h2>
             <ModalCloseButton onClick={() => rotationModal.hide()} />
           </div>
-          <div className="rotation-action-list-modal__list">
+          <div className="ralm__list">
             {sequence ? (
               <CtnSqnc
                 actions={sequence.actions}

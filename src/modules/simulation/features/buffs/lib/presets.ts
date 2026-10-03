@@ -464,36 +464,61 @@ function normalizeSkillTypeTargets(target: SkillTypeKey | SkillTypeKey[]): Skill
   return Array.from(uniqueTargets)
 }
 
-export function formatManualModifierPreview(modifier: MnlMod): string {
+const PREVIEW_ATTRIBUTE_OPTIONS = [
+  { value: 'aero', label: 'Aero' },
+  { value: 'glacio', label: 'Glacio' },
+  { value: 'spectro', label: 'Spectro' },
+  { value: 'fusion', label: 'Fusion' },
+  { value: 'electro', label: 'Electro' },
+  { value: 'havoc', label: 'Havoc' },
+  { value: 'physical', label: 'Physical' },
+]
+
+export interface ManualModifierPreview {
+  label: string
+  value: string
+}
+
+export function describeManualModifier(modifier: MnlMod): ManualModifierPreview {
   if (modifier.scope === 'baseStat') {
-    return `${getOptionLabel(DVNCBASESTAT, modifier.stat)} ${getOptionLabel(DVNCBASESTuv, modifier.field)} ${formatValue(modifier.value, modifier.field === 'flat' ? '' : '%')}`
+    return {
+      label: `${getOptionLabel(DVNCBASESTAT, modifier.stat)} ${getOptionLabel(DVNCBASESTuv, modifier.field)}`,
+      value: formatValue(modifier.value, modifier.field === 'flat' ? '' : '%'),
+    }
   }
 
   if (modifier.scope === 'topStat') {
     const suffix = modifier.stat === 'flatDmg' || modifier.stat === 'finalDmg' || modifier.stat === 'tuneBreakBoost'
       ? ''
       : '%'
-    return `${getOptionLabel(DVNCTOPSTATP, modifier.stat)} ${formatValue(modifier.value, suffix)}`
+    return {
+      label: getOptionLabel(DVNCTOPSTATP, modifier.stat),
+      value: formatValue(modifier.value, suffix),
+    }
   }
 
   if (modifier.scope === 'attribute') {
-    return `${modifier.attribute === 'all' ? 'All Elements' : getOptionLabel([
-      { value: 'aero', label: 'Aero' },
-      { value: 'glacio', label: 'Glacio' },
-      { value: 'spectro', label: 'Spectro' },
-      { value: 'fusion', label: 'Fusion' },
-      { value: 'electro', label: 'Electro' },
-      { value: 'havoc', label: 'Havoc' },
-      { value: 'physical', label: 'Physical' },
-    ], modifier.attribute)} ${getOptionLabel(MOD_VL_PTNS, modifier.mod)} ${formatValue(modifier.value)}`
+    const attribute = modifier.attribute === 'all'
+      ? 'All Elements'
+      : getOptionLabel(PREVIEW_ATTRIBUTE_OPTIONS, modifier.attribute)
+    return {
+      label: `${attribute} ${getOptionLabel(MOD_VL_PTNS, modifier.mod)}`,
+      value: formatValue(modifier.value),
+    }
   }
 
   if (modifier.scope === 'skillType') {
-    return `${getOptionLabel(ADV_SKILL_TYPES, modifier.skillType)} ${getOptionLabel(MOD_VL_PTNS, modifier.mod)} ${formatValue(modifier.value)}`
+    return {
+      label: `${getOptionLabel(ADV_SKILL_TYPES, modifier.skillType)} ${getOptionLabel(MOD_VL_PTNS, modifier.mod)}`,
+      value: formatValue(modifier.value),
+    }
   }
 
   if (modifier.scope === 'negativeEffect') {
-    return `${getOptionLabel(NEG_EFFECT_OPTS, modifier.negativeEffect)} ${getOptionLabel(NEG_EFFECT_MODS, modifier.mod)} ${formatValue(modifier.value, modifier.mod === 'multiplier' ? '' : '%')}`
+    return {
+      label: `${getOptionLabel(NEG_EFFECT_OPTS, modifier.negativeEffect)} ${getOptionLabel(NEG_EFFECT_MODS, modifier.mod)}`,
+      value: formatValue(modifier.value, modifier.mod === 'multiplier' ? '' : '%'),
+    }
   }
 
   const target = modifier.matchMode === 'skillId'
@@ -503,18 +528,30 @@ export function formatManualModifierPreview(modifier: MnlMod): string {
       : getOptionLabel(ADV_SKILL_TYPES, modifier.skillType ?? 'all')
 
   if (modifier.effect === 'mod') {
-    return `${target} ${getOptionLabel(MOD_VL_PTNS, modifier.mod)} ${formatValue(modifier.value)}`
+    return {
+      label: `${target} ${getOptionLabel(MOD_VL_PTNS, modifier.mod)}`,
+      value: formatValue(modifier.value),
+    }
   }
 
   if (modifier.effect === 'addHitMultiplier') {
-    return `${target} Hit ${modifier.hitIndex + 1} MV ${formatValue(modifier.value)}`
+    return {
+      label: `${target} Hit ${modifier.hitIndex + 1} MV`,
+      value: formatValue(modifier.value),
+    }
   }
 
   if (modifier.effect === 'scalar') {
-    return `${target} ${getOptionLabel(SKLLSCLRPTNS, modifier.field)} ${formatValue(modifier.value, scalarSuffix(modifier.field))}`
+    return {
+      label: `${target} ${getOptionLabel(SKLLSCLRPTNS, modifier.field)}`,
+      value: formatValue(modifier.value, scalarSuffix(modifier.field)),
+    }
   }
 
-  return `${target} ${getOptionLabel(SKLLMODPTNS, modifier.effect)} ${formatValue(modifier.value)}`
+  return {
+      label: `${target} ${getOptionLabel(SKLLMODPTNS, modifier.effect)}`,
+      value: formatValue(modifier.value),
+    }
 }
 
 export function presetToManualModifiers(

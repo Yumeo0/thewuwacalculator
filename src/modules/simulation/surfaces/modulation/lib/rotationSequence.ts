@@ -17,6 +17,8 @@ import {featureMeta} from "@/modules/simulation/surfaces/rotation/shared/feature
 import {seedRsntById} from "@/modules/simulation/features/resonator/lib/seedData.ts";
 import { ROT_LOOP_COLORS } from "@/modules/simulation/surfaces/rotation/shared/loopMeta.ts";
 import { normLoopRuns } from '@/domain/gameData/rotationLoops.ts'
+import type { CondChoice } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
+import { getCondChoice } from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
 
 function getRotNodeItems(node: RotationNode): RotationNode[] {
   return 'items' in node && Array.isArray(node.items) ? node.items : []
@@ -87,6 +89,7 @@ export interface RotSqncNpt {
   items: RotationNode[]
   initialCombat?: Partial<CombatState> | null
   resonatorId?: string | null
+  condChoices?: CondChoice[]
 }
 
 export interface RotSqncRslt {
@@ -343,10 +346,12 @@ export function mkSqnc(input: RotSqncNpt): RotSqncRslt {
 
       if (node.type === 'condition') {
         const enabled = node.enabled ?? true
+        const first = node.changes[0]
+        const choice = getCondChoice(input.condChoices ?? [], first, node.resonatorId ?? input.resonatorId ?? undefined)
         entries.push({
           type: 'condition',
           key: node.id,
-          label: node.label ?? 'Condition',
+          label: node.label ?? choice?.label ?? first?.path.split('.').pop() ?? 'Condition',
           depth,
           enabled,
           rules: getCondRls(node),

@@ -17,7 +17,7 @@ import {
 import { formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { formatTruncCompact } from '@/shared/lib/number.ts'
-import '@/styles/modules/simulation/features/echoes/EchoCard.css'
+import '@/styles/features/echoes/card.css'
 
 export interface EchoCardStat {
   key: string

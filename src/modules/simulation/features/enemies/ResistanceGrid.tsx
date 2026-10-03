@@ -58,7 +58,7 @@ export function ResistanceGrid({
   onSelect,
 }: ResistanceGridProps) {
   return (
-    <div className="enemy-res-grid">
+    <div className="enr-grid">
       {getEnemyReys(profile, elements).map(({ elementId, label, attributeKey, value }) => {
         const effRes = value - shredFor(attributeKey)
         const resMult = resistMultiplier(effRes)
@@ -75,21 +75,21 @@ export function ResistanceGrid({
               src={iconSrc}
               alt=""
               aria-hidden="true"
-              className={isPhys ? 'enemy-res-cell__ghost is-phys' : 'enemy-res-cell__ghost'}
+              className={isPhys ? 'enr-cell__ghost is-phys' : 'enr-cell__ghost'}
               onError={withDefIconM}
             />
-            <div className="enemy-res-cell__head">
+            <div className="enr-cell__head">
               <DisplayImage
                 src={iconSrc}
                 alt={label}
-                className={isPhys ? 'enemy-res-cell__icon is-phys' : 'enemy-res-cell__icon'}
+                className={isPhys ? 'enr-cell__icon is-phys' : 'enr-cell__icon'}
                 onError={withDefIconM}
               />
-              <span className="enemy-res-cell__label">{label}</span>
+              <span className="enr-cell__label">{label}</span>
             </div>
 
             {editable ? (
-              <div className="enemy-res-cell__res">
+              <div className="enr-cell__res">
                 <NumberInput
                   value={value}
                   min={-100}
@@ -98,18 +98,18 @@ export function ResistanceGrid({
                 />
               </div>
             ) : (
-              <div className="enemy-res-cell__res" data-shifted={shifted}>{fmt(effRes)}</div>
+              <div className="enr-cell__res" data-shifted={shifted}>{fmt(effRes)}</div>
             )}
 
-            <div className="enemy-res-cell__mult">
-              <span className="enemy-res-cell__mult-x">×</span>
+            <div className="enr-cell__mult">
+              <span className="enr-cell__mult-x">×</span>
               {formatTruncCompact(resMult, 2)}
             </div>
           </>
         )
 
         const className = [
-          'enemy-res-cell',
+          'enr-cell',
           effRes < value ? 'good' : effRes > value ? 'bad' : '',
           picked ? 'is-picked' : '',
         ].filter(Boolean).join(' ')

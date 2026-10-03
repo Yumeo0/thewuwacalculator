@@ -23,116 +23,105 @@ import {
 } from '@/engine/optimizer/config/constants'
 import { errorOpt, logOptimizer } from '@/engine/optimizer/config/log.ts'
 
-let optRunTkn = 0
-let optCompWrkr: Worker | null = null
-const pendingCompiles = new Map<Worker, Set<(error: Error) => void>>()
+/** Owns the store's compile worker and invalidates stale optimizer requests. */
+export class OptimizerCompileSession {
+  private runToken = 0
+  private worker: Worker | null = null
+  private readonly pending = new Map<Worker, Set<(error: Error) => void>>()
+
+  begin(): number { return ++this.runToken }
+  invalidate(): number { return ++this.runToken }
+  isCurrent(token: number): boolean { return this.runToken === token }
+
+  ensureWorker(): Worker {
+    if (this.worker) return this.worker
+    logOptimizer('[optimizer:store] spawning compile worker')
+    this.worker = new Worker(new URL('@/engine/optimizer/workers/compile.worker.ts', import.meta.url), { type: 'module' })
+    this.worker.onerror = (event) => {
+      errorOpt('[optimizer:store] compile worker uncaught error', {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+      })
+    }
+    return this.worker
+  }
+
+  stop(): void {
+    const worker = this.worker
+    this.worker = null
+    if (!worker) return
+    for (const cancel of this.pending.get(worker) ?? []) cancel(new DOMException('Optimizer request cancelled', 'AbortError'))
+    worker.terminate()
+  }
+
+  stopIfCurrent(worker: Worker): void {
+    if (this.worker === worker) this.stop()
+  }
+
+  owns(worker: Worker): boolean { return this.worker === worker }
+
+  async waitForResponse<T extends OptCompOutMs['type']>(
+    worker: Worker,
+    runId: number,
+    expectedType: T,
+    dispatch: () => void,
+  ): Promise<Extract<OptCompOutMs, { type: T }>> {
+    return await new Promise((resolve, reject) => {
+      const pending = this.pending.get(worker) ?? new Set<(error: Error) => void>()
+      this.pending.set(worker, pending)
+      const cleanup = () => {
+        worker.removeEventListener('message', onMsg)
+        worker.removeEventListener('error', handleError)
+        pending.delete(fail)
+        if (!pending.size) this.pending.delete(worker)
+      }
+      const fail = (error: Error) => { cleanup(); reject(error) }
+      const onMsg = (event: MessageEvent<OptCompOutMs>) => {
+        const message = event.data
+        if (message.runId !== runId) return
+        cleanup()
+        if (message.type === 'error') { reject(new Error(message.message)); return }
+        if (message.type !== expectedType) {
+          reject(new Error(`Unexpected optimizer compile worker response: ${message.type}`))
+          return
+        }
+        resolve(message as Extract<OptCompOutMs, { type: T }>)
+      }
+      const handleError = (event: ErrorEvent) => fail(new Error(event.message || 'Optimizer compile worker failed unexpectedly'))
+      worker.addEventListener('message', onMsg)
+      worker.addEventListener('error', handleError)
+      pending.add(fail)
+      try { dispatch() } catch (error) { fail(error instanceof Error ? error : new Error(String(error))) }
+    })
+  }
+}
+
+const compileSession = new OptimizerCompileSession()
 
 export function bgnOptRun(): number {
-  // each new run gets a strictly newer token so stale async work can be ignored.
-  optRunTkn += 1
-  return optRunTkn
+  return compileSession.begin()
 }
 
 export function nvldOptRun(): number {
-  optRunTkn += 1
-  return optRunTkn
+  return compileSession.invalidate()
 }
 
 export function isOptRunCur(runToken: number): boolean {
-  return optRunTkn === runToken
+  return compileSession.isCurrent(runToken)
 }
 
 export function ensOptCompWr(): Worker {
-  if (optCompWrkr) {
-    return optCompWrkr
-  }
-
-  // the compile worker is shared between runs until explicitly torn down.
-  logOptimizer('[optimizer:store] spawning compile worker')
-  optCompWrkr = new Worker(
-    new URL('@/engine/optimizer/workers/compile.worker.ts', import.meta.url),
-    { type: 'module' },
-  )
-
-  optCompWrkr.onerror = (event) => {
-    errorOpt('[optimizer:store] compile worker uncaught error', {
-      message: event.message,
-      filename: event.filename,
-      lineno: event.lineno,
-      colno: event.colno,
-    })
-  }
-
-  return optCompWrkr
+  return compileSession.ensureWorker()
 }
 
 export function stopOptCompW(): void {
-  const worker = optCompWrkr
-  optCompWrkr = null
-  if (!worker) return
-  for (const cancel of pendingCompiles.get(worker) ?? []) {
-    cancel(new DOMException('Optimizer request cancelled', 'AbortError'))
-  }
-  worker.terminate()
+  compileSession.stop()
 }
 
 export function stopOptComhl(worker: Worker): void {
-  if (optCompWrkr !== worker) {
-    return
-  }
-
-  stopOptCompW()
-}
-
-async function waitForCompW<T extends OptCompOutMs['type']>(
-  worker: Worker,
-  runId: number,
-  expectedType: T,
-  dispatch: () => void,
-): Promise<Extract<OptCompOutMs, { type: T }>> {
-  return await new Promise((resolve, reject) => {
-    const pending = pendingCompiles.get(worker) ?? new Set<(error: Error) => void>()
-    pendingCompiles.set(worker, pending)
-    const cleanup = () => {
-      worker.removeEventListener('message', onMsg)
-      worker.removeEventListener('error', handleError)
-      pending.delete(fail)
-      if (!pending.size) pendingCompiles.delete(worker)
-    }
-    const fail = (error: Error) => { cleanup(); reject(error) }
-    const onMsg = (event: MessageEvent<OptCompOutMs>) => {
-      const message = event.data
-      // multiple runs may reuse the same worker, so ignore out-of-date replies.
-      if (message.runId !== runId) {
-        return
-      }
-
-      cleanup()
-
-      if (message.type === 'error') {
-        reject(new Error(message.message))
-        return
-      }
-
-      if (message.type !== expectedType) {
-        reject(new Error(`Unexpected optimizer compile worker response: ${message.type}`))
-        return
-      }
-
-      resolve(message as Extract<OptCompOutMs, { type: T }>)
-    }
-
-    const handleError = (event: ErrorEvent) => {
-      fail(new Error(event.message || 'Optimizer compile worker failed unexpectedly'))
-    }
-
-    worker.addEventListener('message', onMsg)
-    worker.addEventListener('error', handleError)
-    pending.add(fail)
-    try { dispatch() } catch (error) {
-      fail(error instanceof Error ? error : new Error(String(error)))
-    }
-  })
+  compileSession.stopIfCurrent(worker)
 }
 
 export async function compOptPayIn(
@@ -151,9 +140,9 @@ export async function compOptPayIn(
   const weaponDataIds = input.settings.includeWeapons
     ? (await import('@/engine/optimizer/context/weaponOverlays')).resolveWeaponCandidates(input)?.candidates.map((weapon) => weapon.id)
     : undefined
-  if (worker !== optCompWrkr) throw new DOMException('Optimizer request cancelled', 'AbortError')
+  if (!compileSession.owns(worker)) throw new DOMException('Optimizer request cancelled', 'AbortError')
   const t0 = performance.now()
-  const message = await waitForCompW(worker, runId, 'done', () => {
+  const message = await compileSession.waitForResponse(worker, runId, 'done', () => {
     worker.postMessage({
       type: 'start',
       runId,
@@ -190,7 +179,7 @@ export async function matOptRsltsI(
   })
 
   const t0 = performance.now()
-  const message = await waitForCompW(worker, runId, 'materialized', () => {
+  const message = await compileSession.waitForResponse(worker, runId, 'materialized', () => {
     worker.postMessage({
       type: 'materialize',
       runId,

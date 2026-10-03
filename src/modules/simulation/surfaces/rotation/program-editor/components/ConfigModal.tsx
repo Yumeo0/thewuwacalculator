@@ -10,7 +10,6 @@ import { AppModal } from '@/shared/ui/AppModal.tsx'
 import type { ReactNode } from 'react'
 import {
   DAMAGE_DECIMALS,
-  statCeiling,
 } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 import type {
   DamageDecimals,
@@ -18,8 +17,11 @@ import type {
   StatKey,
 } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 import { ColumnRack } from '@/modules/simulation/surfaces/rotation/program-editor/components/ColumnRack.tsx'
+import { useColumnCeiling } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/useColumnCeiling'
 import { useAppStore } from '@/application/state'
 import type { RotationDamageBasis } from '@/domain/entities/rotationEditorPreferences.ts'
+import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
 
 type ConfigTab = 'display' | 'simulation'
@@ -232,10 +234,12 @@ export function ConfigModal({
   const update = session.update
   const close = useCallback(() => onClose(session.finish), [onClose, session])
   const surfaceConcern: ConfigConcern = savedView === 'off' ? 'rotation' : 'saved'
+  const mobile = useMobileUi()
   const [tab, setTab] = useState<ConfigTab>('display')
   const [concern, setConcern] = useState<ConfigConcern>(surfaceConcern)
   const tabs = tabsFor(concern)
-  const statMax = statCeiling(draft.dockPane)
+  const statMax = useColumnCeiling(draft.dockPane)
+  const visibleStatKeys = draft.statKeys.slice(0, statMax)
 
   const selectConcern = (next: ConfigConcern) => {
     setConcern(next)
@@ -244,14 +248,8 @@ export function ConfigModal({
     }
   }
 
-  return (
-    <AppModal
-      state={state}
-      variant="settings"
-      ariaLabel="Rotation editor settings"
-      onClose={close}
-    >
-      <div className="amdl rtcfg">
+  const mHeader = (
+    <>
         <header className="amdl__head">
           <span className="amdl__title">
             <span className="amdl__over">Rotation editor</span>
@@ -284,8 +282,10 @@ export function ConfigModal({
             <X size="0.95rem" />
           </button>
         </header>
+    </>
+  )
 
-        <div className="amdl__body rtcfg__body">
+  const mRail = (
           <nav className="amdl__rail" aria-label="Settings sections">
             {tabs.map((entry) => (
               <button
@@ -303,7 +303,9 @@ export function ConfigModal({
               {tabs.reduce((sum, entry) => sum + entry.count, 0)} settings
             </span>
           </nav>
+  )
 
+  const mPane = (
           <div className="amdl__pane">
             {tab === 'display' ? (
               <div className="rtcfg__sets">
@@ -397,7 +399,7 @@ export function ConfigModal({
                     <b className="rtcfg-set__name">
                       Columns
                       <span className="rtcfg-set__count">
-                        {draft.statKeys.length} of {statMax}
+                        {visibleStatKeys.length} of {statMax}
                       </span>
                     </b>
                     <span className="rtcfg-set__why">
@@ -406,7 +408,7 @@ export function ConfigModal({
                     </span>
                   </span>
                   <ColumnRack
-                    statKeys={draft.statKeys}
+                    statKeys={visibleStatKeys}
                     onStatKeys={(value) => update((current) => ({ ...current, statKeys: value }))}
                     groupOrder={draft.groupOrder}
                     onGroupOrder={(value) => update((current) => ({ ...current, groupOrder: value }))}
@@ -434,8 +436,31 @@ export function ConfigModal({
               </div>
             )}
           </div>
+  )
+
+
+  return (
+    <AppModal
+      state={state}
+      variant="settings"
+      ariaLabel="Rotation editor settings"
+      onClose={close}
+    >
+      {mobile ? (
+        <MobilePages
+          className="rtcfg"
+          head={mHeader}
+          pages={tabs.map((entry) => ({ id: entry.id, label: entry.label, badge: entry.count, node: entry.id === tab ? mPane : null }))} page={tab} onPage={(id) => setTab(id as ConfigTab)}
+        />
+      ) : (
+      <div className="amdl rtcfg">
+        {mHeader}
+        <div className="amdl__body rtcfg__body">
+          {mRail}
+          {mPane}
         </div>
       </div>
+      )}
     </AppModal>
   )
 }

@@ -36,6 +36,47 @@ function clearGameDataState() {
 }
 
 describe('game data bootstrap invariants', () => {
+  it('loads a saved rotation\'s resonator before caching its comparison damage', async () => {
+    vi.resetModules()
+    clearGameDataState()
+    const previousFetch = globalThis.fetch
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => ({
+      ok: true,
+      json: async () => JSON.parse(await readFile(`public${resolveRequestUrl(input)}`, 'utf8')),
+    } as Response)) as typeof fetch
+    try {
+      const data = await import('@/data/gameData')
+      await data.initGameData({ mode: 'beta', resonatorIds: ['1506', '1208'] })
+      const { getDefaultRotation } = await import('@/data/catalog/gameDataService')
+      const { getResSeedBy } = await import('@/data/catalog/resonatorSeedService')
+      const { makeResProfile, makeScenarioFromProfiles } = await import('@/engine/runtime/defaults')
+      const { makeSavedRotation } = await import('@/domain/entities/inventoryStorage')
+      const { prepareSavedRotationBatch, runPreparedSavedRotationBatch, runSavedRotationComparison, runSavedRotationDetailBatch } =
+        await import('@/modules/simulation/surfaces/rotation/program-editor/simulation/simulation')
+      const seed = getResSeedBy('1208')!
+      const scenario = makeScenarioFromProfiles({ '1208': makeResProfile(seed, { maxed: true }) }, null, 0, '1208')
+      scenario.program.program = structuredClone(getDefaultRotation('1208')!.items)
+      const entry = makeSavedRotation({ name: 'Saved context', scenario })
+      const expected = runSavedRotationComparison({ entry })!.average.total.avg
+      expect(expected).toBeGreaterThan(0)
+
+      await data.initGameData({ mode: 'beta', resonatorIds: ['1506'] })
+      expect(data.hasResonatorData(['1208'])).toBe(false)
+      expect(runSavedRotationComparison({ entry })!.average.total.avg).toBeLessThan(expected)
+      const result = await runPreparedSavedRotationBatch(prepareSavedRotationBatch([entry]))
+      expect(result.get(entry.id)?.average.total.avg).toBeCloseTo(expected)
+
+      await data.initGameData({ mode: 'beta', resonatorIds: ['1506'] })
+      expect(data.hasResonatorData(['1208'])).toBe(false)
+      const detail = await runSavedRotationDetailBatch([entry])
+      expect(detail.get(entry.id)?.summary.total.avg).toBeCloseTo(expected)
+    } finally {
+      globalThis.fetch = previousFetch
+      clearGameDataState()
+      vi.resetModules()
+    }
+  })
+
   it('hydrates the app from core catalogs before loading calculation sources', async () => {
     vi.resetModules()
     clearGameDataState()
@@ -54,7 +95,9 @@ describe('game data bootstrap invariants', () => {
     try {
       const { DEF_RES_ID } = await import('@/data/gameData/constants')
       const data = await import('@/data/gameData')
-      await data.initCoreGameData({ mode: 'beta', resonatorIds: [DEF_RES_ID] })
+      await data.initCoreGameData({ mode: 'beta', resonatorIds: [DEF_RES_ID, '1208'] })
+      const { getDefaultRotation } = await import('@/data/catalog/gameDataService')
+      expect(getDefaultRotation('1208')).toBeNull()
       const coreSource = data.getGameData().sourcesByKey[`resonator:${DEF_RES_ID}`]
       expect(coreSource).toBeDefined()
       expect(coreSource.skills).toHaveLength(0)
@@ -71,16 +114,19 @@ describe('game data bootstrap invariants', () => {
       const { useAppStore, selScenarioProfiles } = await import('@/application/state')
       expect(Object.keys(selScenarioProfiles(useAppStore.getState()))).toContain(DEF_RES_ID)
       failFullSourceOnce = true
-      await expect(data.initGameData({ mode: 'beta', resonatorIds: [DEF_RES_ID] })).rejects.toThrow('source unavailable')
+      await expect(data.initGameData({ mode: 'beta', resonatorIds: [DEF_RES_ID, '1208'] })).rejects.toThrow('source unavailable')
       expect(data.getGameData().sourcesByKey[`resonator:${DEF_RES_ID}`].skills).toHaveLength(0)
-      await data.initGameData({ mode: 'beta', resonatorIds: [DEF_RES_ID] })
+      await data.initGameData({ mode: 'beta', resonatorIds: [DEF_RES_ID, '1208'] })
       expect(data.getGameData().sourcesByKey[`resonator:${DEF_RES_ID}`].skills?.length).toBeGreaterThan(0)
+      expect(getDefaultRotation('1208')?.items.length).toBeGreaterThan(0)
       expect(data.getGameData().sourcesByKey['resonator:1205']).toBeUndefined()
       data.releaseCalculationGameData()
       expect(data.getGameData().sourcesByKey[`resonator:${DEF_RES_ID}`].skills).toHaveLength(0)
+      expect(getDefaultRotation('1208')).toBeNull()
       expect(data.getGameData().sourcesByKey['resonator:1205']).toBeDefined()
-      await data.initGameData({ mode: 'beta', resonatorIds: [DEF_RES_ID] })
+      await data.ensureResonatorData([DEF_RES_ID, '1208'])
       expect(data.getGameData().sourcesByKey[`resonator:${DEF_RES_ID}`].skills?.length).toBeGreaterThan(0)
+      expect(getDefaultRotation('1208')?.items.length).toBeGreaterThan(0)
     } finally {
       globalThis.fetch = previousFetch
       clearGameDataState()

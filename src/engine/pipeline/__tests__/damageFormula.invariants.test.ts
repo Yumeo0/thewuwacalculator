@@ -11,6 +11,7 @@ import type { FeatureResult } from '@/domain/gameData/contracts'
 import type { FinalStats, SkillDef } from '@/domain/entities/stats'
 import { makeCombatState } from '@/engine/runtime/defaults'
 import { calcSkillDamage, calcSkillDamageScoreInto } from '@/engine/formulas/damage'
+import { getEnemyMaxOffTune, getTuneLevel } from '@/engine/formulas/tuneRupture'
 import { formBrkd, fmtBreakdown } from '@/modules/simulation/features/results/lib/damageFormula'
 
 function makeBuff() {
@@ -369,6 +370,66 @@ describe('damage formula invariants', () => {
     expect(buffed.avg).toBeGreaterThan(baseline.avg)
   })
 
+  it('sums ordinary Amplify sources and limits special damage to its own scope', () => {
+    const baseline = calcSkillDamage(makeFinalStats(), skill, enemy, 90)
+    const ordinarySkill = { ...skill, skillBuffs: { ...makeBuff(), amplify: 40 } }
+    const ordinaryStats = makeFinalStats({
+      amplify: 10,
+      attribute: {
+        ...makeFinalStats().attribute,
+        [skill.element]: { ...makeBuff(), amplify: 20 },
+      },
+      skillType: {
+        ...makeFinalStats().skillType,
+        [skill.skillType[0]!]: { ...makeBuff(), amplify: 30 },
+      },
+    })
+    expect(calcSkillDamage(ordinaryStats, ordinarySkill, enemy, 90).normal)
+      .toBeCloseTo(baseline.normal * 2, 10)
+
+    const negativeSkill = {
+      ...negativeEffectSkill,
+      skillType: ['basicAtk', 'spectroFrazzle'] as SkillDef['skillType'],
+    }
+    const combat = { spectroFrazzle: 1 }
+    const negativeBase = calcSkillDamage(makeFinalStats(), negativeSkill, enemy, 90, combat)
+    const unrelatedStats = makeFinalStats({
+      amplify: 25,
+      attribute: {
+        ...makeFinalStats().attribute,
+        all: { ...makeBuff(), amplify: 15 },
+        spectro: { ...makeBuff(), amplify: 10 },
+      },
+      skillType: {
+        ...makeFinalStats().skillType,
+        all: { ...makeBuff(), amplify: 20 },
+        basicAtk: { ...makeBuff(), amplify: 30 },
+        spectroFrazzle: { ...makeBuff(), amplify: 40 },
+      },
+    })
+    const negativeEffectAmp = calcSkillDamage(unrelatedStats, negativeSkill, enemy, 90, combat)
+    expect(negativeEffectAmp.normal).toBeCloseTo(negativeBase.normal * 1.4, 10)
+    const ownSkill = { ...negativeSkill, skillBuffs: { ...makeBuff(), amplify: 20 } }
+    const negativeOwnAmp = calcSkillDamage(unrelatedStats, ownSkill, enemy, 90, combat)
+    expect(negativeOwnAmp.normal).toBeCloseTo(negativeBase.normal * 1.6, 10)
+    const negativeBreakdown = formBrkd(
+      makeFeatureResult(ownSkill, negativeOwnAmp), unrelatedStats, enemy, 90,
+      { ...makeCombatState(), spectroFrazzle: 1 },
+    )
+    expect(negativeBreakdown.sections.find((section) => section.label === 'mods')?.lines)
+      .toContain('mod.amp = 60% = Effect 40% + Skill 20%')
+
+    const tuneBase = calcSkillDamage(makeFinalStats(), tuneRuptureSkill, enemy, 90)
+    const tuneAmplified = calcSkillDamage(unrelatedStats, tuneRuptureSkill, enemy, 90)
+    expect(tuneAmplified.normal).toBeCloseTo(tuneBase.normal, 10)
+    const tuneBreakdown = formBrkd(
+      makeFeatureResult(tuneRuptureSkill, tuneAmplified), unrelatedStats, enemy, 90,
+      makeCombatState(),
+    )
+    expect(tuneBreakdown.sections.find((section) => section.label === 'mods')?.lines)
+      .toContain('mod.amp = 0% = Tune Break ignores Amplify')
+  })
+
   it('keeps fixed damage isolated from ordinary damage buffs', () => {
     // fixed damage is an override branch, not a normal skill damage branch, so
     // it must ignore crit, amplify, flat damage, and skill-type bonuses
@@ -478,6 +539,19 @@ describe('damage formula invariants', () => {
     expect(buffedHack.avg).toBeGreaterThan(baseHack.avg)
   })
 
+  it('uses the revised level table and enemy max Off-Tune for tune rupture and hack', () => {
+    expect(getTuneLevel(90)).toBeCloseTo(255.83427675, 10)
+    const defense = 1520 / (1520 + 1512)
+    for (const [enemyClass, maxOffTune] of [[1, 2.8], [2, 8.4], [3, 39.2], [4, 39.2]]) {
+      const target = { ...enemy, class: enemyClass }
+      expect(getEnemyMaxOffTune(enemyClass)).toBe(maxOffTune)
+      expect(calcSkillDamage(makeFinalStats(), tuneRuptureSkill, target, 90).normal)
+        .toBeCloseTo(255.83427675 * 16 * defense * 0.8 * maxOffTune, 7)
+      expect(calcSkillDamage(makeFinalStats(), hackSkill, target, 90).normal)
+        .toBeCloseTo(255.83427675 * 2 * defense * 0.8 * maxOffTune, 7)
+    }
+  })
+
   it('applies defense ignore to special damage only when the special branch is targeted', () => {
     const baseHack = calcSkillDamage(makeFinalStats(), hackSkill, enemy, 90)
     const globalIgnoreHack = calcSkillDamage(makeFinalStats({ defIgnore: 20 }), hackSkill, enemy, 90)
@@ -579,6 +653,7 @@ describe('damage formula invariants', () => {
 
     expect(tuneBreakdown.sections.flatMap((section) => section.lines).join('\n')).toContain('core.tuneAmp')
     expect(fmtBreakdown(tuneBreakdown)).toContain('mod.finalDmg = 25%')
+    expect(fmtBreakdown(tuneBreakdown)).toContain('enemy.maxOffTune = 2.8')
     expect(hackBreakdown.sections.flatMap((section) => section.lines).join('\n')).toContain('core.hackAmp')
     expect(fmtBreakdown(hackBreakdown)).toContain('mod.tuneBoost')
     expect(fmtBreakdown(tuneBreakdown).split('\n').filter((line) => line.startsWith('out.normal ='))).toHaveLength(1)

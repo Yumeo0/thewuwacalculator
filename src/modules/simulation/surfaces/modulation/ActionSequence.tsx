@@ -261,12 +261,12 @@ export function CtnSqnc({
               className={className}
               style={{ '--rotation-loop-color': entry.color } as CssProps}
             >
-              <span className="rotation-loop-marker__title">
-                <span className="rotation-loop-marker__badge">
+              <span className="rlm__title">
+                <span className="rlm__badge">
                   <Glyph fill={entry.kind === 'self' ? 'none' : 'currentColor'} aria-hidden="true" size="1em" />
                   {badgeText}
                 </span>
-                <span className="entry-name rotation-loop-marker__name">{entry.label}</span>
+                <span className="entry-name rlm__name">{entry.label}</span>
               </span>
               {showRuns ? (
                 <span className="rss-sequence__loop-runs" title={`Runs ${entry.runs} ${entry.runs === 1 ? 'time' : 'times'}`}>

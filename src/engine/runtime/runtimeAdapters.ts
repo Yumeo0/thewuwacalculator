@@ -46,9 +46,9 @@ import {
 } from '@/engine/runtime/runtimeCloning'
 import { projectScenarioUiRuntimes } from '@/engine/runtime/scenarioRuntime'
 import {
-  extractMemberManualBuffs,
   removeMemberEnvironmentState,
   replaceMemberManualEffect,
+  replaceProjectedMemberManualBuffs,
   resolveEnvironmentManualBuffs,
 } from '@/engine/runtime/scenarioEnvironment'
 
@@ -503,14 +503,10 @@ export function applyRuntimeToSimulation(
       environment = removeMemberEnvironmentState(environment, previousMember.id)
     }
   }
-  environment = replaceMemberManualEffect(
+  environment = replaceProjectedMemberManualBuffs(
     environment,
-    updatedMember.id,
-    extractMemberManualBuffs(
-      scenario.environment,
-      scenario.team.members[memberIndex],
-      runtime.state.manualBuffs,
-    ),
+    scenario.team.members[memberIndex],
+    runtime.state.manualBuffs,
   )
   for (const member of team.members) {
     if (scenario.team.members.some((candidate) => candidate.id === member.id)) continue

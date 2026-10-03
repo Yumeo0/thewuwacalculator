@@ -41,6 +41,7 @@ import {
 } from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
 import type {
   CondChoice,
+  RotationMember,
   RotationConditionValue,
   SkillMenuEntry,
 } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
@@ -64,9 +65,9 @@ export function makeFeatureNode(entry: {
   color?: string
   aggregationType?: SkillAggType
   echoId?: string
-}, focusedId: string): EditorStep {
+}, focusedId: string, members: readonly RotationMember[] = []): EditorStep {
   const memberId = entry.resonatorId || focusedId
-  return {
+  return withTeamTuneBreakResponses({
     ...makeStep(entry.label, memberId),
     owner: entry.echoId
       ? { kind: 'echo', echoId: entry.echoId }
@@ -79,7 +80,52 @@ export function makeFeatureNode(entry: {
     // palette entries carry the skill tab, so a negative-effect add shows the
     // series section before the next run re-projects the step
     negEffect: entry.tab === 'negativeEffect',
+  }, members)
+}
+
+/**
+ * Responses remain ordinary editable attachments. Do not filter visibleWhen
+ * here: a mode condition earlier in the program can differ from the build's
+ * current mode, and the executor checks the response at the actual break.
+ */
+function withTeamTuneBreakResponses(
+  step: EditorStep,
+  members: readonly RotationMember[],
+): EditorStep {
+  if (step.kindLabel !== 'tuneBreak') return step
+
+  const attached = [...(step.attached ?? [])]
+  const existing = new Set(attached.map((child) => `${child.memberId}:${child.featureId}`))
+  for (const member of members) {
+    for (const feature of member.features) {
+      if (feature.variant === 'subHit' || feature.source.type !== 'resonator') continue
+      const skill = member.skills.find((candidate) => candidate.id === feature.skillId)
+      if (skill?.triggeredBy !== 'teamTuneBreak') continue
+      const key = `${member.id}:${feature.id}`
+      if (existing.has(key)) continue
+      existing.add(key)
+      attached.push({
+        ...makeFeatureNode({
+          label: skill.label,
+          resonatorId: member.id,
+          featureId: feature.id,
+          tab: skill.tab,
+          color: skillDisplayColor(skill),
+          aggregationType: skill.aggregationType,
+        }, member.id),
+        element: skill.element,
+      })
+    }
   }
+  return attached.length === (step.attached?.length ?? 0)
+    ? step
+    : { ...step, attached, attachedEdited: true }
+}
+
+function isTeamTuneBreakResponse(step: EditorStep, members: readonly RotationMember[]): boolean {
+  const member = members.find((candidate) => candidate.id === step.memberId)
+  const feature = member?.features.find((candidate) => candidate.id === step.featureId)
+  return member?.skills.some((skill) => skill.id === feature?.skillId && skill.triggeredBy === 'teamTuneBreak') ?? false
 }
 
 export function makeConditionNode(
@@ -240,9 +286,10 @@ export function makePaletteNode(
   condChoices: CondChoice[],
   seedValue?: (choice: CondChoice) => RotationConditionValue,
   previousValue?: (choice: CondChoice) => RuntimeValue | undefined,
+  members: readonly RotationMember[] = [],
 ): EditorStep | EditorCondition | EditorHandoff | null {
   if (payload.kind === 'step') {
-    return makeFeatureNode(payload, focusedId)
+    return makeFeatureNode(payload, focusedId, members)
   }
 
   const choice = condChoices.find((entry) => entry.id === payload.choiceId)
@@ -280,24 +327,28 @@ function makeConditionFromChange(
       : options.focusedId)
   const value = regChangeValue(nodeChange)
   const from = previousCondition?.from
-  const label = rotationNode.label
-    ?? choice?.label
-    ?? previousCondition?.label
-    ?? nodeChange.path.split('.').pop()
-    ?? 'Condition'
-  const base = makeCondition(label, memberId)
   const previousSource = options.previous?.sourceNode?.type === 'condition'
     ? options.previous.sourceNode
     : null
+  const samePath = previousSource?.changes[0]?.path === nodeChange.path
+  const authoredLabel = samePath && previousSource?.label !== choice?.label
+    ? previousSource?.label
+    : undefined
+  const label = authoredLabel
+    ?? choice?.label
+    ?? (previousCondition?.path === nodeChange.path ? previousCondition.label : undefined)
+    ?? nodeChange.path.split('.').pop()
+    ?? 'Condition'
+  const base = makeCondition(label, memberId)
   const sourceNode: Extract<RotationNode, { type: 'condition' }> = previousSource
     ? {
       ...previousSource,
       id: rotationNode.id,
       resonatorId: rotationNode.resonatorId,
-      label,
       changes: [nodeChange],
     }
     : rotationNode
+  if (previousSource && !samePath) delete sourceNode.label
 
   if (nodeChange.path === ACTIVE_RESONATOR_PATH) {
     return {
@@ -377,23 +428,31 @@ export function applyFeatureSelection(
   sections: EditorSection[],
   nodeId: string,
   entry: SkillMenuEntry,
+  members: readonly RotationMember[] = [],
 ): EditorSection[] {
-  return updateStep(sections, nodeId, (step) => ({
-    ...step,
-    owner: { kind: 'member', memberId: entry.resonatorId },
-    ownerEdited: true,
-    memberId: entry.resonatorId,
-    featureId: entry.featureId,
-    label: entry.variant === 'subHit' ? getSubHitLbl(entry) : entry.skill.label,
-    kindLabel: entry.skill.tab,
-    element: entry.skill.element,
-    color: skillDisplayColor(entry.skill),
-    aggregationType: entry.skill.aggregationType,
-    damageByRun: {},
-    statsByRun: {},
-    writesByRun: undefined,
-    gate: undefined,
-  }))
+  return updateStep(sections, nodeId, (step) => {
+    const leavingTuneBreak = step.kindLabel === 'tuneBreak' && entry.skill.tab !== 'tuneBreak'
+    const attached = leavingTuneBreak
+      ? step.attached?.filter((child) => !isTeamTuneBreakResponse(child, members))
+      : step.attached
+    return withTeamTuneBreakResponses({
+      ...step,
+      owner: { kind: 'member', memberId: entry.resonatorId },
+      ownerEdited: true,
+      memberId: entry.resonatorId,
+      featureId: entry.featureId,
+      label: entry.variant === 'subHit' ? getSubHitLbl(entry) : entry.skill.label,
+      kindLabel: entry.skill.tab,
+      element: entry.skill.element,
+      color: skillDisplayColor(entry.skill),
+      aggregationType: entry.skill.aggregationType,
+      damageByRun: {},
+      statsByRun: {},
+      writesByRun: undefined,
+      gate: undefined,
+      ...(attached !== step.attached ? { attached, attachedEdited: true } : {}),
+    }, members)
+  })
 }
 
 export function applyFeatureConditionChanges(

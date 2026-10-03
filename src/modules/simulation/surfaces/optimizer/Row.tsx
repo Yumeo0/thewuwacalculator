@@ -5,6 +5,9 @@
 */
 
 import { memo } from 'react'
+import { Check, Eye } from 'lucide-react'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
+import type { MenuEntry } from '@/shared/ui/CtxMenu'
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { formatTruncCompact } from '@/shared/lib/number.ts'
@@ -55,6 +58,7 @@ interface OptRowPrps {
   showWeapon?: boolean
   selected?: boolean
   onClick?: () => void
+  menuItems?: MenuEntry[]
 }
 
 function renderStat(value: number | null | undefined, formatter: (next: number) => string): string {
@@ -90,6 +94,7 @@ export const Row = memo(function Row({
   showWeapon = false,
   selected = false,
   onClick,
+  menuItems,
 }: OptRowPrps) {
   const { stats, costs, sets, mainEchoIcon, weaponIcon, weaponName, damage, invalid } = result
   const displayDamage = displayedDamage(damage)
@@ -110,7 +115,7 @@ export const Row = memo(function Row({
           name: getEchoSetDe(entry.id)?.name ?? `Set ${entry.id}`,
           pieces: entry.count,
           icon: entry.icon,
-        }))} className="workspace-srel-set-plan"
+        }))} className="wk-srel-set-plan"
         emptyLabel="…"
       />
     )
@@ -135,7 +140,7 @@ export const Row = memo(function Row({
     )
   }
 
-  return (
+  const content = (
     <div
       className={`opt-result-row${selected ? ' is-selected' : ''}${base ? ' is-base' : ''}${invalid ? ' is-invalid' : ''}`}
       onClick={clickable ? onClick : undefined}
@@ -193,13 +198,29 @@ export const Row = memo(function Row({
       <div className="opt-result-row__col opt-result-row__col--eff">{diff}%</div>
     </div>
   )
+  return menuItems ? (
+    <ContextTrigger asChild ariaLabel="Optimizer result actions" items={menuItems}>
+      {content}
+    </ContextTrigger>
+  ) : content
 })
 
-export const OptimizerResultRows = memo(function OptimizerResultRows({ rows, indices, selected, onSelect, ...shared }: {
+export const OptimizerResultRows = memo(function OptimizerResultRows({ rows, indices, selected, onSelect, onEquip, ...shared }: {
   rows: OptDisplayRow[]
   indices: number[]
   selected: number | null
   onSelect: (index: number) => void
+  onEquip: (originalIndex: number) => void
 } & Pick<OptRowPrps, 'baseDamage' | 'rotationMode' | 'showWeapon'>) {
-  return rows.map((result, index) => <Row key={indices[index]} result={result} {...shared} selected={selected === index} onClick={() => onSelect(index)} />)
+  return rows.map((result, index) => <Row
+    key={indices[index]}
+    result={result}
+    {...shared}
+    selected={selected === index}
+    onClick={() => onSelect(index)}
+    menuItems={[
+      { id: `optimizer:result:${indices[index]}:preview`, label: 'Preview', icon: <Eye size="1em" />, disabled: Boolean(result.invalid), onSelect: () => onSelect(index) },
+      { id: `optimizer:result:${indices[index]}:equip`, label: 'Equip result', icon: <Check size="1em" />, disabled: Boolean(result.invalid) || indices[index] == null, onSelect: () => onEquip(indices[index]!) },
+    ]}
+  />)
 })

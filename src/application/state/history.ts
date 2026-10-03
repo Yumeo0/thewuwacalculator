@@ -119,54 +119,61 @@ export function makeHistoryEntry(before: PersistedState, after: PersistedState, 
   return changes.length ? { changes, domains: [...new Set(domains)], label } : null
 }
 
-const historyCompactionQueue: PrssHistEnt[] = []
-let historyCompacting = false
-
-/** A queued compression owns its uncompressed object graph. Drop jobs whose
- * entries have already fallen out of the bounded undo/redo history. */
-export function retainQueuedHistoryCompactions(history: Pick<PrssHistStt, 'past' | 'future'>): void {
-  if (historyCompactionQueue.length === 0) return
-  const retained = new Set([...history.past, ...history.future])
-  for (let index = historyCompactionQueue.length - 1; index >= 0; index -= 1) {
-    if (!retained.has(historyCompactionQueue[index])) historyCompactionQueue.splice(index, 1)
-  }
-}
-
 function shouldCompact(entry: PrssHistEnt): boolean {
   return entry.changes.length > 100 || entry.changes.some((change) =>
     (Array.isArray(change.before) && change.before.length > 32)
     || (Array.isArray(change.after) && change.after.length > 32))
 }
 
-/** Large, cold transactions are compressed in a short-lived worker. Ordinary
- * scalar edits stay as tiny path/value pairs and never start a worker. */
-export function queueHistoryCompaction(entry: PrssHistEnt): void {
-  if (typeof Worker === 'undefined' || !shouldCompact(entry)) return
-  historyCompactionQueue.push(entry)
-  if (historyCompacting) return
-  const drain = () => {
-    const next = historyCompactionQueue.shift()
-    if (!next) { historyCompacting = false; return }
-    const changes = next.changes
-    let worker: Worker
-    try {
-      worker = new Worker(new URL('./historyCompression.worker.ts', import.meta.url), { type: 'module' })
-    } catch { drain(); return }
-    worker.onmessage = (event: MessageEvent<{ packed: string | null }>) => {
-      if (event.data.packed && next.changes === changes) {
-        next.packed = event.data.packed
-        next.changes = []
-      }
-      worker.terminate()
-      drain()
+/** Owns queued compression work and the one active worker. */
+export class HistoryCompactor {
+  private readonly queue: PrssHistEnt[] = []
+  private compacting = false
+
+  retain(history: Pick<PrssHistStt, 'past' | 'future'>): void {
+    if (this.queue.length === 0) return
+    const retained = new Set([...history.past, ...history.future])
+    for (let index = this.queue.length - 1; index >= 0; index -= 1) {
+      if (!retained.has(this.queue[index])) this.queue.splice(index, 1)
     }
-    worker.onerror = () => { worker.terminate(); drain() }
-    try { worker.postMessage(changes) }
-    catch { worker.terminate(); drain() }
   }
-  historyCompacting = true
-  if (typeof requestIdleCallback === 'function') requestIdleCallback(drain, { timeout: 2_000 })
-  else setTimeout(drain, 0)
+
+  queueEntry(entry: PrssHistEnt): void {
+    if (typeof Worker === 'undefined' || !shouldCompact(entry)) return
+    this.queue.push(entry)
+    if (this.compacting) return
+    const drain = () => {
+      const next = this.queue.shift()
+      if (!next) { this.compacting = false; return }
+      const changes = next.changes
+      let worker: Worker
+      try {
+        worker = new Worker(new URL('./historyCompression.worker.ts', import.meta.url), { type: 'module' })
+      } catch { drain(); return }
+      worker.onmessage = (event: MessageEvent<{ packed: string | null }>) => {
+        if (event.data.packed && next.changes === changes) {
+          next.packed = event.data.packed
+          next.changes = []
+        }
+        worker.terminate()
+        drain()
+      }
+      worker.onerror = () => { worker.terminate(); drain() }
+      try { worker.postMessage(changes) }
+      catch { worker.terminate(); drain() }
+    }
+    this.compacting = true
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(drain, { timeout: 2_000 })
+    else setTimeout(drain, 0)
+  }
+}
+
+const historyCompactor = new HistoryCompactor()
+export function retainQueuedHistoryCompactions(history: Pick<PrssHistStt, 'past' | 'future'>): void {
+  historyCompactor.retain(history)
+}
+export function queueHistoryCompaction(entry: PrssHistEnt): void {
+  historyCompactor.queueEntry(entry)
 }
 
 function cloneBranch(value: unknown): Record<string, unknown> | unknown[] {

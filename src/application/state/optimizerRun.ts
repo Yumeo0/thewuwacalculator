@@ -4,7 +4,7 @@
                the root store keeps its small synchronous status interface.
 */
 
-import type { AppStore } from '@/application/state/store'
+import type { OptimizerRunState } from './optimizerRunStore'
 import type { OptBckn, OptPrgr, OptStartPay } from '@/engine/optimizer/types'
 import { runOptWithWr, rstOptWrkrPo, cnclActOptWr } from '@/engine/optimizer/workers/poolClient'
 import { ROT_GPU_JOB, CPU_THEORY_JOB, GPU_THEORY_JOB } from '@/engine/optimizer/config/constants'
@@ -14,7 +14,7 @@ import {
   matOptRsltsI, resOptBtchSi, stopOptCompW,
 } from '@/application/state/storeOptimizerRuntime'
 
-type SetStore = (updater: (state: AppStore) => AppStore) => void
+type SetStore = (updater: (state: OptimizerRunState) => OptimizerRunState) => void
 type RunHooks = { onProgress?: (progress: OptPrgr) => void; settle?: () => Promise<unknown> }
 
 export function cancelOptimizerRun(): void {
@@ -71,14 +71,11 @@ export function startOptimizerRun(
       })
       set((state) => ({
         ...state,
-        optimizer: {
-          ...state.optimizer,
-          batchSize: compPay.mode === 'theoryTarget' || compPay.mode === 'theoryRotation'
-            ? backend === 'gpu' ? GPU_THEORY_JOB : CPU_THEORY_JOB
-            : compPay.mode === 'rotation' && backend === 'gpu'
-              ? ROT_GPU_JOB : resOptBtchSi(backend),
-          resPay: null,
-        },
+        batchSize: compPay.mode === 'theoryTarget' || compPay.mode === 'theoryRotation'
+          ? backend === 'gpu' ? GPU_THEORY_JOB : CPU_THEORY_JOB
+          : compPay.mode === 'rotation' && backend === 'gpu'
+            ? ROT_GPU_JOB : resOptBtchSi(backend),
+        resPay: null,
       }))
 
       hooks.onProgress?.({
@@ -106,12 +103,9 @@ export function startOptimizerRun(
         ttlMs: Math.round(performance.now() - runStartTime),
       })
       set((state) => ({
-        ...state,
-        optimizer: {
-          status: 'done', progress: state.optimizer.progress,
-          results: fnlzRslts, error: null, batchSize: state.optimizer.batchSize,
-          resPay: null, resultEchoes: [],
-        },
+        status: 'done', progress: state.progress,
+        results: fnlzRslts, error: null, batchSize: state.batchSize,
+        resPay: null, resultEchoes: [],
       }))
       disposeOptimizerRun()
     } catch (error) {
@@ -124,12 +118,9 @@ export function startOptimizerRun(
       if (!current()) return
       cancelOptimizerRun()
       set((state) => ({
-        ...state,
-        optimizer: {
-          status: 'error', progress: state.optimizer.progress, results: [],
-          error: error instanceof Error ? error.message : 'Optimizer worker pool failed unexpectedly',
-          batchSize: state.optimizer.batchSize, resPay: null, resultEchoes: [],
-        },
+        status: 'error', progress: state.progress, results: [],
+        error: error instanceof Error ? error.message : 'Optimizer worker pool failed unexpectedly',
+        batchSize: state.batchSize, resPay: null, resultEchoes: [],
       }))
     }
   })()

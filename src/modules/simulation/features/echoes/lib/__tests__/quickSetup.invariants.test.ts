@@ -1,31 +1,40 @@
 /*
   Author: Runor Ewhro
-  Description: Verifies dual-set main Echoes remain legal leaders for Forge beta
+  Description: Verifies dual-set main Echoes remain legal leaders for
                five-piece quick-build plans.
 */
 
 import { describe, expect, it } from 'vitest'
-import { getEchoById } from '@/data/catalog/echoCatalogService'
+import { getEchoById, listEchoes } from '@/data/catalog/echoCatalogService'
+import { ECHO_SET_DEFS } from '@/data/gameData/echoSets/effects'
 import { cmptSetCnts } from '../echoPane'
 import { canMainEchoFitSetPlan, generateQuickBuild, makeQuickConfig } from '../quickSetup'
 
-describe('Forge beta Sonata plans', () => {
-  it.each([
-    [36, '6000225'],
-    [37, '6000225'],
-    [38, '6000218'],
-  ] as const)('keeps the dual-set 4-cost lead Echo in a five-piece set %i build', (setId, mainEchoId) => {
-    const setPreferences = [{ setId, count: 5 }]
-    expect(canMainEchoFitSetPlan(mainEchoId, setPreferences, [4, 3, 3, 1, 1])).toBe(true)
+describe('five-piece quick-build plans', () => {
+  it('keeps every eligible dual-set main Echo in its selected set', () => {
+    const catalog = listEchoes()
+    const costs = [4, 3, 3, 1, 1] as const
+    const candidates = catalog.flatMap((mainEcho) => mainEcho.cost === 4 && mainEcho.sets.length > 1
+      ? mainEcho.sets.filter((setId) => (
+        ECHO_SET_DEFS.some((set) => set.id === setId && set.setMax === 5) &&
+        catalog.filter((echo) => echo.cost === 3 && echo.sets.includes(setId)).length >= 2 &&
+        catalog.filter((echo) => echo.cost === 1 && echo.sets.includes(setId)).length >= 2
+      )).map((setId) => ({ mainEchoId: mainEcho.id, setId }))
+      : [])
 
-    const echoes = generateQuickBuild({ ...makeQuickConfig(), mainEchoId, setPreferences })
-    expect(echoes[0]?.id).toBe(mainEchoId)
-    expect(echoes[0]?.set).toBe(setId)
-    expect(echoes.map((echo) => echo && getEchoById(echo.id)?.cost)).toEqual([4, 3, 3, 1, 1])
-    expect(cmptSetCnts(echoes)[setId]).toBe(5)
-    for (const echo of echoes) {
-      expect(echo?.set).toBe(setId)
-      expect(echo && getEchoById(echo.id)?.sets).toContain(setId)
+    expect(candidates.length).toBeGreaterThan(0)
+    for (const { mainEchoId, setId } of candidates) {
+      const setPreferences = [{ setId, count: 5 }]
+      expect(canMainEchoFitSetPlan(mainEchoId, setPreferences, costs), `${mainEchoId}:${setId}`).toBe(true)
+
+      const echoes = generateQuickBuild({ ...makeQuickConfig(), mainEchoId, setPreferences })
+      expect(echoes[0]?.id).toBe(mainEchoId)
+      expect(echoes.map((echo) => echo && getEchoById(echo.id)?.cost)).toEqual(costs)
+      expect(cmptSetCnts(echoes)[setId]).toBe(5)
+      for (const echo of echoes) {
+        expect(echo?.set).toBe(setId)
+        expect(echo && getEchoById(echo.id)?.sets).toContain(setId)
+      }
     }
   })
 })

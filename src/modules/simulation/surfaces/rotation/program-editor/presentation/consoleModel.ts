@@ -312,7 +312,7 @@ export function makeConsoleModel(
         nodes.push({
           ...common,
           kind: 'swap',
-          label: nameOf(handoff.memberId) ?? 'Handoff',
+          label: nameOf(handoff.memberId) ?? 'Switch resonator',
           memberId: handoff.memberId,
           hold,
           value: 0,

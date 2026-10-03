@@ -12,6 +12,8 @@ import { listResSds } from '@/data/catalog/resonatorSeedService.ts'
 import { makeResProfile, makeScenarioMemberFromProfile } from '@/engine/runtime/defaults.ts'
 import { insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember } from '@/engine/runtime/scenarioMembers.ts'
 import { applyRuntimeToSimulation, materializeScenarioRuntime } from '@/engine/runtime/runtimeAdapters.ts'
+import { makeEmptyManualBuffs } from '@/engine/runtime/scenarioEnvironment.ts'
+import { parseScenarioEnvironment } from '@/engine/runtime/schema.ts'
 import { createConfigurationTransaction } from '@/shared/ui/useConfigurationSession.ts'
 
 describe('configuration commit boundaries', () => {
@@ -62,6 +64,61 @@ describe('configuration commit boundaries', () => {
     expect(after.ui.blurMode).toBe(!before.ui.blurMode)
     expect(after.history.past).toHaveLength(historyCount + 1)
     expect(consumePersist()).toEqual(['ui.appearance'])
+  })
+
+  it('edits, removes, and clears the source row of an inherited manual modifier', () => {
+    const initial = selectedCombatScenario(useAppStore.getState().combat)
+    const member = initial.team.members[0]
+    const teammateSeed = listResSds().find((seed) => seed.id !== member.resonatorId)!
+    const teammate = makeScenarioMemberFromProfile(makeResProfile(teammateSeed))
+    const teamScenario = insertScenarioTeamMember(initial, 1, teammate)
+    const shared = makeEmptyManualBuffs()
+    shared.quick.atk.percent = 10
+    shared.modifiers.push({ id: 'shared-mod', enabled: true, scope: 'topStat', stat: 'critRate', value: 10 })
+    const scenario = {
+      ...teamScenario,
+      environment: {
+        ...teamScenario.environment,
+        manualEffects: [
+          ...teamScenario.environment.manualEffects,
+          { id: 'shared', enabled: true, selector: { kind: 'all' as const }, buffs: shared },
+        ],
+      },
+    }
+    const runtime = materializeScenarioRuntime(scenario, member.resonatorId)!
+    expect(runtime.state.manualBuffs.modifiers.map((modifier) => modifier.id)).toContain('shared-mod')
+    const edited = applyRuntimeToSimulation(scenario, member.resonatorId, {
+      ...runtime,
+      state: { ...runtime.state, manualBuffs: {
+        ...runtime.state.manualBuffs,
+        modifiers: runtime.state.manualBuffs.modifiers.map((modifier) =>
+          modifier.id === 'shared-mod' ? { ...modifier, value: 14 } : modifier),
+      } },
+    }).scenario
+    const afterEdit = materializeScenarioRuntime(edited, member.resonatorId)!
+    expect(afterEdit.state.manualBuffs.modifiers).toEqual([
+      { id: 'shared-mod', enabled: true, scope: 'topStat', stat: 'critRate', value: 14 },
+    ])
+    expect(materializeScenarioRuntime(edited, teammate.resonatorId)?.state.manualBuffs.modifiers[0]?.value).toBe(10)
+    expect(edited.environment.manualEffects.find((effect) => effect.id === 'shared')?.excludedMemberIds).toEqual([member.id])
+    expect(parseScenarioEnvironment(edited.environment).success).toBe(true)
+    const removed = applyRuntimeToSimulation(edited, member.resonatorId, {
+      ...afterEdit,
+      state: { ...afterEdit.state, manualBuffs: {
+        ...afterEdit.state.manualBuffs,
+        modifiers: [],
+      } },
+    }).scenario
+    expect(materializeScenarioRuntime(removed, member.resonatorId)?.state.manualBuffs.modifiers).toEqual([])
+    expect(removed.environment.manualEffects.find((effect) => effect.id === 'shared')?.buffs.modifiers).toEqual(shared.modifiers)
+    expect(materializeScenarioRuntime(removed, teammate.resonatorId)?.state.manualBuffs.modifiers[0]?.value).toBe(10)
+    const cleared = applyRuntimeToSimulation(edited, member.resonatorId, {
+      ...afterEdit,
+      state: { ...afterEdit.state, manualBuffs: makeEmptyManualBuffs() },
+    }).scenario
+    expect(materializeScenarioRuntime(cleared, member.resonatorId)?.state.manualBuffs.modifiers).toEqual([])
+    expect(materializeScenarioRuntime(cleared, member.resonatorId)?.state.manualBuffs.quick.atk.percent).toBe(0)
+    expect(materializeScenarioRuntime(cleared, teammate.resonatorId)?.state.manualBuffs.quick.atk.percent).toBe(10)
   })
 
   it('applies common member edits without replacing unrelated scenario payloads', () => {

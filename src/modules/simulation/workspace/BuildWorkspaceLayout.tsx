@@ -16,7 +16,7 @@ export const BuildWorkspaceBoard = forwardRef<HTMLDivElement, HTMLAttributes<HTM
     <div
       {...props}
       ref={ref}
-      className={['workspace-board', className].filter(Boolean).join(' ')}
+      className={['wk-board', className].filter(Boolean).join(' ')}
       data-view={page}
     >
       {children}
@@ -25,9 +25,9 @@ export const BuildWorkspaceBoard = forwardRef<HTMLDivElement, HTMLAttributes<HTM
 })
 
 export function BuildWorkspaceWorkspace({ children }: { children: ReactNode }) {
-  return <div className="workspace-workspace">{children}</div>
+  return <div className="wk-workspace">{children}</div>
 }
 
 export function BuildWorkspaceRailSlot({ children }: { children: ReactNode }) {
-  return <div className="workspace-rail-wrapper">{children}</div>
+  return <div className="wk-rail-wrapper">{children}</div>
 }

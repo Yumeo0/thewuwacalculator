@@ -7,9 +7,7 @@ import { ArrowRightLeft, Clipboard, Copy, Scissors, SquareDashedMousePointer, Tr
 import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
 
 interface GetEvaluationStageCtx {
-  canDeleteAll: boolean
   onPaste: () => void
-  onDeleteAll: () => void
 }
 
 interface GetEvaluationTargetCtx {
@@ -25,9 +23,7 @@ interface GetEvaluationTargetCtx {
 }
 
 export function getEvaluationStageCtx({
-  canDeleteAll,
   onPaste,
-  onDeleteAll,
 }: GetEvaluationStageCtx): MenuEntry[] {
   return [
     {
@@ -35,14 +31,6 @@ export function getEvaluationStageCtx({
       label: 'Paste',
       icon: <Clipboard size="1em" />,
       onSelect: onPaste,
-    },
-    {
-      id: 'evaluation-stage:delete-all',
-      label: 'Delete All',
-      icon: <Trash2 size="1em" />,
-      danger: true,
-      disabled: !canDeleteAll,
-      onSelect: onDeleteAll,
     },
   ]
 }

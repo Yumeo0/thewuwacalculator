@@ -17,8 +17,7 @@ import { mkPrepLiveCm, selLiveRun } from '@/modules/simulation/model/selectors.t
 import { RszbSplt } from '@/shared/ui/ResizableSplit.tsx'
 import { Left } from '@/modules/simulation/surfaces/legacy/calculator/Left.tsx'
 import { Right } from '@/modules/simulation/surfaces/legacy/calculator/Right.tsx'
-import { useCtxBuilder } from '@/modules/simulation/shell/context-menu/useContextMenuBuilder.ts'
-import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
+import '@/styles/legacy/calculator/index.css'
 
 interface CalcWorkCntn {
   actResId: string | null
@@ -43,15 +42,8 @@ function CalcCntn({
   setEnemyProf: setNmyPrfl,
   pdtActResRt: pdtActResRt,
 }: CalcWorkCntn) {
-  const menu = useCtxBuilder()
-
   return (
     <div className="calculator-stage calculator-stage--workspace">
-      <ContextTrigger
-        asChild
-        ariaLabel="Calculator main actions"
-        items={menu.simulation.workspace()}
-      >
         <section className="calculator-workspace"
           aria-label="Calculator workspace"
         >
@@ -79,7 +71,6 @@ function CalcCntn({
             right={<Right simulation={simulation} runtime={runtime} enemy={enemyProfile} />}
           />
         </section>
-      </ContextTrigger>
     </div>
   )
 }

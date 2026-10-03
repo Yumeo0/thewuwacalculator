@@ -2,18 +2,20 @@
 
 ## Summary
 
-This repository is the current production codebase for The Wuwa Calculator. It is a browser first React and TypeScript application for build planning, damage simulation, rotation analysis, suggestions, OCR assisted echo import, inventory management, and optimizer execution for *Wuthering Waves*.
+This repository contains the production React and TypeScript app for *Wuthering Waves* build planning, damage simulation, rotation analysis, Suggestions, Echo image import, inventory management, and optimization.
 
-The app is built around one central idea:
+The app processes data in this order:
 
 1. checked in game data is loaded before React mounts
 2. that data becomes catalogs plus a richer executable registry
-3. one global Zustand store holds persistent app state, derived runtime state, and transient run state
-4. runtime adapters materialize the active resonator, team, enemy, and control state into engine friendly structures
+3. the composed app store holds canonical state and runtime projections; focused stores own transient optimizer and inventory UI state
+4. runtime adapters convert the selected resonator, team, enemy, and controls into inputs for the engine
 5. the engine resolves effects, final stats, formulas, and rotations
-6. heavier flows such as suggestions and optimizer reuse the same runtime foundations, but move expensive work into workers and optional WebGPU paths
+6. Suggestions and Optimizer use the same runtime data and run expensive searches in workers or through WebGPU
 
-This document is the top level system map. Use it first, then move into the focused docs in this folder for subsystem detail.
+Start here for the system overview, then use the other docs for subsystem details.
+
+See [lifecycle-owners.md](./lifecycle-owners.md) for the class boundaries around workers, caches, persistence coordination, and GPU resources.
 
 ## Runtime Boot Flow
 
@@ -68,7 +70,7 @@ Checked in runtime data and authored content:
 - guides and changelog content
 - scoring tables
 
-This layer is the bridge between checked in JSON and the domain plus engine layers. It does not import the engine.
+This layer loads checked-in JSON for the domain and engine layers. It does not import the engine.
 
 ### `src/domain`
 
@@ -131,9 +133,24 @@ Reusable UI primitives and low level helpers:
 - tooltip system
 - small utility stores and helpers
 
-`shared` is the leaf layer and cannot import application or feature ownership.
+`shared` provides reusable code and cannot import application or feature modules.
 
 The import direction is enforced by `npm run check:architecture`. App-to-module and cross-module imports must use an explicit `api/` or route `pages/` entry.
+
+### `src/styles`
+
+Stylesheets
+- `base/`: reset, tokens, themes, responsive overrides, cross-cutting polish
+- `app/`: the shell, route chrome and navigation motion
+- `ui/`: app-wide primitives (modal language, popups, menus, select, toast, loader, pickers)
+- `features/`: simulation pieces shared by several surfaces (echoes, inventory, teams, resonator, buffs, enemies, controls, weapons)
+- `surfaces/`: one folder per Simulation surface (bench, showcase, optimizer, rotation, suggestions)
+- `mobile/`: the decoupled phone UI
+- `pages/`: Home, Read, Calibration and system pages
+
+`styles/index.css` imports the global layers in cascade order, and `src/index.css` only imports it. A few large surface sheets (the rotation editor, optimizer transport, suggestions climb, echo card and rows) are imported by their components so they load with their chunk.
+
+Class names are short block codes (`amdl`, `pkr`, `wk`, `fcm`, `rte`) with BEM elements and modifiers (`fcm__item`, `wk-echo--empty`).
 
 ## Route And Shell Model
 
@@ -144,7 +161,7 @@ Primary files:
 - [src/app/shell/ChromeHeader.tsx](../src/app/shell/ChromeHeader.tsx)
 - [src/modules/simulation/shell/SimulationPage.tsx](../src/modules/simulation/shell/SimulationPage.tsx)
 
-The public route hierarchy is `Home > Read / Simulation`, expressed with flat URLs. Home is `/`. Simulation tools are `/modulation`, `/rotation`, `/showcase`, `/optimizer`, and `/suggestions`; Read owns Guides, Docs, Changelog, Privacy, and Terms; What's New is an act on Home. Simulation tools stay directly on the header, while reference pages and Calibration are in its Read dropdown.
+Navigation groups pages under `Home > Read / Simulation`, while URLs remain flat. Home is `/`. Simulation tools are `/modulation`, `/rotation`, `/showcase`, `/optimizer`, and `/suggestions`. Read includes Guides, Docs, Changelog, Privacy, and Terms. What's New is a Home section. The header links directly to Simulation tools and puts reference pages and Calibration in the Read dropdown.
 
 Pages mount under `AppLayout`. `ChromeHeader` owns header interaction only; `AppLayout` owns global shell behavior and `GlobalHosts` owns application-wide portals and notices.
 
@@ -191,6 +208,13 @@ See [game-data-and-content-pipeline.md](./game-data-and-content-pipeline.md) for
 Primary files:
 
 - [src/application/state/store.ts](../src/application/state/store.ts)
+- [src/application/state/scenarioSlice.ts](../src/application/state/scenarioSlice.ts)
+- [src/application/state/resonatorSlice.ts](../src/application/state/resonatorSlice.ts)
+- [src/application/state/inventorySlice.ts](../src/application/state/inventorySlice.ts)
+- [src/application/state/optimizerSlice.ts](../src/application/state/optimizerSlice.ts)
+- [src/application/state/uiSlice.ts](../src/application/state/uiSlice.ts)
+- [src/application/state/optimizerRunStore.ts](../src/application/state/optimizerRunStore.ts)
+- [src/application/state/inventoryUiStore.ts](../src/application/state/inventoryUiStore.ts)
 - [src/engine/runtime/runtimeAdapters.ts](../src/engine/runtime/runtimeAdapters.ts)
 - [src/engine/runtime/runtimeMaterialization.ts](../src/engine/runtime/runtimeMaterialization.ts)
 - [src/application/persistence/storage.ts](../src/application/persistence/storage.ts)
@@ -211,7 +235,7 @@ Runtime adapters expand that into active runtime structures for the engine:
 - team slot layout
 - derived workspace bundles
 
-Transient run state holds things such as optimizer progress, optimizer results, and temporary worker lifecycle state.
+The focused transient stores hold optimizer progress and results and inventory panel state. Worker lifecycle remains with its resource owners. All persisted actions still pass through the app store's domain-aware write path.
 
 Persistence is granular by domain. The app does not rewrite one monolithic blob for every small change.
 

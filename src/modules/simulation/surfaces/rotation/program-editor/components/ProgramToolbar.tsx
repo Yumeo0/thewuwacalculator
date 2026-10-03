@@ -71,13 +71,15 @@ import {
 import type { RotationEditorPreferences } from '@/domain/entities/rotationEditorPreferences.ts'
 import { Select, type SelectOption } from '@/application/ui/Select'
 import { ColumnsMenu } from './ColumnsMenu.tsx'
+import { TeamMenu } from './TeamMenu.tsx'
+import { useColumnCeiling } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/useColumnCeiling'
 import { NodeSearch, type NodeSearchProps } from './NodeSearch.tsx'
 import {
   DAMAGE_DECIMALS,
-  statCeiling,
   type StatKey,
 } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 import type { SavedListView } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/savedRotationList.ts'
+import type { RotationLoadMode } from '@/modules/simulation/surfaces/rotation/program-editor/saved/useLoadRotation.ts'
 import {useAppStore} from "@/application/state";
 
 type Surface = 'editor' | 'saved'
@@ -147,7 +149,7 @@ interface SavedBarActions {
   onQuery: (query: string) => void
   onImport: () => void
   onPaste: () => void
-  onLoad: () => void
+  onLoad: (mode: RotationLoadMode) => void
   onEdit: () => void
   onToggleSelection: () => void
   onCompare: () => void
@@ -159,6 +161,8 @@ interface SavedBarActions {
 }
 
 interface DisplayBarActions {
+  /** Damage contribution keyed by resonator id. */
+  teamShares: Readonly<Record<string, number>>
   statKeys: readonly StatKey[]
   onStatKeys: (value: readonly StatKey[]) => void
   onDockPane: (value: boolean) => void
@@ -549,6 +553,88 @@ function SavedRotationListTools({ saved }: Pick<RotationProgramToolbarProps, 'sa
   more than one is picked at once. They stand against the search because that
   is the end of the bar the list itself is handled from.
 */
+function SavedLoadPopup({ saved }: Pick<RotationProgramToolbarProps, 'saved'>) {
+  const [open, setOpen] = useState(false)
+  const hostRef = useRef<HTMLSpanElement | null>(null)
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
+  const popupRef = useRef<HTMLDivElement | null>(null)
+
+  useAppPopupDismiss({
+    open,
+    onDismiss: () => setOpen(false),
+    hostRef,
+    popupRef,
+    returnFocusRef: triggerRef,
+    pointerEvent: 'mousedown',
+  })
+
+  const choose = (mode: RotationLoadMode) => {
+    if (!saved.canLoad) return
+    setOpen(false)
+    saved.onLoad(mode)
+  }
+
+  return (
+    <span className="rte-cm" ref={hostRef}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className={`rte-tool${open ? ' is-on' : ''}`}
+        data-motion-icon-group=""
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label={saved.selectedName ? `Load ${saved.selectedName}` : 'Select a saved rotation to load'}
+        title={saved.selectedName ? `Load ${saved.selectedName}` : 'Select a saved rotation to load'}
+        disabled={!saved.canLoad}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <FolderInput size="0.86rem" mode="signature" trigger="parent-hover" aria-hidden="true" />
+      </button>
+      <AnchoredAppPopup
+        visible={open && saved.canLoad}
+        anchorRef={triggerRef}
+        popupRef={popupRef}
+        align="end"
+        preferredPlacement="down"
+        className="rte-choice__drop rte-load-choice__drop"
+        open={open}
+        role="menu"
+        aria-label={`Load ${saved.selectedName ?? 'saved rotation'}`}
+      >
+        <AppPopupHeader>Load saved rotation</AppPopupHeader>
+        <div className="rte-choice__options">
+          <button
+            type="button"
+            className="rte-choice__option"
+            role="menuitem"
+            title="Load the saved team, builds, buffs, enemy and rotation"
+            onClick={() => choose('build')}
+          >
+            <Users size="1em" aria-hidden="true" />
+            <span className="rte-load-choice__label">
+              <b>Full build</b>
+              <small>Team, builds, buffs and enemy</small>
+            </span>
+          </button>
+          <button
+            type="button"
+            className="rte-choice__option"
+            role="menuitem"
+            title="Load only the rotation steps into the current build for this resonator"
+            onClick={() => choose('rotation')}
+          >
+            <List size="1em" aria-hidden="true" />
+            <span className="rte-load-choice__label">
+              <b>Rotation only</b>
+              <small>Keep its team, builds and enemy</small>
+            </span>
+          </button>
+        </div>
+      </AnchoredAppPopup>
+    </span>
+  )
+}
+
 function SavedRotationListEditTools({ saved }: Pick<RotationProgramToolbarProps, 'saved'>) {
   return (
     <span className="rte-feature-tools" role="group" aria-label="Saved entry actions">
@@ -564,12 +650,7 @@ function SavedRotationListEditTools({ saved }: Pick<RotationProgramToolbarProps,
         Icon={ClipboardPaste}
         onClick={saved.onPaste}
       />
-      <MotionTool
-        label={saved.selectedName ? `Load ${saved.selectedName} into the editor` : 'Select a saved rotation to load'}
-        Icon={FolderInput}
-        disabled={!saved.canLoad}
-        onClick={saved.onLoad}
-      />
+      <SavedLoadPopup saved={saved} />
       <MotionTool
         label={saved.selectedName ? `Edit ${saved.selectedName}` : 'Select a saved rotation to edit'}
         Icon={Pencil}
@@ -730,10 +811,11 @@ function DisplayTools({
   const view = useAppStore((state) => state.ui.rotationEditorPreferences.view)
   const [columnsOpen, setColumnsOpen] = useState(false)
   const decimalIndex = DAMAGE_DECIMALS.indexOf(decimals)
-  const ceiling = statCeiling(dockPane)
+  const ceiling = useColumnCeiling(dockPane)
 
   return (
     <>
+      {!archive ? <TeamMenu shares={display.teamShares} /> : null}
       {!archive ? (
         <span className="rte-deck" role="group" aria-label="Rotation reading">
           <button
@@ -760,7 +842,6 @@ function DisplayTools({
         </button>
       </span>
       ) : null}
-
 
       <span className="rte-steps" aria-label="Damage decimal places">
         <button
@@ -849,7 +930,7 @@ function DisplayTools({
         pressed={dockPane}
         onClick={() => display.onDockPane(!dockPane)}
       />
-      <MotionTool label="How the rotation is drawn and how an edit is taken" Icon={Settings} onClick={display.onSettings} />
+      <MotionTool label="Rotation display and editing settings" Icon={Settings} onClick={display.onSettings} />
     </>
   )
 }

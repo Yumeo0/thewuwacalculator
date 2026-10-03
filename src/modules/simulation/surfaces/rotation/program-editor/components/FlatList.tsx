@@ -4,6 +4,8 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
+import type { MenuEntry } from '@/shared/ui/CtxMenu'
 import type { CSSProperties, MouseEvent } from 'react'
 import { useEffect, useMemo, useRef } from 'react'
 import type {
@@ -80,6 +82,7 @@ interface FlatListProps {
   onAddSelection: (id: string) => void
   onRangeSelection: (id: string) => void
   onToggleSelection: (id: string) => void
+  rowMenu: (row: FlatRow) => MenuEntry[]
   /** move where Off-Tune starts counting again after a Tune Break */
   onOffTuneResume: (id: string, on: boolean) => void
   offTuneAuthoring: ReadonlyMap<string, OffTuneAuthoringState>
@@ -196,6 +199,7 @@ export function FlatList({
   onAddSelection,
   onRangeSelection,
   onToggleSelection,
+  rowMenu,
   onOffTuneResume,
   offTuneAuthoring,
   revealRequest,
@@ -352,7 +356,8 @@ export function FlatList({
           if (row.kind === 'state') {
             const state = rowState(row, joinsBefore, joinsAfter)
             return (
-              <div key={row.key} className="rtf-seg">
+              <ContextTrigger key={row.key} asChild ariaLabel="Executed state actions" getItems={() => rowMenu(row)}>
+              <div className="rtf-seg">
                 {bandLine}
                 {row.writes.map((write) => (
                   <ConditionLine
@@ -368,6 +373,7 @@ export function FlatList({
                   />
                 ))}
               </div>
+              </ContextTrigger>
             )
           }
 
@@ -379,7 +385,8 @@ export function FlatList({
           const state = rowState(row, joinsBefore, joinsAfter)
 
           return (
-            <div key={row.key} className="rtf-seg">
+            <ContextTrigger key={row.key} asChild ariaLabel={`${step.label} execution actions`} getItems={() => rowMenu(row)}>
+            <div className="rtf-seg">
               {bandLine}
               <button
                 type="button"
@@ -459,6 +466,7 @@ export function FlatList({
                 )}
               </button>
             </div>
+            </ContextTrigger>
           )
         })}
       </div>

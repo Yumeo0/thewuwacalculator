@@ -251,12 +251,12 @@ export function bandSpan(band: RegisterBand): number {
 }
 
 /** the initial register is intentionally dense; its scroller owns overflow */
-export const MAX_STAT_KEYS = 13
+export const MAX_STAT_KEYS = 12
 
-export const DOCKED_STAT_DROP = 6
+export const DOCKED_STAT_DROP = 5
 
-export function statCeiling(docked: boolean): number {
-  return docked ? MAX_STAT_KEYS - DOCKED_STAT_DROP : MAX_STAT_KEYS
+export function statCeiling(docked: boolean, compact = false): number {
+  return MAX_STAT_KEYS - (docked ? DOCKED_STAT_DROP : 0) - (compact ? 1 : 0)
 }
 
 /** the columns a rotation opens with, which is what the list has always shown */

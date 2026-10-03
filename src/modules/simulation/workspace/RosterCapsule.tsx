@@ -1,6 +1,6 @@
 /*
   Author: Runor Ewhro
-  Description: What grows out of a bead on the rotation surface. The bead itself
+  Description: What a bead's spark pins out on the rotation surface. The bead
                stretches into a capsule carrying the resonator's name and the
                size of its rotation, and on the lead, the two teammates beside
                it. Every portrait in it opens that member's console.
@@ -106,16 +106,12 @@ export function RosterCapsule({
   onFace,
   onFaceMenu,
   onMate,
-  onHold,
-  onRelease,
 }: {
   target: CapsuleTarget | null
   mates: CapsuleMate[]
   onFace: (entry: BuildRosterEntry) => void
   onFaceMenu: (entry: BuildRosterEntry, event: ReactMouseEvent<HTMLElement>) => void
   onMate: (resonatorId: string) => void
-  onHold: () => void
-  onRelease: () => void
 }) {
   const [shown, setShown] = useState<CapsuleTarget | null>(target)
   const [phase, setPhase] = useState<'in' | 'out'>('in')
@@ -196,10 +192,6 @@ export function RosterCapsule({
         '--cx': `${shown.x}px`,
         '--cy': `${shown.y}px`,
       } as CssVars}
-      onPointerEnter={onHold}
-      onPointerLeave={onRelease}
-      onFocus={onHold}
-      onBlur={onRelease}
     >
       <button
         type="button" className="blm-capsule-face"

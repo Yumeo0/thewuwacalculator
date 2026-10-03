@@ -2,7 +2,7 @@
 
 ## Summary
 
-This folder is the maintainer handoff set for the repository. It documents the shipped app, the checked in operational flows that support it, and the central data and runtime contracts that shape production behavior.
+This folder documents the production app, its maintenance workflows, and the data and runtime contracts developers need when changing it.
 
 Use these docs in this order:
 
@@ -19,13 +19,13 @@ Use these docs in this order:
 - [state-and-persistence.md](./state-and-persistence.md)
   Store structure, runtime materialization, persistence slices, and hydration behavior.
 - [game-data-and-content-pipeline.md](./game-data-and-content-pipeline.md)
-  Checked in runtime data, registry bootstrapping, authored content, and checked in build pipeline shape.
+  Runtime data, registry initialization, authored content, and build scripts.
 - [calculation-and-runtime-engine.md](./calculation-and-runtime-engine.md)
   Combat context building, formulas, simulation, effects, and rotation execution.
 - [optimizer-and-suggestions.md](./optimizer-and-suggestions.md)
-  Suggestions, workers, optimizer compile and search flow, CPU and GPU paths, and result materialization.
+  Suggestions, workers, optimizer preparation and search, CPU and GPU execution, and result construction.
 - [feature-surfaces.md](./feature-surfaces.md)
-  User-facing ownership across Home, Read, Simulation, Settings, and System surfaces.
+  The pages and features owned by Home, Read, Simulation, Settings, and System modules.
 - [deployment-and-operations.md](./deployment-and-operations.md)
   Local development, Cloudflare deployment, OAuth, sync, and checked in maintenance workflows.
 
@@ -36,7 +36,7 @@ These docs aim to cover:
 - shipped runtime behavior
 - checked in deployment and operational flows
 - checked in scripts that build central runtime artifacts
-- the shape of generated outputs that the app depends on
+- the format of generated outputs that the app uses
 
 These docs do not aim to deeply document:
 
@@ -48,11 +48,11 @@ These docs do not aim to deeply document:
 
 When a change alters:
 
-- runtime data shape
-- store shape
+- runtime data format
+- store data format
 - route ownership
 - deployment setup
-- a major feature surface
+- a major user-facing feature
 - a checked in build or ingest contract
 
 the relevant doc in this folder should be updated in the same change.

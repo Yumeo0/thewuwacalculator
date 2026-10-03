@@ -12,7 +12,7 @@ interface AppLoaderOverlayProps {
   text?: string
   className?: string
   contentClass?: string
-  mode?: 'overlay' | 'centered' | 'scrim'
+  mode?: 'overlay' | 'centered' | 'inline' | 'scrim'
 }
 
 const DUST = [0, 1, 2, 3, 4, 5, 6]
@@ -77,6 +77,14 @@ export default function AppLoaderOverlay({
   if (mode === 'centered') {
     return (
       <div className={`app-loader-fallback ${className}`.trim()} aria-live="polite" aria-busy="true">
+        <LoaderContent text={text} aside={aside} className={contentClass} />
+      </div>
+    )
+  }
+
+  if (mode === 'inline') {
+    return (
+      <div className={`app-loader-inline ${className}`.trim()} aria-live="polite" aria-busy="true">
         <LoaderContent text={text} aside={aside} className={contentClass} />
       </div>
     )

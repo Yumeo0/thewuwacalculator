@@ -120,12 +120,40 @@ async function buildFontEmbedCss(usage: FontUsage, text: string, load: (url: str
   return blocks.join('\n')
 }
 
+const GLASS_BACKGROUND = ['image', 'color', 'size', 'position', 'repeat', 'origin', 'clip', 'attachment']
+  .map((part) => `background-${part}`)
+
+// Chromium does not clip backdrop-filter to the border box inside an SVG image:
+// the blur spills out by its filter radius and frosts over neighbouring cards.
+// Paint each glass element's backdrop on its own clipped layer underneath the
+// content instead, so overflowing children (echo avatars) stay unclipped.
+function clipCaptureGlass(element: HTMLElement, filter: string) {
+  const style = element.style
+  const layer = document.createElement('div')
+  layer.setAttribute('aria-hidden', 'true')
+  Object.assign(layer.style, {
+    position: 'absolute', inset: '0', zIndex: '-1', pointerEvents: 'none',
+    borderRadius: 'inherit', clipPath: `inset(0 round ${style.borderRadius || '0'})`,
+  })
+  layer.style.setProperty('backdrop-filter', filter)
+  layer.style.setProperty('-webkit-backdrop-filter', filter)
+  for (const property of GLASS_BACKGROUND) layer.style.setProperty(property, style.getPropertyValue(property))
+  style.setProperty('backdrop-filter', 'none')
+  style.setProperty('-webkit-backdrop-filter', 'none')
+  style.setProperty('background-image', 'none')
+  style.setProperty('background-color', 'transparent')
+  style.setProperty('isolation', 'isolate')
+  if (style.position === 'static') style.position = 'relative'
+  element.insertBefore(layer, element.firstChild)
+}
+
 // Freeze the live composition on a disposable clone. Only the host is moved
 // offscreen: moving the card itself would put its contents outside the PNG.
 function createCaptureClone(source: HTMLElement): { card: HTMLElement; fonts: FontUsage; text: string; dispose: () => void } {
   const fonts: FontUsage = new Map()
   let text = source.textContent || ''
   const pseudos: string[] = []
+  const glass: [HTMLElement, string][] = []
   const card = source.cloneNode(true) as HTMLElement
   const originals = [source, ...source.querySelectorAll<HTMLElement | SVGElement>('*')]
   const copies = [card, ...card.querySelectorAll<HTMLElement | SVGElement>('*')]
@@ -152,6 +180,8 @@ function createCaptureClone(source: HTMLElement): { card: HTMLElement; fonts: Fo
       copy.style.setProperty(property, computed.getPropertyValue(property))
     }
     copy.style.setProperty('animation', 'none', 'important')
+    const backdrop = computed.backdropFilter || computed.getPropertyValue?.('-webkit-backdrop-filter')
+    if (backdrop && backdrop !== 'none' && copy instanceof HTMLElement) glass.push([copy, backdrop])
     copy.style.setProperty('transition', 'none', 'important')
     if (original instanceof HTMLImageElement && copy instanceof HTMLImageElement) {
       copy.src = original.currentSrc || original.src
@@ -170,18 +200,19 @@ function createCaptureClone(source: HTMLElement): { card: HTMLElement; fonts: Fo
   // The original custom stylesheet remains active. Duplicating style elements
   // here would reapply their rules to the live card while preparing the export.
   card.querySelectorAll('style, .spine-animated').forEach((node) => node.remove())
+  for (const [element, filter] of glass) clipCaptureGlass(element, filter)
   const pseudoStyle = document.createElement('style')
   pseudoStyle.textContent = pseudos.join('\n')
   card.appendChild(pseudoStyle)
-  card.querySelectorAll<HTMLElement>('.workspace-portrait-scrim, .workspace-portrait-cue')
+  card.querySelectorAll<HTMLElement>('.wk-portrait-scrim, .wk-portrait-cue')
     .forEach((node) => { node.style.opacity = '0' })
   card.querySelectorAll<HTMLElement>('.spine-setup, .stat-muted')
     .forEach((node) => { node.style.opacity = '1' })
 
   // Keep the existing grade/score alignment protection, using live geometry
   // but changing only the copy. Font embedding must not move this composition.
-  const figure = source.querySelector<HTMLElement>('.showcase-verdict-figure')
-  const figureCopy = card.querySelector<HTMLElement>('.showcase-verdict-figure')
+  const figure = source.querySelector<HTMLElement>('.sc-verdict-figure')
+  const figureCopy = card.querySelector<HTMLElement>('.sc-verdict-figure')
   if (figure && figureCopy) {
     const bounds = figure.getBoundingClientRect()
     if (bounds.width > 0 && bounds.height > 0) {
@@ -189,7 +220,7 @@ function createCaptureClone(source: HTMLElement): { card: HTMLElement; fonts: Fo
         display: 'block', position: 'relative', flex: 'none',
         width: `${bounds.width}px`, height: `${bounds.height}px`,
       })
-      for (const selector of ['.showcase-grade-mark', '.showcase-grade-score']) {
+      for (const selector of ['.sc-grade-mark', '.sc-grade-score']) {
         const original = figure.querySelector<HTMLElement>(selector)
         const copy = figureCopy.querySelector<HTMLElement>(selector)
         if (!original || !copy) continue

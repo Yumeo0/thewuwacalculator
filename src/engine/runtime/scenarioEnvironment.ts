@@ -59,6 +59,9 @@ export function makeCombatEnvironment(
     manualEffects: manualEffects.map((effect) => ({
       ...effect,
       selector: structuredClone(effect.selector),
+      ...(effect.excludedMemberIds
+        ? { excludedMemberIds: [...effect.excludedMemberIds] }
+        : {}),
       buffs: cloneBuffs(effect.buffs),
     })),
     targetModifiers: {
@@ -81,6 +84,14 @@ export function environmentSelectorMatches(
   if (!seed) return false
   if (selector.kind === 'attribute') return selector.attributes.includes(seed.attribute)
   return selector.weaponTypes.includes(seed.weaponType)
+}
+
+export function environmentManualEffectMatches(
+  effect: EnvironmentManualEffect,
+  member: ScenarioTeamMember,
+): boolean {
+  return !effect.excludedMemberIds?.includes(member.id)
+    && environmentSelectorMatches(effect.selector, member)
 }
 
 function mergeManualBuffs(target: ManualBuffs, source: ManualBuffs): void {
@@ -106,7 +117,7 @@ export function resolveEnvironmentManualBuffs(
   for (const effect of environment.manualEffects) {
     if (!excludedEffectIds.has(effect.id)
       && effect.enabled
-      && environmentSelectorMatches(effect.selector, member)) {
+      && environmentManualEffectMatches(effect, member)) {
       mergeManualBuffs(resolved, effect.buffs)
     }
   }
@@ -196,6 +207,52 @@ export function replaceMemberManualEffect(
   if (index >= 0) manualEffects[index] = effect
   else manualEffects.push(effect)
   return { ...environment, manualEffects }
+}
+
+/** Detach edited inherited buffs for one member, then store the desired projection. */
+export function replaceProjectedMemberManualBuffs(
+  environment: CombatEnvironment,
+  member: ScenarioTeamMember,
+  projected: ManualBuffs,
+): CombatEnvironment {
+  const ownEffectId = memberManualEffectId(member.id)
+  const projectedById = new Map(projected.modifiers.map((modifier) => [modifier.id, modifier]))
+  const previous = resolveEnvironmentManualBuffs(environment, member)
+  const quickChanged = (contribution: ManualBuffs['quick']): boolean => (
+    (contribution.atk.flat !== 0 && previous.quick.atk.flat !== projected.quick.atk.flat)
+    || (contribution.atk.percent !== 0 && previous.quick.atk.percent !== projected.quick.atk.percent)
+    || (contribution.hp.flat !== 0 && previous.quick.hp.flat !== projected.quick.hp.flat)
+    || (contribution.hp.percent !== 0 && previous.quick.hp.percent !== projected.quick.hp.percent)
+    || (contribution.def.flat !== 0 && previous.quick.def.flat !== projected.quick.def.flat)
+    || (contribution.def.percent !== 0 && previous.quick.def.percent !== projected.quick.def.percent)
+    || (contribution.critRate !== 0 && previous.quick.critRate !== projected.quick.critRate)
+    || (contribution.critDmg !== 0 && previous.quick.critDmg !== projected.quick.critDmg)
+    || (contribution.energyRegen !== 0 && previous.quick.energyRegen !== projected.quick.energyRegen)
+    || (contribution.healingBonus !== 0 && previous.quick.healingBonus !== projected.quick.healingBonus)
+  )
+  let changed = false
+  const manualEffects = environment.manualEffects.map((effect) => {
+    if (effect.id === ownEffectId || !effect.enabled || !environmentManualEffectMatches(effect, member)) {
+      return effect
+    }
+
+    const modifierChanged = effect.buffs.modifiers.some((modifier) => {
+      const edited = projectedById.get(modifier.id)
+      return !edited || JSON.stringify(edited) !== JSON.stringify(modifier)
+    })
+    if (!modifierChanged && !quickChanged(effect.buffs.quick)) return effect
+    changed = true
+    return {
+      ...effect,
+      excludedMemberIds: [...(effect.excludedMemberIds ?? []), member.id],
+    }
+  })
+  const revised = changed ? { ...environment, manualEffects } : environment
+  return replaceMemberManualEffect(
+    revised,
+    member.id,
+    extractMemberManualBuffs(revised, member, projected),
+  )
 }
 
 export function removeMemberEnvironmentState(

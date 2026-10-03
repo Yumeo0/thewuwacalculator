@@ -7,6 +7,8 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/application/state'
 import { selSubjectResonatorId } from '@/application/state'
+import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
+import { useResonatorData } from '@/application/hooks/useResonatorData'
 import { seedRsnt, seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display'
 import { ResQBbbl } from '@/modules/simulation/shell/ResonatorQueueBubble'
@@ -30,6 +32,7 @@ import { releaseCalculationGameData } from '@/data/gameData'
 import { SIMULATION_SURFACES, isWorkspaceSurface } from '@/shared/lib/appRoutes'
 import { isSimulationRoute } from '@/shared/lib/appRoutes'
 import type { SimulationSurface } from '@/shared/lib/appRoutes'
+import { layoutViewportWidth } from '@/shared/lib/layoutViewport'
 
 // the panes are the same warmable chunks the rail fetches on intent, so a
 // surface reached from the rail mounts without a loader in the way
@@ -49,6 +52,18 @@ const LOADING_TEXT: Record<SimulationSurface, string> = {
 }
 
 export function SimulationPage() {
+  const teamIds = useAppStore((state) => selectedCombatScenario(state.combat).team.members
+    .map((member) => member.resonatorId).join(','))
+  const dataReady = useResonatorData(teamIds ? teamIds.split(',') : [])
+
+  if (!dataReady) {
+    return <AppLdrVrly mode="centered" className="app-loader-fallback--route" text="Loading game data..." />
+  }
+
+  return <ReadySimulationPage />
+}
+
+function ReadySimulationPage() {
   const surface = useSimulationSurface()
   useEffect(() => () => {
     // StrictMode's development effect replay remains on a Simulation URL.
@@ -65,7 +80,7 @@ export function SimulationPage() {
   const swtcToRes = useAppStore((state) => state.swRes)
   const bumpPickerFreq = useAppStore((state) => state.bumpPickFr)
   const [isCllpMode, setIsCllpMod] = useState(() =>
-      typeof window !== 'undefined' ? window.innerWidth < 910 : false,
+      typeof window !== 'undefined' ? layoutViewportWidth() < 910 : false,
   )
 
   const subjectSeed = subjectResonatorId
@@ -119,7 +134,7 @@ export function SimulationPage() {
 
   useEffect(() => {
     const onResize = () => {
-      setIsCllpMod(window.innerWidth < 910)
+      setIsCllpMod(layoutViewportWidth() < 910)
     }
 
     onResize()

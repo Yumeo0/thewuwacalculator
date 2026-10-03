@@ -101,6 +101,9 @@ import {
   tglTrcNd,
 } from '@/modules/simulation/features/resonator/lib/buildEdits.ts'
 import { withDefIconM, withDefResMg, withDefWpnMg } from '@/shared/lib/imageFallback.ts'
+import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { MobileConsoleBar } from '@/modules/simulation/features/teams/mobile/MobileConsoleBar.tsx'
+import type { ConsolePage } from '@/modules/simulation/features/teams/mobile/MobileConsoleBar.tsx'
 
 // Nested tools are not needed to display the member. Keep their loading boundary
 // below the editor so opening one cannot suspend the whole console session.
@@ -759,6 +762,8 @@ function ResonatorView({
   const [ownChannel, setOwnChannel] = useState<ChannelId>(initChannel)
   const channel = channelProp ?? ownChannel
   const setChannel = channelProp == null ? setOwnChannel : () => undefined
+  const mobile = useMobileUi()
+  const [mPage, setMPage] = useState<ConsolePage>('stage')
   const [showAllBlds, setShowAllBlds] = useState(false)
   // Reset member-owned tray state during render so a switch cannot commit
   // a tray opened for the previous member. Only one level tray can be active.
@@ -770,6 +775,11 @@ function ResonatorView({
   }
   const [ownRackOpen, setOwnRackOpen] = useState(false)
   const wpnRackOpen = rackOpenProp ?? ownRackOpen
+  const [rackSeen, setRackSeen] = useState(wpnRackOpen)
+  if (rackSeen !== wpnRackOpen) {
+    setRackSeen(wpnRackOpen)
+    if (wpnRackOpen && mobile) setMPage('channel')
+  }
   const setWpnRackOpen = useCallback((next: boolean) => {
     if (onRackOpenChange) onRackOpenChange(next)
     if (rackOpenProp == null) setOwnRackOpen(next)
@@ -1932,7 +1942,7 @@ function ResonatorView({
 
             {!wpnRackOpen && actChannel === 'echoes' ? (
               <>
-                <ContextTrigger asChild ariaLabel="Teammate echo actions" items={makeEchoPaneMenu()}>
+                <ContextTrigger asChild ariaLabel="Teammate echo actions" items={selMode ? selection.contextItemsFor() : makeEchoPaneMenu()}>
                   <div
                     className={`mcc-block${selMode ? ' selection-mode' : ''}`}
                     {...selection.surfaceProps}
@@ -1990,7 +2000,7 @@ function ResonatorView({
                                   key={mainEcho.uid}
                                   asChild
                                   ariaLabel={`${mainEchoDef?.name ?? 'Echo'} actions`}
-                                  items={makeEchoSlotMenu(slotIndex, mainEcho)}
+                                  items={selMode ? selection.contextItemsFor(slotIndex) : makeEchoSlotMenu(slotIndex, mainEcho)}
                                 >
                                   <button
                                     type="button"
@@ -2050,7 +2060,7 @@ function ResonatorView({
                                   key={`empty-${index}`}
                                   asChild
                                   ariaLabel="Empty echo slot actions"
-                                  items={emptySlot >= 0 ? makeEmptyEchoSlotMenu(emptySlot) : []}
+                                  items={selMode ? selection.contextItemsFor() : emptySlot >= 0 ? makeEmptyEchoSlotMenu(emptySlot) : []}
                                 >
                                   <span className="mcc-orbit-node is-empty"
                                     style={style}
@@ -2074,7 +2084,7 @@ function ResonatorView({
                                 key={echo.uid}
                                 asChild
                                 ariaLabel={`${def?.name ?? 'Echo'} actions`}
-                                items={makeEchoSlotMenu(slotIndex, echo)}
+                                items={selMode ? selection.contextItemsFor(slotIndex) : makeEchoSlotMenu(slotIndex, echo)}
                               >
                                 <button
                                   type="button"
@@ -2317,7 +2327,8 @@ function ResonatorView({
     <>
       <ContextTrigger asChild ariaLabel="Teammate build actions" items={buildPaneMenu}>
         {onBare ? stageBody : (
-        <div className="mcc-root"
+        <div className={mobile ? 'mcc-root mpg-native' : 'mcc-root'}
+          data-mpage={mobile ? mPage : undefined}
           onClick={(event) => event.stopPropagation()}
         >
         <aside className="mcc-spine">
@@ -2550,6 +2561,25 @@ function ResonatorView({
 
           {stageBody}
         </section>
+        {mobile ? (
+          <MobileConsoleBar
+            name={member.name}
+            channels={channels}
+            channel={actChannel}
+            page={mPage}
+            badges={navBadges}
+            onStage={() => {
+              setWpnRackOpen(false)
+              setMPage('stage')
+            }}
+            onChannel={(id) => {
+              setChannel(id)
+              onChannelChange?.(id)
+              setWpnRackOpen(false)
+              setMPage('channel')
+            }}
+          />
+        ) : null}
         </div>
         )}
       </ContextTrigger>

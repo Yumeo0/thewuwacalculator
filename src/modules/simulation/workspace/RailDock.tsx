@@ -4,6 +4,7 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { AnimationEvent, CSSProperties, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
@@ -169,6 +170,10 @@ const ICONS: Record<Exclude<HudRole, 'target'>, ReactNode> = {
   skills: <><path d="M12 2 21 7v10l-9 5-9-5V7z" /><path d="M12 22V12" /><path d="m21 7-9 5-9-5" /></>,
 }
 
+function DockMenuIcon({ role }: { role: Exclude<HudRole, 'target'> }) {
+  return <svg viewBox="0 0 24 24" aria-hidden="true">{ICONS[role]}</svg>
+}
+
 const RING_R = 22
 const RING_C = 2 * Math.PI * RING_R
 
@@ -306,6 +311,13 @@ export function RailDock({
   const clearCast = () => setCast(null)
 
   return createPortal(
+    <ContextTrigger asChild ariaLabel="Build dock actions" items={[
+      { id: 'dock:max', label: 'Max build', icon: <DockMenuIcon role="max" />, disabled: maxed, onSelect: () => activate('max') },
+      { id: 'dock:import', label: 'Import Echoes', icon: <DockMenuIcon role="import" />, onSelect: () => activate('import') },
+      { id: 'dock:buffs', label: 'Buffs', icon: <DockMenuIcon role="buffs" />, onSelect: () => activate('buffs') },
+      { id: 'dock:skills', label: 'Skill data', icon: <DockMenuIcon role="skills" />, onSelect: () => activate('skills') },
+      { id: 'dock:target', label: 'Change target', icon: <DisplayImage src={getEnemyIcon(enemy.id) ?? '/assets/game/default.webp'} alt="" onError={withDefIconM} />, onSelect: () => activate('target') },
+    ]}>
     <div
       ref={dockRef}
       className="rdk"
@@ -363,7 +375,8 @@ export function RailDock({
       {shownLog ? (
         <MaxLogPanel log={shownLog} onUndo={undoMax} onClose={closeLog} onAnimationEnd={onLogAnimationEnd} />
       ) : null}
-    </div>,
+    </div>
+    </ContextTrigger>,
     host,
   )
 }
@@ -469,7 +482,7 @@ function TargetKey({
   const label = [
     `Target ${name}, Lv ${enemy.level}.`,
     match && lands != null ? `${match.word}, ${lands}% of your damage lands.` : '',
-    'Opens the target console.',
+    'Opens target settings.',
   ].filter(Boolean).join(' ')
 
   return (

@@ -34,6 +34,7 @@ import {
 } from '@/domain/gameData/rotationLoops.ts'
 import { makeBlockNode } from '@/modules/simulation/surfaces/rotation/shared/nodeTools.ts'
 import { ACTIVE_RESONATOR_PATH } from '@/domain/gameData/rotationPaths.ts'
+import { getStateText } from '@/modules/simulation/model/sourceStateDisplay.ts'
 import { parseRegValue } from '@/modules/simulation/surfaces/rotation/program-editor/model/registerValues.ts'
 import {
   normalizeFeatureAttachments,
@@ -398,9 +399,11 @@ function serializeCondition(
     id: node.id,
     changes,
   }
-  if (!source) {
+  const catalogLabel = node.state ? getStateText(node.state).label : undefined
+  if (!source && node.label !== catalogLabel) {
     nextNode.label = node.label
   }
+  if (catalogLabel !== undefined && nextNode.label === catalogLabel) delete nextNode.label
   if (!source || node.ownerEdited) {
     nextNode.resonatorId = node.owner.kind === 'member' ? node.owner.memberId : base.resonatorId
   }
@@ -443,6 +446,7 @@ function serializeHandoff(
     : base.changes
 
   const next = { ...base, id: node.id, changes }
+  if (next.label === 'Active Resonator') delete next.label
 
   return writeAttachedNote(writeEnabled(next, node.disabled), node)
 }

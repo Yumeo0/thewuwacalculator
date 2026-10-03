@@ -1,0 +1,120 @@
+
+
+html.mui .scw {
+  align-items: stretch;
+  overflow: hidden;
+}
+
+
+html.mui .scw-band {
+  height: 100dvh;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  padding-bottom: env(safe-area-inset-bottom);
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+html.mui .scw-tick {
+  zoom: 1.3;
+}
+
+html.mui .scw-in {
+  zoom: 1.3;
+  width: auto;
+  margin: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem calc(16px / 1.3) 0;
+}
+
+
+html.mui .scw-copy {
+  flex: 1 0 auto;
+  grid-template-rows: auto auto auto 1fr;
+  gap: 0.85rem;
+}
+
+
+html.mui .scw-mate {
+  position: absolute;
+  top: 2.4rem;
+  right: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+html.mui .scw-mate img {
+  width: 6.6rem;
+  -webkit-mask-image: linear-gradient(#000 72%, transparent);
+  mask-image: linear-gradient(#000 72%, transparent);
+}
+
+html.mui .scw-aside {
+  top: -1.45rem;
+  left: -1.4rem;
+  font-size: 0.95rem;
+}
+
+html.mui :is(.scw-flagline, .scw-head) {
+  padding-right: 6.4rem;
+}
+
+html.mui .scw-flagline {
+  gap: 0.5rem 0.8rem;
+}
+
+html.mui .scw-head {
+  font-size: 1.85rem;
+  line-height: 1.05;
+  min-height: 4.4rem;
+}
+
+html.mui .scw-points {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  margin: 0.2rem 0 0;
+}
+
+html.mui .scw-points li {
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+html.mui .scw-acts {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  align-self: end;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+  padding: 1.1rem 0 0.8rem;
+  background: linear-gradient(transparent, color-mix(in srgb, var(--bg) 66%, black) 1.1rem);
+}
+
+html.mui .scw-cap {
+  width: 100%;
+  padding-block: 0.7rem;
+}
+
+html.mui .scw-card {
+  zoom: 1.3;
+  left: calc(12px / 1.3);
+  width: calc((100vw - 24px) / 1.3);
+}
+
+html.mui .scw-tab {
+  zoom: 1.3;
+}
+
+
+html.mui .ckb {
+  zoom: 1.3;
+  left: calc(12px / 1.3);
+  bottom: calc(12px / 1.3);
+  width: calc((100vw - 24px) / 1.3);
+  max-width: none;
+}

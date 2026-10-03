@@ -14,7 +14,6 @@ import type {
 } from 'react'
 import {
   Boxes,
-  ChevronDown,
   Copy,
   Globe,
   Layers,
@@ -28,7 +27,11 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import type { MnlMod } from '@/domain/entities/manualBuffs.ts'
 import type { ResRuntime } from '@/domain/entities/runtime.ts'
+import type { AttributeKey } from '@/domain/entities/stats.ts'
+import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
+import { skllTypeDspl } from '@/domain/gameData/skillTypes.ts'
 import { getWpnById } from '@/data/catalog/weaponCatalogService.ts'
+import { echoStatIconSrc } from '@/modules/simulation/features/echoes/lib/statGlyph.tsx'
 import { withDefEchoMg, withDefIconM, withDefWpnMg } from '@/shared/lib/imageFallback.ts'
 import { AppModal } from '@/shared/ui/AppModal.tsx'
 import type { AppModalState } from '@/shared/ui/AppModal.tsx'
@@ -53,7 +56,7 @@ import {
 import {
   buildBuffPresetCatalog,
   buffTypeLabel,
-  formatManualModifierPreview,
+  describeManualModifier,
   presetToManualModifiers,
 } from './lib/presets.ts'
 import type {
@@ -77,30 +80,34 @@ const SOURCE_FILTER_VALUES = ['all', 'echo', 'echoSet', 'weapon'] as const satis
 const BUFF_TYPE_FILTER_VALUES = ['all', 'self', 'active', 'team'] as const satisfies readonly BuffTypeFilter[]
 const BUFF_PRESET_FILTERS_STORAGE_KEY = 'wwcalc.buff-preset-filters'
 
-interface SegOption<T extends string> {
+interface RailOption<T extends string> {
   value: T
   label: string
   icon: LucideIcon | ComponentType<SVGProps<SVGSVGElement>>
 }
 
-const SOURCE_KIND_OPTIONS: Array<SegOption<SourceFilter>> = [
+const SOURCE_KIND_OPTIONS: Array<RailOption<SourceFilter>> = [
   { value: 'all', label: 'All', icon: Layers },
   { value: 'echo', label: 'Echoes', icon: EchoSourceIcon },
   { value: 'echoSet', label: 'Sets', icon: Boxes },
   { value: 'weapon', label: 'Weapons', icon: Swords },
 ]
 
-const BUFF_TYPE_OPTIONS: Array<SegOption<BuffTypeFilter>> = [
-  { value: 'all', label: 'All', icon: Globe },
+const BUFF_TYPE_OPTIONS: Array<RailOption<BuffTypeFilter>> = [
+  { value: 'all', label: 'Any', icon: Globe },
   { value: 'self', label: 'Self', icon: User },
   { value: 'active', label: 'Active', icon: Zap },
   { value: 'team', label: 'Team', icon: Users },
 ]
 
-const RANK_OPTIONS = [1, 2, 3, 4, 5].map((rank) => ({
-  value: rank,
-  label: `R${rank}`,
-}))
+const BUFF_TYPE_ICONS: Record<BuffPresetType, LucideIcon> = {
+  self: User,
+  active: Zap,
+  team: Users,
+}
+
+const RANK_STEPS = [1, 2, 3, 4, 5]
+const FOOT_WELL_LIMIT = 9
 
 const ECHO_SOURCE_ICON = '/assets/echo.svg'
 
@@ -187,6 +194,10 @@ function entryImageFallback(entry: BuffPresetEntry) {
   return withDefIconM
 }
 
+function entryIcon(entry: BuffPresetEntry): string | null {
+  return entry.sourceIcon ?? (entry.source.type === 'echo' ? ECHO_SOURCE_ICON : null)
+}
+
 function searchableText(entry: BuffPresetEntry): string {
   return [
     entry.sourceName,
@@ -202,26 +213,147 @@ function searchableText(entry: BuffPresetEntry): string {
     .toLowerCase()
 }
 
-interface SegControlProps<T extends string> {
-  value: T
-  options: Array<SegOption<T>>
-  onChange: (value: T) => void
-  ariaLabel: string
+function matchesFilters(
+    entry: BuffPresetEntry,
+    sourceKind: SourceFilter,
+    buffType: BuffTypeFilter,
+    query: string,
+): boolean {
+  if (sourceKind !== 'all' && entry.source.type !== sourceKind) return false
+  if (buffType !== 'all' && entry.buffType !== buffType) return false
+  if (query && !searchableText(entry).includes(query)) return false
+  return true
 }
 
-function SegControl<T extends string>({ value, options, onChange, ariaLabel }: SegControlProps<T>) {
-  const activeIndex = Math.max(0, options.findIndex((option) => option.value === value))
+const ATTRIBUTE_GLYPHS = new Set(['aero', 'glacio', 'spectro', 'fusion', 'electro', 'havoc', 'physical'])
+
+function modifierGlyph(modifier: MnlMod): { icon: string; tint?: string } | null {
+  if (modifier.scope === 'baseStat' || modifier.scope === 'topStat') {
+    const icon = echoStatIconSrc(modifier.stat)
+    return icon ? { icon } : null
+  }
+
+  if (modifier.scope === 'attribute') {
+    if (!ATTRIBUTE_GLYPHS.has(modifier.attribute)) return null
+    return {
+      icon: `/assets/game/stats/icons/${modifier.attribute}.png`,
+      tint: ATTR_COLORS[modifier.attribute as AttributeKey],
+    }
+  }
+
+  const skillType = modifier.scope === 'skillType' || modifier.scope === 'skill'
+    ? modifier.skillType
+    : undefined
+  const icon = skillType ? skllTypeDspl[skillType]?.icon : undefined
+  return icon ? { icon } : null
+}
+
+function ModifierGlyph({ modifier }: { modifier: MnlMod }) {
+  const glyph = modifierGlyph(modifier)
+  if (!glyph) return <span className="bp-star bp-star--quiet" aria-hidden="true" />
 
   return (
-    <div className="bp-seg"
-      role="radiogroup"
-      aria-label={ariaLabel}
-      style={{ '--bp-seg-count': options.length, '--bp-seg-index': activeIndex } as CSSProperties}
-    >
-      <span className="bp-seg__thumb" aria-hidden="true" />
+    <span
+      className="bp-glyph"
+      aria-hidden="true"
+      style={{
+        WebkitMaskImage: `url("${glyph.icon}")`,
+        maskImage: `url("${glyph.icon}")`,
+        ...(glyph.tint ? { '--bp-glyph-tint': glyph.tint } : null),
+      } as CSSProperties}
+    />
+  )
+}
+
+interface RankDialProps {
+  label: string
+  value: number
+  onChange: (rank: number) => void
+}
+
+function RankDial({ label, value, onChange }: RankDialProps) {
+  return (
+    <div className="bp-dial">
+      <div
+        className="bp-dial__track"
+        role="radiogroup"
+        aria-label={label}
+        style={{ '--bp-dial-lit': (value - 1) / (RANK_STEPS.length - 1) } as CSSProperties}
+      >
+        <span className="bp-dial__rule" aria-hidden="true" />
+        <span className="bp-dial__lit" aria-hidden="true" />
+        {RANK_STEPS.map((step) => (
+          <button
+            key={step}
+            type="button"
+            role="radio"
+            aria-checked={step === value}
+            aria-label={`${label} R${step}`}
+            className={[
+              'bp-dial__node',
+              step <= value ? 'lit' : '',
+              step === value ? 'current' : '',
+            ].filter(Boolean).join(' ')}
+            onClick={() => onChange(step)}
+          >
+            <span className="bp-star" aria-hidden="true" />
+          </button>
+        ))}
+      </div>
+      <span className="bp-dial__read">R{value}</span>
+    </div>
+  )
+}
+
+interface StepperProps {
+  label: string
+  value: number
+  min: number
+  max: number
+  onChange: (value: number) => void
+}
+
+function Stepper({ label, value, min, max, onChange }: StepperProps) {
+  return (
+    <div className="bp-step" role="group" aria-label={label} title={label}>
+      <button
+        type="button"
+        aria-label={`Fewer ${label}`}
+        disabled={value <= min}
+        onClick={() => onChange(Math.max(min, value - 1))}
+      >
+        &minus;
+      </button>
+      <b>{value}</b>
+      <span>/{max}</span>
+      <button
+        type="button"
+        aria-label={`More ${label}`}
+        disabled={value >= max}
+        onClick={() => onChange(Math.min(max, value + 1))}
+      >
+        +
+      </button>
+    </div>
+  )
+}
+
+interface RailGroupProps<T extends string> {
+  title: string
+  value: T
+  options: Array<RailOption<T>>
+  counts: Record<T, number>
+  onChange: (value: T) => void
+}
+
+function RailGroup<T extends string>({ title, value, options, counts, onChange }: RailGroupProps<T>) {
+  return (
+    <div className="bp-rail__group" role="radiogroup" aria-label={title}>
+      <h3 className="bp-rail__title">{title}</h3>
       {options.map((option) => {
-        const isActive = option.value === value
         const Icon = option.icon
+        const isActive = option.value === value
+        const count = counts[option.value] ?? 0
 
         return (
           <button
@@ -229,11 +361,13 @@ function SegControl<T extends string>({ value, options, onChange, ariaLabel }: S
             type="button"
             role="radio"
             aria-checked={isActive}
-            className={`bp-seg__option${isActive ? ' bp-seg__option--active' : ''}`}
+            className="bp-rail__opt"
+            disabled={!isActive && count === 0}
             onClick={() => onChange(option.value)}
           >
-            <Icon width={15} height={15} aria-hidden="true" />
+            <Icon width="0.85rem" height="0.85rem" aria-hidden="true" />
             <span>{option.label}</span>
+            <b>{count}</b>
           </button>
         )
       })}
@@ -292,16 +426,39 @@ export function BuffPresetModal({
     return next
   }, [catalog, controlValues, rankValues, runtime])
 
-  const filtered = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
+  const normalizedQuery = query.trim().toLowerCase()
 
-    return catalog.filter((entry) => {
-      if (sourceKind !== 'all' && entry.source.type !== sourceKind) return false
-      if (buffType !== 'all' && entry.buffType !== buffType) return false
-      if (normalizedQuery && !searchableText(entry).includes(normalizedQuery)) return false
-      return true
-    })
-  }, [buffType, catalog, query, sourceKind])
+  const filtered = useMemo(
+    () => catalog.filter((entry) => matchesFilters(entry, sourceKind, buffType, normalizedQuery)),
+    [buffType, catalog, normalizedQuery, sourceKind],
+  )
+
+  // Each group count applies the opposite group and search predicates first.
+  const railCounts = useMemo(() => {
+    const source = { all: 0, echo: 0, echoSet: 0, weapon: 0 } satisfies Record<SourceFilter, number>
+    const type = { all: 0, self: 0, active: 0, team: 0 } satisfies Record<BuffTypeFilter, number>
+
+    for (const entry of catalog) {
+      if (matchesFilters(entry, 'all', buffType, normalizedQuery)) {
+        source.all += 1
+        source[entry.source.type] += 1
+      }
+      if (matchesFilters(entry, sourceKind, 'all', normalizedQuery)) {
+        type.all += 1
+        type[entry.buffType] += 1
+      }
+    }
+
+    return { source, type }
+  }, [buffType, catalog, normalizedQuery, sourceKind])
+
+  const filtersActive = sourceKind !== 'all' || buffType !== 'all' || normalizedQuery.length > 0
+
+  const resetFilters = useCallback(() => {
+    setSourceKind('all')
+    setBuffType('all')
+    setQuery('')
+  }, [])
 
   const visiblePresetIds = useMemo(
     () => filtered.map((entry) => entry.id),
@@ -516,6 +673,16 @@ export function BuffPresetModal({
     >
       <div className="amdl bp-modal">
         <ModalHeader over="Manual Buffs" title={<h2>Buff Presets</h2>} onClose={close}>
+          <label className="amdl__find bp-find">
+            <Search size="0.85rem" aria-hidden="true" />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search buffs, sources, effects"
+              aria-label="Search presets"
+            />
+          </label>
           <div className="amdl__gauge" aria-label="Preset counts">
             <div className="amdl__pill">
               <span className="amdl__pill-label">Shown</span>
@@ -528,153 +695,186 @@ export function BuffPresetModal({
           </div>
         </ModalHeader>
 
-        <div className="bp-toolbar">
-          <label className="bp-search">
-            <Search size="1.0625rem" aria-hidden="true" />
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search buffs, sources, effects…"
-            />
-          </label>
-
-          <div className="bp-toolbar__filters">
-            <SegControl
+        <div className="bp-body">
+          <aside className="bp-rail" aria-label="Preset filters">
+            <RailGroup
+              title="Source"
               value={sourceKind}
               options={SOURCE_KIND_OPTIONS}
+              counts={railCounts.source}
               onChange={setPersistedSourceKind}
-              ariaLabel="Filter by source"
             />
-            <SegControl
+            <RailGroup
+              title="Reach"
               value={buffType}
               options={BUFF_TYPE_OPTIONS}
+              counts={railCounts.type}
               onChange={setPersistedBuffType}
-              ariaLabel="Filter by buff type"
             />
-          </div>
-        </div>
+            <div className="bp-rail__foot">
+              <span><b>{filtered.length}</b> of {catalog.length} shown</span>
+              {filtersActive ? (
+                <button type="button" className="bp-rail__reset" onClick={resetFilters}>
+                  Reset filters
+                </button>
+              ) : null}
+            </div>
+          </aside>
 
-        <ContextTrigger
-          asChild
-          ariaLabel="Buff preset list actions"
-          getItems={buildModalContextMenu}
-        >
-          <div className="bp-body" {...presetSelection.surfaceProps}>
-            {filtered.length > 0 ? (
-              <div className="bp-grid">
-                {filtered.map((entry, index) => {
-                  const rank = entryRank(entry, rankValues)
-                  const values = entryValues(entry, controlValues)
-                  const modifiers = previews.get(entry.id) ?? []
-                  const isSelectable = modifiers.length > 0
-                  const isSelected = presetSelection.selectedIdSet.has(entry.id)
-                  const descriptionParams = entryDescriptionParams(entry, rank)
-                  const controls = visibleControls(entry)
-                  const isWeapon = entry.source.type === 'weapon'
-                  const sourceIcon = entry.sourceIcon
-                    ?? (entry.source.type === 'echo' ? ECHO_SOURCE_ICON : null)
+          <ContextTrigger
+            asChild
+            ariaLabel="Buff preset list actions"
+            getItems={buildModalContextMenu}
+          >
+            <div className="bp-list" {...presetSelection.surfaceProps}>
+              {filtered.length > 0 ? (
+                <>
+                  <div className="bp-cols bp-list__head" aria-hidden="true">
+                    <span />
+                    <span />
+                    <span>Source</span>
+                    <span>Reach</span>
+                    <span>Adds</span>
+                    <span className="bp-list__head-end">Settings</span>
+                  </div>
+                  <div role="list">
+                    {filtered.map((entry) => {
+                      const rank = entryRank(entry, rankValues)
+                      const values = entryValues(entry, controlValues)
+                      const modifiers = previews.get(entry.id) ?? []
+                      const isSelectable = modifiers.length > 0
+                      const isSelected = presetSelection.selectedIdSet.has(entry.id)
+                      const descriptionParams = entryDescriptionParams(entry, rank)
+                      const controls = visibleControls(entry)
+                      const isWeapon = entry.source.type === 'weapon'
+                      const sourceIcon = entryIcon(entry)
+                      const ReachIcon = BUFF_TYPE_ICONS[entry.buffType]
 
-                  return (
-                    <ContextTrigger
-                      key={entry.id}
-                      asChild
-                      ariaLabel={`${entry.sourceName} preset actions`}
-                      items={buildEntryContextMenu(entry)}
-                    >
-                      <article
-                        className={[
-                          'bp-card',
-                          presetSelection.selectionMode ? 'selection-mode' : '',
-                          isSelected ? 'bp-card--selected focus-selected' : '',
-                        ].filter(Boolean).join(' ')}
-                        data-selection-focus-item="true"
-                        aria-selected={isSelected ? 'true' : 'false'}
-                        style={{ '--bp-i': Math.min(index, 24) } as CSSProperties}
-                        onClickCapture={presetSelection.buildClickCapture(entry.id, {
-                          active: isSelectable,
-                          shouldIgnore: ignoreCardClick,
-                        })}
-                        onClick={(event) => {
-                          if (ignoreCardClick(event)) return
-                          presetSelection.addToSelection(entry.id)
-                        }}
-                      >
-                        <div className="bp-card__top">
-                          <div className="bp-card__icon" aria-hidden="true">
-                            {sourceIcon ? (
-                              <DisplayImage
-                                src={sourceIcon}
-                                alt=""
-                                loading="lazy"
-                                onError={entryImageFallback(entry)}
-                              />
-                            ) : (
-                              <span>{kindLabel(entry.source.type).slice(0, 1)}</span>
-                            )}
-                          </div>
-
-                          <div className="bp-card__head">
-                            <div className="bp-card__tags">
-                              <span className={`bp-tag bp-tag--${entry.source.type}`}>{kindLabel(entry.source.type)}</span>
-                              <span className={`bp-tag bp-tag--type-${entry.buffType}`}>{buffTypeLabel(entry.buffType)}</span>
-                            </div>
-                            <h3 className="bp-card__name">{entry.sourceName}</h3>
-                          </div>
-
-                          {isWeapon ? (
-                            <Select
-                              value={rank}
-                              options={RANK_OPTIONS}
-                              onChange={(nextRank) => setRankValue(entry.id, nextRank)}
-                              ariaLabel={`${entry.sourceName} rank`} className="bp-rank"
-                              renderTrigger={(selected) => (
-                                <>
-                                  <span className="bp-rank__label">Rank</span>
-                                  <span className="bp-rank__value">{selected?.label ?? `R${rank}`}</span>
-                                  <ChevronDown size="0.8125rem" className="bp-rank__chevron" aria-hidden="true" />
-                                </>
-                              )}
-                            />
-                          ) : null}
-                        </div>
-
-                        {entry.description ? (
-                          <RichDscr
-                            description={entry.description}
-                            params={descriptionParams} className="bp-card__desc"
-                          />
-                        ) : <p className="bp-card__desc">{entry.label}</p>}
-
-                        <div className="bp-card__preview" aria-label="Generated modifiers">
-                          {modifiers.length > 0 ? modifiers.map((modifier, modIndex) => (
-                            <span className="bp-chip" key={`${modifier.scope}-${modIndex}`}>
-                              {formatManualModifierPreview(modifier)}
+                      return (
+                        <ContextTrigger
+                          key={entry.id}
+                          asChild
+                          ariaLabel={`${entry.sourceName} preset actions`}
+                          items={buildEntryContextMenu(entry)}
+                        >
+                          <article
+                            role="listitem"
+                            className={[
+                              'bp-row',
+                              'bp-cols',
+                              isSelected ? 'is-selected focus-selected' : '',
+                              isSelectable ? '' : 'is-empty',
+                            ].filter(Boolean).join(' ')}
+                            data-selection-focus-item="true"
+                            aria-selected={isSelected ? 'true' : 'false'}
+                            onClickCapture={presetSelection.buildClickCapture(entry.id, {
+                              active: isSelectable,
+                              shouldIgnore: ignoreCardClick,
+                            })}
+                            onClick={(event) => {
+                              if (ignoreCardClick(event)) return
+                              presetSelection.addToSelection(entry.id)
+                            }}
+                          >
+                            <span className="bp-row__mark" aria-hidden="true">
+                              <span className="bp-star" />
                             </span>
-                          )) : (
-                            <span className="bp-chip bp-chip--empty">No modifier</span>
-                          )}
-                        </div>
 
-                        {controls.length > 0 ? (
-                          <div className="bp-card__controls">
-                            {controls.map((control) => (
-                              <label key={control.key} className="bp-control">
-                                <span>{control.label}</span>
-                                {control.kind === 'select' && control.options ? (
-                                  <Select
-                                    value={String(values[control.key])}
-                                    options={control.options.map((option) => ({
-                                      value: option.id,
-                                      label: option.label,
-                                    }))}
-                                    onChange={(value) => setControlValue(entry.id, control.key, value)}
-                                    ariaLabel={control.label}
-                                  />
-                                ) : (
+                            <span className="bp-row__icon" aria-hidden="true">
+                              {sourceIcon ? (
+                                <DisplayImage
+                                  src={sourceIcon}
+                                  alt=""
+                                  loading="lazy"
+                                  onError={entryImageFallback(entry)}
+                                />
+                              ) : (
+                                <span>{kindLabel(entry.source.type).slice(0, 1)}</span>
+                              )}
+                            </span>
+
+                            <div className="bp-row__source">
+                              <h3>
+                                <span className="bp-row__name">{entry.sourceName}</span>
+                                <span className="bp-row__kind">{kindLabel(entry.source.type)}</span>
+                              </h3>
+                              {entry.description ? (
+                                <RichDscr
+                                  description={entry.description}
+                                  params={descriptionParams}
+                                  className="bp-row__desc"
+                                />
+                              ) : <p className="bp-row__desc">{entry.label}</p>}
+                            </div>
+
+                            <span className={`bp-reach bp-reach--${entry.buffType}`}>
+                              <ReachIcon size="0.72rem" aria-hidden="true" />
+                              {buffTypeLabel(entry.buffType)}
+                            </span>
+
+                            <ul className="bp-adds" aria-label="Generated modifiers">
+                              {isSelectable ? modifiers.map((modifier, modIndex) => {
+                                const preview = describeManualModifier(modifier)
+                                return (
+                                  <li key={`${modifier.scope}-${modIndex}`}>
+                                    <ModifierGlyph modifier={modifier} />
+                                    <span className="bp-adds__label" title={preview.label}>{preview.label}</span>
+                                    <i className="bp-adds__lead" aria-hidden="true" />
+                                    <b>{preview.value}</b>
+                                  </li>
+                                )
+                              }) : (
+                                <li className="bp-adds__none">No modifier at these settings</li>
+                              )}
+                            </ul>
+
+                            <div className="bp-row__settings">
+                              {isWeapon ? (
+                                <RankDial
+                                  label={`${entry.sourceName} rank`}
+                                  value={rank}
+                                  onChange={(nextRank) => setRankValue(entry.id, nextRank)}
+                                />
+                              ) : null}
+                              {controls.map((control) => {
+                                if (control.kind === 'select' && control.options) {
+                                  return (
+                                    <Select
+                                      key={control.key}
+                                      value={String(values[control.key])}
+                                      options={control.options.map((option) => ({
+                                        value: option.id,
+                                        label: option.label,
+                                      }))}
+                                      onChange={(value) => setControlValue(entry.id, control.key, value)}
+                                      ariaLabel={control.label}
+                                      className="bp-row__select"
+                                    />
+                                  )
+                                }
+
+                                const value = Number(values[control.key] ?? 0)
+                                if (control.min !== undefined && control.max !== undefined) {
+                                  return (
+                                    <Stepper
+                                      key={control.key}
+                                      label={control.label}
+                                      value={value}
+                                      min={control.min}
+                                      max={control.max}
+                                      onChange={(next) => setControlValue(entry.id, control.key, next)}
+                                    />
+                                  )
+                                }
+
+                                return (
                                   <input
+                                    key={control.key}
                                     type="number"
-                                    value={Number(values[control.key] ?? 0)}
+                                    className="bp-row__number"
+                                    aria-label={control.label}
+                                    title={control.label}
+                                    value={value}
                                     min={control.min}
                                     max={control.max}
                                     onChange={(event) => {
@@ -686,62 +886,96 @@ export function BuffPresetModal({
                                       )
                                     }}
                                   />
-                                )}
-                              </label>
-                            ))}
-                          </div>
-                        ) : null}
-                      </article>
-                    </ContextTrigger>
+                                )
+                              })}
+                            </div>
+                          </article>
+                        </ContextTrigger>
+                      )
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div className="bp-empty">
+                  <Search size="1.1rem" aria-hidden="true" />
+                  <strong>No presets match</strong>
+                  <span>Clear the search or reset the filters.</span>
+                </div>
+              )}
+            </div>
+          </ContextTrigger>
+        </div>
+
+        <footer className="amdl__foot bp-foot">
+          <div className="bp-wells">
+            <span className="bp-wells__lead">
+              {selectedEntries.length > 0
+                ? <><b>{selectedEntries.length}</b> picked</>
+                : 'Pick presets'}
+            </span>
+            {selectedEntries.length > 0 ? (
+              <>
+                {selectedEntries.slice(0, FOOT_WELL_LIMIT).map((entry) => {
+                  const icon = entryIcon(entry)
+                  return (
+                    <button
+                      key={entry.id}
+                      type="button"
+                      className="bp-well"
+                      title={`Remove ${entry.sourceName}`}
+                      aria-label={`Remove ${entry.sourceName}`}
+                      onClick={() => deselectEntry(entry)}
+                    >
+                      {icon ? (
+                        <DisplayImage src={icon} alt="" onError={entryImageFallback(entry)} />
+                      ) : null}
+                    </button>
                   )
                 })}
-              </div>
+                {selectedEntries.length > FOOT_WELL_LIMIT ? (
+                  <span className="bp-well bp-well--more">+{selectedEntries.length - FOOT_WELL_LIMIT}</span>
+                ) : null}
+              </>
             ) : (
-              <div className="bp-empty">
-                <div className="bp-empty__icon" aria-hidden="true">
-                  <Search size="1.375rem" />
-                </div>
-                <strong>No presets found</strong>
-                <span>Adjust the filters or search text to see more.</span>
-              </div>
+              <>
+                <span className="bp-well bp-well--ghost" aria-hidden="true" />
+                <span className="bp-well bp-well--ghost" aria-hidden="true" />
+                <span className="bp-well bp-well--ghost" aria-hidden="true" />
+              </>
             )}
           </div>
-        </ContextTrigger>
 
-        <footer className="bp-footer">
-          <div className="bp-footer__summary">
-            <span className="bp-footer__count">{presetSelection.selectedCount}</span>
-            <div className="bp-footer__copy">
-              <strong>{presetSelection.selectedCount === 1 ? 'preset selected' : 'presets selected'}</strong>
-              <span>{selectedModifiers.length} {selectedModifiers.length === 1 ? 'modifier' : 'modifiers'} ready</span>
-            </div>
-          </div>
-          <div className="bp-footer__actions">
-            <button type="button" className="bp-btn bp-btn--ghost" onClick={presetSelection.selectAll}>
-              Select Visible
+          <div className="bp-foot__acts">
+            <button type="button" className="amdl__act" onClick={presetSelection.selectAll}>
+              Select visible
             </button>
             <button
-              type="button" className="bp-btn bp-btn--ghost"
+              type="button"
+              className="amdl__act"
               onClick={presetSelection.exitSelectionMode}
               disabled={presetSelection.selectedCount === 0}
             >
               Clear
             </button>
             <button
-              type="button" className="bp-btn bp-btn--ghost"
+              type="button"
+              className="amdl__act"
               onClick={copySelected}
               disabled={selectedModifiers.length === 0}
             >
-              <Copy size="1rem" aria-hidden="true" />
+              <Copy size="0.8rem" aria-hidden="true" />
               Copy
             </button>
             <button
-              type="button" className="bp-btn bp-btn--primary"
+              type="button"
+              className="amdl__act is-go"
               onClick={addSelected}
               disabled={selectedModifiers.length === 0}
             >
-              <Plus size="1rem" aria-hidden="true" />
-              Add Selected
+              <Plus size="0.8rem" aria-hidden="true" />
+              {selectedModifiers.length > 0
+                ? `Add ${selectedModifiers.length} ${selectedModifiers.length === 1 ? 'modifier' : 'modifiers'}`
+                : 'Add selected'}
             </button>
           </div>
         </footer>

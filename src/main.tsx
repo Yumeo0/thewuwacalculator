@@ -13,6 +13,7 @@ import { readPersistedGameDataMode } from '@/application/persistence/gameDataMod
 import { StartupErrorNotice } from '@/modules/system/pages/StartupErrorNotice'
 import { RootErrorBoundary } from '@/modules/system/pages/RootErrorBoundary'
 import { isSimulationRoute } from '@/shared/lib/appRoutes'
+import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay'
 const root = createRoot(document.getElementById('root')!)
 
 function BootLoading() {
@@ -20,7 +21,7 @@ function BootLoading() {
     document.documentElement.dataset.appEntryStarted = 'true'
     document.getElementById('boot-fallback')?.setAttribute('hidden', '')
   }, [])
-  return <div className="boot-loading" role="status">Loading game data...</div>
+  return <AppLoaderOverlay mode="centered" className="boot-loading" text="Loading game data..." />
 }
 
 function showStartupError(error: unknown) {

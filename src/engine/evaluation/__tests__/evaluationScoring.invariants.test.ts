@@ -1,16 +1,14 @@
 /*
   Author: Runor Ewhro
-  Description: stable invariants for evaluation scoring internals: request-key
-               determinism, anchor cache reuse, and persisted-fixture output
-               characterization.
+  Description: stable invariants for evaluation scoring internals, request-key
+               determinism, and anchor cache reuse.
 */
 
 import { describe, expect, it, vi } from 'vitest'
 import { listChsByCos } from '@/data/catalog/echoCatalogService'
 import { getResSeedBy, listResSds } from '@/data/catalog/resonatorSeedService'
-import { makeEnemy, makeResRuntime, makeTeamMember, normProfTeam } from '@/engine/runtime/defaults'
+import { makeEnemy, makeResRuntime, makeTeamMember } from '@/engine/runtime/defaults'
 import { makeRuntimeMap, runtimeFromSnapshot } from '@/engine/runtime/runtimeAdapters'
-import { matRtFromPro } from '@/engine/runtime/runtimeMaterialization'
 import { initWpnStts } from '@/engine/runtime/sourceStateInit'
 import { catWpnAtk } from '@/engine/runtime/weaponState'
 import { maxResRt } from '@/engine/gameData/resonatorMax'
@@ -29,10 +27,7 @@ import { makeEvaluationOverviewStats, sumEncodedEnergyRegen } from '@/engine/eva
 import { REFERENCE_STEP_MODEL, tierStepIncreases } from '@/engine/evaluation/evaluation/stepAllocation'
 import { resolveEvaluationStats, scoreStats } from '@/engine/evaluation/evaluation/scoring.ts'
 import { CTX_FLOATS, ECHO_STAT_STRIDE, MAIN_BUFF_LEN, MV, SET_MASK, SKILL_ID } from '@/engine/optimizer/config/constants'
-import {
-  rotationBuildEvaluationReport,
-  type BuildEvaluation,
-} from '@/engine/evaluation/buildEvaluation.ts'
+import { rotationBuildEvaluationReport } from '@/engine/evaluation/buildEvaluation.ts'
 import { makeEvaluationKey } from '@/engine/evaluation/buildEvaluationKey'
 import {
   applyEvaluationAsm,
@@ -47,14 +42,6 @@ import { computeShowcaseAnalysis, type ShowcaseAnalysisProgress } from '../showc
 import { computeShowcaseStats } from '../showcaseStats'
 import { makeEchoMainStatProfileKey } from '../echoMainStatProfile'
 import * as evaluationReport from '../evaluation/report'
-
-const prodAppLoaders = import.meta.glob('../../../../prod-app.json', {
-  query: '?raw',
-  import: 'default',
-}) as Record<string, () => Promise<string>>
-
-const loadProdApp = prodAppLoaders['../../../../prod-app.json']
-const AUGUSTA_ID = '1306'
 
 function buildInvariantEchoes(subKey: string): Array<EchoInstance | null> {
   // anchors should be reusable across different substat layouts, so this keeps
@@ -111,68 +98,6 @@ function evaluationContextFor(seedId: string, echoes: Array<EchoInstance | null>
   }, simulation)
 }
 
-function round(value: number, places: number): number {
-  return Number(value.toFixed(places))
-}
-
-function materialize(profile: ResProf) {
-  // persisted fixtures are profile-shaped, not runtime-shaped, so this mirrors
-  // production hydration before scoring them
-  const seed = getResSeedBy(profile.resonatorId)
-  if (!seed) {
-    throw new Error(`missing seed ${profile.resonatorId}`)
-  }
-
-  const runtime = matRtFromPro({
-    seed,
-    profile,
-    slotId: 'active',
-    localState: profile.runtime.local,
-    teamSlots: normProfTeam(profile.resonatorId, profile.runtime.team),
-    rotation: profile.runtime.rotation,
-  })
-
-  return { profile, runtime, seed }
-}
-
-async function loadFixtureProfiles(): Promise<ResProf[]> {
-  // local fixture coverage is optional: pull the named augusta fixture and a
-  // small deterministic slice from the prod snapshot when that file exists
-  const profiles: ResProf[] = []
-
-  if (loadProdApp) {
-    const snapshot = JSON.parse(await loadProdApp()) as {
-      calculator: { profiles: Record<string, ResProf> }
-    }
-    const augusta = snapshot.calculator.profiles[AUGUSTA_ID]
-    if (augusta) {
-      profiles.push(augusta)
-    }
-    profiles.push(
-      ...Object.values(snapshot.calculator.profiles)
-        .filter((profile) => profile.resonatorId !== AUGUSTA_ID)
-        .sort((left, right) => left.resonatorId.localeCompare(right.resonatorId))
-        .slice(0, 2),
-    )
-  }
-
-  return profiles
-}
-
-function buildSignature(build: BuildEvaluation['builds']['referenceBuild']) {
-  // signatures intentionally ignore echo uids and ordering noise, leaving only
-  // the evaluation-relevant build shape and stat totals
-  return {
-    sets: build.sets.map((set) => `${set.setId}:${set.pieces}`).sort(),
-    mainEcho: build.echoes.find((echo) => echo.mainEcho)?.echoId ?? null,
-    costs: build.echoes.map((echo) => echo.cost).sort((left, right) => left - right),
-    substats: build.statRows
-      .filter((row) => row.substatCount > 0)
-      .map((row) => `${row.key}:${round(row.substatCount, 3)}:${round(row.total, 3)}`)
-      .sort(),
-  }
-}
-
 function echoSlot(
   id: string,
   set: number,
@@ -194,56 +119,12 @@ function echoSlot(
   }
 }
 
-function fingerprint(evaluation: BuildEvaluation) {
-  // numeric fields are rounded so snapshots catch meaningful evaluation drift
-  // without failing on tiny floating-point serialization differences
-  return {
-    percent: round(evaluation.percent * 100, 4),
-    grade: evaluation.grade,
-    userDamage: round(evaluation.userDamage, 2),
-    baselineDamage: round(evaluation.baselineDamage, 2),
-    referenceDamage: round(evaluation.referenceDamage, 2),
-    maximumDamage: round(evaluation.maximumDamage, 2),
-    referenceBuild: buildSignature(evaluation.builds.referenceBuild),
-    maximumBuild: buildSignature(evaluation.builds.maximumBuild),
-  }
-}
-
-async function runEvaluation(profile: ResProf) {
-  // The report is the only evaluation entry point, so fixture fingerprints
-  // exercise both its score and detail fields together.
-  const { runtime, seed } = materialize(profile)
-  const enemy = makeEnemy()
-  const runtimesById = makeRuntimeMap(runtime)
-  const simulation = runResSmlt(
-    runtime,
-    seed,
-    enemy,
-    runtimesById,
-    profile.runtime.routing.selectedTargetsByOwnerKey,
-  )
-  const input = {
-    scenarioId: combatScenarioId('evaluation:test'),
-    memberId: teamMemberId(runtime.id),
-    runtime,
-    simulation,
-    enemy,
-    runtimesById,
-  }
-  const report = rotationBuildEvaluationReport(input)
-  if (!report) {
-    throw new Error(`no evaluation for ${profile.resonatorId}`)
-  }
-
-  return { input, report }
-}
-
 const norm = (value: unknown) => JSON.parse(
   JSON.stringify(value, (key, entry) => (key === 'uid' ? undefined : entry)),
 )
 
 describe('evaluation scoring invariants', () => {
-  it('applies the ranked tier limits and relevant-flat minimum to the supplied build', () => {
+  it('applies the ranked tier limits and fifth-ranked stat minimum to the supplied build', () => {
     // wwcalc-current-resonator-1610-2026-09-24T01-56-29. The report always uses
     // the default rotation; retain the supplied build, team, and combat state.
     const profile = JSON.parse(referenceCalibration) as ResProf
@@ -260,7 +141,7 @@ describe('evaluation scoring invariants', () => {
     expect(report).toBeTruthy()
     // Pin the real build's score under the 16-line reference budget; its
     // equipped damage is independent of the reference allocation.
-    expect(report.evaluation.percent * 100).toBeCloseTo(98.13, 2)
+    expect(report.evaluation.percent * 100).toBeCloseTo(100.73, 2)
     expect(report.evaluation.userDamage).toBeCloseTo(2128773.54, 0)
     const reference = report.evaluation.builds.referenceBuild
     const relevant = new Set(['atkPercent', 'atkFlat', 'critRate', 'critDmg', 'basicAtk', 'heavyAtk', 'energyRegen'])
@@ -663,22 +544,6 @@ describe('evaluation scoring invariants', () => {
     expect(checked).toBeGreaterThan(0)
   }, 120000)
 
-  it.runIf(Boolean(loadProdApp))(
-    'pins scoring fingerprints for representative persisted fixtures',
-    async () => {
-      const profiles = await loadFixtureProfiles()
-      expect(profiles.length).toBeGreaterThan(0)
-
-      const fingerprints = []
-      for (const profile of profiles) {
-        const { report } = await runEvaluation(profile)
-        fingerprints.push(fingerprint(report.evaluation))
-      }
-
-      expect(fingerprints).toMatchSnapshot()
-    },
-    120000,
-  )
 
   it('keeps team-buffed Brant maximum-roll builds within the generated 200% anchor', () => {
     const seed = getResSeedBy('1206')

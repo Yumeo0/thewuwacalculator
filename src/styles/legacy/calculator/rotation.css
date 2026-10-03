@@ -1,0 +1,13 @@
+.pane-section {
+  padding: 0.9rem 0.95rem;
+}
+
+.results-pane-head {
+  margin-bottom: 0.2rem;
+}
+
+.calculator-results-pane {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}

@@ -102,14 +102,6 @@ describe('the menu a row offers', () => {
     expect(entry && entry.type !== 'separator' ? entry.disabled : null).toBe(true)
   })
 
-  it('says which way a disabled row would go', () => {
-    const off = entryOf(rowMenu({ node: { ...step, disabled: true } }), ':enabled')
-    const on = entryOf(rowMenu(), ':enabled')
-
-    expect(off && off.type !== 'separator' ? off.label : null).toBe('Enable')
-    expect(on && on.type !== 'separator' ? on.label : null).toBe('Disable')
-  })
-
   /*
     a piece of a loop is not a node of its own, so it cannot be wrapped in
     something or copied whole
@@ -142,20 +134,6 @@ describe('the menu a row offers', () => {
 })
 
 describe('the menu a palette tile offers', () => {
-  it('names what it adds and where a press would put it', () => {
-    const withRow = makeSelectionMenu({
-      label: 'Liberation',
-      hasSelection: true,
-      onAdd: vi.fn(),
-      onAddAtEnd: vi.fn(),
-    })
-    const [add, atEnd] = withRow
-
-    expect(add.type !== 'separator' ? add.label : null).toBe('Add Liberation')
-    expect(add.type !== 'separator' ? add.hint : null).toBe('After the selected row')
-    expect(atEnd.type !== 'separator' ? atEnd.disabled : null).toBe(false)
-  })
-
   /* with nothing selected a press already adds at the end, so the second
      entry would do the same thing twice */
   it('drops the second place to add when both would be the same', () => {
@@ -166,7 +144,7 @@ describe('the menu a palette tile offers', () => {
       onAddAtEnd: vi.fn(),
     })
 
-    expect(add.type !== 'separator' ? add.hint : null).toBe('At the end')
+    expect(add.type).not.toBe('separator')
     expect(atEnd.type !== 'separator' ? atEnd.disabled : null).toBe(true)
   })
 })

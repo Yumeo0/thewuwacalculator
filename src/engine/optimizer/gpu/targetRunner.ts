@@ -24,6 +24,7 @@ import { mkNdxMapXcld, mkJobCmbNdxn } from '@/engine/optimizer/combos/jobIndex.t
 import { dispCmptPass } from '@/engine/optimizer/gpu/dispatch.ts'
 import { runRdcPassIf } from '@/engine/optimizer/gpu/reduce.ts'
 import { getGpuDevice } from '@/engine/optimizer/gpu/getDevice.ts'
+import { GpuResourceSession } from '@/engine/optimizer/gpu/GpuResourceSession.ts'
 import {
   CYCLES_PER_CALL,
   GPU_BATCH_MAX_READBACK,
@@ -245,8 +246,27 @@ async function getWeaponPipeline(device: GPUDevice): Promise<{ layout: GPUBindGr
   return { layout: cachedWpnLayout, pipeline: cachedWpnPipeline }
 }
 
-// singleton target gpu state for the current initialized payload
-let targetGpuState: TgtGpuSttcSt | null = null
+// Each worker keeps the buffers for one initialized target payload.
+const targetGpuSession = new GpuResourceSession<TgtGpuSttcSt>((state) => {
+  destroyBuffer(state.contextReuse)
+  destroyBuffer(state.candRs)
+  destroyBuffer(state.candRdbcRs)
+  destroyBuffer(state.comboRs)
+  destroyBuffer(state.reduceReuse.output)
+  destroyBuffer(state.reduceReuse.params)
+
+  state.echoSttsBffr.destroy()
+  state.setCnstLutns.destroy()
+  state.echoSetsBffr.destroy()
+  state.comboMapBox.destroy()
+  state.echoCstsBffr.destroy()
+  state.mainEchoBuff.destroy()
+  state.statCstrsBsy.destroy()
+  state.echoKindIdrr.destroy()
+  state.cmbBnmBffr.destroy()
+  state.weaponOverlayBuf?.destroy()
+  state.weaponMetaBuf?.destroy()
+})
 
 // lazily compile and cache the target shader pipeline
 async function getPipeline(device: GPUDevice): Promise<{ layout: GPUBindGroupLayout; pipeline: GPUComputePipeline }> {
@@ -289,30 +309,7 @@ function destroyBuffer(reuse: ReusableBuffer): void {
 
 // destroy all current target gpu resources before reinitializing with another payload
 function dstrTgtGpuSt(): void {
-  if (!targetGpuState) {
-    return
-  }
-
-  destroyBuffer(targetGpuState.contextReuse)
-  destroyBuffer(targetGpuState.candRs)
-  destroyBuffer(targetGpuState.candRdbcRs)
-  destroyBuffer(targetGpuState.comboRs)
-  destroyBuffer(targetGpuState.reduceReuse.output)
-  destroyBuffer(targetGpuState.reduceReuse.params)
-
-  targetGpuState.echoSttsBffr.destroy()
-  targetGpuState.setCnstLutns.destroy()
-  targetGpuState.echoSetsBffr.destroy()
-  targetGpuState.comboMapBox.destroy()
-  targetGpuState.echoCstsBffr.destroy()
-  targetGpuState.mainEchoBuff.destroy()
-  targetGpuState.statCstrsBsy.destroy()
-  targetGpuState.echoKindIdrr.destroy()
-  targetGpuState.cmbBnmBffr.destroy()
-  targetGpuState.weaponOverlayBuf?.destroy()
-  targetGpuState.weaponMetaBuf?.destroy()
-
-  targetGpuState = null
+  targetGpuSession.dispose()
 }
 
 // local helper for creating storage buffers in this module
@@ -418,11 +415,11 @@ function getBindGroup(
 
 // state guard used by execution functions
 function ensTgtGpuStt(): TgtGpuSttcSt {
-  if (!targetGpuState) {
+  if (!targetGpuSession.current) {
     throw new Error('Target GPU worker state has not been initialized')
   }
 
-  return targetGpuState
+  return targetGpuSession.current
 }
 
 // initialize persistent target-gpu resources for one static payload
@@ -464,7 +461,7 @@ export async function initTgtGpu(payload: TargetGpuState): Promise<void> {
       })()
       : null
 
-  targetGpuState = {
+  targetGpuSession.current = {
     device,
     layout,
     pipeline,

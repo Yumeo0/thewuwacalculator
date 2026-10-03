@@ -52,7 +52,7 @@ import {
 } from '@/engine/services/sourceStateService'
 import { findCombatPartByMemberId } from '@/engine/runtime/combatGraph'
 import {
-  environmentSelectorMatches,
+  environmentManualEffectMatches,
 } from '@/engine/runtime/scenarioEnvironment'
 import { evalCond, evalForm } from '@/engine/effects/evaluator'
 import { listGraphEffectRows } from '@/engine/effects/dataEffects'
@@ -645,7 +645,7 @@ export function tracePreparedRestState(
       selector: structuredClone(manualEffect.selector),
     }
     for (const member of scenario.team.members) {
-      if (!environmentSelectorMatches(manualEffect.selector, member)) continue
+      if (!environmentManualEffectMatches(manualEffect, member)) continue
       addMemberEffect(sourceNodeId, effectDef, 'base', resolution, member.id, structuredClone(memberOperations))
       addTargetEffect(sourceNodeId, effectDef, 'base', resolution, member.id, structuredClone(targetOperations))
     }

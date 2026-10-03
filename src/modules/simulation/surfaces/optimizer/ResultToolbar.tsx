@@ -207,7 +207,7 @@ export function ResultToolbar({
               setId: badge.id,
               name: setName(badge.id),
               pieces: badge.count,
-            }))} className="workspace-srel-set-plan"
+            }))} className="wk-srel-set-plan"
             emptyLabel="--"
           />
           <span className="opt-qc-plan__count">{plan.count}</span>
@@ -230,7 +230,7 @@ export function ResultToolbar({
   const header = (
     <div className="opt-qc__bar-inner">
       {open ? (
-        <div className="opt-qc__seg" role="group" aria-label="Console mode">
+        <div className="opt-qc__seg" role="group" aria-label="Filter or find results">
           <button
             type="button"
             className={`opt-qc__seg-opt${mode === 'filter' ? ' is-on' : ''}`}

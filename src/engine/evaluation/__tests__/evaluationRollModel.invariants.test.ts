@@ -18,11 +18,11 @@ import { auditFixedLineTiers } from '@/engine/evaluation/evaluation/stepAllocati
 const tiers = () => Object.fromEntries(SUBSTAT_KEYS.map(key => [key, getSbstStepP(key)]))
 const base = () => new Float32Array(ECHO_STAT_STRIDE * 5)
 const ids = Int32Array.from([0, 1, 2, 3, 4])
-const relevantKeys = ['atkPercent', 'atkFlat', 'critRate', 'critDmg']
-// Minimum-line ranking is CR > CD > ATK% > flat ATK, independently of ER.
+const relevantKeys = ['atkPercent', 'atkFlat', 'critRate', 'critDmg', 'heavyAtk']
+// Minimum-value ranking is CR > CD > ATK% > heavy attack > flat ATK, independently of ER.
 const score = (stats: Float32Array) => {
   const totals = sumEncodedStats(stats, ids)
-  return totals.critRate * 10 + totals.critDmg * 2 + totals.atkP + totals.atkF * 0.05
+  return totals.critRate * 10 + totals.critDmg * 2 + totals.atkP + totals.heavy * 0.5 + totals.atkF * 0.05
 }
 const relevantCount = (values: Record<string, number[]>, keys = relevantKeys) => (
   Object.entries(values).reduce((sum, [key, entries]) => (
@@ -61,10 +61,11 @@ describe('native evaluation slot and step budgets', () => {
     expect(REFERENCE_STEP_MODEL.maxStepIncreases).toBe(32)
   })
 
-  it('enforces relevant flats and their mandatory upgrades even when the budget is small', () => {
+  it('requires two copies of the fifth-ranked damage stat, including when it is not flat', () => {
     const catalog = tiers()
     expect(prepareStepAllocator(catalog, [], 32)(base(), 0, score)).toBeNull()
-    expect(prepareStepAllocator(catalog, ['critRate', 'critDmg', 'atkPercent'])(base(), 0, score)).toBeNull()
+    const threeStats = prepareStepAllocator(catalog, ['critRate', 'critDmg', 'atkPercent'])(base(), 0, score)!
+    expect(threeStats.values.atkPercent.length).toBeGreaterThanOrEqual(2)
     expect(prepareStepAllocator(catalog, relevantKeys, 3)(base(), 0, score)).toBeNull()
     const result = prepareStepAllocator(catalog, relevantKeys, 4)(base(), 0, score)!
     expect(Object.values(result.values).flat()).toHaveLength(25)
@@ -75,6 +76,14 @@ describe('native evaluation slot and step budgets', () => {
       expect(values.length).toBeLessThanOrEqual(5)
       if (key !== 'atkFlat') expect(values.every(value => value === catalog[key][0])).toBe(true)
     }
+    const nonflatKeys = ['critRate', 'critDmg', 'atkPercent', 'heavyAtk', 'resonanceLiberation']
+    const nonflatScore = (stats: Float32Array) => {
+      const t = sumEncodedStats(stats, ids)
+      return t.critRate * 10 + t.critDmg * 2 + t.atkP + t.heavy * 0.5 + t.lib * 0.1
+    }
+    const nonflat = prepareStepAllocator(catalog, nonflatKeys)(base(), 0, nonflatScore)!
+    expect(nonflat.values.resonanceLiberation.length).toBeGreaterThanOrEqual(2)
+    expect(nonflat.values.resonanceLiberation.every(value => value >= 9.2)).toBe(true)
   })
 
   it('scores exactly the selected tier totals without accumulating Float32 upgrade drift', () => {
@@ -164,6 +173,28 @@ describe('native evaluation slot and step budgets', () => {
     }
   })
 
+  it('clears a stat lane when refinement moves away its last roll', () => {
+    const mains = base()
+    addStatTotal(mains, 'atkPercent', 36)
+    addStatTotal(mains, 'critDmg', 44)
+    const keys = ['critRate', 'critDmg', 'atkPercent', 'atkFlat', 'resonanceSkill']
+    const mixedScore = (stats: Float32Array) => {
+      const totals = sumEncodedStats(stats, ids)
+      return (1000 + totals.atkP * 2 + totals.atkF * 0.4)
+        * (1 + totals.critRate * 0.003)
+        * (1 + totals.critDmg * 0.0025)
+        * (1 + totals.skill * 0.002)
+    }
+    const result = prepareStepAllocator(tiers(), keys)(mains, 22.8, mixedScore, undefined, true)!
+    const replay = mains.slice()
+    for (const [key, values] of Object.entries(result.values)) {
+      addStatTotal(replay, key, values.reduce((sum, value) => sum + value, 0))
+    }
+    expect(result.values.atkPercent).toEqual([])
+    expect(result.stats).toEqual(replay)
+    expect(result.damage).toBe(mixedScore(replay))
+  })
+
   it('preserves the lowest-key floor when ER consumes the rest of the step budget', () => {
     const catalog = tiers()
     const allocate = prepareStepAllocator(catalog, relevantKeys)
@@ -188,24 +219,23 @@ describe('native evaluation slot and step budgets', () => {
     // Flat ATK ranks first: floor(3 * .29) = 0. ATK% ranks second: floor(7 * .29) = 2.
     expect(result.values.atkFlat.every(value => value === 30)).toBe(true)
     expect(result.values.atkPercent.every(value => value <= 7.9)).toBe(true)
-    // ER leaves no room for CD. The lowest *present* damage key is therefore CR.
+    // ER leaves no room for CD; the required fifth stat still occupies two slots.
     expect(result.values.critDmg).toHaveLength(0)
-    expect(result.values.critRate.length).toBeGreaterThan(0)
-    expect(result.values.critRate.every(value => value >= 8.7)).toBe(true)
+    expect(result.values.heavyAtk.length).toBeGreaterThanOrEqual(2)
+    expect(result.values.heavyAtk.every(value => value >= 9.2)).toBe(true)
     expect(result.values.energyRegen.reduce((sum, value) => sum + value, 0)).toBeGreaterThanOrEqual(35)
     expect(result.stepIncreases).toBeLessThanOrEqual(32)
   })
 
-  it('allows the relevant-flat minimum to span different keys and rounds the lowest floor up', () => {
-    const keys = ['atkFlat', 'hpFlat', 'critRate', 'critDmg']
-    const diminishingFlats = (stats: Float32Array) => {
+  it('requires both copies of the same fifth-ranked stat and rounds its value floor up', () => {
+    const keys = ['atkFlat', 'hpFlat', 'critRate', 'critDmg', 'atkPercent']
+    const rankedScore = (stats: Float32Array) => {
       const t = sumEncodedStats(stats, ids)
-      return t.critRate * 100 + t.critDmg * 20 + Math.min(t.atkF, 30) * 3 + Math.min(t.hpF, 320) * 0.2
+      return t.critRate * 100 + t.critDmg * 20 + t.atkP * 5 + t.atkF * 0.5 + t.hpF * 0.001
     }
-    const result = prepareStepAllocator(tiers(), keys)(base(), 0, diminishingFlats)!
-    expect(result.values.atkFlat.length).toBeGreaterThan(0)
-    expect(result.values.hpFlat.length).toBeGreaterThan(0)
-    // HP ranks last. Every selected HP line must spend ceil(7 / 2) = 4 steps.
+    const result = prepareStepAllocator(tiers(), keys)(base(), 0, rankedScore)!
+    expect(result.values.hpFlat.length).toBeGreaterThanOrEqual(2)
+    // HP ranks fifth. Every selected HP substat must spend ceil(7 / 2) = 4 moves.
     expect(result.values.hpFlat.every(value => value >= 470)).toBe(true)
     expect(result.stepIncreases).toBeLessThanOrEqual(32)
   })

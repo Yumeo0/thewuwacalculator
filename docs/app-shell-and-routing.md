@@ -48,7 +48,7 @@ Settings is now Calibration at `/calibration`; `/settings` redirects to it.
 
 ## Shared Simulation Workspace
 
-[SimulationPage.tsx](../src/modules/simulation/shell/SimulationPage.tsx) owns initialization and providers shared by Simulation tools. Modulation, Showcase, and Optimizer use one persistent parameterized route and [BuildWorkspaceSurface.tsx](../src/modules/simulation/workspace/BuildWorkspaceSurface.tsx), so their roster, rail, and workspace furniture remain mounted while the tool body changes. Rotation uses its own editor surface but the same Simulation provider boundary.
+[SimulationPage.tsx](../src/modules/simulation/shell/SimulationPage.tsx) initializes shared Simulation providers. Modulation, Showcase, and Optimizer use one persistent parameterized route and [BuildWorkspaceSurface.tsx](../src/modules/simulation/workspace/BuildWorkspaceSurface.tsx), so the roster, quick-action rail, and shared build controls stay mounted when the active tool changes. Rotation has a separate editor under the same providers.
 
 Route chunks preserve lazy loading and prewarm tool modules on navigation intent.
 
@@ -69,7 +69,7 @@ Primary files:
 - [src/app/shell/ChromeHeader.tsx](../src/app/shell/ChromeHeader.tsx)
 - [src/application/navigation/appIndex.ts](../src/application/navigation/appIndex.ts)
 
-`AppLayout` is the single route layout and owns global hosts, route effects, the roster aperture, and the outlet. `ChromeHeader` owns only the header UI. The header always presents Simulation tools directly. Docs, Guides, Changelog, Calibration, Privacy, and Terms are in the Read dropdown on every route. Home is the front door. Hidden legacy pages are never added to the authored navigation index.
+`AppLayout` provides the route layout, global overlays, route effects, roster display area, and page outlet. `ChromeHeader` renders the header. The header links directly to Simulation tools and puts Docs, Guides, Changelog, Calibration, Privacy, and Terms in the Read dropdown. Home is the root page. Hidden legacy pages are excluded from navigation.
 
 ## Related Docs
 

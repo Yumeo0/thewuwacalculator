@@ -104,7 +104,7 @@ function SelectionRead({ read }: { read?: FltnSelRead }) {
   const idle = count === 0
 
   return (
-    <div className="selection-focus-actions__read" data-idle={idle ? 'true' : undefined}>
+    <div className="sfa__read" data-idle={idle ? 'true' : undefined}>
       <b>{idle ? 'Nothing picked' : `${count} ${count === 1 ? read?.one : read?.many}`}</b>
       {idle ? null : <em>selected</em>}
     </div>
@@ -154,7 +154,7 @@ function FltnSelCtnsH({ session }: { session: RgstFltnSelS | null }) {
       {session ? (
         <motion.div
           key={session.key}
-          ref={actionsRef} className="app-popup selection-focus-actions"
+          ref={actionsRef} className="app-popup sfa"
           data-state="open"
           role="toolbar"
           aria-label={session.ariaLabel ?? 'Selection actions'}
@@ -173,24 +173,24 @@ function FltnSelCtnsH({ session }: { session: RgstFltnSelS | null }) {
         >
           <SelectionRead read={session.readout} />
 
-          <div className="selection-focus-actions__cells">
+          <div className="sfa__cells">
             {session.groups.filter((group) => group.length > 0).map((group, groupIndex) => (
               <Fragment key={`${session.key}:group:${groupIndex}`}>
                 {groupIndex > 0 ? (
-                  <span className="selection-focus-actions__gap" aria-hidden="true" />
+                  <span className="sfa__gap" aria-hidden="true" />
                 ) : null}
                 {group.map((action, wellIndex) => (
                   <button
                     key={action.id}
-                    type="button" className="selection-focus-actions__item"
+                    type="button" className="sfa__item"
                     style={{ '--well-index': groupIndex * 4 + wellIndex } as CssProps}
                     data-danger={action.danger ? 'true' : undefined}
                     title={action.title}
                     disabled={action.disabled}
                     onClick={action.onSelect}
                   >
-                    {action.icon ? <span className="selection-focus-actions__icon">{action.icon}</span> : null}
-                    <span className="selection-focus-actions__label">{action.label}</span>
+                    {action.icon ? <span className="sfa__icon">{action.icon}</span> : null}
+                    <span className="sfa__label">{action.label}</span>
                   </button>
                 ))}
               </Fragment>

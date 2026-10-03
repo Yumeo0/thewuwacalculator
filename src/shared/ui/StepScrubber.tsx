@@ -4,7 +4,7 @@
                set state controls.
 */
 
-import './StepScrubber.css'
+import '@/styles/legacy/shared/step-scrubber.css'
 import { motion } from 'motion/react'
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { AnchoredAppPopup } from '@/shared/ui/AppPopup'

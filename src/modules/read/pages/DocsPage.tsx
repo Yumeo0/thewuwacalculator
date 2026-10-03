@@ -29,6 +29,7 @@ import { getTuneLevel } from '@/engine/formulas/tuneRupture'
 import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay'
 import { CllpPageHeyf } from '@/shared/ui/CollapsiblePageHero'
 import { AnchoredAppPopup, useAppPopupDismiss } from '@/shared/ui/AppPopup'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
 const secAnchorId = (sectionId: string) => `doc-s-${sectionId}`
@@ -374,14 +375,14 @@ const SUGGESTION_SPACE = {
       evalCalls: 83_520,
       recipeEvaluations: 9_280,
       poolSize: 18,
-      detail: 'same 9,280 recipes, rescored across 9 stored rotation contexts',
+      detail: 'the same 9,280 main-stat combinations, scored across 9 rotation damage events',
     },
     setPlans: {
       evalCalls: 9_234,
       candidatePlans: 991,
       partialBaselines: 34,
       totalDamageCalls: 1_026,
-      detail: 'same 1,026 plan evaluations, rescored across 9 stored rotation contexts',
+      detail: 'the same 1,026 Sonata plan evaluations, scored across 9 rotation damage events',
     },
     contextCount: 9,
   },
@@ -482,10 +483,10 @@ function SearchSpace() {
     ? (isSuggestions ? 'widest suggestion workload' : 'widest search space')
     : `${factor >= 10 ? Math.round(factor) : factor.toFixed(1)}× smaller than the widest`
   const ctxN = SUGGESTION_SPACE[objective].contextCount
-  const acrossRot = ctxN > 1 ? `, rescored across ${ctxN} rotation steps` : ''
+  const acrossRot = ctxN > 1 ? `, scored across ${ctxN} rotation damage events` : ''
   const suggestionMeta = suggestMode === 'mainStats'
-    ? `${suggestMainEntry.recipeEvaluations.toLocaleString()} main-stat mixes${acrossRot}`
-    : `${suggestSetEntry.totalDamageCalls.toLocaleString()} set splits${acrossRot}`
+    ? `${suggestMainEntry.recipeEvaluations.toLocaleString()} main-stat combinations${acrossRot}`
+    : `${suggestSetEntry.totalDamageCalls.toLocaleString()} Sonata plan evaluations${acrossRot}`
   const meta = isSuggestions
     ? suggestionMeta
     : (
@@ -502,7 +503,7 @@ function SearchSpace() {
     <div className="docs-space">
       <div className="docs-space__levers">
         <SpaceLever
-          label="Route"
+          label="Tool"
           options={[{ id: 'optimizer', text: 'Optimizer' }, { id: 'suggestions', text: 'Suggestions' }]}
           value={route}
           onPick={(id) => setRoute(id as SpaceRoute)}
@@ -516,7 +517,7 @@ function SearchSpace() {
               onPick={(id) => setObjective(id as SuggestObjective)}
             />
             <SpaceLever
-              label="Pass"
+              label="Suggestion type"
               options={[{ id: 'mainStats', text: 'Main Stats' }, { id: 'setPlans', text: 'Set Plans' }]}
               value={suggestMode}
               onPick={(id) => setSuggestMode(id as SuggestMode)}
@@ -536,7 +537,7 @@ function SearchSpace() {
           value={optObjective}
           onPick={(id) => setOptObjective(id as 'single' | 'rotation')}
           disabled={!isTheory}
-          note={!isTheory ? 'same' : undefined}
+          note={!isTheory ? 'Does not change Inventory count' : undefined}
         />
         <SpaceLever
           label="Engine"
@@ -544,7 +545,7 @@ function SearchSpace() {
           value={engine}
           onPick={(id) => setEngine(id as SpaceEngine)}
           disabled={isTheory}
-          note={isTheory ? 'same' : undefined}
+          note={isTheory ? 'Does not change Theory count' : undefined}
         />
         <SpaceLever
           label="Main-stat filter"
@@ -552,7 +553,7 @@ function SearchSpace() {
           value={isTheory ? 'on' : filter}
           onPick={(id) => setFilter(id as SpaceFilter)}
           disabled={isTheory}
-          note={isTheory ? 'uses optimal filter' : undefined}
+          note={isTheory ? 'Chosen automatically for Theory' : undefined}
         />
           </>
         )}
@@ -600,9 +601,9 @@ function SearchSpace() {
 }
 
 const INSTRUMENT_META: Record<Exclude<DocTopic['instrument'], 'none'>, { title: string, hint: string }> = {
-  anchorScale: { title: 'Anchor scale', hint: 'Drag to read damage → percent → grade' },
-  stackRamp: { title: 'Stack ramp', hint: 'Pick an effect, drag to add stacks' },
-  searchSpace: { title: 'Decade meter', hint: 'Flip the levers, watch the space carve down' },
+  anchorScale: { title: 'Build score scale', hint: 'Drag to see how damage changes the score and grade' },
+  stackRamp: { title: 'Negative-effect stacks', hint: 'Pick an effect, then drag to change its stack count' },
+  searchSpace: { title: 'Search-size comparison', hint: 'Change search settings to compare candidate counts' },
 }
 
 function Instrument({ topic }: { topic: DocTopic }) {
@@ -1022,12 +1023,12 @@ export function DocsPage() {
       />
 
       <div className="docs-console">
-        <div ref={searchRef} className="guide-search" role="search">
-          <div className="guide-search__field" data-open={popoverOpen || undefined}>
-            <Search size="1rem" className="guide-search__icon" aria-hidden="true" />
+        <div ref={searchRef} className="gd-search" role="search">
+          <div className="gd-search__field" data-open={popoverOpen || undefined}>
+            <Search size="1rem" className="gd-search__icon" aria-hidden="true" />
             <input
               ref={inputRef}
-              type="search" className="guide-search__input"
+              type="search" className="gd-search__input"
               value={query}
               placeholder="search methods"
               autoComplete="off"
@@ -1039,7 +1040,7 @@ export function DocsPage() {
               aria-controls="docs-search-popover"
               aria-autocomplete="list"
             />
-            <span className="guide-search__shortcut" aria-hidden="true">/</span>
+            <span className="gd-search__shortcut" aria-hidden="true">/</span>
           </div>
           <AnchoredAppPopup
             visible={popoverOpen}
@@ -1047,12 +1048,12 @@ export function DocsPage() {
             popupRef={popupRef}
             anchorWidth="exact"
             maxHeight={448}
-            id="docs-search-popover" className="guide-search__popover"
+            id="docs-search-popover" className="gd-search__popover"
             open={popoverOpen}
             role="listbox"
           >
               {hits.length === 0 ? (
-                <div className="guide-search__empty">no matches for &quot;{query.trim()}&quot;</div>
+                <div className="gd-search__empty">no matches for &quot;{query.trim()}&quot;</div>
               ) : hits.map((hit, i) => {
                 const isActive = i === safeSelNdx
                 const before = hit.display.slice(0, hit.matchStart)
@@ -1061,7 +1062,7 @@ export function DocsPage() {
                 return (
                   <button
                     key={`${hit.topicId}-${hit.sectionId ?? ''}-${hit.kind}-${i}`}
-                    type="button" className="guide-search__hit"
+                    type="button" className="gd-search__hit"
                     data-active={isActive || undefined}
                     role="option"
                     aria-selected={isActive}
@@ -1069,11 +1070,11 @@ export function DocsPage() {
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => selectHit(hit)}
                   >
-                    <span className="guide-search__badge">{hit.kind}</span>
-                    <span className="guide-search__title">
-                      {before}{match ? <mark className="guide-search__mark">{match}</mark> : null}{after}
+                    <span className="gd-search__badge">{hit.kind}</span>
+                    <span className="gd-search__title">
+                      {before}{match ? <mark className="gd-search__mark">{match}</mark> : null}{after}
                     </span>
-                    <span className="guide-search__crumb">{hit.crumb}</span>
+                    <span className="gd-search__crumb">{hit.crumb}</span>
                   </button>
                 )
               })}
@@ -1088,6 +1089,22 @@ export function DocsPage() {
       </div>
 
       <div className="docs-shell">
+        <ContextTrigger
+          asChild
+          ariaLabel={`${topic.title} method actions`}
+          getItems={(event) => {
+            const target = event.target
+            if (target instanceof Element && target.closest('button, input, select, textarea, a, [role="slider"]')) return []
+            return [
+              { id: 'docs:previous', label: 'Previous method', icon: <ChevronLeft size="1em" />, disabled: activeIdx === 0, onSelect: () => cycle(-1) },
+              { id: 'docs:next', label: 'Next method', icon: <ChevronRight size="1em" />, disabled: activeIdx === docTopics.length - 1, onSelect: () => cycle(1) },
+              { id: 'docs:sections', label: 'On this page...', submenu: topic.sections.map((section) => ({
+                id: `docs:section:${section.id}`, label: section.title,
+                onSelect: () => jumpTo(secAnchorId(section.id)),
+              })) },
+            ]
+          }}
+        >
         <article className="docs-method" role="tabpanel" aria-label={topic.title}>
           <header className="docs-method__head">
             <span className="docs-method__kicker">
@@ -1107,6 +1124,7 @@ export function DocsPage() {
             </footer>
           </div>
         </article>
+        </ContextTrigger>
 
         <aside className="docs-side">
           <div className="docs-side__sticky">

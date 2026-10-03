@@ -39,13 +39,13 @@ function TuneSlider({
   const current = value ?? local
   const fill = ((current - min) / (max - min)) * 100
   return (
-    <label className="workspace-tune-ctl">
-      <span className="workspace-tune-ctl-head">
-        <span className="workspace-tune-ctl-label">{label}</span>
-        <span className="workspace-tune-ctl-val">{current}{suffix}</span>
+    <label className="wk-tune-ctl">
+      <span className="wk-tune-ctl-head">
+        <span className="wk-tune-ctl-label">{label}</span>
+        <span className="wk-tune-ctl-val">{current}{suffix}</span>
       </span>
       <input
-        type="range" className="workspace-tune-range"
+        type="range" className="wk-tune-range"
         min={min}
         max={max}
         step={step}
@@ -76,12 +76,12 @@ function TuneSwatch({
   const [local, setLocal] = useState(defaultColor ?? value ?? '#888888')
   const current = value ?? local
   return (
-    <div className="workspace-tune-ctl workspace-tune-ctl--row">
-      <span className="workspace-tune-ctl-label">{label}</span>
-      <span className="workspace-tune-swatch">
-        <span className="workspace-tune-hex">{current.toUpperCase()}</span>
+    <div className="wk-tune-ctl wk-tune-ctl--row">
+      <span className="wk-tune-ctl-label">{label}</span>
+      <span className="wk-tune-swatch">
+        <span className="wk-tune-hex">{current.toUpperCase()}</span>
         <input
-          type="color" className="workspace-tune-color"
+          type="color" className="wk-tune-color"
           value={current}
           onChange={(event) => {
             const next = event.target.value
@@ -136,22 +136,22 @@ function TuneFont({
   }
 
   return (
-    <div className="workspace-tune-ctl">
-      <span className="workspace-tune-ctl-head">
-        <span className="workspace-tune-ctl-label">{label}</span>
-        {display ? <span className="workspace-tune-ctl-val" style={{ fontFamily: `'${display}', ${fallback}` }}>{display}</span> : null}
+    <div className="wk-tune-ctl">
+      <span className="wk-tune-ctl-head">
+        <span className="wk-tune-ctl-label">{label}</span>
+        {display ? <span className="wk-tune-ctl-val" style={{ fontFamily: `'${display}', ${fallback}` }}>{display}</span> : null}
       </span>
       <input
         type="text"
         inputMode="url"
-        className={`workspace-tune-input${invalid ? ' is-invalid' : ''}`}
+        className={`wk-tune-input${invalid ? ' is-invalid' : ''}`}
         value={url}
         placeholder="Paste Google Fonts link"
         spellCheck={false}
         onChange={(event) => handle(event.target.value)}
         aria-label={`${label} font link`}
       />
-      {invalid ? <span className="workspace-tune-hint">Not a fonts.googleapis.com link</span> : null}
+      {invalid ? <span className="wk-tune-hint">Not a fonts.googleapis.com link</span> : null}
     </div>
   )
 }
@@ -190,8 +190,8 @@ function TextStyleEditor({
   }
 
   return (
-    <div className="workspace-tune-slots-w">
-      <div className="workspace-tune-slots" role="tablist" aria-label="Text type">
+    <div className="wk-tune-slots-w">
+      <div className="wk-tune-slots" role="tablist" aria-label="Text type">
         {TEXT_SLOT_META.map((entry) => (
           <button
             key={entry.key}
@@ -199,7 +199,7 @@ function TextStyleEditor({
             role="tab"
             aria-selected={active === entry.key}
             data-on={active === entry.key ? 'true' : undefined}
-            data-set={slots[entry.key] ? 'true' : undefined} className="workspace-tune-slot"
+            data-set={slots[entry.key] ? 'true' : undefined} className="wk-tune-slot"
             onClick={() => setActive(entry.key)}
           >
             {entry.label}
@@ -249,7 +249,7 @@ function TextStyleEditor({
         onChange={(value) => patch({ transform: value })}
       />
       {slots[active] ? (
-        <button type="button" className="workspace-tune-slot-clear" onClick={clear}>
+        <button type="button" className="wk-tune-slot-clear" onClick={clear}>
           Reset {meta.label.toLowerCase()}
         </button>
       ) : null}
@@ -267,7 +267,7 @@ function TuneTextarea({
   onChange: (value: string) => void
 }) {
   return (
-    <textarea className="workspace-tune-textarea"
+    <textarea className="wk-tune-textarea"
       value={value}
       placeholder={placeholder}
       spellCheck={false}
@@ -281,15 +281,15 @@ function TuneTextarea({
 function TuneGroup({ title, actions, children }: { title: string; actions?: ReactNode; children: ReactNode }) {
   return (
     <Expandable
-      as="section" className="workspace-tune-group"
-      triggerClass="workspace-tune-grouptoggle"
-      chevronClass="workspace-tune-caret"
+      as="section" className="wk-tune-group"
+      triggerClass="wk-tune-grouptoggle"
+      chevronClass="wk-tune-caret"
       chevronSize={13}
-      innerClass="workspace-tune-groupbody"
+      innerClass="wk-tune-groupbody"
       noHeaderWrap
-      header={<span className="workspace-tune-eyebrow">{title}</span>}
+      header={<span className="wk-tune-eyebrow">{title}</span>}
     >
-      {actions ? <div className="workspace-tune-groupactions">{actions}</div> : null}
+      {actions ? <div className="wk-tune-groupactions">{actions}</div> : null}
       {children}
     </Expandable>
   )
@@ -346,11 +346,11 @@ function TuneIdentityDraft({
   }, [initialId, initialUid, setIdentity])
 
   return (
-    <div className="workspace-tune-ident">
-      <label className="workspace-tune-ident-field">
-        <span className="workspace-tune-ident-label">Player</span>
+    <div className="wk-tune-ident">
+      <label className="wk-tune-ident-field">
+        <span className="wk-tune-ident-label">Player</span>
         <input
-          type="text" className="workspace-tune-input"
+          type="text" className="wk-tune-input"
           id="showcase-player-id"
           placeholder="Name"
           value={draft.id}
@@ -358,10 +358,10 @@ function TuneIdentityDraft({
           onBlur={commit}
         />
       </label>
-      <label className="workspace-tune-ident-field">
-        <span className="workspace-tune-ident-label">UID</span>
+      <label className="wk-tune-ident-field">
+        <span className="wk-tune-ident-label">UID</span>
         <input
-          type="text" className="workspace-tune-input"
+          type="text" className="wk-tune-input"
           id="showcase-player-uid"
           inputMode="numeric"
           placeholder="500295087"
@@ -376,7 +376,7 @@ function TuneIdentityDraft({
 
 function GroupActionBtn({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
   return (
-    <button type="button" className="workspace-tune-edit" onClick={onClick} title={label} aria-label={label}>
+    <button type="button" className="wk-tune-edit" onClick={onClick} title={label} aria-label={label}>
       {icon}
       <span>{label}</span>
     </button>
@@ -397,10 +397,10 @@ function TuneCreditField({
   onChange: (value: string) => void
 }) {
   return (
-    <div className="workspace-tune-credit">
+    <div className="wk-tune-credit">
       <TuneToggle label={label} on={on} onChange={onToggle} />
       <input
-        type="text" className="workspace-tune-input"
+        type="text" className="wk-tune-input"
         placeholder="@artist or source"
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -414,14 +414,14 @@ function TuneCreditField({
 function TuneToggle({ label, on, onChange }: { label: string; on: boolean; onChange: () => void }) {
   return (
     <button
-      type="button" className="workspace-tune-toggle"
+      type="button" className="wk-tune-toggle"
       role="switch"
       aria-checked={on}
       data-on={on ? 'true' : undefined}
       onClick={onChange}
     >
-      <span className="workspace-tune-toggle-label">{label}</span>
-      <span className="workspace-tune-switch" aria-hidden="true"><i /></span>
+      <span className="wk-tune-toggle-label">{label}</span>
+      <span className="wk-tune-switch" aria-hidden="true"><i /></span>
     </button>
   )
 }
@@ -438,13 +438,13 @@ function TuneSegment<T extends string>({
   onChange: (value: T) => void
 }) {
   return (
-    <div className="workspace-tune-segment">
-      <span className="workspace-tune-segment-label">{label}</span>
-      <div className="workspace-tune-segment-track" role="radiogroup" aria-label={label}>
+    <div className="wk-tune-segment">
+      <span className="wk-tune-segment-label">{label}</span>
+      <div className="wk-tune-segment-track" role="radiogroup" aria-label={label}>
         {options.map((opt) => (
           <button
             key={opt.value}
-            type="button" className="workspace-tune-segment-opt"
+            type="button" className="wk-tune-segment-opt"
             role="radio"
             aria-checked={value === opt.value}
             data-on={value === opt.value ? 'true' : undefined}
@@ -470,16 +470,16 @@ function TuneAsset({
   onPick: () => void
 }) {
   return (
-    <div className="workspace-tune-asset">
-      <span className="workspace-tune-thumb"
+    <div className="wk-tune-asset">
+      <span className="wk-tune-thumb"
         style={imageUrl ? { backgroundImage: `url("${imageUrl}")`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
         aria-hidden="true"
       />
-      <span className="workspace-tune-asset-copy">
-        <strong className="workspace-tune-asset-name">{name}</strong>
-        <span className="workspace-tune-asset-hint">{imageUrl ? 'Custom' : hint}</span>
+      <span className="wk-tune-asset-copy">
+        <strong className="wk-tune-asset-name">{name}</strong>
+        <span className="wk-tune-asset-hint">{imageUrl ? 'Custom' : hint}</span>
       </span>
-      <button type="button" className="workspace-tune-asset-btn" onClick={onPick}>
+      <button type="button" className="wk-tune-asset-btn" onClick={onPick}>
         {imageUrl ? 'Change' : 'Add'}
       </button>
     </div>
@@ -589,7 +589,7 @@ export function ShowcaseCustomizePanel({
   const [baseTypeResetKey, setBaseTypeResetKey] = useState(0)
   const openImport = () => fileInputRef.current?.click()
   return (
-    <aside className="workspace-card workspace-card--mod workspace-tune"
+    <aside className="wk-card wk-card--mod wk-tune"
       data-docked={docked ? 'true' : undefined}
       data-open={docked && drawerOpen ? 'true' : undefined}
       data-phase={surfacePhase === 'idle' ? undefined : surfacePhase}
@@ -597,7 +597,7 @@ export function ShowcaseCustomizePanel({
     >
       {docked ? (
         <button
-          type="button" className="workspace-tune-handle"
+          type="button" className="wk-tune-handle"
           onClick={onToggleDrawer}
           aria-expanded={drawerOpen}
           aria-label={drawerOpen ? 'Hide controls' : 'Show controls'}
@@ -605,18 +605,18 @@ export function ShowcaseCustomizePanel({
           <SlidersHorizontal size="1em" aria-hidden="true" />
         </button>
       ) : null}
-      <header className="workspace-tune-head">
-        <span className="workspace-tune-headline">
-          <span className="workspace-tune-title">Customize</span>
-          <span className="workspace-tune-sub">Do what you gotta do.</span>
+      <header className="wk-tune-head">
+        <span className="wk-tune-headline">
+          <span className="wk-tune-title">Customize</span>
+          <span className="wk-tune-sub">Do what you gotta do.</span>
         </span>
-        <button type="button" className="workspace-tune-reset" onClick={onReset}>
+        <button type="button" className="wk-tune-reset" onClick={onReset}>
           <RotateCcw aria-hidden="true" size="0.75rem" />
           Reset
         </button>
       </header>
 
-      <div className="workspace-tune-fixed">
+      <div className="wk-tune-fixed">
         <TuneSegment
           label="Card"
           value={layout}
@@ -629,7 +629,7 @@ export function ShowcaseCustomizePanel({
         <TuneIdentity />
       </div>
 
-      <div className="workspace-tune-body">
+      <div className="wk-tune-body">
         <TuneGroup
           title="Show"
           actions={(
@@ -657,7 +657,7 @@ export function ShowcaseCustomizePanel({
           ) : null}
           <TuneToggle label="Site credit" on={!hidden.brand} onChange={() => onToggleHidden('brand')} />
           {layout === 'seal' ? (
-            <span className="workspace-tune-note">Seal always shows the build score, damage, crit value, chains and team.</span>
+            <span className="wk-tune-note">Seal always shows the build score, damage, crit value, chains and team.</span>
           ) : null}
           <TuneSegment
             label="Stat values"
@@ -669,7 +669,7 @@ export function ShowcaseCustomizePanel({
             ]}
             onChange={(value) => onStyleChange({ statsColumn: value })}
           />
-          <span className="workspace-tune-subhead">Artist credits</span>
+          <span className="wk-tune-subhead">Artist credits</span>
           <TuneCreditField
             label="Portrait artist"
             on={!hidden.portraitCredit}
@@ -691,7 +691,7 @@ export function ShowcaseCustomizePanel({
           actions={
             <>
               <button
-                type="button" className="workspace-tune-edit"
+                type="button" className="wk-tune-edit"
                 data-on={editMode === 'portrait' ? 'true' : undefined}
                 onClick={() => onEdit('portrait')}
               >
@@ -708,12 +708,12 @@ export function ShowcaseCustomizePanel({
               <TuneSlider label="Offset X" min={-100} max={200} value={portraitX} onChange={(v) => onStyleChange({ portraitX: v })} />
               <TuneSlider label="Offset Y" min={-100} max={200} value={portraitY} onChange={(v) => onStyleChange({ portraitY: v })} />
               <TuneSlider label="Scale" value={portraitScale} onChange={(v) => onStyleChange({ portraitScale: v })} />
-              <span className="workspace-tune-subhead">Edge fade</span>
+              <span className="wk-tune-subhead">Edge fade</span>
               <TuneSlider label="Fade top" value={maskTop} onChange={(v) => onStyleChange({ maskTop: v })} />
               <TuneSlider label="Fade right" value={maskRight} onChange={(v) => onStyleChange({ maskRight: v })} />
               <TuneSlider label="Fade bottom" value={maskBottom} onChange={(v) => onStyleChange({ maskBottom: v })} />
               <TuneSlider label="Fade left" value={maskLeft} onChange={(v) => onStyleChange({ maskLeft: v })} />
-              <span className="workspace-tune-subhead">Edge sharpness</span>
+              <span className="wk-tune-subhead">Edge sharpness</span>
               <TuneSlider label="Sharp top" value={maskTopSharp} onChange={(v) => onStyleChange({ maskTopSharp: v })} />
               <TuneSlider label="Sharp right" value={maskRightSharp} onChange={(v) => onStyleChange({ maskRightSharp: v })} />
               <TuneSlider label="Sharp bottom" value={maskBottomSharp} onChange={(v) => onStyleChange({ maskBottomSharp: v })} />
@@ -727,7 +727,7 @@ export function ShowcaseCustomizePanel({
           actions={
             <>
               <button
-                type="button" className="workspace-tune-edit"
+                type="button" className="wk-tune-edit"
                 data-on={editMode === 'backdrop' ? 'true' : undefined}
                 onClick={() => onEdit('backdrop')}
               >
@@ -779,7 +779,7 @@ export function ShowcaseCustomizePanel({
           <TuneFont key={`display-${baseTypeResetKey}`} label="Display" fallback="sans-serif" onApply={(stack) => onStyleChange({ displayFont: stack })} />
           <TuneFont key={`mono-${baseTypeResetKey}`} label="Mono" fallback="monospace" onApply={(stack) => onStyleChange({ monoFont: stack })} />
           <TuneSwatch label="Text color" value={text} onChange={(v) => onStyleChange({ text: v })} />
-          <span className="workspace-tune-note">Card-wide defaults. Use Per-text styles below to override a single type.</span>
+          <span className="wk-tune-note">Card-wide defaults. Use Per-text styles below to override a single type.</span>
         </TuneGroup>
 
         <TuneGroup
@@ -809,23 +809,23 @@ export function ShowcaseCustomizePanel({
           }
         >
           {docked ? (
-            <span className="workspace-tune-note">Editing in the side panel; collapse to bring it back here.</span>
+            <span className="wk-tune-note">Editing in the side panel; collapse to bring it back here.</span>
           ) : (
             <>
               <TuneTextarea
                 value={customCss}
-                placeholder={'.showcase-grade-score {\n  color: gold;\n}'}
+                placeholder={'.sc-grade-score {\n  color: gold;\n}'}
                 onChange={(value) => onStyleChange({ customCss: value || null })}
               />
-              <span className="workspace-tune-note">You know what to do..</span>
+              <span className="wk-tune-note">You know what to do..</span>
             </>
           )}
         </TuneGroup>
       </div>
 
-      <div className="workspace-tune-actions">
+      <div className="wk-tune-actions">
         <button
-          type="button" className="workspace-tune-cap workspace-tune-cap--primary"
+          type="button" className="wk-tune-cap wk-tune-cap--primary"
           disabled={capturing || editMode != null}
           onClick={() => onCapture('download')}
           title={captureAction === 'download' ? 'Capturing' : 'Capture'}
@@ -834,7 +834,7 @@ export function ShowcaseCustomizePanel({
           <TbCameraDown aria-hidden="true" size="1.5em" />
         </button>
         <button
-          type="button" className="workspace-tune-cap"
+          type="button" className="wk-tune-cap"
           disabled={capturing || editMode != null}
           onClick={() => onCapture('clipboard')}
           title="Copy to clipboard"
@@ -843,7 +843,7 @@ export function ShowcaseCustomizePanel({
           <Clipboard aria-hidden="true" size="1.5em" />
         </button>
         <button
-          type="button" className="workspace-tune-cap"
+          type="button" className="wk-tune-cap"
           onClick={openImport}
           title="Import card or group file"
           aria-label="Import card settings"
@@ -851,7 +851,7 @@ export function ShowcaseCustomizePanel({
           <Upload aria-hidden="true" size="1.5em" />
         </button>
         <button
-          type="button" className="workspace-tune-cap"
+          type="button" className="wk-tune-cap"
           onClick={() => onExport('all')}
           title="Export everything to JSON"
           aria-label="Export all card settings"

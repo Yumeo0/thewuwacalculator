@@ -198,7 +198,7 @@ function FloatingHero({
 
   return (
     <motion.button
-      type="button" className="floating-page-hero"
+      type="button" className="fph"
       onClick={onActivate}
       aria-label={ariaLabel || 'Scroll to top'}
       style={top !== undefined ? { top } : undefined}
@@ -209,13 +209,13 @@ function FloatingHero({
       whileHover={{ y: 2 }}
       whileTap={{ scale: 0.97 }}
     >
-      <span className="floating-page-hero__indicator" aria-hidden="true" />
+      <span className="fph__indicator" aria-hidden="true" />
 
       {eyebrowChars ? (
-        <span className="floating-page-hero__eyebrow" aria-hidden="true">
+        <span className="fph__eyebrow" aria-hidden="true">
           {eyebrowChars.map((ch, i) => (
             <motion.span
-              key={`e-${i}`} className="floating-page-hero__char"
+              key={`e-${i}`} className="fph__char"
               initial={{ opacity: 0, y: -10, rotateX: -80, filter: 'blur(6px)' }}
               animate={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
               exit={{ opacity: 0, y: -6, filter: 'blur(4px)', transition: { duration: 0.14 } }}
@@ -230,14 +230,14 @@ function FloatingHero({
           ))}
         </span>
       ) : eyebrow ? (
-        <span className="floating-page-hero__eyebrow">{eyebrow}</span>
+        <span className="fph__eyebrow">{eyebrow}</span>
       ) : null}
 
       {titleChars ? (
-        <span className="floating-page-hero__title" aria-hidden="true">
+        <span className="fph__title" aria-hidden="true">
           {titleChars.map((ch, i) => (
             <motion.span
-              key={`t-${i}`} className="floating-page-hero__char floating-page-hero__char--title"
+              key={`t-${i}`} className="fph__char fph__char--title"
               initial={{ opacity: 0, y: -14, rotateX: -85, filter: 'blur(8px)' }}
               animate={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
               exit={{ opacity: 0, y: -8, filter: 'blur(6px)', transition: { duration: 0.16 } }}
@@ -252,10 +252,10 @@ function FloatingHero({
           ))}
         </span>
       ) : (
-        <span className="floating-page-hero__title">{title}</span>
+        <span className="fph__title">{title}</span>
       )}
 
-      <motion.span className="floating-page-hero__seal"
+      <motion.span className="fph__seal"
         aria-hidden="true"
         initial={{ opacity: 0, x: 8 }}
         animate={{ opacity: 1, x: 0 }}

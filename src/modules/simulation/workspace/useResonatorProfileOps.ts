@@ -12,6 +12,7 @@ import {
   makeProfileClip,
   readProfClip,
   writeProfClip,
+  type ProfileClipPay,
 } from '@/modules/simulation/workspace/profileClipboard.ts'
 import { useConfirm } from '@/shared/hooks/useConfirmation.ts'
 import { useTstStr } from '@/shared/util/toastStore.ts'
@@ -30,7 +31,7 @@ export interface ResonatorProfileOps {
   copy: (resonatorIds: string[]) => Promise<boolean>
   remove: (resonatorIds: string[], copy?: ResonatorRemoveCopy) => void
   cut: (resonatorIds: string[]) => Promise<void>
-  paste: () => Promise<void>
+  paste: (clipboardPayload?: ProfileClipPay) => Promise<void>
 }
 
 export function useResonatorProfileOps(roster: BuildRosterEntry[]): ResonatorProfileOps {
@@ -132,8 +133,8 @@ export function useResonatorProfileOps(roster: BuildRosterEntry[]): ResonatorPro
     })
   }, [copy, remove])
 
-  const paste = useCallback(async () => {
-    const payload = await readProfClip()
+  const paste = useCallback(async (clipboardPayload?: ProfileClipPay) => {
+    const payload = clipboardPayload ?? await readProfClip()
     if (!payload) {
       showToast({
         content: 'Clipboard does not contain a resonator profile.',

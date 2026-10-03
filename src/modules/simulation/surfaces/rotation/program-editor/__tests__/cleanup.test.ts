@@ -16,6 +16,7 @@ import type {
   NodeGate,
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import type { DataSrcRef } from '@/domain/gameData/contracts.ts'
+import type { RtChng } from '@/domain/gameData/contracts.ts'
 import {
   applyRotationCleanup,
   cleanupCounts,
@@ -117,6 +118,41 @@ function ids(sections: EditorSection[]): string[] {
   return out
 }
 
+function duplicateSetterPair(id: string, paths = ['realm.a', 'realm.b']): EditorNode[] {
+  const changes: RtChng[] = paths.map((path) => ({
+    type: 'set', path, value: false, resonatorId: 'res-a',
+  }))
+  const attached = changes.map((change, index) => ({
+    id: `${id}:attached:${index}`,
+    type: 'condition' as const,
+    resonatorId: 'res-a',
+    changes: [change],
+  }))
+  const feature = {
+    ...step(id),
+    changes,
+    sourceNode: {
+      id,
+      type: 'feature' as const,
+      resonatorId: 'res-a',
+      featureId: id,
+      attached: { conditions: attached, features: [] },
+    },
+  }
+  const persistent = changes.map((change, index) => ({
+    ...condition(`${id}:persistent:${index}`),
+    path: change.path,
+    change,
+    sourceNode: {
+      id: `${id}:persistent:${index}`,
+      type: 'condition' as const,
+      resonatorId: 'res-a',
+      changes: [change],
+    },
+  }))
+  return [feature, ...persistent.reverse()]
+}
+
 describe('planning a rotation sweep', () => {
   it('takes the rows the last run left doing nothing, and nothing else', () => {
     const sections = section([
@@ -138,7 +174,7 @@ describe('planning a rotation sweep', () => {
       { id: 'unresolved', reason: 'dead' },
       { id: 'handed-to-itself', reason: 'inert' },
     ])
-    expect(cleanupCounts(plan)).toEqual({ inert: 2, dead: 2, total: 4 })
+    expect(cleanupCounts(plan)).toEqual({ inert: 2, dead: 2, redundant: 0, total: 4 })
   })
 
   it('reads rows inside blocks, and never the blocks themselves', () => {
@@ -201,7 +237,7 @@ describe('planning a rotation sweep', () => {
     const plan = planRotationCleanup(section([step('fresh'), condition('fresh-write')]))
 
     expect(plan.targets).toEqual([])
-    expect(cleanupCounts(plan)).toEqual({ inert: 0, dead: 0, total: 0 })
+    expect(cleanupCounts(plan)).toEqual({ inert: 0, dead: 0, redundant: 0, total: 0 })
   })
 
   it('reads attached rows and every stored loop pass once', () => {
@@ -289,6 +325,96 @@ describe('planning a rotation sweep', () => {
       { id: 'missing-weapon', reason: 'dead' },
     ])
   })
+
+  it('hoists matching persistent setters and removes the attached copies', () => {
+    const sections = section(duplicateSetterPair('outro'))
+    const inert = sections[0]?.children[1]
+    if (inert?.type === 'condition') {
+      sections[0]!.children[1] = { ...inert, gate: { kind: 'inert' } }
+    }
+    const plan = planRotationCleanup(sections)
+
+    expect(plan.targets).toEqual([{
+      id: 'outro',
+      reason: 'redundant',
+      followingConditionIds: ['outro:persistent:1', 'outro:persistent:0'],
+    }])
+    const swept = applyRotationCleanup(sections, plan)[0]!.children
+    expect(swept.map((node) => node.id)).toEqual([
+      'outro:persistent:1', 'outro:persistent:0', 'outro',
+    ])
+    const feature = swept[2]
+    expect(feature?.type === 'step' ? feature.changes : null).toBeUndefined()
+    expect(feature?.type === 'step' ? feature.changesEdited : null).toBe(true)
+    expect(sections[0]?.children.map((node) => node.id)).toEqual([
+      'outro', 'outro:persistent:1', 'outro:persistent:0',
+    ])
+  })
+
+  it('keeps local setters when the following writes differ or another node intervenes', () => {
+    const unmatched = duplicateSetterPair('different')
+    const altered = unmatched[1]
+    if (altered?.type === 'condition') {
+      unmatched[1] = { ...altered, change: { type: 'set', path: 'other', value: false } }
+    }
+    expect(planRotationCleanup(section(unmatched)).targets).toEqual([])
+
+    const interrupted = duplicateSetterPair('interrupted')
+    interrupted.splice(1, 0, step('another-skill'))
+    expect(planRotationCleanup(section(interrupted)).targets).toEqual([])
+  })
+
+  it('removes attached copies when matching persistent setters already precede the skill', () => {
+    const [feature, ...setters] = duplicateSetterPair('pre-set')
+    const sections = section([...setters, feature])
+    const plan = planRotationCleanup(sections)
+    expect(plan.targets).toEqual([{
+      id: 'pre-set', reason: 'redundant',
+      precedingConditionIds: ['pre-set:persistent:1', 'pre-set:persistent:0'],
+    }])
+    const swept = applyRotationCleanup(sections, plan)[0]!.children
+    expect(swept.map((node) => node.id)).toEqual([
+      'pre-set:persistent:1', 'pre-set:persistent:0', 'pre-set',
+    ])
+    expect(swept[2]?.type === 'step' ? swept[2].changes : null).toBeUndefined()
+  })
+
+  it('hoists duplicate setters in only the loop pass that contains them', () => {
+    const runOne = duplicateSetterPair('outro')
+    const runTwo = [runOne[0]!, step('other'), ...runOne.slice(1)]
+    const loop = block('loop', 'loop', runOne, {
+      loopId: 'loop-a', runs: 2, passTemplate: runOne, passForks: { 2: runTwo },
+    })
+    const plan = planRotationCleanup(section([loop]))
+    expect(plan.targets).toEqual([{
+      id: 'outro', reason: 'redundant', loopId: 'loop-a', run: 1,
+      followingConditionIds: ['outro:persistent:1', 'outro:persistent:0'],
+    }])
+    const result = applyRotationCleanup(section([loop]), plan)[0]!.children[0]
+    expect(result?.type).toBe('loop')
+    if (result?.type !== 'loop') return
+    const template = result.passTemplate ?? result.children
+    expect(resolveEditorPassBody(template, result.passForks, 1).map((node) => node.id))
+      .toEqual(['outro:persistent:1', 'outro:persistent:0', 'outro'])
+    expect(resolveEditorPassBody(template, result.passForks, 2).map((node) => node.id))
+      .toEqual(['outro', 'other', 'outro:persistent:1', 'outro:persistent:0'])
+  })
+
+  it('retains distinct pass node ids when equivalent pass bodies are cleaned', () => {
+    const first = duplicateSetterPair('outro-one')
+    const second = duplicateSetterPair('outro-two')
+    const loop = block('loop', 'loop', first, {
+      loopId: 'loop-a', runs: 2, passTemplate: first, passForks: { 2: second },
+    })
+    const result = applyRotationCleanup(section([loop]), planRotationCleanup(section([loop])))
+    const swept = result[0]?.children[0]
+    expect(swept?.type).toBe('loop')
+    if (swept?.type !== 'loop') return
+    expect(Object.keys(swept.passForks ?? {})).toEqual(['2'])
+    const template = swept.passTemplate ?? swept.children
+    expect(resolveEditorPassBody(template, swept.passForks, 1).at(-1)?.id).toBe('outro-one')
+    expect(resolveEditorPassBody(template, swept.passForks, 2).at(-1)?.id).toBe('outro-two')
+  })
 })
 
 describe('applying a rotation sweep', () => {
@@ -338,5 +464,8 @@ describe('describing a rotation sweep', () => {
     expect(both).toBe("2 nodes that didn't actually change, and 1 node the last run never used.")
     expect(inertOnly).toBe("1 node that didn't actually change.")
     expect(deadOnly).toBe('4 nodes the last run never used.')
+    expect(describeRotationCleanup({
+      targets: [{ id: 'outro', reason: 'redundant', followingConditionIds: ['realm-off'] }],
+    })).toBe('1 skill with attached setters duplicated by adjacent persistent setters.')
   })
 })

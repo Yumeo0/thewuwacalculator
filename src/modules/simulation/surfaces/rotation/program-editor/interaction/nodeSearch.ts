@@ -133,7 +133,7 @@ export function buildNodeIndex(
         out.push({
           id: node.id,
           kind: 'swap',
-          title: to || 'Handoff',
+          title: to || 'Switch resonator',
           aside: names.member(node.from),
           crumb: where,
           order,

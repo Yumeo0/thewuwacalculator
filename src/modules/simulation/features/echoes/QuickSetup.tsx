@@ -34,7 +34,9 @@ import { AppModal } from '@/shared/ui/AppModal.tsx'
 import { Select, type SelectOption } from '@/application/ui/Select'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback'
-import { Hammer, Minus, Plus, RotateCcw, TriangleAlert, X } from 'lucide-react'
+import { Crown, Hammer, Minus, Plus, RotateCcw, Rows3, TriangleAlert, X } from 'lucide-react'
+import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 
 const MAX_COST = 12
 const MAX_SUBSTATS = 5
@@ -81,6 +83,7 @@ export function QuickSetup({
   onClose,
   onGenerate,
 }: QuickSetupProps) {
+  const mobile = useMobileUi()
   const [config, setConfig] = useState<QuickSetupConfig>(() => makeQuickConfig(currentEchoes))
   const [tplPick, setTplPick] = useState(0)
   const echoPicker = useAppModal()
@@ -296,14 +299,7 @@ export function QuickSetup({
     return total
   }, 0) ?? 0
 
-  return (
-    <AppModal
-      state={{ visible, open, closing }}
-      variant="echo-quick-setup"
-      ariaLabel="Echo forge"
-      onClose={onClose}
-    >
-      <div className="amdl eqs">
+  const mHeader = (
         <header className="amdl__head eqs-head">
           <button
             type="button"
@@ -404,7 +400,9 @@ export function QuickSetup({
             <X size="0.95rem" />
           </button>
         </header>
+  )
 
+  const mBand = (
         <div className="eqs-band" role="group" aria-label="Main stats">
           {config.slots.map((slot, index) => {
             const active = index < config.echoCount
@@ -459,7 +457,10 @@ export function QuickSetup({
             )
           })}
         </div>
+  )
 
+  const mSubs = (
+    <>
         <div className="eqs-tabs">
           <span className="eqs-ul eqs-ul--tabs" role="tablist" aria-label="Substat templates">
             {groups.map((entry, index) => (
@@ -595,7 +596,10 @@ export function QuickSetup({
             </button>
           </div>
         )}
+    </>
+  )
 
+  const mFoot = (
         <footer className="amdl__foot">
           <span className="eec-tally">
             <span><b>{config.echoCount}</b> {config.echoCount === 1 ? 'echo' : 'echoes'}</span>
@@ -621,7 +625,37 @@ export function QuickSetup({
             Forge build
           </button>
         </footer>
+  )
+
+
+  return (
+    <AppModal
+      state={{ visible, open, closing }}
+      variant="echo-quick-setup"
+      ariaLabel="Echo forge"
+      onClose={onClose}
+    >
+      {mobile ? (
+        <MobilePages
+          className="eqs"
+          head={mHeader}
+          foot={mFoot}
+          pages={[
+            { id: 'main', label: 'Main stats', icon: <Crown />, node: mBand },
+            { id: 'subs', label: 'Substats', icon: <Rows3 />, node: <div className="eqs-msubs">{mSubs}</div> },
+          ]}
+        />
+      ) : (
+      <div className="amdl eqs">
+        {mHeader}
+
+        {mBand}
+
+        {mSubs}
+
+        {mFoot}
       </div>
+      )}
 
       {echoPicker.visible ? (
         <EchoPicker

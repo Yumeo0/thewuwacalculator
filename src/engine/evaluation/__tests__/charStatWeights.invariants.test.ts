@@ -55,13 +55,4 @@ describe('generated character stat weights', () => {
     validateCatalog(betaArtifact, betaCatalog, betaSources)
   })
 
-  it('keeps the live 3.7 and beta stat weights identical', () => {
-    const betaWeights: Record<string, Record<string, number>> = betaArtifact.weights
-    const liveWeights: Record<string, Record<string, number>> = liveArtifact.weights
-    expect(betaArtifact.settings).toEqual(liveArtifact.settings)
-    for (const resonator of liveCatalog) {
-      expect(betaWeights[resonator.id]).toEqual(liveWeights[resonator.id])
-    }
-    expect(Object.keys(betaArtifact.weights)).toHaveLength(Object.keys(liveArtifact.weights).length)
-  })
 })

@@ -31,6 +31,7 @@ type StateEntry = {
   max: Buff[]
   atMax?: Buff[]
   requiresMax?: string
+  resets?: string[]
 }
 
 export interface SetPart {
@@ -417,11 +418,18 @@ function mkSetPkg(def: SetDef): SrcPkg {
   }
 
   // build all toggle or stack-driven state effects for this set
-  for (const [stateId, state] of Object.entries(def.states)) {
+  const stateEntries = Object.entries(def.states)
+  for (const [stateIndex, [stateId, state]] of stateEntries.entries()) {
     const perStep = state.perStep ?? state.perStack ?? state.max
     const isToggle = perStep.every((ps, index) => ps.value === state.max[index].value)
     const part = def.parts.find((entry) => entry.key === stateId)
     const requirement = stateReq(def, state)
+    // A later exclusive branch wins if legacy controls retain both branches;
+    // current state setters clear the sibling through SourceState.resets.
+    const superseding = stateEntries.slice(stateIndex + 1)
+      .filter(([, candidate]) => candidate.resets?.includes(stateId))
+      .map(([id]): CondExpr => ({ type: 'not', value: truthyCond(def.id, id) }))
+    const activeCondition = andCond(truthyCond(def.id, stateId), ...superseding)
     const effectCond = (active: CondExpr) => andCond(
       setGte(def.id, pieceReq),
       active,
@@ -461,6 +469,9 @@ function mkSetPkg(def: SetDef): SrcPkg {
         part?.label ?? stateId,
         part?.description ?? part?.trigger,
       )
+      if (state.resets?.length) {
+        sourceState.resets = state.resets.map((id) => controlKey(def.id, id))
+      }
       if (requirement && state.requiresMax) {
         sourceState.enabledWhen = requirement
         sourceState.controlDependencies = [controlKey(def.id, state.requiresMax)]
@@ -474,7 +485,7 @@ function mkSetPkg(def: SetDef): SrcPkg {
             stateId,
             effectName(def, pieceReq),
             buffs.map((buff) => pathOp(buff.path, constVal(buff.value))),
-            effectCond(truthyCond(def.id, stateId)),
+            effectCond(activeCondition),
             targetScope,
             part?.description,
           ),
@@ -531,7 +542,7 @@ function mkSetPkg(def: SetDef): SrcPkg {
                 clamp(mul(readCtrl(def.id, stateId), constVal(perStack.value)), max.value),
               ),
             ),
-            effectCond(truthyCond(def.id, stateId)),
+            effectCond(activeCondition),
             targetScope,
             part?.description,
           ),
@@ -546,7 +557,7 @@ function mkSetPkg(def: SetDef): SrcPkg {
           `${stateId}:max`,
           effectName(def, pieceReq),
           buffs.map((buff) => pathOp(buff.path, constVal(buff.value))),
-          andCond(setGte(def.id, pieceReq), eqCtrl(def.id, stateId, stateMaxVal(state))),
+          andCond(setGte(def.id, pieceReq), eqCtrl(def.id, stateId, stateMaxVal(state)), ...superseding),
           targetScope,
           part?.description,
         ),

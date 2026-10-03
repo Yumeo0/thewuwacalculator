@@ -243,29 +243,6 @@ export function SimulationProvider({
     onToggleSubHits: () => setShowSubHi(!showSubHits),
   }), [paneEntries, setShowSubHi, showSubHits, swtcToEnts])
 
-  const rtMoreEnts = useMemo(
-    () => rtChrmMenu.builders.routeChrome.simulationSection(),
-    [rtChrmMenu.builders.routeChrome],
-  )
-
-  const moreEntries = useMemo<MenuEntry[]>(() => {
-    // Simulation-local "more" actions come first, with route-wide actions
-    // appended after a separator when both groups exist.
-    if (simulationMoreEntries.length === 0) {
-      return rtMoreEnts
-    }
-
-    if (rtMoreEnts.length === 0) {
-      return simulationMoreEntries
-    }
-
-    return [
-      ...simulationMoreEntries,
-      { type: 'separator' },
-      ...rtMoreEnts,
-    ]
-  }, [rtMoreEnts, simulationMoreEntries])
-
   const builders = useMemo<SimulationContextValue['builders']>(() => ({
     simulation: {
       workspace: () => simulationMenuBuilder.simulation.workspace({
@@ -274,7 +251,7 @@ export function SimulationProvider({
         showSubHits,
         onToggleSubHits: () => setShowSubHi(!showSubHits),
       }),
-      more: () => moreEntries,
+      more: () => simulationMoreEntries,
       damage: {
         row: ({ rowId, subHitsVis: subHitsVis, hasSubHitReq: hasSubHitRow, onTgglFrml: onTgglFrml, onTgglSubHwm: onTgglSubHit, onOpenSklleu: onOpenSkllDa }) =>
           simulationMenuBuilder.simulation.damage.row({
@@ -284,33 +261,33 @@ export function SimulationProvider({
             onTgglFrml: onTgglFrml,
             onTgglSubHwm: onTgglSubHit,
             onOpenSklleu: onOpenSkllDa,
-            moreEntries,
+            moreEntries: [],
           }),
       },
       rotation: {
         pane: ({ items }) => simulationMenuBuilder.simulation.rotation.pane({
           items,
-          moreEntries,
+          moreEntries: [],
         }),
         item: ({ items }) => simulationMenuBuilder.simulation.rotation.item({
           items,
-          moreEntries,
+          moreEntries: [],
         }),
       },
       optimizer: {
         pane: ({ items }) => simulationMenuBuilder.simulation.optimizer.main({
           items,
-          moreEntries,
+          moreEntries: [],
         }),
       },
       manualBuffs: {
         pane: (args) => simulationMenuBuilder.simulation.manualBuffs.pane({
           ...args,
-          moreEntries,
+          moreEntries: [],
         }),
         item: (args) => simulationMenuBuilder.simulation.manualBuffs.item({
           ...args,
-          moreEntries,
+          moreEntries: [],
         }),
       },
       echo: {
@@ -324,7 +301,7 @@ export function SimulationProvider({
     },
     routeChrome: rtChrmMenu.builders.routeChrome,
   }), [
-    moreEntries,
+    simulationMoreEntries,
     paneEntries,
     rtChrmMenu.builders.routeChrome,
     setShowSubHi,

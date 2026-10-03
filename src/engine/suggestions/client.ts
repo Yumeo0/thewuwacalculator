@@ -1,194 +1,55 @@
 /*
   Author: Runor Ewhro
-  Description: Manages the durable suggestions worker lifecycle and dispatches
-               typed jobs for main-stat, set-plan, and weapon computations.
+  Description: Owns suggestions worker requests and their idle lifecycle.
 */
 
 import type {
-  CompactSetPlanSuggest,
-  CompactSuggestionJob,
-  MainStatSugg,
-  MainStatPrep,
-  PrepSetPlanS,
-  PrepWeaponPlan,
-  SetPlanSuggest,
-  SuggsWrkrInM,
-  SuggsWrkrOut,
-  WeaponEntry,
+  CompactSetPlanSuggest, CompactSuggestionJob, MainStatSugg, MainStatPrep,
+  PrepSetPlanS, PrepWeaponPlan, SetPlanSuggest, SuggsWrkrInM, SuggsWrkrOut, WeaponEntry,
 } from '@/engine/suggestions/types'
 import { getGameDataMode } from '@/data/gameData'
+import { WorkerChannel } from '@/shared/lib/WorkerChannel'
 
-let worker: Worker | null = null
-let idleTimer: ReturnType<typeof setTimeout> | null = null
-const IDLE_TEARDOWN_MS = 1_200
-
-let nextJobId = 1
-
-const pendingJobs = new Map<number, {
-  resolve: (value: unknown) => void
-  reject: (error: Error) => void
-}>()
-
-function clearIdleTeardown(): void {
-  if (idleTimer != null) {
-    clearTimeout(idleTimer)
-    idleTimer = null
-  }
-}
-
-function scheduleIdleTeardown(): void {
-  clearIdleTeardown()
-  if (pendingJobs.size > 0 || !worker) return
-  idleTimer = setTimeout(() => {
-    idleTimer = null
-    if (pendingJobs.size > 0) return
-    worker?.terminate()
-    worker = null
-  }, IDLE_TEARDOWN_MS)
-  ;(idleTimer as unknown as { unref?: () => void }).unref?.()
-}
-
-export function disposeSuggestionsWorker(): void {
-  clearIdleTeardown()
-  if (pendingJobs.size > 0) return
-  worker?.terminate()
-  worker = null
-}
-
-export function cancelSuggestionsJobs(): void {
-  clearIdleTeardown()
-  worker?.terminate()
-  worker = null
-  for (const pending of pendingJobs.values()) pending.reject(new Error('Suggestions cancelled'))
-  pendingJobs.clear()
-}
-
-export function runCompactSuggestion(
-  mode: 'mainStats' | 'setPlans' | 'weapons',
-  payload: CompactSuggestionJob,
-): Promise<MainStatSugg[] | CompactSetPlanSuggest[] | WeaponEntry[]> {
-  return new Promise((resolve, reject) => {
-    const id = nextJobId++
-    pendingJobs.set(id, {
-      resolve: (value) => resolve(value as MainStatSugg[] | CompactSetPlanSuggest[] | WeaponEntry[]),
-      reject,
-    })
-    ensureWorker().postMessage({
-      id, gameDataMode: getGameDataMode(), type: 'compact', mode, payload,
-    } satisfies SuggsWrkrInM)
+class SuggestionsClient {
+  private readonly channel = new WorkerChannel<SuggsWrkrInM, SuggsWrkrOut>({
+    createWorker: () => new Worker(new URL('@/engine/suggestions/worker.ts', import.meta.url), { type: 'module' }),
+    idleMs: 1_200,
+    errorMessage: 'Suggestions worker failed unexpectedly',
   })
-}
 
-function ensureWorker(): Worker {
-  clearIdleTeardown()
-  if (worker) {
-    return worker
+  disposeIfIdle(): void { this.channel.disposeIfIdle() }
+  cancel(): void { this.channel.dispose(new Error('Suggestions cancelled')) }
+
+  private async run<T>(message: (id: number) => SuggsWrkrInM): Promise<T> {
+    const response = await this.channel.request(message)
+    if (!response.ok) throw new Error(response.error)
+    return response.result as T
   }
 
-  worker = new Worker(
-      new URL('@/engine/suggestions/worker.ts', import.meta.url),
-      { type: 'module' },
-  )
-
-  worker.onmessage = (event: MessageEvent<SuggsWrkrOut>) => {
-    const message = event.data
-    const pending = pendingJobs.get(message.id)
-
-    if (!pending) {
-      return
-    }
-
-    pendingJobs.delete(message.id)
-
-    if (message.ok) {
-      pending.resolve(message.result)
-      scheduleIdleTeardown()
-      return
-    }
-
-    pending.reject(new Error(message.error))
-    scheduleIdleTeardown()
+  compact(mode: 'mainStats' | 'setPlans' | 'weapons', payload: CompactSuggestionJob): Promise<MainStatSugg[] | CompactSetPlanSuggest[] | WeaponEntry[]> {
+    return this.run((id) => ({ id, gameDataMode: getGameDataMode(), type: 'compact', mode, payload }))
   }
 
-  // A worker failure invalidates every request awaiting that shared instance.
-  worker.onerror = (event) => {
-    const error = new Error(event.message || 'Suggestions worker failed unexpectedly')
-
-    for (const pending of pendingJobs.values()) {
-      pending.reject(error)
-    }
-
-    pendingJobs.clear()
-    worker?.terminate()
-    worker = null
-    clearIdleTeardown()
+  mainStats(payload: MainStatPrep): Promise<MainStatSugg[]> {
+    return this.run((id) => ({ id, gameDataMode: getGameDataMode(), type: 'mainStats', payload }))
   }
 
-  return worker
+  setPlans(payload: PrepSetPlanS): Promise<SetPlanSuggest[]> {
+    return this.run((id) => ({ id, gameDataMode: getGameDataMode(), type: 'setPlans', payload }))
+  }
+
+  weapons(payload: PrepWeaponPlan): Promise<WeaponEntry[]> {
+    return this.run((id) => ({ id, gameDataMode: getGameDataMode(), type: 'weapons', payload }))
+  }
 }
 
-export function runMainStatS(
-    payload: MainStatPrep,
-): Promise<MainStatSugg[]> {
-  return new Promise((resolve, reject) => {
-    const id = nextJobId++
+const client = new SuggestionsClient()
 
-    pendingJobs.set(id, {
-      resolve: (value) => resolve(value as MainStatSugg[]),
-      reject,
-    })
-
-    const message: SuggsWrkrInM = {
-      id,
-      gameDataMode: getGameDataMode(),
-      type: 'mainStats',
-      payload,
-    }
-
-    ensureWorker().postMessage(message)
-  }) as Promise<MainStatSugg[]>
+export function disposeSuggestionsWorker(): void { client.disposeIfIdle() }
+export function cancelSuggestionsJobs(): void { client.cancel() }
+export function runCompactSuggestion(mode: 'mainStats' | 'setPlans' | 'weapons', payload: CompactSuggestionJob): Promise<MainStatSugg[] | CompactSetPlanSuggest[] | WeaponEntry[]> {
+  return client.compact(mode, payload)
 }
-
-export function runSetPlanSu(
-    payload: PrepSetPlanS,
-): Promise<SetPlanSuggest[]> {
-  return new Promise((resolve, reject) => {
-    const id = nextJobId++
-
-    pendingJobs.set(id, {
-      resolve: (value) => resolve(value as SetPlanSuggest[]),
-      reject,
-    })
-
-    const message: SuggsWrkrInM = {
-      id,
-      gameDataMode: getGameDataMode(),
-      type: 'setPlans',
-      payload,
-    }
-
-    ensureWorker().postMessage(message)
-  }) as Promise<SetPlanSuggest[]>
-}
-
-export function runWpnSuggs(
-    payload: PrepWeaponPlan,
-): Promise<WeaponEntry[]> {
-  return new Promise((resolve, reject) => {
-    const id = nextJobId++
-
-    pendingJobs.set(id, {
-      resolve: (value) => resolve(value as WeaponEntry[]),
-      reject,
-    })
-
-    const message: SuggsWrkrInM = {
-      id,
-      gameDataMode: getGameDataMode(),
-      type: 'weapons',
-      payload,
-    }
-
-    ensureWorker().postMessage(message)
-  }) as Promise<WeaponEntry[]>
-}
+export function runMainStatS(payload: MainStatPrep): Promise<MainStatSugg[]> { return client.mainStats(payload) }
+export function runSetPlanSu(payload: PrepSetPlanS): Promise<SetPlanSuggest[]> { return client.setPlans(payload) }
+export function runWpnSuggs(payload: PrepWeaponPlan): Promise<WeaponEntry[]> { return client.weapons(payload) }

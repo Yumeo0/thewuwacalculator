@@ -12,7 +12,7 @@ import { isNoWeaponId, type ResRuntime } from '@/domain/entities/runtime.ts'
 import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
 import { useAppStore } from '@/application/state'
 import { listWpnsByTy } from '@/data/catalog/weaponCatalogService.ts'
-import { getRarityColor, getWpnTypeLb, WPNTYPETOKEY } from '@/modules/simulation/model/display.ts'
+import {getRarityColor, getWpnTypeLb, WPNTYPETOKEY} from '@/modules/simulation/model/display.ts'
 import type { PickFreqWeapon } from '@/domain/entities/appState'
 import { glyphVars } from '@/shared/lib/gameAssets.ts'
 import { withDefWpnMg } from '@/shared/lib/imageFallback.ts'
@@ -308,7 +308,7 @@ function WeaponConsole({
                     style={glyphVars(`/assets/game/weapons/types/${typeKey}.webp`, '--g')}
                   />
                 ) : null}
-                Change weapon
+                Change {typeKey ? typeKey : 'weapon'}
               </button>
             </div>
           </div>

@@ -6,6 +6,7 @@
 */
 
 import { decShareText, encShareText } from '@/shared/lib/shareCodec.ts'
+import { rememberWorkspaceClipboardText } from '@/shared/lib/workspaceClipboardCache.ts'
 import type { EchoInstance, ResonatorId } from '@/domain/entities/runtime.ts'
 import { equalEchoes, cloneEchoFor } from '@/domain/entities/inventoryStorage.ts'
 import { getEchoCostB } from '@/modules/simulation/features/echoes/lib/echoes.ts'
@@ -139,13 +140,15 @@ export async function writeEchoClip(payload: EchoClipPayload): Promise<boolean> 
   // cache first so same-session paste still works when browser permissions
   // reject the system clipboard write.
   cachedEchoClip = nrmlPay
+  const text = serializeEchoClip(nrmlPay)
+  rememberWorkspaceClipboardText(text)
 
   if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
     return true
   }
 
   try {
-    await navigator.clipboard.writeText(serializeEchoClip(nrmlPay))
+    await navigator.clipboard.writeText(text)
     return true
   } catch {
     return false

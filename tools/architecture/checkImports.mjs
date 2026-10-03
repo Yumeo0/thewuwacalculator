@@ -97,6 +97,11 @@ for (const file of listFiles(SRC)) {
   const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true)
 
   for (const specifier of importSpecifiers(sourceFile)) {
+    if (sourceLayer === 'engine' && ['react', 'react-dom', 'zustand'].some((pkg) => specifier === pkg || specifier.startsWith(`${pkg}/`))) {
+      errors.push(`${sourceRelative(file)} -> ${specifier}: engine cannot import React or Zustand`)
+      continue
+    }
+
     const target = resolveSourceImport(file, specifier)
     if (!target) continue
     const targetLayer = layerOf(target)
@@ -106,6 +111,12 @@ for (const file of listFiles(SRC)) {
       errors.push(`${sourceRelative(file)} -> ${specifier}: ${sourceLayer} cannot import ${targetLayer}`)
       continue
     }
+
+    if (sourceLayer === 'engine' && /\/shared\/(?:ui|hooks|navigation)\//.test(sourceRelative(target))) {
+      errors.push(`${sourceRelative(file)} -> ${specifier}: engine cannot import React-facing shared modules`)
+      continue
+    }
+
 
     if (sourceLayer === 'app' && targetLayer === 'modules' && !isPublicModuleEntry(target)) {
       errors.push(`${sourceRelative(file)} -> ${specifier}: app must use a module api/ or pages/ entry`)

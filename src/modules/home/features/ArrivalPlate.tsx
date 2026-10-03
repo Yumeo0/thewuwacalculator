@@ -4,11 +4,22 @@
                activation, pointer-derived motion, and shared active selection.
 */
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, PointerEvent as RPointerEvent } from 'react'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
+import { useAppStore } from '@/application/state'
+import { useNavX } from '@/shared/navigation/useNavX'
+import { SIMULATION_ROUTES } from '@/shared/lib/appRoutes'
+import { TbMathFunction } from 'react-icons/tb'
+import { useMenuContributions } from '@/application/context-menu/AppContextMenu'
+import type { MenuContribution } from '@/application/context-menu/menuContributions'
+import { useTstStr } from '@/shared/util/toastStore'
 import type { ArrivedResonator, Arrivals } from '@/modules/home/model/arrivals'
+import { getEvaluationSpinePlacement } from '@/shared/spine/placement'
+import { SpinePortrait } from '@/shared/spine/SpinePortrait'
 
 type Side = 'l' | 'r'
+type ArrivalContext = { who: ArrivedResonator, side: Side }
 
 interface ArrivalPlateProps {
   arrivals: Arrivals
@@ -21,26 +32,38 @@ interface ArrivalPlateProps {
 }
 
 // Remounting by artwork key resets fallback state when release data changes.
-function Figure({ who, className }: { who: ArrivedResonator, className: string }) {
-  const [src, setSrc] = useState(who.art)
+function Figure({ who, className, animated }: { who: ArrivedResonator, className: string, animated: boolean }) {
+  const [src, setSrc] = useState(who.artFallback ?? who.art)
 
   return (
     <span className={className} aria-hidden="true">
-      <img
-        src={src}
-        alt=""
-        onError={() => {
-          if (who.artFallback && src !== who.artFallback) setSrc(who.artFallback)
-        }}
-      />
+      <span className="hm-half__stage">
+        <SpinePortrait
+          resId={who.id}
+          animated={animated}
+          playing={animated}
+          spineClassName="hm-half__spine"
+          placement={getEvaluationSpinePlacement(who.id)}
+          fallback={
+            <img
+              className="hm-half__fallback"
+              src={src}
+              alt=""
+              onError={() => {
+                if (src !== who.art) setSrc(who.art)
+              }}
+            />
+          }
+        />
+      </span>
     </span>
   )
 }
 
-function Half({ who }: { who: ArrivedResonator }) {
+function Half({ who, animated }: { who: ArrivedResonator, animated: boolean }) {
   return (
     <>
-      <Figure who={who} className="hm-half__art" key={who.art} />
+      <Figure who={who} className="hm-half__art" animated={animated} key={who.art} />
       <span className="hm-half__bloom" aria-hidden="true" />
       <span className="hm-half__scrim" aria-hidden="true" />
 
@@ -68,6 +91,9 @@ function Half({ who }: { who: ArrivedResonator }) {
 }
 
 export function ArrivalPlate({ arrivals, reading, onLit, still }: ArrivalPlateProps) {
+  const showToast = useTstStr((state) => state.show)
+  const swapResonator = useAppStore((state) => state.swRes)
+  const navigate = useNavX()
   const plate = useRef<HTMLDivElement | null>(null)
   const [lit, setLit] = useState<Side | null>(null)
   const [swept, setSwept] = useState(() => still)
@@ -89,8 +115,6 @@ export function ArrivalPlate({ arrivals, reading, onLit, still }: ArrivalPlatePr
     }
   }, [reading, swept])
 
-  if (pair.length < 2) return null
-
   // Normalize pointer coordinates to [-1, 1] CSS variables unless motion is disabled.
   const track = (event: RPointerEvent<HTMLDivElement>) => {
     const node = plate.current
@@ -100,10 +124,10 @@ export function ArrivalPlate({ arrivals, reading, onLit, still }: ArrivalPlatePr
     node.style.setProperty('--hm-py', ((event.clientY - box.top) / box.height * 2 - 1).toFixed(3))
   }
 
-  const light = (side: Side | null, id: string | null) => {
+  const light = useCallback((side: Side | null, id: string | null) => {
     setLit(side)
     onLit?.(id)
-  }
+  }, [onLit])
 
   const rest = () => {
     light(null, null)
@@ -112,6 +136,44 @@ export function ArrivalPlate({ arrivals, reading, onLit, still }: ArrivalPlatePr
     node.style.setProperty('--hm-px', '0')
     node.style.setProperty('--hm-py', '0')
   }
+
+  const contributions = useMemo<MenuContribution<ArrivalContext>[]>(() => [{
+    id: 'home-arrival-highlight',
+    group: '1_primary',
+    build: ({ who, side }) => [
+      ...(who.held ? [{
+        id: `home-arrival-build:${who.id}`,
+        label: `Build ${who.name}`,
+        icon: <TbMathFunction size="1em" />,
+        onSelect: () => { swapResonator(who.id); navigate(SIMULATION_ROUTES.modulation) },
+      }] : []),
+      {
+        id: `home-arrival-highlight:${who.id}`,
+        label: 'Highlight',
+        onSelect: () => light(side, who.id),
+      },
+    ],
+  }, {
+    id: 'home-arrival-copy-name',
+    group: '2_copy',
+    build: ({ who }) => [{
+      id: `home-arrival-copy-name:${who.id}`,
+      label: 'Copy name',
+      onSelect: () => {
+        if (!navigator.clipboard?.writeText) {
+          showToast({ content: 'Could not copy name', variant: 'error' })
+          return
+        }
+        void navigator.clipboard.writeText(who.name).then(
+          () => showToast({ content: 'Name copied', variant: 'success' }),
+          () => showToast({ content: 'Could not copy name', variant: 'error' }),
+        )
+      },
+    }],
+  }], [light, navigate, showToast, swapResonator])
+  useMenuContributions('home.arrival', contributions)
+
+  if (pair.length < 2) return null
 
   return (
     <div
@@ -125,9 +187,15 @@ export function ArrivalPlate({ arrivals, reading, onLit, still }: ArrivalPlatePr
       {pair.map((who, index) => {
         const side: Side = index === 0 ? 'l' : 'r'
         return (
+          <ContextTrigger
+            asChild
+            ariaLabel={`${who.name} actions`}
+            location="home.arrival"
+            context={{ who, side }}
+            key={who.id}
+          >
           <button
             type="button" className="hm-half"
-            key={who.id}
             data-side={side}
             style={{ '--el': who.colour } as CSSProperties}
             aria-label={`${who.name}, ${who.attributeName} ${who.weaponName}, ${who.held ? 'in the app' : 'not in yet'}`}
@@ -136,8 +204,9 @@ export function ArrivalPlate({ arrivals, reading, onLit, still }: ArrivalPlatePr
             onBlur={rest}
             onClick={() => (lit === side ? rest() : light(side, who.id))}
           >
-            <Half who={who} />
+            <Half who={who} animated={reading && !still} />
           </button>
+          </ContextTrigger>
         )
       })}
 

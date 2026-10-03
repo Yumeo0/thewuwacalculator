@@ -34,30 +34,30 @@ function StateSourceGroup({
 
   return (
     <Expandable
-      as="article" className="workspace-source"
-      triggerClass="workspace-source-trigger"
-      contentClass="workspace-source-body"
-      innerClass="workspace-source-scopes"
-      chevronClass="workspace-source-chevron"
+      as="article" className="wk-source"
+      triggerClass="wk-source-trigger"
+      contentClass="wk-source-body"
+      innerClass="wk-source-scopes"
+      chevronClass="wk-source-chevron"
       chevronSize={14}
       defaultOpen
       data-role={role}
       header={
-        <div className="workspace-source-head">
-          <span className="workspace-source-frame">
+        <div className="wk-source-head">
+          <span className="wk-source-frame">
             <DisplayImage
               src={group.srcProf || '/assets/game/default.webp'}
-              alt={group.sourceName} className="workspace-source-avatar"
+              alt={group.sourceName} className="wk-source-avatar"
               loading="lazy"
               decoding="async"
               onError={onImageError}
             />
           </span>
-          <span className="workspace-source-id">
-            <span className="workspace-source-role">{role === 'active' ? 'Active' : 'Support'}</span>
-            <strong className="workspace-source-name">{group.sourceName}</strong>
+          <span className="wk-source-id">
+            <span className="wk-source-role">{role === 'active' ? 'Active' : 'Support'}</span>
+            <strong className="wk-source-name">{group.sourceName}</strong>
           </span>
-          <span className="workspace-source-count">
+          <span className="wk-source-count">
             {branchCount}
             <i>{branchCount === 1 ? 'branch' : 'branches'}</i>
           </span>
@@ -65,26 +65,26 @@ function StateSourceGroup({
       }
     >
       {group.scopes.map((scope) => (
-        <section key={scope.id} className="workspace-scope">
-          <div className="workspace-scope-head">
-            <span className="workspace-scope-label">{scope.label}</span>
-            <span className="workspace-scope-count">{scope.nodes.length}</span>
+        <section key={scope.id} className="wk-scope">
+          <div className="wk-scope-head">
+            <span className="wk-scope-label">{scope.label}</span>
+            <span className="wk-scope-count">{scope.nodes.length}</span>
           </div>
 
-          <div className="workspace-scope-nodes">
+          <div className="wk-scope-nodes">
             {scope.nodes.map((node) => (
-              <section key={node.id} className="workspace-node">
-                <strong className="workspace-node-owner">{node.ownerLabel}</strong>
-                <ul className="workspace-node-effects">
+              <section key={node.id} className="wk-node">
+                <strong className="wk-node-owner">{node.ownerLabel}</strong>
+                <ul className="wk-node-effects">
                   {node.effectLabels.length > 0 ? (
                     node.effectLabels.map((label, index) => (
                       <li
-                        key={`${node.id}-${index}`} className="workspace-node-effect"
+                        key={`${node.id}-${index}`} className="wk-node-effect"
                         dangerouslySetInnerHTML={{ __html: label }}
                       />
                     ))
                   ) : (
-                    <li className="workspace-node-effect workspace-node-effect--bare">Active</li>
+                    <li className="wk-node-effect wk-node-effect--bare">Active</li>
                   )}
                 </ul>
               </section>
@@ -108,13 +108,13 @@ export function ActiveStateSources({
   const supportGroups = groups.filter((group) => group.sourceId !== activeResId)
 
   return (
-    <section className={`workspace-states ${className}`.trim()} aria-label="Active state sources">
-      <header className="workspace-states-head">
-        <h3 className="workspace-states-title">Active State Sources</h3>
+    <section className={`wk-states ${className}`.trim()} aria-label="Active state sources">
+      <header className="wk-states-head">
+        <h3 className="wk-states-title">Active State Sources</h3>
       </header>
 
       {groups.length > 0 ? (
-        <div className="workspace-states-grid">
+        <div className="wk-states-grid">
           {activeGroup ? (
             <StateSourceGroup group={activeGroup} role="active" onImageError={onImageError} />
           ) : null}
@@ -123,7 +123,7 @@ export function ActiveStateSources({
           ))}
         </div>
       ) : (
-        <p className="workspace-states-empty">
+        <p className="wk-states-empty">
           No states are feeding this build. Team buffs, skills, and sequences show up here once active.
         </p>
       )}

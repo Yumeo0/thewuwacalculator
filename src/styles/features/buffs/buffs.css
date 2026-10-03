@@ -1,0 +1,18 @@
+.custom-buffs-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.custom-buffs-card h4 {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.buff-preset-panel {
+  --amdl-w: 67rem;
+  --amdl-h: 45rem;
+  --bp-accent: var(--amdl-accent);
+}

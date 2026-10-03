@@ -17,8 +17,12 @@ import { BuildRail } from './BuildRail'
 import { RailDock } from './RailDock'
 import { ResolvedBackdropContext } from './showcaseArtworkContext'
 import { BuildWorkspaceBoard, BuildWorkspaceRailSlot, BuildWorkspaceWorkspace } from './BuildWorkspaceLayout'
-import { getEvaluationSpinePlacement, type CssVars } from './ui'
+import type { CssVars } from './ui'
+import { getEvaluationSpinePlacement } from '@/shared/spine/placement'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
+import type { MenuEntry } from '@/shared/ui/CtxMenu'
+import { Clipboard, RotateCcw, SlidersHorizontal } from 'lucide-react'
+import { TbCameraDown } from 'react-icons/tb'
 import AppLdrVrly from '@/shared/ui/AppLoaderOverlay'
 const ImageUploadModal = lazy(async () => ({ default: (await import('@/application/media/ImageUploadModal')).ImageUploadModal }))
 const ShowcaseCustomizePanel = lazy(async () => ({ default: (await import('../surfaces/showcase/Customize')).ShowcaseCustomizePanel }))
@@ -399,6 +403,44 @@ export function BuildWorkspacePresentation({ railProps, dockProps, boardRef, pag
       setCaptureAction(null)
     }
   }, [captureAction, flushShowcaseStyle, isShowcase, railModel.seed?.name, showToast])
+
+  const resetCardStyle = useCallback(() => {
+    if (railResId) {
+      discardPendingShowcaseStyle()
+      resetShowcaseCard(railResId)
+      setCardStyleDraft({ resonatorId: railResId, style: DEF_SHOWCASE_CARD_STYLE })
+    }
+    setEditMode(null)
+    setTuneResetKey((key) => key + 1)
+  }, [discardPendingShowcaseStyle, railResId, resetShowcaseCard])
+
+  const boardContextItems = useMemo<MenuEntry[]>(() => isShowcase ? [
+    {
+      id: 'showcase:copy-image', label: 'Copy card image',
+      icon: <Clipboard size="1em" />,
+      disabled: captureAction !== null || surfacePhase !== 'idle',
+      onSelect: () => { void captureBuildCard('clipboard') },
+    },
+    {
+      id: 'showcase:download-image', label: 'Download card image',
+      icon: <TbCameraDown size="1em" />,
+      disabled: captureAction !== null || surfacePhase !== 'idle',
+      onSelect: () => { void captureBuildCard('download') },
+    },
+    {
+      id: 'showcase:customize', label: 'Customize card',
+      icon: <SlidersHorizontal size="1em" />,
+      onSelect: () => setTuneDrawerOpen(true),
+    },
+    { type: 'separator' },
+    ...(stageContextItems ?? []),
+    { type: 'separator' },
+    {
+      id: 'showcase:reset-card', label: 'Reset card style',
+      icon: <RotateCcw size="1em" />, danger: true,
+      onSelect: resetCardStyle,
+    },
+  ] : stageContextItems ?? [], [captureAction, captureBuildCard, isShowcase, resetCardStyle, stageContextItems, surfacePhase])
   const maskVars = useMemo<CssVars>(() => ({
     ...(cardStyle.maskTop != null ? { '--mask-top': `${cardStyle.maskTop}%` } : {}),
     ...(cardStyle.maskRight != null ? { '--mask-right': `${cardStyle.maskRight}%` } : {}),
@@ -423,7 +465,7 @@ export function BuildWorkspacePresentation({ railProps, dockProps, boardRef, pag
   )
   const scopedCustomCss = useMemo(
     () => isShowcase && customCssParts
-      ? `${customCssParts.hoisted}\n@scope (.workspace-rail-wrapper, .workspace-rail) to (.workspace-tune) {\n${customCssParts.scoped}\n}`
+      ? `${customCssParts.hoisted}\n@scope (.wk-rail-wrapper, .wk-rail) to (.wk-tune) {\n${customCssParts.scoped}\n}`
       : null,
     [customCssParts, isShowcase],
   )
@@ -487,7 +529,7 @@ export function BuildWorkspacePresentation({ railProps, dockProps, boardRef, pag
   }, [isShowcase, cardStyle.displayFont, cardStyle.monoFont, cardStyle.textSlots])
 
 
-return <ContextTrigger asChild ariaLabel="Build Lab stage actions" items={stageContextItems}>
+return <ContextTrigger asChild ariaLabel="Build Lab stage actions" items={boardContextItems}>
             <BuildWorkspaceBoard
               ref={boardRef}
               page={page}
@@ -496,7 +538,7 @@ return <ContextTrigger asChild ariaLabel="Build Lab stage actions" items={stageC
               data-css-expanded={isShowcase && cssExpanded ? 'true' : undefined}
             >
             {isShowcase && cssExpanded ? (
-              <Suspense fallback={<div className="workspace-css-dock"><AppLdrVrly mode="centered" text="Loading CSS editor..." /></div>}>
+              <Suspense fallback={<div className="wk-css-dock"><AppLdrVrly mode="centered" text="Loading CSS editor..." /></div>}>
               <ShowcaseCssEditorDock
                 value={cardStyle.customCss ?? ''}
                 isDark={isDarkTheme}
@@ -522,7 +564,7 @@ return <ContextTrigger asChild ariaLabel="Build Lab stage actions" items={stageC
                 />
                 <MemoRailDock {...dockProps} />
                 {isShowcase && (
-                  <Suspense fallback={null}>
+                  <Suspense fallback={<AppLdrVrly mode="inline" text="Loading Showcase controls..." />}>
                   <ShowcaseCustomizePanel
                     key={tuneResetKey}
                     layout={showcaseLayout}
@@ -566,15 +608,7 @@ return <ContextTrigger asChild ariaLabel="Build Lab stage actions" items={stageC
                     onResetSection={handleResetTuneSection}
                     onPickImage={handlePickImage}
                     onResetGroup={handleResetGroup}
-                    onReset={() => {
-                      if (railResId) {
-                        discardPendingShowcaseStyle()
-                        resetShowcaseCard(railResId)
-                        setCardStyleDraft({ resonatorId: railResId, style: DEF_SHOWCASE_CARD_STYLE })
-                      }
-                      setEditMode(null)
-                      setTuneResetKey((key) => key + 1)
-                    }}
+                    onReset={resetCardStyle}
                     onCapture={captureBuildCard}
                     captureAction={captureAction}
                     capturing={captureAction != null || surfacePhase !== 'idle'}

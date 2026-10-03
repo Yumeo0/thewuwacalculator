@@ -64,6 +64,37 @@ import {
   type ThemeVariant,
 } from '@/domain/entities/themes'
 import { mkPrefGrps, type PrefTglItem } from '@/modules/calibration/model/preferences'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
+import { useMenuContributions } from '@/application/context-menu/AppContextMenu'
+import type { MenuContribution } from '@/application/context-menu/menuContributions'
+
+const preferenceMenu: MenuContribution<PrefTglItem>[] = [
+  {
+    id: 'calibration-toggle',
+    group: '1_primary',
+    when: (item) => !item.disabled && Boolean(item.onChange),
+    build: (item) => [{
+      id: `calibration-toggle:${item.label}`,
+      label: item.checked ? 'Turn off' : 'Turn on',
+      onSelect: () => item.onChange?.(!item.checked),
+    }],
+  },
+  {
+    id: 'calibration-options',
+    group: '2_options',
+    when: (item) => item.checked && Boolean(item.child),
+    build: (item) => [{
+      id: `calibration-options:${item.label}`,
+      label: 'Set history depth',
+      submenu: item.child?.options.map((option) => ({
+        id: `calibration-depth:${option.value}`,
+        label: option.label,
+        disabled: item.child?.value === option.value,
+        onSelect: () => item.child?.onChange(option.value),
+      })) ?? [],
+    }],
+  },
+]
 
 function waitForNextP(): Promise<void> {
   return new Promise((resolve) => {
@@ -363,14 +394,16 @@ function SettingRow({
   name,
   note,
   chip,
+  menuContext,
   children,
 }: {
   name: ReactNode
   note?: ReactNode
   chip?: ReactNode
+  menuContext?: PrefTglItem
   children: ReactNode
 }) {
-  return (
+  const row = (
     <div className="cal-row">
       <div>
         <div className="cal-row__name">
@@ -382,6 +415,11 @@ function SettingRow({
       <div className="cal-row__control">{children}</div>
     </div>
   )
+  return menuContext ? (
+    <ContextTrigger asChild ariaLabel={`${menuContext.label} actions`} location="calibration.preference" context={menuContext}>
+      {row}
+    </ContextTrigger>
+  ) : row
 }
 
 
@@ -626,6 +664,7 @@ function CalibrationContent() {
     setSeeQppd,
     setCmprXprts: useAppStore.getState().setCmprXprts,
   })
+  useMenuContributions('calibration.preference', preferenceMenu)
 
   const appGroup = prefGrps.find((group) => group.title === 'App')
   const calcGroup = prefGrps.find((group) => group.title === 'Calculator')
@@ -1026,7 +1065,7 @@ function CalibrationContent() {
       if (snapshotTextRef.current) snapshotTextRef.current.value = ''
       setHasSnpsTxt(false)
       setSnpsRrr(null)
-      setSnpsStts(`Imported ${resolved.result.label} into the current app state.`)
+      setSnpsStts(`Imported ${resolved.result.label} into your app data.`)
       scheduleMeasure()
     } catch (error) {
       setSnpsStts(null)
@@ -1106,7 +1145,7 @@ function CalibrationContent() {
           ? `Recorded ${result.report.issues.length} migration note${result.report.issues.length === 1 ? '' : 's'} during conversion.`
           : null,
       ].filter(Boolean).join(' '))
-      showToast({ content: 'Imported legacy v1 backup into the current app state.', variant: 'success' })
+      showToast({ content: 'Imported the v1 backup into your app data.', variant: 'success' })
       scheduleMeasure()
     } catch (error) {
       setLgcyMprtS(null)
@@ -1160,6 +1199,7 @@ function CalibrationContent() {
         key={item.label}
         name={item.label}
         note={item.description}
+        menuContext={item}
         chip={beta ? <span className="cal-chip">reloads the app</span> : null}
       >
         {isHistory && item.checked ? (
@@ -1242,8 +1282,18 @@ function CalibrationContent() {
           </div>
           <div className="cal-shelf__row">
             {THEME_BY_MODE[openSlot].map((variant) => (
-              <button
+              <ContextTrigger
                 key={variant}
+                asChild
+                ariaLabel={`${THEME_LABELS[variant]} theme actions`}
+                items={[{
+                  id: `calibration:theme:${openSlot}:${variant}`,
+                  label: `Use ${THEME_LABELS[variant]}`,
+                  disabled: pickOf[openSlot] === variant,
+                  onSelect: () => pickVariant(openSlot, variant),
+                }]}
+              >
+              <button
                 type="button" className="cal-card"
                 aria-pressed={pickOf[openSlot] === variant}
                 title={THEME_LABELS[variant]}
@@ -1251,6 +1301,7 @@ function CalibrationContent() {
               >
                 <ThemeInkCard variant={variant} />
               </button>
+              </ContextTrigger>
             ))}
           </div>
         </>
@@ -1262,7 +1313,7 @@ function CalibrationContent() {
         <CllpPageHeyf
           eyebrow="Configuration"
           title="Calibration"
-          subtitle="Set how the calculator looks and behaves, and choose where your data lives."
+          subtitle="Change the calculator’s appearance, behavior and data storage."
           layoutKey="calibration-hero"
         />
 
@@ -1291,7 +1342,7 @@ function CalibrationContent() {
               <div className="cal-block">
                 <div className="cal-blockh">
                   <h3>Theme</h3>
-                  <span>the app holds one pick per mode, so all three keep their own</span>
+                  <span>Choose a separate theme for each mode.</span>
                 </div>
 
                 <div className="cal-slots">
@@ -1385,7 +1436,7 @@ function CalibrationContent() {
 
               <div className="cal-block">
                 <div className="cal-blockh">
-                  <h3>Where uploads live</h3>
+                  <h3>Upload storage</h3>
                   <span>wallpapers and showcase card images</span>
                 </div>
 
@@ -1474,6 +1525,14 @@ function CalibrationContent() {
               ) : null}
             </section>
 
+            <ContextTrigger asChild ariaLabel="Data actions" items={[
+              { id: 'calibration:data:export-all', label: 'Export snapshot', onSelect: () => { void onXprtSnap() } },
+              { id: 'calibration:data:export-parts', label: 'Export part...', submenu: DATAXPRTCTNS.map((action) => ({
+                id: `calibration:data:export:${action.kind}`,
+                label: action.label,
+                onSelect: () => { void onXprtDataBn(action.kind) },
+              })) },
+            ]}>
             <section className="cal-sec" id="cal-data" ref={keepSec('data')}>
               <div className="cal-sech">
                 <h2>Data</h2>
@@ -1597,6 +1656,7 @@ function CalibrationContent() {
                 </div>
               </div>
             </section>
+            </ContextTrigger>
 
             <section className="cal-sec" id="cal-backup" ref={keepSec('backup')}>
               <div className="cal-sech">

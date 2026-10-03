@@ -17,7 +17,8 @@ import type { SimulationPageId } from '@/application/navigation/appIndex'
 import type { ChromeIndexCtx } from '@/application/navigation/chromeIndex'
 import { useTstStr } from '@/shared/util/toastStore.ts'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
-import { useAppCtxMen } from '@/application/context-menu/AppContextMenu'
+import { useAppCtxMen, useMenuContributions } from '@/application/context-menu/AppContextMenu'
+import { isLegacyMenuRoute } from '@/application/context-menu/menuContributions'
 import { SIMULATION_SURFACES, isSimulationRoute, isSimulationSurfaceRoute } from '@/shared/lib/appRoutes'
 import { CURRENT_CHANGE_NOTICE, CURRENT_CHANGE_NOTICE_KEY } from '@/data/content/currentChangelogNotice'
 import { RtMenuProv } from '@/app/shell/context-menu/RouteMenuProvider'
@@ -27,7 +28,9 @@ import { useCkBoot } from '@/app/hooks/useCookieBootstrap'
 import { usePageTrck } from '@/app/hooks/usePageTracking'
 import { useSeoMeta } from '@/app/hooks/useSeoMeta'
 import { useShellTheme } from '@/app/shell/useShellTheme'
+import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay'
 import { GlobalHosts } from '@/app/shell/GlobalHosts'
+import { hasMobileRoute, useMobileUi } from '@/shared/navigation/mobileUi'
 
 const CHNGTSTSTORE = 'seen-changelog-version'
 const RosterColumn = lazy(async () => ({ default: (await import('@/modules/simulation/api/roster')).RosterColumn }))
@@ -52,6 +55,7 @@ function AppLayoutContent() {
   const location = useLocation()
   const rtChrmMenu = useRtChrmMen()
   const contextMenu = useAppCtxMen()
+  const wasLegacyMenuRoute = useRef(false)
 
   const { updateToast, shellClassName } = useShellTheme()
 
@@ -62,13 +66,25 @@ function AppLayoutContent() {
   /* Pages mount below the header but can replace its stamp action. Wrap the
      callback so React never interprets registration as a functional update. */
   const [stamp, holdStamp] = useState<{ run: () => void } | null>(null)
+  // Toast clicks can happen after navigation, so resolve the route action at click time.
+  const stampAction = useRef<(() => void) | null>(null)
   const [toolsPort, setToolsPort] = useState<HTMLElement | null>(null)
   const setStamp = useCallback(
-      (run: (() => void) | null) => holdStamp(run ? { run } : null),
+      (run: (() => void) | null) => {
+        stampAction.current = run
+        holdStamp(run ? { run } : null)
+      },
       [],
   )
 
   const showToast = useTstStr((state) => state.show)
+
+  const mobileUi = useMobileUi()
+  const phone = mobileUi && hasMobileRoute(location.pathname)
+  useLytFfct(() => {
+    document.documentElement.classList.toggle('mshell-on', phone)
+    document.documentElement.classList.toggle('mui', mobileUi)
+  }, [mobileUi, phone])
 
   useLytFfct(() => setFrontDoor(location.pathname), [location.pathname])
 
@@ -91,7 +107,8 @@ function AppLayoutContent() {
       duration: 60000,
       onClick: () => {
         localStorage.setItem(CHNGTSTSTORE, ltstVrsn)
-        rtChrmMenu.actions.openStatus()
+        if (stampAction.current) stampAction.current()
+        else rtChrmMenu.actions.openStatus()
       },
     })
   }, [rtChrmMenu.actions, showToast, updateToast])
@@ -111,14 +128,18 @@ function AppLayoutContent() {
     [rtChrmMenu.builders.routeChrome],
   )
 
-  useLytFfct(() => {
-    // Register route actions at the global context-menu boundary for blank surfaces.
-    contextMenu.setGlblTms(rtCtxMenuTms)
+  const backgroundContributions = useMemo(() => [{
+    id: 'route-actions',
+    group: 'app',
+    build: () => rtCtxMenuTms,
+  }], [rtCtxMenuTms])
+  useMenuContributions('app.background', backgroundContributions)
 
-    return () => {
-      contextMenu.setGlblTms([])
-    }
-  }, [contextMenu, rtCtxMenuTms])
+  useEffect(() => {
+    const legacy = isLegacyMenuRoute(location.pathname)
+    if (legacy && !wasLegacyMenuRoute.current) contextMenu.close()
+    wasLegacyMenuRoute.current = legacy
+  }, [contextMenu, location.pathname])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -162,11 +183,25 @@ function AppLayoutContent() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [rtChrmMenu.actions])
 
+  if (phone) {
+    return (
+      <ContextTrigger asChild ariaLabel="App actions" location="app.background" touchLongPress={false}>
+      <div className={`${shellClassName} mshell`}>
+        <main className="mshell-main" ref={aperture}>
+          <Outlet context={{ setStamp } satisfies ChromeIndexCtx} />
+        </main>
+        <GlobalHosts simulating={false} />
+      </div>
+      </ContextTrigger>
+    )
+  }
+
   return (
       <ContextTrigger
         asChild
         ariaLabel="App actions"
-        items={[]}
+        location="app.background"
+        touchLongPress={false}
       >
         <div className={shellClassName}>
           <div className="app-wallpaper" aria-hidden="true" />
@@ -182,7 +217,7 @@ function AppLayoutContent() {
               />
 
               {/* Keep the roster outside Outlet so route changes do not remount it. */}
-              {rosterUp ? <Suspense fallback={null}><RosterColumn /></Suspense> : null}
+              {rosterUp ? <Suspense fallback={<div className="blm blm--loading"><AppLoaderOverlay mode="inline" text="Loading roster..." /></div>}><RosterColumn /></Suspense> : null}
 
               <main className="main-content" ref={aperture}>
                 <Outlet context={{ setStamp } satisfies ChromeIndexCtx} />

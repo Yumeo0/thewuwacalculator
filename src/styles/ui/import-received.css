@@ -1,0 +1,400 @@
+@keyframes irc-rise {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes irc-out {
+  to { opacity: 0; }
+}
+
+
+@keyframes irc-open {
+  from { clip-path: inset(calc(50% - 1px) 0 calc(50% - 1px) 0); }
+  to { clip-path: inset(-1rem 0 -1rem 0); }
+}
+
+
+@keyframes irc-shut {
+  from { clip-path: inset(calc(50% - 1px) 0 calc(50% - 1px) 0); }
+  to { clip-path: inset(-1rem 0 -1rem 0); }
+}
+
+
+.app-modal-panel.irc-band {
+  --irc-gold: var(--loader-glow, #f8e56c);
+  --irc-ink: color-mix(in srgb, var(--irc-gold) 78%, var(--picker-modal-text));
+  --irc-line: color-mix(in srgb, var(--picker-modal-text) 12%, transparent);
+  --irc-bleed: clamp(1rem, 2vw, 1.6rem);
+  --irc-ground: color-mix(in srgb, var(--bg) 94%, transparent);
+
+  width: calc(100% + 2 * var(--irc-bleed));
+  max-width: none;
+  margin-inline: calc(-1 * var(--irc-bleed));
+  padding: 1.7rem 1rem 1.6rem;
+  align-items: center;
+  gap: 1.1rem;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: linear-gradient(90deg, transparent, var(--irc-ground) 18%, var(--irc-ground) 82%, transparent);
+}
+
+.app-modal-panel.irc-band.open {
+  box-shadow: none;
+}
+
+
+[data-app-modal-content].irc-band.open {
+  animation: irc-open 0.55s cubic-bezier(0.3, 0.9, 0.3, 1) both;
+}
+
+.app-modal-panel.irc-band.closing {
+  opacity: 1;
+}
+
+[data-app-modal-content].irc-band.closing {
+  animation: irc-shut 240ms cubic-bezier(0.3, 0.9, 0.3, 1) 80ms reverse both;
+}
+
+.irc-band.closing > :not(.irc-star) {
+  animation: irc-out 120ms ease-out both;
+}
+
+.app-modal-blur:has(+ .app-modal-overlay .irc-band) {
+  --mdl-haze: 350ms;
+  --mdl-haze-wait: 0ms;
+}
+
+.ax:has(.app-modal-overlay .irc-band.open) .ax-chrome {
+  transform: none;
+}
+
+.irc-band::before,
+.irc-band::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--irc-gold) 55%, transparent) 30%, color-mix(in srgb, var(--irc-gold) 55%, transparent) 70%, transparent);
+  pointer-events: none;
+}
+
+.irc-band::before { top: 0; }
+.irc-band::after { bottom: 0; }
+
+.irc-star {
+  position: absolute;
+  left: 50%;
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--irc-gold);
+  filter: drop-shadow(0 0 6px var(--irc-gold));
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.irc-star--top { top: 0; }
+.irc-star--bottom { top: 100%; }
+
+.irc-title {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  text-align: center;
+  text-wrap: balance;
+  animation: irc-rise 420ms 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.irc-title svg {
+  flex: none;
+  width: 0.8rem;
+  height: 0.8rem;
+  color: var(--irc-gold);
+}
+
+.irc-sub {
+  margin: -0.6rem 0 0;
+  font-size: 0.84rem;
+  color: var(--picker-modal-muted);
+  animation: irc-rise 420ms 350ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.irc-tiles {
+  display: flex;
+  gap: 1rem;
+  animation: irc-rise 420ms 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.irc-tiles__rule {
+  width: 1px;
+  margin-inline: 0.3rem;
+  background: var(--irc-line);
+}
+
+.irc-tile {
+  appearance: none;
+  position: relative;
+  display: grid;
+  gap: 0.45rem;
+  width: 7.6rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+
+.irc-tile__art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 7.6rem;
+  overflow: hidden;
+  border: 1px solid var(--irc-line);
+  border-radius: 0.5rem;
+  background: linear-gradient(to top,
+    color-mix(in srgb, var(--irc-gold) 30%, var(--bg)) 0%,
+    color-mix(in srgb, var(--irc-gold) 6%, var(--bg)) 55%,
+    var(--bg) 100%);
+  filter: saturate(0.55) brightness(0.8);
+  transition: border-color 220ms ease, box-shadow 220ms ease, filter 220ms ease;
+}
+
+.irc-tile__art::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: var(--irc-gold);
+  opacity: 0.5;
+}
+
+.irc-tile__portrait {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.irc-tile__weapon {
+  position: absolute;
+  right: 0.25rem;
+  bottom: 0.3rem;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.6) 35%, transparent 70%);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+.irc-tile__glyph {
+  width: 4.2rem;
+  height: 3rem;
+  color: var(--irc-gold);
+}
+
+.irc-tile__mark {
+  width: 2.8rem;
+  height: 2.8rem;
+  color: var(--irc-gold);
+}
+
+.irc-tile__count {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.4rem;
+  z-index: 1;
+  padding: 0.05rem 0.3rem;
+  border-radius: 0.25rem;
+  background: rgba(0, 0, 0, 0.55);
+  font-family: var(--mono-font);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+}
+
+.irc-tile__tick {
+  position: absolute;
+  top: -0.4rem;
+  right: -0.4rem;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: var(--irc-gold);
+  color: var(--bg);
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 220ms ease, transform 220ms cubic-bezier(0.34, 1.5, 0.64, 1);
+}
+
+.irc-tile__tick svg {
+  width: 0.8rem;
+  height: 0.8rem;
+  stroke-width: 3.2;
+}
+
+.irc-tile__name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--picker-modal-muted);
+  transition: color 200ms ease;
+}
+
+.irc-tile__sub {
+  margin-top: -0.3rem;
+  font-size: 0.7rem;
+  line-height: 1.3;
+  color: var(--picker-modal-muted);
+  opacity: 0.8;
+}
+
+.irc-tile:is(:hover, :focus-visible) .irc-tile__art {
+  filter: saturate(0.8) brightness(0.95);
+}
+
+.irc-tile:focus-visible {
+  outline: none;
+}
+
+.irc-tile:focus-visible .irc-tile__art {
+  border-color: color-mix(in srgb, var(--irc-gold) 60%, transparent);
+}
+
+.irc-tile[aria-checked='true'] .irc-tile__art {
+  filter: none;
+  border-color: var(--irc-gold);
+  box-shadow: 0 0 0 1px var(--irc-gold), 0 0 22px color-mix(in srgb, var(--irc-gold) 35%, transparent);
+}
+
+.irc-tile[aria-checked='true'] .irc-tile__tick {
+  opacity: 1;
+  transform: none;
+}
+
+.irc-tile[aria-checked='true'] .irc-tile__name {
+  color: var(--irc-ink);
+}
+
+
+.irc-tile[data-included] .irc-tile__art {
+  filter: none;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--irc-gold) 55%, transparent);
+}
+
+.irc-tile[data-included] .irc-tile__name {
+  color: color-mix(in srgb, var(--irc-ink) 70%, var(--picker-modal-muted));
+}
+
+.irc-read {
+  max-width: 34rem;
+  min-height: 2.6em;
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--picker-modal-muted);
+  animation: irc-rise 420ms 425ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.irc-read em {
+  font-style: normal;
+  color: var(--irc-ink);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--irc-gold) 55%, transparent);
+  text-underline-offset: 3px;
+}
+
+.irc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  animation: irc-rise 420ms 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.irc-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 6rem;
+  padding: 0.35rem 1.3rem 0.35rem 0.35rem;
+  border: 1px solid color-mix(in srgb, var(--picker-modal-text) 18%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--picker-modal-text) 6%, var(--bg));
+  color: var(--picker-modal-text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.irc-btn__well {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--picker-modal-text) 12%, transparent);
+}
+
+.irc-btn__well svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.irc-btn:is(:hover, :focus-visible) {
+  border-color: color-mix(in srgb, var(--picker-modal-text) 40%, transparent);
+  outline: none;
+}
+
+.irc-btn--go {
+  border-color: color-mix(in srgb, var(--irc-gold) 60%, transparent);
+  background: color-mix(in srgb, var(--irc-gold) 12%, var(--bg));
+}
+
+.irc-btn--go .irc-btn__well {
+  background: var(--irc-gold);
+  color: var(--bg);
+}
+
+.irc-btn--go:is(:hover, :focus-visible) {
+  border-color: var(--irc-gold);
+}
+
+.irc-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+:is(.no-entrance-anim, .reduce-animation) :is(.irc-title, .irc-sub, .irc-tiles, .irc-read, .irc-actions) {
+  animation: none;
+}
+
+:is(.no-entrance-anim, .reduce-animation) [data-app-modal-content].irc-band:is(.open, .closing),
+:is(.no-entrance-anim, .reduce-animation) .irc-band.closing > * {
+  animation: none;
+}
+
+:is(.no-entrance-anim, .reduce-animation) .app-modal-panel.irc-band.closing {
+  opacity: 0;
+}
+
+:is(.no-entrance-anim, .reduce-animation) :is(.irc-tile__art, .irc-tile__tick, .irc-tile__name, .irc-btn) {
+  transition: none;
+}

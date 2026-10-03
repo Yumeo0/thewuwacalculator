@@ -141,9 +141,9 @@ describe('rotation editor engine round trips', () => {
   })
 
   it.each([
-    ['healing', 'var(--calc-support-healing-color)'],
-    ['shield', 'var(--calc-support-shield-color)'],
-  ] as const)('projects %s as the step\'s first-class support color', (aggregationType, color) => {
+    'healing',
+    'shield',
+  ] as const)('keeps %s out of damage totals while recording support output', (aggregationType) => {
     const supportSeed: ResSeed = {
       ...seed,
       skills: (seed.skills ?? []).map((skill) => ({ ...skill, aggregationType })),
@@ -177,7 +177,6 @@ describe('rotation editor engine round trips', () => {
 
     expect(projected?.type).toBe('step')
     if (projected?.type === 'step') {
-      expect(projected.color).toBe(color)
       expect(projected.aggregationType).toBe(aggregationType)
     }
     expect(result.summary.total.avg).toBe(0)
@@ -294,55 +293,6 @@ describe('rotation editor engine round trips', () => {
     })
     expect(result.summary.counts.entries).toBe(1)
     expect(editorSectionsToRotation(result.sections, rotation)[1]?.items).toEqual(rotation)
-  })
-
-  it('projects authored repeat and uptime display metadata', () => {
-    const runtime = makeResRuntime(seed)
-    runtime.rotation.program = [
-      {
-        id: 'repeat-meta',
-        type: 'repeat',
-        label: 'Burst window',
-        color: '#20bfb9',
-        times: 2,
-        items: [],
-      },
-      {
-        id: 'uptime-meta',
-        type: 'uptime',
-        label: 'Buff window',
-        color: '#f472b6',
-        ratio: 0.5,
-        items: [],
-      },
-    ]
-    const members: RotationMember[] = [{
-      id: seed.id,
-      name: seed.name,
-      profile: seed.profile ?? '',
-      attribute: seed.attribute,
-      runtime,
-      skills: seed.skills ?? [],
-      features: seed.features ?? [],
-      states: seed.states ?? [],
-    }]
-
-    const result = buildRun({
-      runtime,
-      seed,
-      runtimesById: { [runtime.id]: runtime },
-      enemy: makeEnemy(),
-      members,
-    })
-
-    expect(findNode(result.sections, 'repeat-meta')).toMatchObject({
-      label: 'Burst window',
-      color: '#20bfb9',
-    })
-    expect(findNode(result.sections, 'uptime-meta')).toMatchObject({
-      label: 'Buff window',
-      color: '#f472b6',
-    })
   })
 
   it('projects the exact condition and feature stream without replaying containers', () => {

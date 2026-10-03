@@ -13,6 +13,7 @@ import {
   Panel,
   Separator,
 } from 'react-resizable-panels'
+import { layoutViewportWidth } from '@/shared/lib/layoutViewport'
 
 interface RszbSpltPrps {
   left: ReactNode
@@ -75,24 +76,23 @@ export function RszbSplt({
   const [isDragging, setIsDrgg] = useState(false)
   const [isStacked, setIsStacked] = useState(() => {
     if (typeof window === 'undefined') return false
-    return window.innerWidth <= stackBelowPx
+    return layoutViewportWidth() <= stackBelowPx
   })
 
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    const media = window.matchMedia(`(max-width: ${stackBelowPx}px)`)
-
     const update = () => {
-      setIsStacked(media.matches)
-      if (media.matches) {
+      const stacked = layoutViewportWidth() <= stackBelowPx
+      setIsStacked(stacked)
+      if (stacked) {
         setIsDrgg(false)
       }
     }
 
     update()
-    media.addEventListener('change', update)
-    return () => media.removeEventListener('change', update)
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
   }, [stackBelowPx])
 
   useEffect(() => {

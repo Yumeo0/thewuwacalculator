@@ -6,6 +6,7 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
+import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation } from 'react-router-dom'
@@ -16,22 +17,14 @@ import { useAppSnapshot } from '@/modules/home/model/useAppSnapshot'
 import { useChromeIndex } from '@/application/navigation/chromeIndex'
 import { STATE_LABELS, STATUS_DATA } from '@/data/content/appStatus'
 import { getWhatsNewEntries } from '@/data/content/changelogEntries'
-import { listResonatorSeeds, listEchoes } from '@/data/catalog/catalogService'
-import { getWeapons } from '@/data/gameData/weapons/weaponDataStore'
-import { SONATA_SETS } from '@/data/gameData/catalog/sonataSets'
-import { loadEnemySummary } from '@/data/catalog/enemyCatalogService'
 import { APP_ROUTES, WHATS_NEW_ACT } from '@/shared/lib/appRoutes'
 import { mainPortal } from '@/shared/lib/portalTarget'
 import { ArrivalPlate } from '@/modules/home/features/ArrivalPlate'
 import { WhatsNewIndex } from '@/modules/home/features/WhatsNewIndex'
 import { loadArrivals } from '@/modules/home/model/arrivals'
 import type { Arrivals } from '@/modules/home/model/arrivals'
-
-const REPORT_ART = '/assets/home/cs-1.webp'
-const ARRIVAL_ART = '/assets/home/cs-4.webp'
-const WORK_ART = '/assets/home/sc-rotation.webp'
-const RELEASE_ART = '/assets/home/cs-3.webp'
-const ABOUT_ART = '/assets/home/cs-2.webp'
+import { useCoverage } from '@/modules/home/model/useCoverage'
+import { ABOUT_ART, ARRIVAL_ART, RELEASE_ART, REPORT_ART, WORK_ART } from '@/modules/home/model/homeArt'
 
 // Debounce artwork selection so transient sections crossed during scrolling do not trigger swaps.
 const ROOM_WAIT = 420
@@ -62,33 +55,6 @@ function useRested<T>(value: T, ms: number): T {
   }, [ms, rested, value])
 
   return rested
-}
-
-// Derive counts directly from catalogs; enemy data resolves asynchronously.
-function useCoverage() {
-  const [enemies, setEnemies] = useState<number | null>(null)
-
-  useEffect(() => {
-    let live = true
-    void loadEnemySummary()
-        .then((entries) => { if (live) setEnemies(Object.keys(entries).length) })
-        .catch(() => { if (live) setEnemies(null) })
-    return () => { live = false }
-  }, [])
-
-  return useMemo(() => {
-    const size: Record<string, number | null> = {
-      resonators: listResonatorSeeds().length,
-      weapons: getWeapons().length,
-      echoes: listEchoes().length,
-      enemies,
-    }
-    return STATUS_DATA.coverage.map((domain) => ({
-      ...domain,
-      count: size[domain.key] ?? null,
-      extra: domain.key === 'echoes' ? `${SONATA_SETS.length} sets` : '',
-    }))
-  }, [enemies])
 }
 
 const HAS_RELEASES = getWhatsNewEntries().length > 0
@@ -377,7 +343,7 @@ export function HomePage() {
                     <span className="hm-also__n">{arrivals.enemies}</span>
                     <span>
                       <span className="hm-also__k">New enemies</span>
-                      <span className="hm-also__v is-quiet">all measurable</span>
+                      <span className="hm-also__v is-quiet">available as simulation targets</span>
                     </span>
                   </div>
                 ) : null}
@@ -385,14 +351,14 @@ export function HomePage() {
             </>
           ) : (
             <div className="hm-split hm-split--bare">
-              <p>
-                {arrivals === null ? (
-                  <>
-                    Nanoka is not answering right now, so there is nothing to show here.
-                    The <AxLink to={APP_ROUTES.changelog}>changelog</AxLink> has what landed.
-                  </>
-                ) : 'Checking what the game shipped last..'}
-              </p>
+              {arrivals === undefined ? (
+                <AppLoaderOverlay mode="inline" text="Checking the latest additions..." />
+              ) : (
+                <p>
+                  Nanoka is not answering right now, so there is nothing to show here.
+                  The <AxLink to={APP_ROUTES.changelog}>changelog</AxLink> lists recent app updates.
+                </p>
+              )}
             </div>
           )}
         </div>

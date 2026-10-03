@@ -3,11 +3,12 @@
   Description: Builds rotation-editor context actions for authored nodes, executed rows, and selections.
 */
 
-import { Ban, CopyPlus, Gauge, ListEnd, Power, RotateCcw, TextQuote, Trash2, Unlink } from 'lucide-react'
+import { CheckCheck, ClipboardPaste, Copy, CopyPlus, Eraser, Gauge, GitCompare, ListEnd, Power, PowerOff, RotateCcw, Scissors, SquareDashedMousePointer, TextQuote, Trash2, Unlink, X } from 'lucide-react'
 import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
 import type { EditConfig } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
 import { withEditMenu } from '@/modules/simulation/surfaces/rotation/shared/nodeTools.ts'
 import type { EditorNode } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
+import type { SelectionActions } from '@/modules/simulation/surfaces/rotation/program-editor/components/InspectPanels.tsx'
 
 export interface RowCtxActions {
   node: EditorNode
@@ -73,8 +74,8 @@ export function makeRowMenu(actions: RowCtxActions): MenuEntry[] {
           ? 'Clear Off-Tune resume'
           : 'Off-Tune resumes here',
         hint: actions.offTuneResume.marked
-          ? 'Hands it back to the default landing'
-          : 'The target refuses Off-Tune until this feature',
+          ? 'Use the default Off-Tune resume point'
+          : 'Prevent Off-Tune until this feature',
         icon: <Gauge size="1em" />,
         onSelect: actions.offTuneResume.onSelect,
       } satisfies MenuEntry]
@@ -83,7 +84,7 @@ export function makeRowMenu(actions: RowCtxActions): MenuEntry[] {
     {
       id: `rte-ctx:${node.id}:enabled`,
       label: node.disabled ? 'Enable' : 'Disable',
-      icon: node.disabled ? <Power size="1em" /> : <Ban size="1em" />,
+      icon: node.disabled ? <PowerOff size="1em" /> : <Power size="1em" />,
       onSelect: actions.onToggleEnabled,
     },
     {
@@ -94,6 +95,32 @@ export function makeRowMenu(actions: RowCtxActions): MenuEntry[] {
       onSelect: actions.onDelete,
     },
   ], actions.edit)
+}
+
+export function makeSelectedNodesMenu(actions: SelectionActions, count: number): MenuEntry[] {
+  return [
+    ...(actions.onCompare ? [{ id: 'rte-selection:compare', label: actions.compareLabel ?? 'Compare', icon: <GitCompare size="1em" />, disabled: !actions.canCompare, onSelect: actions.onCompare } satisfies MenuEntry] : []),
+    ...(actions.onLoopify ? [{ id: 'rte-selection:loopify', label: 'Loopify', icon: <RotateCcw size="1em" />, disabled: !actions.hasSelection, onSelect: actions.onLoopify } satisfies MenuEntry] : []),
+    ...(actions.onBlockify ? [{ id: 'rte-selection:blockify', label: 'Blockify', icon: <TextQuote size="1em" />, disabled: !actions.hasSelection, onSelect: actions.onBlockify } satisfies MenuEntry] : []),
+    { id: 'rte-selection:copy', label: 'Copy', icon: <Copy size="1em" />, disabled: !actions.canCopy, onSelect: actions.onCopy },
+    ...(actions.onCut ? [{ id: 'rte-selection:cut', label: 'Cut', icon: <Scissors size="1em" />, disabled: !actions.canCopy, onSelect: actions.onCut } satisfies MenuEntry] : []),
+    ...(actions.onPaste ? [{ id: 'rte-selection:paste', label: 'Paste', icon: <ClipboardPaste size="1em" />, disabled: !actions.canPaste, onSelect: actions.onPaste } satisfies MenuEntry] : []),
+    ...(actions.onDuplicate ? [{ id: 'rte-selection:duplicate', label: 'Duplicate', icon: <CopyPlus size="1em" />, disabled: !actions.canCopy, onSelect: actions.onDuplicate } satisfies MenuEntry] : []),
+    { type: 'separator' },
+    { id: 'rte-selection:all', label: 'Select all', icon: <CheckCheck size="1em" />, onSelect: actions.onSelectAll },
+    { id: 'rte-selection:clear', label: 'Clear selection', icon: <Eraser size="1em" />, disabled: !actions.hasSelection, onSelect: actions.onClear },
+    { id: 'rte-selection:exit', label: 'Exit selection', icon: <X size="1em" />, onSelect: actions.onExit },
+    ...(actions.onDelete ? [{ type: 'separator' } as MenuEntry, { id: 'rte-selection:delete', label: count > 0 ? `Delete ${count}` : 'Delete', icon: <Trash2 size="1em" />, danger: true, disabled: !actions.hasSelection, onSelect: actions.onDelete } satisfies MenuEntry] : []),
+  ]
+}
+
+export function makeAddToSelectionMenu(onAdd: () => void, actions: SelectionActions): MenuEntry[] {
+  return [
+    { id: 'rte-selection:add', label: 'Add to selection', icon: <SquareDashedMousePointer size="1em" />, onSelect: onAdd },
+    { type: 'separator' },
+    { id: 'rte-selection:all', label: 'Select all', icon: <CheckCheck size="1em" />, onSelect: actions.onSelectAll },
+    { id: 'rte-selection:exit', label: 'Exit selection', icon: <X size="1em" />, onSelect: actions.onExit },
+  ]
 }
 
 interface PickCtxActions {

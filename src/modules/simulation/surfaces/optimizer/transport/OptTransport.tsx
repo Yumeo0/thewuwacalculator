@@ -752,8 +752,8 @@ export function OptTransport(props: OptTransportProps) {
         <div className="app-popup__footer">
           <span>Batch {batchSize ? batchSize.toLocaleString() : '...'}</span>
           <span className="app-popup__fill" />
-          <button type="button" className="app-popup__action" onClick={props.onGuide}>Guide</button>
-          <button type="button" className="app-popup__action" onClick={props.onRules}>Rules</button>
+          <button type="button" className="app-popup__action" onClick={() => { setDrop(null); props.onGuide() }}>Guide</button>
+          <button type="button" className="app-popup__action" onClick={() => { setDrop(null); props.onRules() }}>Rules</button>
         </div>
       </DropHost>
 

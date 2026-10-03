@@ -7,7 +7,6 @@ import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { resolveDisplayImage } from '@/shared/lib/displayAssets'
 import { currentPixelRatio } from '@/shared/lib/displayImageSizing'
 import type { CSSProperties, KeyboardEvent, MouseEvent, RefCallback } from 'react'
-import type { SpinePlacement } from '@/shared/spine/SpinePortrait.tsx'
 import type { AttributeKey } from '@/domain/entities/stats'
 import type { EchoInstance } from '@/domain/entities/runtime'
 import type {
@@ -44,6 +43,7 @@ export interface EvaluationEchoSelection {
   buildClickCapture: (id: string) => (event: MouseEvent<HTMLElement>) => void
   getId: (slotIndex: number) => string
   getItems: (id: string, echo: EchoInstance) => MenuEntry[]
+  getEmptyItems?: (slotIndex: number) => MenuEntry[]
   surfaceProps: {
     ref?: RefCallback<HTMLElement>
     tabIndex?: number
@@ -63,71 +63,6 @@ export interface EvaluationEchoActions {
   onLift: (slotIndex: number) => void
   liftedSlot: number | null
   onUndoLift: () => void
-}
-
-const DEFAULT_EVALUATION_SPINE_PLACEMENT: SpinePlacement = {
-  x: 2017.173,
-  y: 1512.373,
-  scale: 3,
-}
-
-const defaults = DEFAULT_EVALUATION_SPINE_PLACEMENT
-
-const EVALUATION_SPINE_PLACEMENTS: Record<string, SpinePlacement> = {
-  '1412': {
-    x: 1907.173,
-    y: defaults.y,
-    scale: defaults.scale,
-  },
-  '1411': {
-    x: 1907.173,
-    y: defaults.y,
-    scale: defaults.scale,
-  },
-  '1505': {
-    x: 1907.173,
-    y: defaults.y - 100,
-    scale: defaults.scale,
-  },
-  '1208': {
-    x: 1957.173,
-    y: defaults.y,
-    scale: defaults.scale,
-  },
-  '1506': {
-    x: 1957.173,
-    y: defaults.y + 88,
-    scale: defaults.scale,
-  },
-  '1509': {
-    x: 1957.173,
-    y: defaults.y,
-    scale: defaults.scale,
-  },
-  '1107': {
-    x: 2087.173,
-    y: defaults.y - 110,
-    scale: defaults.scale,
-  },
-  '1108': {
-    x: 2087.173,
-    y: defaults.y + 148,
-    scale: defaults.scale,
-  },
-  '1207': {
-    x: defaults.x,
-    y: defaults.y + 148,
-    scale: defaults.scale,
-  },
-  '1510': {
-    x: 2017.173,
-    y: defaults.y + 150,
-    scale: defaults.scale,
-  }
-}
-
-export function getEvaluationSpinePlacement(resId: string | null): SpinePlacement {
-  return (resId && EVALUATION_SPINE_PLACEMENTS[resId]) || DEFAULT_EVALUATION_SPINE_PLACEMENT
 }
 
 export const BUILD_LABEL: Record<EvaluationBuildKey, string> = {
@@ -223,12 +158,12 @@ export function SonataTokens({
   if (sets.length === 0) {
     return emptyToken ? (
       <span className={className}>
-        <span className="workspace-sonata-set workspace-sonata-set--empty" title="No sonata sets">
-          <span className="workspace-sonata-icon workspace-sonata-icon--fallback" />
-          <span className="workspace-sonata-pc">{emptyLabel}</span>
+        <span className="wk-sonata-set wk-sonata-set--empty" title="No sonata sets">
+          <span className="wk-sonata-icon wk-sonata-icon--fallback" />
+          <span className="wk-sonata-pc">{emptyLabel}</span>
         </span>
       </span>
-    ) : <span className={`${className} workspace-sonata-empty`}>{emptyLabel}</span>
+    ) : <span className={`${className} wk-sonata-empty`}>{emptyLabel}</span>
   }
 
   return (
@@ -236,13 +171,13 @@ export function SonataTokens({
       {sets.map((set) => {
         const icon = set.icon ?? getSntSetIco(set.setId)
         return (
-          <span key={set.setId} className="workspace-sonata-set" title={`${set.name} · ${set.pieces}pc`}>
+          <span key={set.setId} className="wk-sonata-set" title={`${set.name} · ${set.pieces}pc`}>
             {icon ? (
-              <DisplayImage src={icon} alt="" className="workspace-sonata-icon" loading="lazy" onError={withDefIconM} />
+              <DisplayImage src={icon} alt="" className="wk-sonata-icon" loading="lazy" onError={withDefIconM} />
             ) : (
-              <span className="workspace-sonata-icon workspace-sonata-icon--fallback" />
+              <span className="wk-sonata-icon wk-sonata-icon--fallback" />
             )}
-            <span className="workspace-sonata-pc">{set.pieces}</span>
+            <span className="wk-sonata-pc">{set.pieces}</span>
           </span>
         )
       })}
@@ -274,9 +209,7 @@ export const EVALUATION_RAIL_EXIT_MS = 120
 export const EVALUATION_RAIL_ENTER_MS = 260
 export const EVALUATION_SURFACE_EXIT_MS = 180
 export const EVALUATION_SURFACE_ENTER_MS = 460
-// Time the rail spends growing/shrinking between views. Must match the
-// `.workspace-rail { transition: width }` duration in rail.css so the incoming
-// surface only fades in once the rail has finished resizing.
+// Must match the rail width transition so dependent measurements wait for stable geometry.
 export const EVALUATION_RAIL_RESIZE_MS = 460
 export const EVALUATION_RAIL_PRELOAD_TIMEOUT_MS = 260
 
@@ -344,7 +277,7 @@ export function StatGlyph({ statKey, size }: { statKey: string; size?: number })
   const icon = statIconSrc(statKey)
   if (!icon) return null
   return (
-    <span className="workspace-stat-glyph"
+    <span className="wk-stat-glyph"
       style={{
         '--stat-color': statTint(statKey),
         ...(size ? { width: `${size}rem`, height: `${size}rem` } : {}),
@@ -392,18 +325,18 @@ export function describeSwap(
 export function SwapToken({ side }: { side: SwapSide }) {
   if (side.sets) {
     return (
-      <span className="workspace-swap-token workspace-swap-token--sets">
-        <SonataTokens sets={side.sets} className="workspace-swap-sets" emptyLabel={side.label} />
+      <span className="wk-swap-token wk-swap-token--sets">
+        <SonataTokens sets={side.sets} className="wk-swap-sets" emptyLabel={side.label} />
       </span>
     )
   }
   return (
-    <span className="workspace-swap-token">
+    <span className="wk-swap-token">
       {side.empty ? (
-        <span className="workspace-swap-img workspace-swap-img--empty" />
+        <span className="wk-swap-img wk-swap-img--empty" />
       ) : null}
       {side.glyph ? <StatGlyph statKey={side.glyph} size={0.95} /> : null}
-      <span className="workspace-swap-label">{side.label}</span>
+      <span className="wk-swap-label">{side.label}</span>
     </span>
   )
 }
@@ -500,19 +433,19 @@ export function EchoCard({
   const lifted = actions?.liftedSlot === index
 
   if (!echo) {
-    return (
+    const emptyCard = (
       <article
-        className={`workspace-echo workspace-echo--empty${onOpen ? ' is-openable' : ''}`}
+        className={`wk-echo wk-echo--empty${onOpen ? ' is-openable' : ''}`}
         style={{ '--i': index } as CssVars}
         aria-label={onOpen ? `Slot ${index + 1}, empty. Choose an echo` : undefined}
         {...openProps}
       >
-        <span className="workspace-echo-empty-mark">{index + 1}</span>
-        <span className="workspace-echo-empty-label">{lifted ? 'Lifted out' : 'Empty'}</span>
+        <span className="wk-echo-empty-mark">{index + 1}</span>
+        <span className="wk-echo-empty-label">{lifted ? 'Lifted out' : 'Empty'}</span>
         {lifted && actions ? (
           <>
             <button
-              type="button" className="workspace-echo-undo"
+              type="button" className="wk-echo-undo"
               onClick={(event) => {
                 event.stopPropagation()
                 actions.onUndoLift()
@@ -522,11 +455,20 @@ export function EchoCard({
               <Undo2 size="0.72rem" aria-hidden="true" />
               Undo
             </button>
-            <span className="workspace-echo-wear" aria-hidden="true" />
+            <span className="wk-echo-wear" aria-hidden="true" />
           </>
         ) : null}
       </article>
     )
+    return selection?.getEmptyItems ? (
+      <ContextTrigger
+        asChild
+        ariaLabel={`Echo slot ${index + 1} actions`}
+        items={selection.getEmptyItems(index)}
+      >
+        {emptyCard}
+      </ContextTrigger>
+    ) : emptyCard
   }
 
   const echoDef = getEchoById(echo.echoId)
@@ -545,7 +487,7 @@ export function EchoCard({
   const card = (
     <article
       className={[
-        'workspace-echo',
+        'wk-echo',
         'ecr-card',
         onOpen ? 'ecr-card--live' : '',
         gutter ? 'has-gutter' : '',
@@ -564,9 +506,9 @@ export function EchoCard({
       {...openProps}
     >
       {gutter && actions ? (
-        <div className="workspace-echo-gut" onKeyDown={(event) => event.stopPropagation()}>
+        <div className="wk-echo-gut" onKeyDown={(event) => event.stopPropagation()}>
           <button
-            type="button" className="workspace-echo-ctl"
+            type="button" className="wk-echo-ctl"
             title={canSave ? 'Save to bag' : 'Already in the bag'}
             aria-label={canSave ? `Save ${echoLabel} to bag` : `${echoLabel} is already in the bag`}
             data-saved={canSave ? undefined : 'true'}
@@ -579,7 +521,7 @@ export function EchoCard({
             <LibraryBig size="0.86rem" aria-hidden="true" />
           </button>
           <button
-            type="button" className="workspace-echo-ctl workspace-echo-ctl--lift"
+            type="button" className="wk-echo-ctl wk-echo-ctl--lift"
             title={`Lift out of slot ${index + 1}`}
             aria-label={`Lift ${echoLabel} out of slot ${index + 1}`}
             onClick={(event) => {
@@ -603,9 +545,9 @@ export function EchoCard({
       />
 
       {/* the bench names what it is editing, which the modals leave to the art */}
-      <div className="workspace-echo-title">
-        <span className="workspace-echo-name">{echoLabel}</span>
-        <span className="workspace-echo-cost">{echo.cost}C</span>
+      <div className="wk-echo-title">
+        <span className="wk-echo-name">{echoLabel}</span>
+        <span className="wk-echo-cost">{echo.cost}C</span>
       </div>
 
       {tuned ? (
@@ -614,7 +556,7 @@ export function EchoCard({
           <EchoCardRibbon cv={cv} score={score} />
         </>
       ) : (
-        <p className="workspace-echo-subs-empty">No tuned substats</p>
+        <p className="wk-echo-subs-empty">No tuned substats</p>
       )}
     </article>
   )
@@ -650,7 +592,7 @@ export function EvaluationSeqRail({
   // decoration for the screenshot and stays out of the tab order.
   const live = Boolean(onActivate) && !hidden
   return (
-    <div className="workspace-seq-rail"
+    <div className="wk-seq-rail"
       data-hidden={hidden ? 'true' : undefined}
       style={{ '--seq-fill': `${fill}%` } as CssVars}
       aria-hidden={hidden ? 'true' : undefined}
@@ -659,12 +601,12 @@ export function EvaluationSeqRail({
       {Array.from({ length: SEQ_NODES }, (_, i) => {
         const node = i + 1
         const glyph = (
-          <span className="workspace-seq-glyph"
+          <span className="wk-seq-glyph"
             style={glyphVars(resSeqIcon(resId, node), '--seq-mask') as CssVars}
           />
         )
         const nodeProps = {
-          className: 'workspace-seq-node',
+          className: 'wk-seq-node',
           'data-on': node <= sequence ? 'true' : undefined,
           'data-current': node === sequence && sequence > 0 ? 'true' : undefined,
         }
@@ -692,7 +634,7 @@ export function EvaluationSeqRail({
 export function ResonatorName({ name, onOpen }: { name: string; onOpen?: () => void }) {
   if (!onOpen) return <>{name}</>
   return (
-    <button type="button" className="workspace-name-link" onClick={onOpen} aria-label={`Configure ${name}`}>
+    <button type="button" className="wk-name-link" onClick={onOpen} aria-label={`Configure ${name}`}>
       {name}
     </button>
   )

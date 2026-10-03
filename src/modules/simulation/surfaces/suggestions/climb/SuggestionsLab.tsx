@@ -4,10 +4,11 @@
                application of selected Echo, set-plan, or weapon results.
 */
 
-import '@/styles/modules/simulation/surfaces/suggestions/suggestions-climb.css'
+import '@/styles/surfaces/suggestions/climb.css'
 import { selectSuggestionTarget } from '@/modules/simulation/surfaces/suggestions/lib/helpers.ts'
 
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/application/state'
 import { selEnemyProf, selVrvwDrvd, selWorkDrvd } from '@/application/state'
@@ -19,11 +20,7 @@ import type { EchoInstance } from '@/domain/entities/runtime.ts'
 import type { CompactSetPlanSuggest, MainStatSugg, WeaponEntry } from '@/engine/suggestions/types.ts'
 import type { PickFreqWeapon } from '@/domain/entities/appState.ts'
 import { getResonator, WPNTYPETOKEY } from '@/modules/simulation/features/resonator/lib/resonator.ts'
-import { LoadoutHead } from '@/modules/simulation/workspace/LoadoutHead.tsx'
-import { EchoCard } from '@/modules/simulation/workspace/ui.tsx'
-import { makeEchoSlot } from '@/modules/simulation/workspace/echoSlot.ts'
-import { useEchoScores } from '@/engine/evaluation/useEchoScoringRevision.ts'
-import { useEchoSrfcM } from '@/modules/simulation/features/echoes/lib/useEchoSurfaceMenu.tsx'
+import { OptimizerEchoPreview } from '@/modules/simulation/surfaces/optimizer/transport/OptimizerEchoPreview.tsx'
 import { useSuggRuns } from '@/modules/simulation/surfaces/suggestions/lib/useSuggRuns.ts'
 import { smmrCurSetPl } from '@/modules/simulation/surfaces/suggestions/lib/suggestions.ts'
 import { Climb } from '@/modules/simulation/surfaces/suggestions/climb/Climb.tsx'
@@ -114,12 +111,6 @@ export function SuggestionsLab() {
     () => heldRow && !heldRow.now ? materializeRowEchoes(heldRow, echoes) : null,
     [echoes, heldRow],
   )
-  const stripEchoes = preview ?? echoes
-  const echoScores = useEchoScores(runtime?.id ?? null, stripEchoes)
-  const loadoutSlots = useMemo(
-    () => stripEchoes.map((echo) => (echo ? makeEchoSlot(echo) : null)),
-    [stripEchoes],
-  )
 
   const applyRow = useCallback((row: ClimbRow) => {
     if (row.weapon) {
@@ -150,13 +141,6 @@ export function SuggestionsLab() {
     }))
   }, [updActResRt])
 
-  const echoSurface = useEchoSrfcM({
-    clpbSrcResId: runtime?.id ?? '',
-    clipSourceName: subject?.name ?? "",
-    currentEchoes: echoes,
-    onQpEchoAtjg: () => undefined,
-  })
-
   const onTarget = useCallback((value: string) => {
     updActResSug((state) => ({
       ...state,
@@ -167,48 +151,18 @@ export function SuggestionsLab() {
   if (!runtime) return null
 
   return (
-    <main className="workspace-main" data-phase="idle">
-      <section className="workspace-section workspace-span workspace-ink">
-        <LoadoutHead
-          title="Echo Loadout"
-          runtime={runtime}
-          resonatorName={subject?.name ?? null}
-          echoes={stripEchoes}
-          proposal={preview != null}
-          editable={preview == null}
-          canSaveEcho={echoSurface.canSaveEcho}
-          onEchoes={preview == null ? writeEchoes : undefined}
-          onEquip={preview && heldRow ? () => applyRow(heldRow) : undefined}
-        />
-        <div className="workspace-echoes sgl-strip" data-preview={preview ? '' : undefined}>
-          {Array.from({ length: 5 }, (_, index) => {
-            const proposed = preview?.[index] ?? null
-            const worn = echoes[index] ?? null
-            const moved = preview != null && (
-              proposed?.mainStats.primary.key !== worn?.mainStats.primary.key
-              || proposed?.set !== worn?.set
-            )
+    <main className="wk-main" data-phase="idle">
+      <OptimizerEchoPreview
+        previewKey={`${runtime.id}:${kind}:${heldRow?.key ?? 'build'}`}
+        resonatorId={runtime.id}
+        resonatorName={subject?.name ?? runtime.id}
+        runtime={runtime}
+        sourceEchoes={preview ?? echoes}
+        editable
+        onEquip={writeEchoes}
+      />
 
-            return (
-              <div
-                key={index} className="sgl-slot"
-                data-moved={moved ? '' : undefined}
-                data-quiet={preview != null && !moved ? '' : undefined}
-              >
-                <EchoCard
-                  echo={loadoutSlots[index] ?? null}
-                  sourceEcho={stripEchoes[index] ?? null}
-                  index={index}
-                  score={echoScores?.[index] ?? null}
-                  unpainted={Boolean(moved)}
-                />
-              </div>
-            )
-          })}
-        </div>
-      </section>
-
-      <section className="workspace-section workspace-span workspace-ink sgl-run">
+      <section className="wk-section wk-span wk-ink sgl-run">
         <Climb
           kind={kind}
           onKind={(next) => {
@@ -248,7 +202,7 @@ export function SuggestionsLab() {
         onSetCondsrx={updResSetCon}
       />
 
-      {wpnCondMdl.visible ? <Suspense fallback={null}>
+      {wpnCondMdl.visible ? <Suspense fallback={<AppLoaderOverlay mode="scrim" text="Loading weapon settings..." />}>
         <WpnCfgMdl
           {...wpnCondMdl}
           title="Config - Weapon Search"

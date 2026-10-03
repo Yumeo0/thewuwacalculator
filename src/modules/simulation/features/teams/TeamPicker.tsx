@@ -8,7 +8,9 @@
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useId, useMemo, useRef, useState } from 'react'
 import type { CSSProperties as CssProps, PointerEvent as ReactPointerEvent } from 'react'
-import { Lock, X } from 'lucide-react'
+import { Lock, SlidersHorizontal, Users, X } from 'lucide-react'
+import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import { ensureResonatorData } from '@/data/gameData'
 import { useTstStr } from '@/shared/util/toastStore'
 import { AppModal } from '@/shared/ui/AppModal'
@@ -18,7 +20,7 @@ import { usePickerMotion, type PickerMove } from '@/modules/simulation/ui/picker
 import { usePickerFilters, useResPickerView } from '@/modules/simulation/features/resonator/Picker.tsx'
 import { RES_MENU } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display.ts'
-import { withDefIconM } from '@/shared/lib/imageFallback.ts'
+import { DEF_ICON_SRC, withDefIconM } from '@/shared/lib/imageFallback.ts'
 
 type Supports = [string | null, string | null]
 
@@ -52,7 +54,40 @@ function toneOf(id: string) {
 }
 
 function profileOf(id: string) {
-  return MENU_BY_ID.get(id)?.profile ?? ''
+  return MENU_BY_ID.get(id)?.profile || DEF_ICON_SRC
+}
+
+function MissingSeat({ id, seat, onRemove }: { id: string; seat: number; onRemove?: () => void }) {
+  const content = (
+    <>
+      <div className="pkm__card-art">
+        <div className="pkm__media-frame">
+          <DisplayImage src={DEF_ICON_SRC} alt="" className="pkm__media-image" />
+        </div>
+        <span className="tpk-key">{seat}{seat === 1 ? <Lock size="0.55rem" strokeWidth={2.6} /> : null}</span>
+        {onRemove ? <span className="tpk-x" aria-hidden="true"><X size="0.7rem" strokeWidth={2.4} /></span> : null}
+      </div>
+      <div className="pkm__card-cap">
+        <div className="pkm__card-title">Unavailable resonator</div>
+        <div className="pkm__card-subtitle">ID {id} · Not in current game data</div>
+      </div>
+    </>
+  )
+  const style = { '--pk-tone': 'var(--amdl-muted)' } as CssProps
+  return onRemove ? (
+    <button
+      type="button"
+      className="pkm__card is-seat"
+      style={style}
+      data-pick-id={id}
+      aria-label={`Remove unavailable resonator ${id} from seat ${seat}`}
+      onClick={onRemove}
+    >
+      {content}
+    </button>
+  ) : (
+    <div className="pkm__card is-seat is-lead" style={style}>{content}</div>
+  )
 }
 
 export function TeamPicker(props: TeamPickerProps) {
@@ -73,6 +108,7 @@ function TeamPickerContent({
   const support1 = team[1] ?? null
   const support2 = team[2] ?? null
   const applied = useMemo<Supports>(() => [support1, support2], [support1, support2])
+  const mobile = useMobileUi()
   const [seats, setSeats] = useState<Supports>(applied)
   const [docked, setDocked] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -101,7 +137,7 @@ function TeamPickerContent({
     flight.oncancel = () => el.classList.remove('is-flying')
     flight.onfinish = () => {
       el.classList.remove('is-flying')
-      const art = el.querySelector('.picker-modal__card-art')
+      const art = el.querySelector('.pkm__card-art')
       if (!art || !el.closest('.tpk-row')) return
       const ring = document.createElement('i')
       ring.className = 'tpk-ring'
@@ -123,7 +159,7 @@ function TeamPickerContent({
   // remove it after the transfer completes.
   const flyToStrip = useCallback((id: string, seat: number) => {
     const body = bodyRef.current
-    const from = body?.querySelector<HTMLImageElement>(`[data-pick-id="${id}"] .picker-modal__media-image`)
+    const from = body?.querySelector<HTMLImageElement>(`[data-pick-id="${id}"] .pkm__media-image`)
     const to = body?.querySelector<HTMLElement>(`[data-tpk-mini="${seat + 1}"]`)
     if (!from || !to || calm()) return
     const a = from.getBoundingClientRect()
@@ -147,7 +183,7 @@ function TeamPickerContent({
 
   const nudge = useCallback(() => {
     if (calm()) return
-    bodyRef.current?.querySelectorAll('.tpk-row .is-seat .picker-modal__card-art, .tpk-strip').forEach((el) => {
+    bodyRef.current?.querySelectorAll('.tpk-row .is-seat .pkm__card-art, .tpk-strip').forEach((el) => {
       el.animate([
         { transform: 'translateX(0)' },
         { transform: 'translateX(-4px)' },
@@ -203,7 +239,7 @@ function TeamPickerContent({
       const under = document.elementFromPoint(x, y)
       const seatEl = under?.closest<HTMLElement>('[data-tpk-drop]')
       if (seatEl && frame.contains(seatEl)) return { drop: { kind: 'seat', seat: Number(seatEl.dataset.tpkDrop) }, el: seatEl }
-      const other = under?.closest<HTMLElement>('.picker-modal__grid [data-pick-id]')
+      const other = under?.closest<HTMLElement>('.pkm__grid [data-pick-id]')
       if (other && from >= 0 && other.dataset.pickId !== id) return { drop: { kind: 'card', id: other.dataset.pickId! }, el: other }
       // Dropping a seated member outside every team target removes that member.
       const inRow = under?.closest('.tpk-row, .tpk-strip, .tpk-seat')
@@ -335,20 +371,7 @@ function TeamPickerContent({
 
   const leadItem = seatItem(leadId, true)
 
-  return (
-    <AppModal
-      state={{ visible, open, closing }}
-      variant="picker"
-      size="regular"
-      ariaLabelBy={titleId}
-      onClose={onClose}
-    >
-      <div
-        ref={frameRef}
-        className={`amdl picker-modal__frame tpk${full ? ' is-full' : ''}`}
-        data-variant="resonator"
-        onClick={(event) => event.stopPropagation()}
-      >
+  const mHeader = (
         <ModalHeader over="Team Slots" title={<h2 id={titleId}>Set Team</h2>} onClose={onClose}>
           {view.summary ? <div className="amdl__gauge">{view.summary}</div> : null}
           <div className="tpk-acts">
@@ -364,15 +387,18 @@ function TeamPickerContent({
             </button>
           </div>
         </ModalHeader>
+  )
 
-        <div className="picker-modal__stage has-rail">
+  const mRail = (
           <nav className="amdl__rail pkr-rail" aria-label="Filters" onClickCapture={reflow} onChangeCapture={reflow}>
             {view.filters}
             <div className="amdl__rail-foot">{view.shown} of {RES_MENU.length - 1} roster</div>
           </nav>
+  )
 
+  const mPane = (
           <div
-            className="picker-modal__body"
+            className="pkm__body"
             ref={bodyRef}
             onScroll={onScroll}
             onPointerDown={onPointerDown}
@@ -414,7 +440,7 @@ function TeamPickerContent({
                     className="is-seat is-lead"
                     art={<span className="tpk-key">1<Lock size="0.55rem" strokeWidth={2.6} /></span>}
                   />
-                ) : null}
+                ) : <MissingSeat id={leadId} seat={1} />}
               </div>
               {seats.map((id, index) => {
                 const item = id ? seatItem(id) : null
@@ -433,6 +459,8 @@ function TeamPickerContent({
                           </>
                         )}
                       />
+                    ) : id ? (
+                      <MissingSeat id={id} seat={index + 2} onRemove={() => pick(id)} />
                     ) : (
                       <div className={`tpk-empty${nextSeat === index ? ' is-next' : ''}`}>
                         <div className="tpk-empty-art"><b>{index + 2}</b></div>
@@ -448,15 +476,55 @@ function TeamPickerContent({
             </div>
 
             {rosterItems.length === 0 ? (
-              <div className="picker-modal__empty"><p>No resonators match these filters.</p></div>
+              <div className="pkm__empty"><p>No resonators match these filters.</p></div>
             ) : (
-              <div className="picker-modal__grid picker-modal__grid--cards">
+              <div className="pkm__grid pkm__grid--cards">
                 {rosterItems.map((item) => <PickerCard key={item.id} item={item} />)}
               </div>
             )}
           </div>
+  )
+
+
+  return (
+    <AppModal
+      state={{ visible, open, closing }}
+      variant="picker"
+      size="regular"
+      ariaLabelBy={titleId}
+      onClose={onClose}
+    >
+      {mobile ? (
+        <MobilePages
+          className="pkm__frame tpk"
+          head={mHeader}
+          onClick={(event) => event.stopPropagation()}
+          pages={[
+            {
+              id: 'roster',
+              label: 'Roster',
+              icon: <Users />,
+              node: <div ref={frameRef} className={`tpk-mroster${full ? ' is-full' : ''}`}>{mPane}</div>,
+            },
+            { id: 'filters', label: 'Filters', icon: <SlidersHorizontal />, badge: view.shown, node: mRail },
+          ]}
+        />
+      ) : (
+      <div
+        ref={frameRef}
+        className={`amdl pkm__frame tpk${full ? ' is-full' : ''}`}
+        data-variant="resonator"
+        onClick={(event) => event.stopPropagation()}
+      >
+        {mHeader}
+
+        <div className="pkm__stage has-rail">
+          {mRail}
+
+          {mPane}
         </div>
       </div>
+      )}
     </AppModal>
   )
 }

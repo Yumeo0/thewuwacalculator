@@ -6,7 +6,7 @@
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
 import { useCallback, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Copy, Scissors, Trash2 } from 'lucide-react'
+import { Clipboard, Copy, Scissors, Trash2, UserRoundPlus } from 'lucide-react'
 import { isSimulationSurfaceRoute } from '@/shared/lib/appRoutes'
 import { useAppStore } from '@/application/state'
 import { selContextResonatorId } from '@/application/state'
@@ -118,9 +118,8 @@ export function RosterColumn() {
 
   const getItems = useCallback((resonatorId: string) => {
     if (!ops.rosterById.has(resonatorId)) return []
-    const selectionIds = selection.selectionMode && selection.isSelected(resonatorId)
-      ? selection.selectedIdsInOrder
-      : [resonatorId]
+    if (selection.selectionMode) return selection.contextItemsFor(resonatorId)
+    const selectionIds = [resonatorId]
 
     return getEvaluationTargetCtx({
       id: resonatorId,
@@ -138,6 +137,34 @@ export function RosterColumn() {
     })
   }, [contextResId, ops, selectContextResonator, selection])
 
+  const backgroundItems = useMemo(() => selection.selectionMode ? selection.contextItemsFor() : [
+    {
+      id: 'roster:add',
+      label: 'Add resonator',
+      icon: <UserRoundPlus size="1em" />,
+      onSelect: rosterAdd.open,
+    },
+    {
+      id: 'roster:paste',
+      label: 'Paste',
+      icon: <Clipboard size="1em" />,
+      onSelect: () => { void ops.paste() },
+    },
+    { type: 'separator' as const },
+    {
+      id: 'roster:delete-all',
+      label: 'Delete all context resonators',
+      icon: <Trash2 size="1em" />,
+      danger: true,
+      disabled: roster.length === 0,
+      onSelect: () => ops.remove(roster.map((entry) => entry.id), {
+        title: 'Remove all context resonators?',
+        message: 'This will remove every scenario represented by the context roster. Build Lab will create a default fallback scenario.',
+        successMessage: `Removed ${roster.length} context resonators from Build Lab.`,
+      }),
+    },
+  ], [ops, roster, rosterAdd.open, selection])
+
   return (
     <>
       <BuildRoster
@@ -149,6 +176,7 @@ export function RosterColumn() {
         onOpenMember={openMember}
         onContextChange={selectContextResonator}
         onAddResonator={rosterAdd.open}
+        backgroundItems={backgroundItems}
         selection={{
           selectionMode: selection.selectionMode,
           isSelected: selection.isSelected,

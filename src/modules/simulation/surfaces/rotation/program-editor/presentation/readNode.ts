@@ -214,7 +214,7 @@ export function resolveReadNode({
   const kindLabel = note
     ? 'note'
     : handoff
-      ? 'handoff'
+      ? 'resonator switch'
       : condition
         ? 'condition'
         : block
@@ -267,7 +267,7 @@ export function resolveReadNode({
     occurrences: step?.featureId ? findFeatureOccurrences(sections, step.featureId) : [],
     history,
     historyWord: handoff
-      ? history.length === 1 ? 'handoff' : 'handoffs'
+      ? history.length === 1 ? 'resonator switch' : 'resonator switches'
       : history.length === 1 ? 'write' : 'writes',
   }
 }

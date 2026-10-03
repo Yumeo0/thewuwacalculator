@@ -182,7 +182,7 @@ function makeLevelScale(options: {
     defMult,
     dmgVuln,
     dmgBonus: finalStats.skillType[kind].dmgBonus,
-    amplify: finalStats.amplify,
+    amplify: kind === 'tuneRupture' ? 0 : finalStats.amplify,
     finalDmg: finalStats.finalDmg,
     tuneBreakBoost: finalStats.tbb,
     critRate: (skill.tuneRuptureCritRate ?? 0) * 100,
@@ -248,16 +248,14 @@ function makeNegBase(options: {
       ? 1
       : defenseMult(level, enemy.level, defIgnore, defShred)
 
-  const amplifyMult =
-      (1 + finalStats.amplify / 100) *
-      (1 + ggrgFfctType.amplify / 100)
+  const effectAmplify = finalStats.skillType[archetype].amplify + skillBuffs.amplify
 
   return {
     resMult,
     defMult,
     dmgVuln,
     dmgBonus: ggrgFfctType.dmgBonus,
-    amplify: (amplifyMult - 1) * 100,
+    amplify: effectAmplify,
     finalDmg: finalStats.finalDmg,
     multiplier: negFfctBuff.multiplier,
     critRate: ((skill.negativeEffectCritRate ?? 0) * 100) + negFfctBuff.critRate,

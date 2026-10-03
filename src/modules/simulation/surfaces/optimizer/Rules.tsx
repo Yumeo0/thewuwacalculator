@@ -7,9 +7,9 @@ import { ModalHeader } from '@/shared/ui/AppModalShell'
 
 export function Rules({ onClose }: { onClose: () => void }) {
   return (
-    <div className="amdl optimizer-rules-modal">
+    <div className="amdl orl-modal">
       <ModalHeader over="Optimizer" title={'Rules (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧'} onClose={onClose} />
-      <div className="optimizer-rules-modal__body">
+      <div className="orl-modal__body">
         <div className="amdl__prose">
           <p>
             The optimizer follows a few behind-the-scenes rules that affect what you see. Keep
@@ -27,9 +27,9 @@ export function Rules({ onClose }: { onClose: () => void }) {
               {' (ง •̀_•́)ง'}.
             </p>
             <p>
-              <strong>Progress is live but partial.</strong> <em>HALT</em> stops early but keeps the best
-              results found so far; permutation counts and ETAs reflect the current filters and
-              can swing as you tweak them. {"Don't panic if the numbers jump around"} {'(≧◡≦)'}.
+              <strong>Progress updates during the search.</strong> <em>HALT</em> stops early but keeps the best
+              results found so far. Candidate counts and time estimates change when filters change.
+              {" Don't panic if the numbers jump around"} {'(≧◡≦)'}.
             </p>
           </div>
         </div>
@@ -38,9 +38,9 @@ export function Rules({ onClose }: { onClose: () => void }) {
           <div className="amdl__grp-name">What gets searched</div>
           <div className="amdl__prose">
             <p>
-              <strong>Echo bag only.</strong> Every build comes from echoes in your bag after
-              filters are applied. If the bag is empty or filters hide everything, the optimizer
-              has nothing to test and will surface empty/no-combo alerts {'(；・ω・)'}.
+              <strong>Saved Echoes only.</strong> Every build uses Echoes in Inventory that pass
+              the selected filters. If none qualify, the optimizer cannot test any builds and
+              shows an empty-results message {'(；・ω・)'}.
             </p>
             <p>
               <strong>Filter strength trimming.</strong> {'The "Filter Strength" slider prunes the '}
@@ -66,15 +66,15 @@ export function Rules({ onClose }: { onClose: () => void }) {
           <div className="amdl__grp-name">Limits and lenses</div>
           <div className="amdl__prose">
             <p>
-              <strong>Range limits are hard stops</strong> (single-skill only). Min/Max fields
-              discard any combo that lands outside those numbers. Overly tight ranges can wipe
-              out all results even if the bag has plenty of echoes. When optimizing for a combo,
-              range limits are ignored so you always see candidates {'(･ω･)ゞ'}.
+              <strong>Range limits apply to single-skill searches.</strong> Min/Max fields
+              discard builds with values outside the chosen limits. Tight limits can exclude
+              every build, even when Inventory has many Echoes. Range limits do not apply to
+              rotation targets {'(･ω･)ゞ'}.
             </p>
             <p>
-              <strong>Combo target changes columns.</strong> Choosing a combo to optimize runs
-              the optimizer against your saved rotation totals and hides bonus/amp columns, so
-              expect different rankings than for a single skill. Same data, different lens{' '}
+              <strong>Rotation targets change the results.</strong> A rotation target ranks builds
+              by the default rotation’s total damage and hides bonus and Amplify columns. Rankings
+              can differ from a single-skill search {' '}
               {'(✿◠‿◠)'}.
             </p>
           </div>

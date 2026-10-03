@@ -1,0 +1,7 @@
+:is(.no-entrance-anim, .reduce-animation) .custom-buffs-pane > .custom-buffs-footer,
+:is(.no-entrance-anim, .reduce-animation) .calculator-results-pane > .soft-empty {
+
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+}

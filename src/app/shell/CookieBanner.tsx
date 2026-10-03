@@ -21,18 +21,18 @@ export function CookieBanner({ visible, open, closing, onAccept }: CkBnnrPrps) {
 
   return (
     <div
-      className={`cookie-banner ${open ? 'open' : ''} ${closing ? 'closing' : ''}`}
+      className={`ckb ${open ? 'open' : ''} ${closing ? 'closing' : ''}`}
       role="region"
       aria-label="Cookie consent"
     >
-      <div className="cookie-banner__icon-wrap" aria-hidden="true">
+      <div className="ckb__icon-wrap" aria-hidden="true">
         <Cookie size="1.125rem" />
       </div>
-      <div className="cookie-banner__body">
-        <p className="cookie-banner__text">
+      <div className="ckb__body">
+        <p className="ckb__text">
           Cookies are used for basic analytics only, nothing personal, nothing sold.{' '}
           <button
-            type="button" className="cookie-banner__link"
+            type="button" className="ckb__link"
             onClick={() => navigate('/privacy')}
           >
             Privacy Policy
@@ -40,7 +40,7 @@ export function CookieBanner({ visible, open, closing, onAccept }: CkBnnrPrps) {
         </p>
       </div>
       <button
-        type="button" className="cookie-banner__accept"
+        type="button" className="ckb__accept"
         onClick={onAccept}
       >
         Got it~

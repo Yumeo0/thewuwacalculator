@@ -15,7 +15,7 @@ import { getSbstStepP } from '@/data/gameData/catalog/echoStats.ts'
 import { getSntSetIco } from '@/data/gameData/catalog/sonataSets'
 import { getWeightObj } from '@/data/scoring/charStatWeights'
 import { cmptEchoCrit, cmptEchoCritAll, getCvToneColor, getScrTone } from '@/modules/simulation/features/echoes/lib/metric.ts'
-import { useEchoScores } from '@/engine/evaluation/useEchoScoringRevision.ts'
+import { useEchoScores } from '@/application/hooks/useEchoScoringRevision.ts'
 import {
   formatCompactNum,
   formatStatKeyLabel,
@@ -44,10 +44,10 @@ export function ShowcaseHolder({ fallback }: { fallback: string }) {
   const playerId = useAppStore((state) => state.ui.preferences.playerId)
   const playerUid = useAppStore((state) => state.ui.preferences.playerUid)
   if (!playerId && !playerUid) {
-    return <span className="showcase-eyebrow">{fallback}</span>
+    return <span className="sc-eyebrow">{fallback}</span>
   }
   return (
-    <span className="showcase-holder">
+    <span className="sc-holder">
       {playerId ? <b>{playerId}</b> : null}
       {playerUid ? <span>{groupUid(playerUid)}</span> : null}
     </span>
@@ -104,20 +104,20 @@ export function ShowcaseStatRow({
 }) {
   const statKey = row.key
   return (
-    <div className="showcase-row"
+    <div className="sc-row"
       data-stat-family={statKey ? statFamily(statKey) : undefined}
       data-relevant={relevant ? 'true' : undefined}
     >
-      <span className="showcase-row-icon">
+      <span className="sc-row-icon">
         {statKey ? <StatGlyph statKey={statKey} size={1.2} /> : null}
       </span>
-      <span className="showcase-row-label">{row.label}</span>
-      <span className="showcase-row-lead" aria-hidden="true" />
-      <span className="showcase-row-build">
+      <span className="sc-row-label">{row.label}</span>
+      <span className="sc-row-lead" aria-hidden="true" />
+      <span className="sc-row-build">
         {blank || buildTotal == null ? '-' : formatStatKeyValue(row.key, buildTotal)}
       </span>
-      <span className="showcase-row-combat">
-        {raised && !blank ? <i className="showcase-row-up" aria-hidden="true" /> : null}
+      <span className="sc-row-combat">
+        {raised && !blank ? <i className="sc-row-up" aria-hidden="true" /> : null}
         {blank ? '-' : formatStatKeyValue(row.key, row.total)}
       </span>
     </div>
@@ -167,13 +167,13 @@ function ShowcaseEcho({
   if (!echo) {
     return (
       <article
-        className="showcase-echo showcase-echo--empty"
+        className="sc-echo sc-echo--empty"
         style={{ '--i': index } as CssVars}
         aria-label={onOpen ? `Slot ${index}, empty. Choose an Echo` : undefined}
         {...openProps}
       >
-        <span className="showcase-echo-vacant">0{index}</span>
-        <span className="showcase-echo-vacant-label">Empty slot</span>
+        <span className="sc-echo-vacant">0{index}</span>
+        <span className="sc-echo-vacant-label">Empty slot</span>
       </article>
     )
   }
@@ -191,8 +191,8 @@ function ShowcaseEcho({
   const card = (
     <article
       className={[
-        'showcase-echo',
-        echo.mainEcho ? 'showcase-echo--lead' : '',
+        'sc-echo',
+        echo.mainEcho ? 'sc-echo--lead' : '',
         selection?.selectionMode ? 'selection-mode' : '',
         selected ? 'focus-selected' : '',
       ].filter(Boolean).join(' ')}
@@ -204,23 +204,23 @@ function ShowcaseEcho({
       {...openProps}
       onClickCapture={itemId ? selection?.buildClickCapture(itemId) : undefined}
     >
-      <span className="showcase-echo-cost" aria-label={`${echoDef?.cost ?? 0} cost`}>{echoDef?.cost ?? 0}</span>
-      <header className="showcase-echo-head">
-        <span className="showcase-echo-frame">
+      <span className="sc-echo-cost" aria-label={`${echoDef?.cost ?? 0} cost`}>{echoDef?.cost ?? 0}</span>
+      <header className="sc-echo-head">
+        <span className="sc-echo-frame">
           {echoDef?.icon ? (
-            <DisplayImage src={echoDef.icon} alt="" className="showcase-echo-icon" loading="lazy" decoding="async" onError={withDefIconM} />
+            <DisplayImage src={echoDef.icon} alt="" className="sc-echo-icon" loading="lazy" decoding="async" onError={withDefIconM} />
           ) : (
-            <span className="showcase-echo-icon showcase-echo-icon--fallback" />
+            <span className="sc-echo-icon sc-echo-icon--fallback" />
           )}
-          {setIcon ? <DisplayImage src={setIcon} alt="" className="showcase-echo-set" loading="lazy" onError={withDefIconM} /> : null}
+          {setIcon ? <DisplayImage src={setIcon} alt="" className="sc-echo-set" loading="lazy" onError={withDefIconM} /> : null}
         </span>
-        <span className="showcase-echo-titles">
-          <strong className="showcase-echo-name">{echoDef?.name ?? 'Echo'}</strong>
+        <span className="sc-echo-titles">
+          <strong className="sc-echo-name">{echoDef?.name ?? 'Echo'}</strong>
           {echo.mainEcho || !hideCv ? (
-            <span className="showcase-echo-meta">
-              {echo.mainEcho ? <span className="showcase-echo-tag">main</span> : null}
+            <span className="sc-echo-meta">
+              {echo.mainEcho ? <span className="sc-echo-tag">main</span> : null}
               {!hideCv ? (
-                <span className="showcase-echo-cv" style={{ '--cv-tone': getCvToneColor(cv) } as CssVars}>
+                <span className="sc-echo-cv" style={{ '--cv-tone': getCvToneColor(cv) } as CssVars}>
                   CV {formatTruncCompact(cv, 1)}
                 </span>
               ) : null}
@@ -228,7 +228,7 @@ function ShowcaseEcho({
           ) : null}
         </span>
         {!hideScore && score != null ? (
-          <span className="showcase-echo-score">
+          <span className="sc-echo-score">
             <b>{formatTruncCompact(score, 0)}</b>
             <i>%</i>
           </span>
@@ -265,17 +265,17 @@ export function ShowcaseEchoMains({ echo, relevant }: { echo: EchoInstance; rele
   const primary = echo.mainStats.primary
   const secondary = echo.mainStats.secondary
   return (
-    <div className="showcase-echo-mains" data-relevant={relevant ? 'true' : undefined}>
-      <div className="showcase-echo-main" data-stat-family={statFamily(primary.key)}>
+    <div className="sc-echo-mains" data-relevant={relevant ? 'true' : undefined}>
+      <div className="sc-echo-main" data-stat-family={statFamily(primary.key)}>
         <StatGlyph statKey={primary.key} size={0.82} />
-        <span className="showcase-echo-main-k">{formatStatKeyLabel(primary.key)}</span>
-        <span className="showcase-echo-main-v">{formatStatKeyValue(primary.key, primary.value)}</span>
+        <span className="sc-echo-main-k">{formatStatKeyLabel(primary.key)}</span>
+        <span className="sc-echo-main-v">{formatStatKeyValue(primary.key, primary.value)}</span>
       </div>
       {secondary?.key ? (
-        <div className="showcase-echo-main showcase-echo-main--sec" data-stat-family={statFamily(secondary.key)}>
+        <div className="sc-echo-main sc-echo-main--sec" data-stat-family={statFamily(secondary.key)}>
           <StatGlyph statKey={secondary.key} size={0.74} />
-          <span className="showcase-echo-main-k">{formatStatKeyLabel(secondary.key)}</span>
-          <span className="showcase-echo-main-v">{formatStatKeyValue(secondary.key, secondary.value)}</span>
+          <span className="sc-echo-main-k">{formatStatKeyLabel(secondary.key)}</span>
+          <span className="sc-echo-main-v">{formatStatKeyValue(secondary.key, secondary.value)}</span>
         </div>
       ) : null}
     </div>
@@ -298,20 +298,20 @@ export function ShowcaseEchoSubs({
 }) {
   const subs = Object.entries(echo.substats).filter(([, value]) => value > 0)
   return (
-    <ul className="showcase-echo-subs">
+    <ul className="sc-echo-subs">
       {subs.map(([key, value]) => {
         const gauge = substatGauge(key, value)
         return (
           <li
-            key={key} className="showcase-echo-sub"
+            key={key} className="sc-echo-sub"
             data-stat-family={statFamily(key)}
             data-relevant={showRel && relStats.keys.has(key) ? 'true' : undefined}
           >
             <StatGlyph statKey={key} size={0.74} />
-            <span className="showcase-echo-sub-k">{formatStatKeyLabel(key)}</span>
-            <span className="showcase-echo-sub-v">{formatStatKeyValue(key, value)}</span>
+            <span className="sc-echo-sub-k">{formatStatKeyLabel(key)}</span>
+            <span className="sc-echo-sub-v">{formatStatKeyValue(key, value)}</span>
             {gauge ? (
-              <span className="showcase-echo-sub-meter"
+              <span className="sc-echo-sub-meter"
                 data-hidden={hideSubVal ? 'true' : undefined}
                 data-tone={!hideSubColor ? gauge.tone : undefined}
                 aria-hidden={hideSubVal ? 'true' : undefined}
@@ -319,7 +319,7 @@ export function ShowcaseEchoSubs({
                 {Array.from({ length: gauge.steps }, (_, seg) => (
                   <span
                     key={seg}
-                    className={`showcase-echo-sub-seg${seg < gauge.filled ? ' is-filled' : ''}`}
+                    className={`sc-echo-sub-seg${seg < gauge.filled ? ' is-filled' : ''}`}
                   />
                 ))}
               </span>
@@ -328,7 +328,7 @@ export function ShowcaseEchoSubs({
         )
       })}
       {subs.length === 0 ? (
-        <li className="showcase-echo-sub showcase-echo-sub--empty">No tuned substats</li>
+        <li className="sc-echo-sub sc-echo-sub--empty">No tuned substats</li>
       ) : null}
     </ul>
   )
@@ -402,34 +402,34 @@ export const ShowcaseBuild = memo(function ShowcaseBuild({
 
   return (
     <>
-      <section className="showcase-stats" style={{ '--i': 0, '--grade': tone } as CssVars}>
-        <header className="showcase-verdict">
-          <span className="showcase-verdict-body">
+      <section className="sc-stats" style={{ '--i': 0, '--grade': tone } as CssVars}>
+        <header className="sc-verdict">
+          <span className="sc-verdict-body">
             <ShowcaseHolder fallback="The Build" />
             {!hideScore ? (
               <>
-                <span className="showcase-verdict-figure">
-                  <b className="showcase-grade-mark">{grade || '-'}</b>
-                  <span className="showcase-grade-score">
+                <span className="sc-verdict-figure">
+                  <b className="sc-grade-mark">{grade || '-'}</b>
+                  <span className="sc-grade-score">
                     {score != null ? formatBuildEvaluationScore(score) : '-'}
                   </span>
                 </span>
-                <span className="showcase-ruler">
+                <span className="sc-ruler">
                   <i style={{ width: `${fill}%` }} />
                 </span>
               </>
             ) : null}
           </span>
           {sonataSets.length > 0 ? (
-            <ul className="showcase-sonata">
+            <ul className="sc-sonata">
               {sonataSets.map((set) => (
-                <li key={set.setId} className="showcase-sonata-set" title={`${set.name} · ${set.pieces}pc`}>
+                <li key={set.setId} className="sc-sonata-set" title={`${set.name} · ${set.pieces}pc`}>
                   {set.icon ? (
-                    <DisplayImage src={set.icon} alt="" className="showcase-sonata-icon" loading="lazy" onError={withDefIconM} />
+                    <DisplayImage src={set.icon} alt="" className="sc-sonata-icon" loading="lazy" onError={withDefIconM} />
                   ) : (
-                    <span className="showcase-sonata-icon showcase-sonata-icon--fallback" />
+                    <span className="sc-sonata-icon sc-sonata-icon--fallback" />
                   )}
-                  <span className="showcase-sonata-pc">{set.pieces}</span>
+                  <span className="sc-sonata-pc">{set.pieces}</span>
                 </li>
               ))}
             </ul>
@@ -437,34 +437,34 @@ export const ShowcaseBuild = memo(function ShowcaseBuild({
         </header>
 
         {!hideDamage || !hideCv ? (
-          <div className="showcase-metrics">
+          <div className="sc-metrics">
             {!hideDamage ? (
-              <div className="showcase-metric">
-                <b className="showcase-metric-v">{avgDamage != null ? formatCompactNum(avgDamage) : '-'}</b>
-                <span className="showcase-metric-k">Avg DMG</span>
+              <div className="sc-metric">
+                <b className="sc-metric-v">{avgDamage != null ? formatCompactNum(avgDamage) : '-'}</b>
+                <span className="sc-metric-k">Avg DMG</span>
               </div>
             ) : null}
             {!hideCv ? (
-              <div className="showcase-metric">
-                <b className="showcase-metric-v showcase-metric-v--cv"
+              <div className="sc-metric">
+                <b className="sc-metric-v sc-metric-v--cv"
                   style={totalCvTone ? { '--cv-tone': totalCvTone } as CssVars : undefined}
                 >
                   {blank ? '-' : formatTruncCompact(totalCv, 1)}
                 </b>
-                <span className="showcase-metric-k">Crit Value</span>
+                <span className="sc-metric-k">Crit Value</span>
               </div>
             ) : null}
           </div>
         ) : null}
 
         {combatStatsView ? (
-          <div className="showcase-ladder" data-highlight={statsColumn}>
-            <div className="showcase-ladder-head" aria-hidden="true">
-              <span className="showcase-ladder-head-lead" />
-              <span className="showcase-ladder-col showcase-ladder-col--build">Build</span>
-              <span className="showcase-ladder-col showcase-ladder-col--combat">Combat</span>
+          <div className="sc-ladder" data-highlight={statsColumn}>
+            <div className="sc-ladder-head" aria-hidden="true">
+              <span className="sc-ladder-head-lead" />
+              <span className="sc-ladder-col sc-ladder-col--build">Build</span>
+              <span className="sc-ladder-col sc-ladder-col--combat">Combat</span>
             </div>
-            <div className="showcase-ladder-group" style={{ '--rows': combatStatsView.mainStats.length } as CssVars}>
+            <div className="sc-ladder-group" style={{ '--rows': combatStatsView.mainStats.length } as CssVars}>
               {combatStatsView.mainStats.map((row) => (
                 <ShowcaseStatRow
                   key={row.key}
@@ -475,7 +475,7 @@ export const ShowcaseBuild = memo(function ShowcaseBuild({
                 />
               ))}
             </div>
-            <div className="showcase-ladder-group" style={{ '--rows': combatStatsView.secondaryStats.length } as CssVars}>
+            <div className="sc-ladder-group" style={{ '--rows': combatStatsView.secondaryStats.length } as CssVars}>
               {combatStatsView.secondaryStats.map((row) => (
                 <ShowcaseStatRow
                   key={row.key}
@@ -488,7 +488,7 @@ export const ShowcaseBuild = memo(function ShowcaseBuild({
             </div>
           </div>
         ) : (
-          <div className="showcase-ladder showcase-ladder--empty">No stats</div>
+          <div className="sc-ladder sc-ladder--empty">No stats</div>
         )}
       </section>
 

@@ -37,7 +37,7 @@ export const SIMULATION_PAGES: SimulationPage[] = [
     ...APP_NAVIGATION.suggestions,
     scope: 'one change',
     art: '/assets/home/sc-optimizer.webp',
-    says: 'What is the single next thing worth doing to this build? Main stats, sonata sets and weapons each get asked separately, because each one is measured its own way.',
+    says: 'Which change improves this build most? Compare main stats, Sonata sets, and weapons against the selected damage target.',
   },
   {
     id: 'optimizer',

@@ -177,11 +177,11 @@ export function EchoPicker({
           onClose()
         },
         leading: (
-          <div className="picker-modal__media-frame">
+          <div className="pkm__media-frame">
             <img
               data-deferred-src={echo.icon}
               data-full-src={echo.icon}
-              alt={echo.name} className="picker-modal__media-image"
+              alt={echo.name} className="pkm__media-image"
               decoding="async"
               onError={withPickerImageFallback}
             />
@@ -195,12 +195,12 @@ export function EchoPicker({
         tone: sonataTone(echo.sets[0]),
         meta: (
           <>
-            <span className={`picker-modal__spec-item ${overBudget ? 'picker-modal__spec-item--warn' : ''}`}>{echo.cost}C</span>
-            <span className="picker-modal__spec-group picker-modal__spec-push">
+            <span className={`pkm__spec-item ${overBudget ? 'pkm__spec-item--warn' : ''}`}>{echo.cost}C</span>
+            <span className="pkm__spec-group pkm__spec-push">
               {echo.sets.map((setId) => {
                 const setIcon = getSntSetIco(setId)
                 return setIcon ? (
-                  <DisplayImage key={setId} src={setIcon} alt="" className="picker-modal__meta-icon" onError={withDefIconM} />
+                  <DisplayImage key={setId} src={setIcon} alt="" className="pkm__meta-icon" onError={withDefIconM} />
                 ) : null
               })}
             </span>

@@ -14,6 +14,7 @@ import { selActResId } from '@/application/state'
 import { useAppStore } from '@/application/state'
 import { ConfirmHost } from '@/shared/ui/ConfirmationModal'
 import { useAppModal } from '@/shared/ui/useAppModal'
+import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay'
 import { routeCtxBuilder } from '@/application/context-menu/routeContextBuilders.tsx'
 import {
   legacyCalculatorViews,
@@ -293,7 +294,7 @@ export function RtMenuProv({ children }: { children: ReactNode }) {
     <RouteMenuContext.Provider value={value}>
       {children}
       <ConfirmHost control={confirmation} portalTarget={typeof document !== 'undefined' ? document.body : null} />
-      {appStatus.visible ? <Suspense fallback={null}><AppSttsMdl
+      {appStatus.visible ? <Suspense fallback={<AppLoaderOverlay mode="scrim" text="Loading app status..." />}><AppSttsMdl
         visible={appStatus.visible}
         open={appStatus.open}
         closing={appStatus.closing}

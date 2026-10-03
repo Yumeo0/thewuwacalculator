@@ -295,7 +295,7 @@ export function findRotationNodeLocation(
 
 function nodeFinderLabel(node: EditorNode): string {
   if (node.type === 'swap') {
-    return 'Handoff'
+    return 'Switch resonator'
   }
   return node.label ?? 'Note'
 }

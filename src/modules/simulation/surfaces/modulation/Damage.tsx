@@ -4,6 +4,8 @@
 */
 
 import { observeSelectionPip } from '@/shared/lib/observeSelectionPip'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
+import { BadgePercent, ListChevronsDownUp, ListChevronsUpDown } from 'lucide-react'
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
@@ -70,6 +72,24 @@ function DamageRow({ entry, at, open, onPick, onOpen }: RowProps) {
 
   return (
     <>
+      <ContextTrigger
+        asChild
+        ariaLabel={`${entry.skill.label} damage actions`}
+        items={[
+          {
+            id: `modulation:formula:${entry.id}`,
+            label: 'See formula',
+            icon: <BadgePercent size="1em" />,
+            onSelect: () => onPick(entry.id),
+          },
+          ...(hasSubHits ? [{
+            id: `modulation:subhits:${entry.id}`,
+            label: open ? 'Hide subhits' : 'Show subhits',
+            icon: open ? <ListChevronsDownUp size="1em" /> : <ListChevronsUpDown size="1em" />,
+            onSelect: () => onOpen(entry.id),
+          }] : []),
+        ]}
+      >
       <div
         className={at ? 'pgd-row is-at' : 'pgd-row'}
         data-row={entry.id}
@@ -114,6 +134,7 @@ function DamageRow({ entry, at, open, onPick, onOpen }: RowProps) {
           <span className={hasSubHits ? 'pgd-car' : 'pgd-car is-off'} aria-hidden="true" />
         </button>
       </div>
+      </ContextTrigger>
 
       {/* the drawer is the app's own disclosure, which measures the height it
           opens to rather than inferring it from a track */}

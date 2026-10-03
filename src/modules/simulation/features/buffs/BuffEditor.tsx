@@ -10,7 +10,7 @@ import { useCallback, useMemo, useRef } from 'react'
 import { ConfirmHost } from '@/shared/ui/ConfirmationModal.tsx'
 import { useConfirm } from '@/shared/hooks/useConfirmation.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
-import { Copy, CopyPlus, Plus, Scissors, Sparkles, Trash2, Power, PowerOff } from 'lucide-react'
+import { Clipboard, Copy, CopyPlus, Plus, Scissors, Sparkles, Trash2, Power, PowerOff } from 'lucide-react'
 import type { ResRuntime } from '@/domain/entities/runtime.ts'
 import type {
   MnlBaseStatK,
@@ -494,6 +494,7 @@ export function BuffEditor({
     {
       id: 'manual-buffs:paste',
       key: 'paste',
+      icon: <Clipboard size="1em" />,
       label: 'Paste',
       title: 'Paste modifiers (Ctrl/Cmd+V)',
       float: false,
@@ -556,6 +557,7 @@ export function BuffEditor({
   ])
 
   const mkModRowCtxM = useCallback((modifier: MnlMod): MenuEntry[] => {
+    if (modSel.selectionMode) return modSel.contextItemsFor(modifier.id)
     const target = resModCtnTgt(modifier)
     // Keep local fallback items here so the row remains usable if the shared Simulation menu provider is not mounted.
     const fllbTms: MenuEntry[] = [
@@ -633,6 +635,7 @@ export function BuffEditor({
   ])
 
   const mkModPaneCtx = useCallback((): MenuEntry[] => {
+    if (modSel.selectionMode) return modSel.contextItemsFor()
     const fllbTms: MenuEntry[] = [
       {
         id: 'manual-buffs:pane:paste',
@@ -801,7 +804,7 @@ export function BuffEditor({
     control: ReactNode,
     className?: string,
   ) => (
-    <label className={['manual-modifier-field', className].filter(Boolean).join(' ')}>
+    <label className={['mmod-field', className].filter(Boolean).join(' ')}>
       <span>{label}</span>
       {control}
     </label>
@@ -954,7 +957,7 @@ export function BuffEditor({
               }
             />,
           )}
-          {viewModFld('Value', viewModVlNpt(modifier), 'manual-modifier-field--value')}
+          {viewModFld('Value', viewModVlNpt(modifier), 'mmod-field--value')}
         </>
       )
     }
@@ -979,7 +982,7 @@ export function BuffEditor({
               }
             />,
           )}
-          {viewModFld('Value', viewModVlNpt(modifier), 'manual-modifier-field--value')}
+          {viewModFld('Value', viewModVlNpt(modifier), 'mmod-field--value')}
         </>
       )
     }
@@ -1035,7 +1038,7 @@ export function BuffEditor({
               }
             />,
           ) : null}
-          {viewModFld('Value', viewModVlNpt(modifier), 'manual-modifier-field--value')}
+          {viewModFld('Value', viewModVlNpt(modifier), 'mmod-field--value')}
         </>
       )
     }
@@ -1073,7 +1076,7 @@ export function BuffEditor({
               }
             />,
           )}
-          {viewModFld('Value', viewModVlNpt(modifier), 'manual-modifier-field--value')}
+          {viewModFld('Value', viewModVlNpt(modifier), 'mmod-field--value')}
         </>
       )
     }
@@ -1093,7 +1096,7 @@ export function BuffEditor({
             }
           />,
         )}
-        {viewModFld('Value', viewModVlNpt(modifier), 'manual-modifier-field--value')}
+        {viewModFld('Value', viewModVlNpt(modifier), 'mmod-field--value')}
       </>
     )
   }
@@ -1112,29 +1115,29 @@ export function BuffEditor({
         <Expandable
           as="article"
           className={[
-            'manual-modifier-row rotation-item ui-surface-card ui-surface-card--inner',
+            'mmod-row rotation-item ui-surface-card ui-surface-card--inner',
             selected ? 'focus-selected' : '',
             modSel.selectionMode ? 'selection-mode' : '',
           ].filter(Boolean).join(' ')}
           data-selection-focus-item="true"
           aria-selected={selected ? 'true' : 'false'}
           onClickCapture={modSel.buildClickCapture(modifier.id)}
-          chevWrapClass="rotation-collapse-button manual-modifier-collapse"
-          triggerClass="manual-modifier-expandable-trigger"
+          chevWrapClass="rotation-collapse-button mmod-collapse"
+          triggerClass="mmod-expandable-trigger"
           contentClass="manual-modifier-expandable"
-          innerClass="manual-modifier-layout"
-          chevronClass="manual-modifier-chevron"
+          innerClass="mmod-layout"
+          chevronClass="mmod-chevron"
           chevronSize={16}
           defaultOpen={false}
           header={
-            <div className="manual-modifier-card-head">
-              <div className="manual-modifier-card-copy">
-                <div className="manual-modifier-card-topline">
-                  <span className="manual-modifier-card-index">{summary}</span>
+            <div className="mmod-card-head">
+              <div className="mmod-card-copy">
+                <div className="mmod-card-topline">
+                  <span className="mmod-card-index">{summary}</span>
                 </div>
               </div>
 
-              <div className="manual-modifier-actions">
+              <div className="mmod-actions">
                 <button
                   type="button" className="block-icon-button power"
                   title={modifier.enabled ? 'Disable modifier' : 'Enable modifier'}
@@ -1176,15 +1179,15 @@ export function BuffEditor({
           }
         >
           <section className="block-entries-list ui-surface-card ui-surface-card--inner">
-            <span className="manual-modifier-panel-label">Target</span>
-            <div className="manual-modifier-fields">
+            <span className="mmod-panel-label">Target</span>
+            <div className="mmod-fields">
               {viewModTgtFl(modifier)}
             </div>
           </section>
 
           <section className="block-entries-list ui-surface-card ui-surface-card--inner">
-            <span className="manual-modifier-panel-label">Effect</span>
-            <div className="manual-modifier-fields">
+            <span className="mmod-panel-label">Effect</span>
+            <div className="mmod-fields">
               {viewModFfctF(modifier)}
             </div>
           </section>
@@ -1210,12 +1213,12 @@ export function BuffEditor({
           <div>
             <h4>Advanced Modifiers</h4>
           </div>
-          <div className="manual-modifier-head-actions">
-            <span className="manual-modifier-count">
+          <div className="mmod-head-actions">
+            <span className="mmod-count">
               {manualBuffs.modifiers.length} {manualBuffs.modifiers.length === 1 ? 'entry' : 'entries'}
             </span>
             <button
-              type="button" className="block-icon-button manual-modifier-add"
+              type="button" className="block-icon-button mmod-add"
               title="Presets"
               aria-label="Presets"
               onClick={presetModal.show}
@@ -1223,7 +1226,7 @@ export function BuffEditor({
               <Sparkles size=".6em" />
             </button>
             <button
-              type="button" className="block-icon-button manual-modifier-add"
+              type="button" className="block-icon-button mmod-add"
               title="Add modifier"
               onClick={addMnlMod}
             >
@@ -1237,9 +1240,9 @@ export function BuffEditor({
           ariaLabel="Advanced modifier list actions"
           getItems={mkModPaneCtx}
         >
-          <div className="manual-modifier-list" {...modSel.surfaceProps}>
+          <div className="mmod-list" {...modSel.surfaceProps}>
             {manualBuffs.modifiers.length === 0 ? (
-              <div className="soft-empty manual-modifier-empty">
+              <div className="soft-empty mmod-empty">
                 No advanced modifiers yet.
               </div>
             ) : (

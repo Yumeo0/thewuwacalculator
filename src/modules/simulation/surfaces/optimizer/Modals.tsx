@@ -30,7 +30,7 @@ export const modalContent: Record<string, ReactNode> = {
         Once your bag has some echoes, the optimizer will be able to generate valid 5-piece,
         {'cost \u2264 12 combinations and show you the best-performing builds instead of an empty list.'}
       </p>
-      <p className="optimizer-modal-note">
+      <p className="omd-note">
         {'TL;DR: no echoes in, no optimizations out. Fill your bag first, then rerun the optimizer ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧.'}
       </p>
     </div>
@@ -76,7 +76,7 @@ export const modalContent: Record<string, ReactNode> = {
         Once at least one valid combination exists, the optimizer will show a non-zero
         {'permutation count and you\'ll be able to run it normally.'}
       </p>
-      <p className="optimizer-modal-note">
+      <p className="omd-note">
         {'TL;DR: Make sure you have usable echoes in your bag and soften the filters a bit, then try again (ง •̀_•́)ง.'}
       </p>
     </div>
@@ -114,7 +114,7 @@ export const modalContent: Record<string, ReactNode> = {
         After you dial the limits back, rerun the optimizer. As soon as at least one build
         fits inside your <span className="highlight">Range Limits</span>, results will start appearing again.
       </p>
-      <p className="optimizer-modal-note">
+      <p className="omd-note">
         {'TL;DR: the builds exist, your ranges just fenced them out. Widen the gate a bit and try again (˶ᵔ ᵕ ᵔ˶).'}
       </p>
     </div>
@@ -152,7 +152,7 @@ export const modalContent: Record<string, ReactNode> = {
           it will still find good builds.
         </li>
       </ul>
-      <p className="optimizer-modal-note">
+      <p className="omd-note">
         {"TL;DR: your setup can't run the GPU path results now. Use CPU mode or try a newer browser / device and then flip GPU back on ( •̀ω•́ )✧"}
       </p>
     </div>
@@ -172,7 +172,7 @@ export const modalContent: Record<string, ReactNode> = {
         <strong>dramatically faster</strong> and makes big search runs feel instant-ish.
         {"It won't break anything if it doesn't work, you can always flip back to CPU."}
       </p>
-      <p className="optimizer-modal-recommended">
+      <p className="omd-recommended">
         <strong>Recommended:</strong>
       </p>
       <ul>
@@ -183,7 +183,7 @@ export const modalContent: Record<string, ReactNode> = {
           {"If GPU fails or isn't supported, CPU will still work (just slower)."}
         </li>
       </ul>
-      <p className="optimizer-modal-note">
+      <p className="omd-note">
         {'TL;DR: GPU is the turbo button. Give it a shot. Worst case, you fall back to CPU and still get good builds.'}
       </p>
     </div>

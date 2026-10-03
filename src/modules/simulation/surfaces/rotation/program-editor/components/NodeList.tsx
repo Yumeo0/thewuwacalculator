@@ -495,7 +495,7 @@ function ghostParts(
   }
   if (node.type === 'swap') {
     const to = roster.member(node.to)
-    return { art: to?.profile, label: to?.name ?? 'Handoff', note: 'on field' }
+    return { art: to?.profile, label: to?.name ?? 'Switch resonator', note: 'on field' }
   }
 
   if (isEditorBlock(node)) {
@@ -1046,6 +1046,7 @@ function SwapRow({
   compareMark,
   focusSelected,
   stale,
+  rowMenu,
   onSelect,
 }: {
   node: EditorHandoff
@@ -1056,6 +1057,7 @@ function SwapRow({
   compareMark: 'on' | 'off' | null
   focusSelected: boolean
   stale: boolean
+  rowMenu: (node: EditorNode) => MenuEntry[]
   onSelect: (event: React.MouseEvent<HTMLElement>, id: string) => void
 }) {
   const from = roster.member(node.from)
@@ -1065,6 +1067,7 @@ function SwapRow({
   }
 
   return (
+    <ContextTrigger asChild ariaLabel={`Swap to ${to.name} actions`} getItems={() => rowMenu(node)}>
     <button
       type="button"
       data-rte-node-id={node.id}
@@ -1090,6 +1093,7 @@ function SwapRow({
         <NoteAside note={node.attachedNote} speaker={{ src: to.profile, alt: to.name, onError: withDefResMg }} />
       ) : null}
     </button>
+    </ContextTrigger>
   )
 }
 
@@ -1111,6 +1115,7 @@ function CondLine({
   compareMark,
   focusSelected,
   stale,
+  rowMenu,
   onSelect,
 }: {
   node: EditorCondition
@@ -1127,6 +1132,7 @@ function CondLine({
   compareMark: 'on' | 'off' | null
   focusSelected: boolean
   stale: boolean
+  rowMenu: (node: EditorNode) => MenuEntry[]
   onSelect: (event: React.MouseEvent<HTMLElement>, id: string) => void
 }) {
   const off = disabled || node.disabled
@@ -1139,6 +1145,7 @@ function CondLine({
   const stateLabel = hasPrior ? `${wrote.from} to ${wrote.to}` : wrote.to
 
   return (
+    <ContextTrigger asChild ariaLabel={`${node.label} actions`} getItems={() => rowMenu(node)}>
     <button
       type="button"
       data-rte-node-id={node.id}
@@ -1212,6 +1219,7 @@ function CondLine({
         <b className="rte-cond__now">{wrote.to}</b>
       </span>
     </button>
+    </ContextTrigger>
   )
 }
 
@@ -1566,6 +1574,7 @@ export function NodeList({
           compareMark={compareMark(node.id)}
           focusSelected={isFocusSelected(node.id)}
           stale={staleIds.has(node.id)}
+          rowMenu={rowMenu}
           onSelect={(event, id) => selectNode(event, null, id)}
         />
       )
@@ -1593,6 +1602,7 @@ export function NodeList({
           compareMark={compareMark(node.id)}
           focusSelected={isFocusSelected(node.id)}
           stale={staleIds.has(node.id)}
+          rowMenu={rowMenu}
           onSelect={(event, id) => selectNode(event, null, id)}
         />
       )
@@ -2099,8 +2109,8 @@ export function NodeList({
           {isContinuation ? null : (
           <ContextTrigger
             asChild
-            ariaLabel={`${block.label} actions`}
-            getItems={() => rowMenu(block)}
+            ariaLabel={`${isSetup ? setupHost?.label ?? block.label : block.label} actions`}
+            getItems={() => rowMenu(isSetup ? setupHost ?? block : block)}
           >
           <button
             type="button"

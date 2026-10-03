@@ -14,6 +14,7 @@ import {
   useState,
   type CSSProperties as CssProps,
   type KeyboardEvent as RctKybrVnt,
+  type MouseEvent as RctMsVnt,
   type ReactNode,
 } from 'react'
 import { useLocation } from 'react-router-dom'
@@ -24,11 +25,13 @@ import {
   type GuideArticle,
   type GuideBlock,
   type GuideCategory,
+  type GuidePlateStep,
 } from '@/data/content/guidesContent'
 import { resGdCtgr } from '@/modules/read/model/guides'
 import { CllpPageHeyf } from '@/shared/ui/CollapsiblePageHero'
 import { useNavX } from '@/shared/navigation/useNavX'
 import { AnchoredAppPopup, useAppPopupDismiss } from '@/shared/ui/AppPopup'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 
 type ActiveTarget = {
   categoryId: string
@@ -51,11 +54,11 @@ function countBlocks(category: GuideCategory) {
 }
 
 function sctnNchrId(articleId: string, sectionIndex: number) {
-  return `guide-s-${articleId}-${sectionIndex}`
+  return `gd-s-${articleId}-${sectionIndex}`
 }
 
 function rtclNchrId(articleId: string) {
-  return `guide-a-${articleId}`
+  return `gd-a-${articleId}`
 }
 
 type GuideHitKind = 'chapter' | 'article' | 'section' | 'block'
@@ -97,6 +100,10 @@ function blckSrchText(block: GuideBlock): string {
       return block.items.map((entry) => `${entry.term}: ${entry.description}`).join(' ')
     case 'note':
       return block.text
+    case 'steps':
+      return block.items.map((entry) => `${entry.title} ${entry.description}`).join(' ')
+    case 'plate':
+      return block.steps.map((entry) => `${entry.title} ${entry.description}`).join(' ')
     default:
       return ''
   }
@@ -272,28 +279,28 @@ function ChptCardBody({
   return (
     <>
       <button
-        type="button" className="guide-chapter-card__head"
+        type="button" className="gd-chapter-card__head"
         onClick={() => onOpen(category.id)}
         aria-label={`Open chapter ${number}: ${category.title}`}
       >
-        <span className="guide-chapter-card__number" aria-hidden="true">§ {number}</span>
-        <h2 className="guide-chapter-card__title">{category.title}</h2>
-        <p className="guide-chapter-card__summary">{category.summary}</p>
+        <span className="gd-chapter-card__number" aria-hidden="true">§ {number}</span>
+        <h2 className="gd-chapter-card__title">{category.title}</h2>
+        <p className="gd-chapter-card__summary">{category.summary}</p>
       </button>
 
-      <ol className="guide-chapter-card__contents" aria-label={`Articles in ${category.title}`}>
+      <ol className="gd-chapter-card__contents" aria-label={`Articles in ${category.title}`}>
         {category.articles.map((article, articleIndex) => (
-          <li key={article.id} className="guide-chapter-card__entry">
+          <li key={article.id} className="gd-chapter-card__entry">
             <button
-              type="button" className="guide-chapter-card__entry-btn"
+              type="button" className="gd-chapter-card__entry-btn"
               onClick={() => onOpen(category.id, article.id)}
             >
-              <span className="guide-chapter-card__entry-num" aria-hidden="true">
+              <span className="gd-chapter-card__entry-num" aria-hidden="true">
                 {chapterIndex + 1}.{articleIndex + 1}
               </span>
-              <span className="guide-chapter-card__entry-title">{article.title}</span>
-              <span className="guide-chapter-card__entry-leader" aria-hidden="true" />
-              <span className="guide-chapter-card__entry-meta" aria-hidden="true">
+              <span className="gd-chapter-card__entry-title">{article.title}</span>
+              <span className="gd-chapter-card__entry-leader" aria-hidden="true" />
+              <span className="gd-chapter-card__entry-meta" aria-hidden="true">
                 {article.sections.length} §
               </span>
             </button>
@@ -301,11 +308,11 @@ function ChptCardBody({
         ))}
       </ol>
 
-      <div className="guide-chapter-card__meta" aria-hidden="true">
-        <span>{counts.articles} ARTICLES</span>
-        <span className="guide-chapter-card__dot">·</span>
+      <div className="gd-chapter-card__meta" aria-hidden="true">
+        <span>{counts.articles} {counts.articles === 1 ? 'GUIDE' : 'GUIDES'}</span>
+        <span className="gd-chapter-card__dot">·</span>
         <span>{counts.sections} SECTIONS</span>
-        <span className="guide-chapter-card__dot">·</span>
+        <span className="gd-chapter-card__dot">·</span>
         <span>{counts.blocks} BLOCKS</span>
       </div>
     </>
@@ -324,12 +331,12 @@ function ChptChipBody({
   const number = pad2(chapterIndex + 1)
   return (
     <button
-      type="button" className="guide-chip__btn"
+      type="button" className="gd-chip__btn"
       onClick={() => onOpen(category.id)}
       aria-label={`Open chapter ${number}: ${category.title}`}
     >
-      <span className="guide-chip__num" aria-hidden="true">§ {number}</span>
-      <span className="guide-chip__title">{category.title}</span>
+      <span className="gd-chip__num" aria-hidden="true">§ {number}</span>
+      <span className="gd-chip__title">{category.title}</span>
     </button>
   )
 }
@@ -344,10 +351,10 @@ function ChptCardCell({
   onOpen: (categoryId: string, articleId?: string) => void
 }) {
   return (
-    <article className="guide-chapter-card"
+    <article className="gd-chapter-card"
       style={{ '--card-index': chapterIndex } as CssProps}
     >
-      <div className="guide-cell-inner guide-cell-inner--card">
+      <div className="gd-cell-inner gd-cell-inner--card">
         <ChptCardBody category={category} chapterIndex={chapterIndex} onOpen={onOpen} />
       </div>
     </article>
@@ -366,11 +373,11 @@ function ChptChipCell({
   return (
     <motion.article
       layout
-      layoutId={`guide-chapter-${category.id}`} className="guide-chip"
+      layoutId={`gd-chapter-${category.id}`} className="gd-chip"
       transition={CELL_TRNS}
       style={LAYOUT_LAYER}
     >
-      <div className="guide-cell-inner guide-cell-inner--chip">
+      <div className="gd-cell-inner gd-cell-inner--chip">
         <ChptChipBody category={category} chapterIndex={chapterIndex} onOpen={onOpen} />
       </div>
     </motion.article>
@@ -381,47 +388,47 @@ function NoteBlock({ block }: { block: Extract<GuideBlock, { type: 'note' }> }) 
   const tone = block.tone ?? 'info'
   const label = tone === 'warning' ? 'WARNING' : 'NOTE'
   return (
-    <aside className={`guide-note guide-note--${tone}`}>
-      <span className="guide-note__label" aria-hidden="true">{label}</span>
-      <p className="guide-note__text">{block.text}</p>
+    <aside className={`gd-note gd-note--${tone}`}>
+      <span className="gd-note__label" aria-hidden="true">{label}</span>
+      <p className="gd-note__text">{block.text}</p>
     </aside>
   )
 }
 
 function ExampleBlock({ block }: { block: Extract<GuideBlock, { type: 'example' }> }) {
   return (
-    <article className="guide-example">
-      <header className="guide-example__head">
-        <span className="guide-example__label" aria-hidden="true">Example</span>
-        <h5 className="guide-example__title">{block.title}</h5>
+    <article className="gd-example">
+      <header className="gd-example__head">
+        <span className="gd-example__label" aria-hidden="true">Example</span>
+        <h5 className="gd-example__title">{block.title}</h5>
       </header>
-      <div className="guide-example__body">
+      <div className="gd-example__body">
         {block.setup.length > 0 ? (
-          <section className="guide-example__section">
-            <h6 className="guide-example__section-title">Setup</h6>
-            <ul className="guide-example__list">
+          <section className="gd-example__section">
+            <h6 className="gd-example__section-title">Setup</h6>
+            <ul className="gd-example__list">
               {block.setup.map((item, index) => (
-                <li key={index} className="guide-example__item">{item}</li>
+                <li key={index} className="gd-example__item">{item}</li>
               ))}
             </ul>
           </section>
         ) : null}
         {block.observation.length > 0 ? (
-          <section className="guide-example__section">
-            <h6 className="guide-example__section-title">What Happens</h6>
-            <ul className="guide-example__list">
+          <section className="gd-example__section">
+            <h6 className="gd-example__section-title">What Happens</h6>
+            <ul className="gd-example__list">
               {block.observation.map((item, index) => (
-                <li key={index} className="guide-example__item">{item}</li>
+                <li key={index} className="gd-example__item">{item}</li>
               ))}
             </ul>
           </section>
         ) : null}
         {block.takeaway.length > 0 ? (
-          <section className="guide-example__section">
-            <h6 className="guide-example__section-title">Takeaway</h6>
-            <ul className="guide-example__list">
+          <section className="gd-example__section">
+            <h6 className="gd-example__section-title">Takeaway</h6>
+            <ul className="gd-example__list">
               {block.takeaway.map((item, index) => (
-                <li key={index} className="guide-example__item">{item}</li>
+                <li key={index} className="gd-example__item">{item}</li>
               ))}
             </ul>
           </section>
@@ -433,15 +440,15 @@ function ExampleBlock({ block }: { block: Extract<GuideBlock, { type: 'example' 
 
 function StepsBlock({ block }: { block: Extract<GuideBlock, { type: 'steps' }> }) {
   return (
-    <ol className="guide-steps">
+    <ol className="gd-steps">
       {block.items.map((item, index) => (
-        <li key={`${item.title}-${index}`} className="guide-steps__item">
-          <span className="guide-steps__number" aria-hidden="true">
+        <li key={`${item.title}-${index}`} className="gd-steps__item">
+          <span className="gd-steps__number" aria-hidden="true">
             {String(index + 1).padStart(2, '0')}
           </span>
-          <div className="guide-steps__copy">
-            <h5 className="guide-steps__title">{item.title}</h5>
-            <p className="guide-steps__text">{item.description}</p>
+          <div className="gd-steps__copy">
+            <h5 className="gd-steps__title">{item.title}</h5>
+            <p className="gd-steps__text">{item.description}</p>
           </div>
         </li>
       ))}
@@ -451,20 +458,20 @@ function StepsBlock({ block }: { block: Extract<GuideBlock, { type: 'steps' }> }
 
 function CmprBlck({ block }: { block: Extract<GuideBlock, { type: 'comparison' }> }) {
   return (
-    <div className="guide-compare" role="table" aria-label={`${block.leftLabel} compared with ${block.rightLabel}`}>
+    <div className="gd-compare" role="table" aria-label={`${block.leftLabel} compared with ${block.rightLabel}`}>
       <div role="rowgroup">
-        <div className="guide-compare__row guide-compare__row--head" role="row">
-          <span className="guide-compare__cell guide-compare__cell--label" role="columnheader" />
-          <span className="guide-compare__cell guide-compare__cell--heading" role="columnheader">{block.leftLabel}</span>
-          <span className="guide-compare__cell guide-compare__cell--heading" role="columnheader">{block.rightLabel}</span>
+        <div className="gd-compare__row gd-compare__row--head" role="row">
+          <span className="gd-compare__cell gd-compare__cell--label" role="columnheader" />
+          <span className="gd-compare__cell gd-compare__cell--heading" role="columnheader">{block.leftLabel}</span>
+          <span className="gd-compare__cell gd-compare__cell--heading" role="columnheader">{block.rightLabel}</span>
         </div>
       </div>
       <div role="rowgroup">
         {block.rows.map((row) => (
-          <div key={row.label} className="guide-compare__row" role="row">
-            <span className="guide-compare__cell guide-compare__cell--label" role="rowheader">{row.label}</span>
-            <span className="guide-compare__cell" role="cell">{row.left}</span>
-            <span className="guide-compare__cell" role="cell">{row.right}</span>
+          <div key={row.label} className="gd-compare__row" role="row">
+            <span className="gd-compare__cell gd-compare__cell--label" role="rowheader">{row.label}</span>
+            <span className="gd-compare__cell" role="cell">{row.left}</span>
+            <span className="gd-compare__cell" role="cell">{row.right}</span>
           </div>
         ))}
       </div>
@@ -474,19 +481,19 @@ function CmprBlck({ block }: { block: Extract<GuideBlock, { type: 'comparison' }
 
 function StatTblBlck({ block }: { block: Extract<GuideBlock, { type: 'statTable' }> }) {
   return (
-    <div className="guide-stats-table" role="table" aria-label="Stat reference table">
-      <div className="guide-stats-table__row guide-stats-table__row--head" role="row">
-        <span className="guide-stats-table__cell guide-stats-table__cell--heading" role="columnheader">Stat</span>
-        <span className="guide-stats-table__cell guide-stats-table__cell--heading" role="columnheader">Structure</span>
-        <span className="guide-stats-table__cell guide-stats-table__cell--heading" role="columnheader">Meaning</span>
-        <span className="guide-stats-table__cell guide-stats-table__cell--heading" role="columnheader">Seen In</span>
+    <div className="gd-stats-table" role="table" aria-label="Stat reference table">
+      <div className="gd-stats-table__row gd-stats-table__row--head" role="row">
+        <span className="gd-stats-table__cell gd-stats-table__cell--heading" role="columnheader">Stat</span>
+        <span className="gd-stats-table__cell gd-stats-table__cell--heading" role="columnheader">Structure</span>
+        <span className="gd-stats-table__cell gd-stats-table__cell--heading" role="columnheader">Meaning</span>
+        <span className="gd-stats-table__cell gd-stats-table__cell--heading" role="columnheader">Seen In</span>
       </div>
       {block.rows.map((row) => (
-        <div key={row.stat} className="guide-stats-table__row" role="row">
-          <span className="guide-stats-table__cell guide-stats-table__cell--stat" role="rowheader">{row.stat}</span>
-          <span className="guide-stats-table__cell" role="cell">{row.structure}</span>
-          <span className="guide-stats-table__cell" role="cell">{row.meaning}</span>
-          <span className="guide-stats-table__cell" role="cell">{row.surfaces}</span>
+        <div key={row.stat} className="gd-stats-table__row" role="row">
+          <span className="gd-stats-table__cell gd-stats-table__cell--stat" role="rowheader">{row.stat}</span>
+          <span className="gd-stats-table__cell" role="cell">{row.structure}</span>
+          <span className="gd-stats-table__cell" role="cell">{row.meaning}</span>
+          <span className="gd-stats-table__cell" role="cell">{row.surfaces}</span>
         </div>
       ))}
     </div>
@@ -495,11 +502,11 @@ function StatTblBlck({ block }: { block: Extract<GuideBlock, { type: 'statTable'
 
 function WrnnListBlck({ block }: { block: Extract<GuideBlock, { type: 'warningList' }> }) {
   return (
-    <aside className="guide-warning-list">
-      <span className="guide-warning-list__label" aria-hidden="true">Watch For</span>
-      <ul className="guide-warning-list__items">
+    <aside className="gd-warning-list">
+      <span className="gd-warning-list__label" aria-hidden="true">Watch For</span>
+      <ul className="gd-warning-list__items">
         {block.items.map((item, index) => (
-          <li key={index} className="guide-warning-list__item">{item}</li>
+          <li key={index} className="gd-warning-list__item">{item}</li>
         ))}
       </ul>
     </aside>
@@ -508,24 +515,169 @@ function WrnnListBlck({ block }: { block: Extract<GuideBlock, { type: 'warningLi
 
 function ImageBlock({ block }: { block: Extract<GuideBlock, { type: 'image' }> }) {
   return (
-    <figure className="guide-image">
-      <img className="guide-image__img"
+    <figure className="gd-image">
+      <img className="gd-image__img"
         src={block.src}
         alt={block.alt}
         loading="lazy"
       />
-      <figcaption className="guide-image__caption">{block.caption}</figcaption>
+      <figcaption className="gd-image__caption">{block.caption}</figcaption>
     </figure>
   )
 }
 
-function MgPlchBlck({ block }: { block: Extract<GuideBlock, { type: 'imagePlaceholder' }> }) {
+const SPARK_PATH = 'M15 1.5C16.3 10 20 13.7 28.5 15C20 16.3 16.3 20 15 28.5C13.7 20 10 16.3 1.5 15C10 13.7 13.7 10 15 1.5Z'
+
+function Spark({ n }: { n: number }) {
   return (
-    <aside className="guide-todo-image" aria-label={`Planned image: ${block.title}`}>
-      <span className="guide-todo-image__label" aria-hidden="true">Planned image</span>
-      <h5 className="guide-todo-image__title">{block.title}</h5>
-      <p className="guide-todo-image__caption">{block.caption}</p>
-    </aside>
+    <>
+      <svg className="gd-spark" viewBox="0 0 30 30" aria-hidden="true"><path d={SPARK_PATH} /></svg>
+      <span className="gd-spark__n">{n}</span>
+    </>
+  )
+}
+
+function PlateBlock({ block }: { block: Extract<GuideBlock, { type: 'plate' }> }) {
+  const shotRef = useRef<HTMLDivElement | null>(null)
+  const [hot, setHot] = useState(0)
+  const [held, setHeld] = useState(0)
+  const [frame, setFrame] = useState({ w: 0, h: 0 })
+  const lit = hot || held
+  const natural = Math.round(block.width / 1.5)
+  const wide = block.width / block.height >= 1.1 && natural >= 700
+
+  useEffect(() => {
+    const el = shotRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setFrame({ w: el.clientWidth, h: el.clientHeight }))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const toggle = (n: number) => setHeld((cur) => (cur === n ? 0 : n))
+
+  let scale = 1
+  let tx = 0
+  let ty = 0
+  if (held > 0 && frame.w > 0) {
+    const [bx, by, bw, bh] = block.steps[held - 1].box
+    const maxZoom = Math.max(1, (block.width / frame.w) * 1.2)
+    scale = Math.max(1, Math.min(0.78 / (bw / 100), 0.66 / (bh / 100), maxZoom))
+    const cx = ((bx + bw / 2) / 100) * frame.w
+    const cy = ((by + bh / 2) / 100) * frame.h
+    tx = Math.min(0, Math.max(frame.w - frame.w * scale, frame.w / 2 - cx * scale))
+    ty = Math.min(0, Math.max(frame.h - frame.h * scale, frame.h / 2 - cy * scale))
+  }
+  const focus = lit > 0 ? block.steps[lit - 1].box : null
+
+  const pinSize = 30
+  const unmarked = new Set<number>()
+  if (frame.w > 0) {
+    const px = ([x, y, w, h]: GuidePlateStep['box']) => [(x / 100) * frame.w, (y / 100) * frame.h, (w / 100) * frame.w, (h / 100) * frame.h]
+    block.steps.forEach(({ box }, i) => {
+      const [x, y, w, h] = px(box)
+      if (frame.h < 120 || w < pinSize * 1.35 || h < pinSize * 0.65) unmarked.add(i)
+      block.steps.slice(i + 1).forEach(({ box: other }, j) => {
+        const [ox, oy] = px(other)
+        if (Math.hypot(x - ox, y - oy) < pinSize) {
+          unmarked.add(i)
+          unmarked.add(i + j + 1)
+        }
+      })
+    })
+  }
+
+  const bind = (n: number) => ({
+    onPointerEnter: () => setHot(n),
+    onPointerLeave: () => setHot(0),
+    onFocus: () => setHot(n),
+    onBlur: () => setHot(0),
+    onClick: (event: RctMsVnt) => {
+      event.stopPropagation()
+      toggle(n)
+    },
+  })
+
+  return (
+    <div
+      className={`gd-plate gd-plate--${wide ? 'wide' : 'tall'}`}
+      style={{ '--ar': block.width / block.height, '--nat': `${natural}px` } as CssProps}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && held) {
+          event.stopPropagation()
+          setHeld(0)
+        }
+      }}
+    >
+      <div
+        ref={shotRef}
+        className="gd-plate__shot"
+        data-lit={lit > 0 || undefined}
+        data-zoomed={held > 0 || undefined}
+        style={{ aspectRatio: `${block.width} / ${block.height}`, maxWidth: `${natural}px` }}
+        onClick={() => setHeld(0)}
+      >
+        <div
+          className="gd-plate__rig"
+          style={{ transform: `translate(${tx}px, ${ty}px) scale(${scale})`, '--inv': 1 / scale } as CssProps}
+        >
+          <img className="gd-plate__img" src={`/assets/app/guides/${block.shot}.webp`} alt={block.alt} width={block.width} height={block.height} loading="lazy" decoding="async" />
+          {focus ? (
+            <span
+              className="gd-plate__focus"
+              style={{ left: `${focus[0]}%`, top: `${focus[1]}%`, width: `${focus[2]}%`, height: `${focus[3]}%` }}
+            />
+          ) : null}
+          {block.steps.map((step, index) => (
+            <button
+              key={step.title}
+              type="button"
+              className="gd-plate__pin"
+              data-on={lit === index + 1 || undefined}
+              data-bare={unmarked.has(index) || undefined}
+              style={{ left: `max(0.95rem, ${step.box[0]}%)`, top: `max(0.95rem, ${step.box[1]}%)` }}
+              aria-label={`${held === index + 1 ? 'Zoom out from' : 'Zoom to'} step ${index + 1}: ${step.title}`}
+              tabIndex={-1}
+              {...bind(index + 1)}
+            >
+              <Spark n={index + 1} />
+            </button>
+          ))}
+        </div>
+        {held > 0 ? (
+          <button
+            type="button"
+            className="gd-plate__unzoom"
+            onClick={(event) => {
+              event.stopPropagation()
+              setHeld(0)
+            }}
+          >
+            <span>Step {held}</span> Zoom out
+          </button>
+        ) : null}
+      </div>
+      <ol className="gd-plate__steps">
+        {block.steps.map((step, index) => (
+          <li key={step.title}>
+            <button
+              type="button"
+              className="gd-plate__step"
+              data-on={lit === index + 1 || undefined}
+              data-held={held === index + 1 || undefined}
+              aria-pressed={held === index + 1}
+              {...bind(index + 1)}
+            >
+              <span className="gd-plate__num" aria-hidden="true"><Spark n={index + 1} /></span>
+              <span className="gd-plate__copy">
+                <span className="gd-plate__title">{step.title}</span>
+                <span className="gd-plate__text">{step.description}</span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ol>
+    </div>
   )
 }
 
@@ -549,7 +701,7 @@ function renderBlocks(
           out.push(
             <p
               key={`${key}-${i}`}
-              className={withDropCap ? 'guide-p guide-p--lede' : 'guide-p'}
+              className={withDropCap ? 'gd-p gd-p--lede' : 'gd-p'}
             >
               {entry}
             </p>,
@@ -559,9 +711,9 @@ function renderBlocks(
       }
       case 'bullets': {
         out.push(
-          <ol key={key} className="guide-bullets">
+          <ol key={key} className="gd-bullets">
             {block.items.map((item, i) => (
-              <li key={i} className="guide-bullets__item">{item}</li>
+              <li key={i} className="gd-bullets__item">{item}</li>
             ))}
           </ol>,
         )
@@ -569,11 +721,11 @@ function renderBlocks(
       }
       case 'definitions': {
         out.push(
-          <dl key={key} className="guide-dict">
+          <dl key={key} className="gd-dict">
             {block.items.map((item) => (
               <Fragment key={item.term}>
-                <dt className="guide-dict__term">{item.term}</dt>
-                <dd className="guide-dict__desc">{item.description}</dd>
+                <dt className="gd-dict__term">{item.term}</dt>
+                <dd className="gd-dict__desc">{item.description}</dd>
               </Fragment>
             ))}
           </dl>,
@@ -608,8 +760,8 @@ function renderBlocks(
         out.push(<ImageBlock key={key} block={block} />)
         break
       }
-      case 'imagePlaceholder': {
-        out.push(<MgPlchBlck key={key} block={block} />)
+      case 'plate': {
+        out.push(<PlateBlock key={key} block={block} />)
         break
       }
       default: {
@@ -633,29 +785,29 @@ function ArticleView({
   const dropCapState = { used: false }
 
   return (
-    <article id={rtclNchrId(article.id)} className="guide-article">
-      <header className="guide-article__head">
-        <span className="guide-article__number" aria-hidden="true">{rtclNmbr}</span>
+    <article id={rtclNchrId(article.id)} className="gd-article">
+      <header className="gd-article__head">
+        <span className="gd-article__number" aria-hidden="true">{rtclNmbr}</span>
         <div>
-          <h3 className="guide-article__title">{article.title}</h3>
-          <p className="guide-article__summary">{article.summary}</p>
+          <h3 className="gd-article__title">{article.title}</h3>
+          <p className="gd-article__summary">{article.summary}</p>
         </div>
       </header>
 
-      <div className="guide-article__body">
+      <div className="gd-article__body">
         {article.sections.map((section, sectionIndex) => (
           <section
             key={`${section.title}-${sectionIndex}`}
-            id={sctnNchrId(article.id, sectionIndex)} className="guide-section"
+            id={sctnNchrId(article.id, sectionIndex)} className="gd-section"
             data-section-anchor={sctnNchrId(article.id, sectionIndex)}
           >
-            <header className="guide-section__head">
-              <span className="guide-section__number" aria-hidden="true">
+            <header className="gd-section__head">
+              <span className="gd-section__number" aria-hidden="true">
                 {rtclNmbr}.{sectionIndex + 1}
               </span>
-              <h4 className="guide-section__title">{section.title}</h4>
+              <h4 className="gd-section__title">{section.title}</h4>
             </header>
-            <div className="guide-section__body">
+            <div className="gd-section__body">
               {renderBlocks(section.blocks, {
                 sectionIndex,
                 dropCapState,
@@ -779,26 +931,26 @@ function ChptRdr({
     <motion.article
       ref={containerRef}
       layout
-      layoutId={`guide-chapter-${category.id}`} className="guide-reader"
+      layoutId={`gd-chapter-${category.id}`} className="gd-reader"
       transition={CELL_TRNS}
       style={LAYOUT_LAYER}
     >
-      <motion.div className="guide-cell-inner guide-cell-inner--reader"
+      <motion.div className="gd-cell-inner gd-cell-inner--reader"
         initial={isSwtcChpt ? { opacity: 0 } : false}
         animate={{
           opacity: 1,
           transition: isSwtcChpt ? CNTN_NTR : CNTNFADEFAST,
         }}
       >
-        <header className="guide-reader__masthead">
-          <span className="guide-reader__number" aria-hidden="true">§ {number}</span>
-          <div className="guide-reader__heading">
-            <span className="guide-reader__eyebrow">Chapter {number}</span>
-            <h2 className="guide-reader__title">{category.title}</h2>
-            <p className="guide-reader__summary">{category.summary}</p>
+        <header className="gd-reader__masthead">
+          <span className="gd-reader__number" aria-hidden="true">§ {number}</span>
+          <div className="gd-reader__heading">
+            <span className="gd-reader__eyebrow">Chapter {number}</span>
+            <h2 className="gd-reader__title">{category.title}</h2>
+            <p className="gd-reader__summary">{category.summary}</p>
           </div>
           <button
-            type="button" className="guide-reader__close"
+            type="button" className="gd-reader__close"
             onClick={onClose}
             aria-label="Close chapter"
           >
@@ -807,35 +959,35 @@ function ChptRdr({
           </button>
         </header>
 
-        <div className="guide-reader__layout">
-          <aside className="guide-reader__rail" aria-label="On this page">
-            <div className="guide-reader__rail-sticky">
-              <span className="guide-reader__rail-label">On this page</span>
-              <ol className="guide-reader__rail-list">
+        <div className="gd-reader__layout">
+          <aside className="gd-reader__rail" aria-label="On this page">
+            <div className="gd-reader__rail-sticky">
+              <span className="gd-reader__rail-label">On this page</span>
+              <ol className="gd-reader__rail-list">
                 {category.articles.map((article, articleIndex) => {
                   const rtclNchrAct = article.sections.some(
                     (_, idx) => sctnNchrId(article.id, idx) === actSctnNchr,
                   )
                   return (
-                    <li key={article.id} className="guide-reader__rail-article">
+                    <li key={article.id} className="gd-reader__rail-article">
                       <button
-                        type="button" className="guide-reader__rail-article-btn"
+                        type="button" className="gd-reader__rail-article-btn"
                         data-active={rtclNchrAct || undefined}
                         onClick={() => jumpTo(rtclNchrId(article.id))}
                       >
-                        <span className="guide-reader__rail-num" aria-hidden="true">
+                        <span className="gd-reader__rail-num" aria-hidden="true">
                           {chapterIndex + 1}.{articleIndex + 1}
                         </span>
                         <span>{article.title}</span>
                       </button>
-                      <ol className="guide-reader__rail-sections">
+                      <ol className="gd-reader__rail-sections">
                         {article.sections.map((section, sectionIndex) => {
                           const anchor = sctnNchrId(article.id, sectionIndex)
                           const isActive = anchor === actSctnNchr
                           return (
                             <li key={anchor}>
                               <button
-                                type="button" className="guide-reader__rail-section-btn"
+                                type="button" className="gd-reader__rail-section-btn"
                                 data-active={isActive || undefined}
                                 aria-current={isActive ? 'location' : undefined}
                                 onClick={() => jumpTo(anchor)}
@@ -853,9 +1005,9 @@ function ChptRdr({
             </div>
           </aside>
 
-          <details className="guide-reader__rail-mobile">
+          <details className="gd-reader__rail-mobile">
             <summary>Contents</summary>
-            <ol className="guide-reader__rail-mobile-list">
+            <ol className="gd-reader__rail-mobile-list">
               {category.articles.map((article, articleIndex) => (
                 <li key={article.id}>
                   <button
@@ -865,7 +1017,7 @@ function ChptRdr({
                       jumpTo(rtclNchrId(article.id))
                     }}
                   >
-                    <span className="guide-reader__rail-num">
+                    <span className="gd-reader__rail-num">
                       {chapterIndex + 1}.{articleIndex + 1}
                     </span>
                     {article.title}
@@ -875,7 +1027,7 @@ function ChptRdr({
             </ol>
           </details>
 
-          <div className="guide-reader__content">
+          <div className="gd-reader__content">
             {category.articles.map((article, articleIndex) => (
               <ArticleView
                 key={article.id}
@@ -885,8 +1037,8 @@ function ChptRdr({
               />
             ))}
 
-            <footer className="guide-reader__footer">
-              <button type="button" className="guide-reader__close guide-reader__close--bottom" onClick={onClose}>
+            <footer className="gd-reader__footer">
+              <button type="button" className="gd-reader__close gd-reader__close--bottom" onClick={onClose}>
                 <X size="0.875rem" aria-hidden="true" />
                 <span>Close · § {number}</span>
               </button>
@@ -979,9 +1131,9 @@ function GuideSearch({ onSelectHit }: { onSelectHit: (hit: GdSrchHit) => void })
   const popoverOpen = isOpen && trimmed.length > 0
 
   return (
-    <div ref={rootRef} className="guide-search" role="search">
-      <div className="guide-search__field" data-open={popoverOpen || undefined}>
-        <Search size="1rem" className="guide-search__icon" aria-hidden="true" />
+    <div ref={rootRef} className="gd-search" role="search">
+      <div className="gd-search__field" data-open={popoverOpen || undefined}>
+        <Search size="1rem" className="gd-search__icon" aria-hidden="true" />
         <input
           ref={inputRef}
           type="search"
@@ -995,12 +1147,12 @@ function GuideSearch({ onSelectHit }: { onSelectHit: (hit: GdSrchHit) => void })
           onKeyDown={onKeyDown}
           placeholder="search the guides"
           autoComplete="off"
-          spellCheck={false} className="guide-search__input"
+          spellCheck={false} className="gd-search__input"
           aria-controls="guide-search-popover"
           aria-expanded={popoverOpen}
           aria-autocomplete="list"
         />
-        <span className="guide-search__shortcut" aria-hidden="true">/</span>
+        <span className="gd-search__shortcut" aria-hidden="true">/</span>
       </div>
       <AnchoredAppPopup
         visible={popoverOpen}
@@ -1008,12 +1160,12 @@ function GuideSearch({ onSelectHit }: { onSelectHit: (hit: GdSrchHit) => void })
         popupRef={popupRef}
         anchorWidth="exact"
         maxHeight={448}
-        id="guide-search-popover" className="guide-search__popover"
+        id="guide-search-popover" className="gd-search__popover"
         open={popoverOpen}
         role="listbox"
       >
           {hits.length === 0 ? (
-            <div className="guide-search__empty">no matches for &quot;{trimmed}&quot;</div>
+            <div className="gd-search__empty">no matches for &quot;{trimmed}&quot;</div>
           ) : (
             hits.map((hit, i) => {
               const isActive = i === safeSelNdx
@@ -1023,7 +1175,7 @@ function GuideSearch({ onSelectHit }: { onSelectHit: (hit: GdSrchHit) => void })
               return (
                 <button
                   key={`${hit.kind}-${hit.categoryId}-${hit.articleId ?? ''}-${hit.secNchr ?? ''}-${i}`}
-                  type="button" className="guide-search__hit"
+                  type="button" className="gd-search__hit"
                   data-active={isActive || undefined}
                   role="option"
                   aria-selected={isActive}
@@ -1031,13 +1183,13 @@ function GuideSearch({ onSelectHit }: { onSelectHit: (hit: GdSrchHit) => void })
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => selectHit(hit)}
                 >
-                  <span className="guide-search__badge">{hit.kind}</span>
-                  <span className="guide-search__title">
+                  <span className="gd-search__badge">{hit.kind}</span>
+                  <span className="gd-search__title">
                     {before}
-                    {match ? <mark className="guide-search__mark">{match}</mark> : null}
+                    {match ? <mark className="gd-search__mark">{match}</mark> : null}
                     {after}
                   </span>
-                  <span className="guide-search__crumb">{hit.breadcrumb}</span>
+                  <span className="gd-search__crumb">{hit.breadcrumb}</span>
                 </button>
               )
             })
@@ -1152,18 +1304,18 @@ function RdrChipStrp({
   }
 
   return (
-    <div ref={wrapRef} className="guide-chip-strip-wrap" data-search-open={searchOpen || undefined}>
-      <motion.div className="guide-chip-strip" layout transition={CELL_TRNS}>
+    <div ref={wrapRef} className="gd-chip-strip-wrap" data-search-open={searchOpen || undefined}>
+      <motion.div className="gd-chip-strip" layout transition={CELL_TRNS}>
         <NmtPrsn mode="wait" initial={false}>
           {searchOpen ? (
             <motion.div
-              key="search-mode" className="guide-chip-strip__search"
+              key="search-mode" className="gd-chip-strip__search"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={CNTNFADEFAST}
             >
-              <Search size="1rem" className="guide-search__icon" aria-hidden="true" />
+              <Search size="1rem" className="gd-search__icon" aria-hidden="true" />
               <input
                 ref={inputRef}
                 type="search"
@@ -1175,13 +1327,13 @@ function RdrChipStrp({
                 onKeyDown={onKeyDown}
                 placeholder="search the guides"
                 autoComplete="off"
-                spellCheck={false} className="guide-search__input"
+                spellCheck={false} className="gd-search__input"
                 aria-controls="guide-search-popover"
                 aria-expanded={popoverOpen}
                 aria-autocomplete="list"
               />
               <button
-                type="button" className="guide-chip-strip__esc"
+                type="button" className="gd-chip-strip__esc"
                 onClick={closeSearch}
                 aria-label="close search"
               >
@@ -1190,7 +1342,7 @@ function RdrChipStrp({
             </motion.div>
           ) : (
             <motion.div
-              key="chip-mode" className="guide-chip-strip__chips"
+              key="chip-mode" className="gd-chip-strip__chips"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -1198,7 +1350,7 @@ function RdrChipStrp({
             >
               <motion.button
                 type="button"
-                layout className="guide-chip-back"
+                layout className="gd-chip-back"
                 onClick={closeChapter}
                 transition={CELL_TRNS}
                 aria-label="Back to all chapters"
@@ -1207,16 +1359,16 @@ function RdrChipStrp({
                 <span>All chapters</span>
               </motion.button>
               <button
-                type="button" className="guide-chip-search"
+                type="button" className="gd-chip-search"
                 data-has-query={trimmed.length > 0 || undefined}
                 onClick={openSearch}
                 aria-label={trimmed ? `open search, current query ${trimmed}` : 'open search'}
               >
                 <Search size="0.875rem" aria-hidden="true" />
                 {trimmed ? (
-                  <span className="guide-chip-search__query">{trimmed}</span>
+                  <span className="gd-chip-search__query">{trimmed}</span>
                 ) : (
-                  <span className="guide-chip-search__placeholder">search</span>
+                  <span className="gd-chip-search__placeholder">search</span>
                 )}
               </button>
               {gdCtgr.map((category, index) =>
@@ -1239,12 +1391,12 @@ function RdrChipStrp({
         popupRef={popupRef}
         anchorWidth="exact"
         maxHeight={448}
-        id="guide-search-popover" className="guide-search__popover"
+        id="guide-search-popover" className="gd-search__popover"
         open={popoverOpen}
         role="listbox"
       >
           {hits.length === 0 ? (
-            <div className="guide-search__empty">no matches for &quot;{trimmed}&quot;</div>
+            <div className="gd-search__empty">no matches for &quot;{trimmed}&quot;</div>
           ) : (
             hits.map((hit, i) => {
               const isActive = i === safeSelNdx
@@ -1254,7 +1406,7 @@ function RdrChipStrp({
               return (
                 <button
                   key={`${hit.kind}-${hit.categoryId}-${hit.articleId ?? ''}-${hit.secNchr ?? ''}-${i}`}
-                  type="button" className="guide-search__hit"
+                  type="button" className="gd-search__hit"
                   data-active={isActive || undefined}
                   role="option"
                   aria-selected={isActive}
@@ -1262,13 +1414,13 @@ function RdrChipStrp({
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => selectHit(hit)}
                 >
-                  <span className="guide-search__badge">{hit.kind}</span>
-                  <span className="guide-search__title">
+                  <span className="gd-search__badge">{hit.kind}</span>
+                  <span className="gd-search__title">
                     {before}
-                    {match ? <mark className="guide-search__mark">{match}</mark> : null}
+                    {match ? <mark className="gd-search__mark">{match}</mark> : null}
                     {after}
                   </span>
-                  <span className="guide-search__crumb">{hit.breadcrumb}</span>
+                  <span className="gd-search__crumb">{hit.breadcrumb}</span>
                 </button>
               )
             })
@@ -1380,17 +1532,37 @@ export function GuidesPage() {
     : null
 
   return (
+    <ContextTrigger
+      asChild
+      ariaLabel="Guides actions"
+      getItems={(event) => {
+        const target = event.target
+        if (target instanceof Element && target.closest('button, input, a, [role="button"]')) return []
+        return activeCategory ? [
+          { id: 'guides:all', label: 'All chapters', onSelect: closeChapter },
+          { id: 'guides:articles', label: 'Open article...', submenu: activeCategory.articles.map((article) => ({
+            id: `guides:article:${article.id}`, label: article.title,
+            onSelect: () => openChapter(activeCategory.id, article.id),
+          })) },
+        ] : [{
+          id: 'guides:chapters', label: 'Open chapter...', submenu: gdCtgr.map((category) => ({
+            id: `guides:chapter:${category.id}`, label: category.title,
+            onSelect: () => openChapter(category.id),
+          })),
+        }]
+      }}
+    >
     <div ref={rootRef} className="page guides-page" data-codex-state={active ? 'reader' : 'index'}>
       <CllpPageHeyf
         eyebrow="Documentation"
         title="Guides"
-        subtitle="Reference notes for the calculator systems, result surfaces, and app behavior."
+        subtitle="How to navigate the app and use each page."
         layoutKey="guides-hero"
         onFltnCtvt={closeChapter}
         floatingTop={active ? 'calc(env(safe-area-inset-top, 0px) + 3rem)' : undefined}
       />
 
-      <div className="guide-codex">
+      <div className="gd-codex">
         <NmtPrsn initial={false}>
           {!activeCategory ? (
             <motion.div
@@ -1430,11 +1602,11 @@ export function GuidesPage() {
             </motion.div>
           ) : null}
         </NmtPrsn>
-        <LayoutGroup id="guide-codex">
+        <LayoutGroup id="gd-codex">
           <NmtPrsn mode="wait" initial={false}>
             {activeCategory ? (
               <motion.div
-                key="reader-mode" className="guide-codex-reader-mode"
+                key="reader-mode" className="gd-codex-reader-mode"
                 initial={{ opacity: 0 }}
                 animate={{
                   opacity: 1,
@@ -1461,7 +1633,7 @@ export function GuidesPage() {
               </motion.div>
             ) : (
               <motion.div
-                key="grid-mode" className="guide-codex-index"
+                key="grid-mode" className="gd-codex-index"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1, transition: CONTENT_FADE }}
                 exit={{ opacity: 0, transition: CNTNFADEOUT }}
@@ -1480,5 +1652,6 @@ export function GuidesPage() {
         </LayoutGroup>
       </div>
     </div>
+    </ContextTrigger>
   )
 }

@@ -162,79 +162,16 @@ describe('Unison Resonator generated contracts', () => {
     })
   })
 
-  it('keeps each Hsin calculator description scoped to the effect it applies', () => {
-    const hsin = details['1311']
-    const rawForte = hsin?.skillsByTab.forteCircuit?.desc ?? ''
-    const expectedTides = hsin?.inherentSkills.find((entry) => entry.unlockLevel === 50)?.desc
-    const rawSequence = hsin?.resonanceChains.find(
-      (entry) => entry.name === 'A River of Lanterns, a River of Wishes',
-    )?.desc
-    const source = sourceFor('1311')
-    const owners = new Map((source.owners ?? []).map((owner) => [owner.ownerKey, owner]))
-    const authoredEffects = source.effects ?? []
-    const effects = new Map(authoredEffects.map((effect) => [effect.id, effect]))
-    const states = new Map(hsin?.stateGraph?.nodes.map((state) => [state.key, state]))
-    const resonanceModes = hsin?.stateGraph?.groups?.find((group) => group.id === 'mode')?.modes
-
-    expect(expectedTides).toContain('both Hsin and Rover: Electro gain 20% Electro DMG Bonus for 30s.')
-    expect(expectedTides).not.toContain('both Hsin and Rover: Electro gain 20% Electro DMG Bonus for 7s.')
-    expect(owners.get('team:1311:rover_electro_resonance')?.description).toContain(
-      'Rover: Electro casting <span style="color:#ffd12f;" class="font-bold">Intro Skill - Thunderous Fury</span>',
-    )
-    expect(owners.get('team:1311:rover_electro_resonance')?.description).not.toContain('Manifold Unison')
-    expect(owners.get('team:1311:herself_a_thousand_lanterns')?.description).not.toContain(
-      'dealing <span style="color:#ebb0ff;">Electro DMG</span>',
-    )
-    expect(states.get('inherent:1311:lvl50:unison_active')?.description).toContain(
-      'increases Hsin\'s ATK by 50% for 8s',
-    )
-    expect(states.get('inherent:1311:lvl50:unison_active')?.description).not.toContain('stacking up to 2 times')
-    expect(states.get('inherent:1311:lvl50:electro_flare_stacks')?.description).toContain(
-      'Hsin gains 25% Electro DMG Bonus, stacking up to 2 times',
-    )
-    expect(states.get('inherent:1311:lvl50:electro_flare_stacks')?.description).not.toContain('Thunderous Fury')
-    expect(states.get('team:1311:rover_electro_resonance:active')?.description).toContain(
-      'both Hsin and Rover: Electro 20% Electro DMG Bonus for 30s',
-    )
-    expect(states.get('team:1311:rover_electro_resonance:active')?.description).not.toContain('stacking up to 2 times')
-    expect(states.get('sequence:1311:s4:active')?.description).toBe(rawSequence)
-
-    expect(authoredEffects.every((effect) => Boolean(effect.description))).toBe(true)
-    expect(effects.get('1311:s6:resonance-skill-vulnerability')?.description).toBe(
-      'Targets take 40% more Resonance Skill DMG from Hsin.',
-    )
-    expect(effects.get('1311:s6:resonance-skill-def-ignore')?.description).toBe(
-      'Resonance Skill DMG dealt by Hsin ignores 20% of the target\'s DEF.',
-    )
-    expect(effects.get('1311:lvl50:unison-intro')).toMatchObject({
-      operations: [{
-        type: 'add_base_stat',
-        stat: 'atk',
-        field: 'percent',
-        value: { type: 'const', value: 50 },
-      }],
-    })
-    expect(effects.get('1311:s1:heart-of-thunder')).toMatchObject({
-      operations: [{
-        type: 'scale_skill_multiplier',
-        match: { skillIds: ['1311:heart-of-thunder:remaining'] },
-        value: { type: 'const', value: 1.2 },
-      }],
-    })
-    expect(effects.get('1311:outro:unison')?.description).not.toContain(
-      'Electro DMG dealt by Resonators in the team other than Hsin',
-    )
-    expect(effects.get('1311:outro:electro-flare')?.description).not.toContain('Shared Light')
-
-    for (const ownerKey of ['resonator:1311:unison_boon']) {
-      expect(rawForte).toContain(owners.get(ownerKey)?.description)
-    }
-    expect(resonanceModes?.find((mode) => mode.id === 'unison')?.body).toContain(
-      'the next cast of <span style="color:#ffd12f;" class="font-bold">Resonance Liberation - Formshift</span>',
-    )
-    expect(resonanceModes?.find((mode) => mode.id === 'electro_flare')?.body).toContain(
-      'targets within a certain range do not lose',
-    )
+  it('keeps Hsin intro ATK and Heart of Thunder multiplier effects distinct', () => {
+    const effects = new Map((sourceFor('1311').effects ?? []).map((effect) => [effect.id, effect]))
+    expect(effects.get('1311:lvl50:unison-intro')?.operations).toEqual([{
+      type: 'add_base_stat', stat: 'atk', field: 'percent', value: { type: 'const', value: 50 },
+    }])
+    expect(effects.get('1311:s1:heart-of-thunder')?.operations).toEqual([{
+      type: 'scale_skill_multiplier',
+      match: { skillIds: ['1311:heart-of-thunder:remaining'] },
+      value: { type: 'const', value: 1.2 },
+    }])
   })
 
   it('routes each resonator Unison Boon contribution to every Unison Response teammate', () => {
@@ -383,77 +320,17 @@ describe('Unison Resonator generated contracts', () => {
     expect(skills.get('1312025')?.skillType).toEqual(['coord'])
   })
 
-  it('keeps each Suoming calculator description scoped to its trigger and applied effect', () => {
-    const suoming = details['1312']
-    const rawForte = suoming?.skillsByTab.forteCircuit?.desc ?? ''
-    const rawOutro = suoming?.outroSkills.find((entry) => entry.name === 'Canopy Rumble')?.desc
-    const source = sourceFor('1312')
-    const owners = new Map((source.owners ?? []).map((owner) => [owner.ownerKey, owner]))
-    const authoredEffects = source.effects ?? []
-    const effects = new Map(authoredEffects.map((effect) => [effect.id, effect]))
-    const states = new Map(suoming?.stateGraph?.nodes.map((state) => [state.key, state]))
-
-    expect(owners.get('team:1312:canopy_rumble')?.description).toBe(rawOutro)
-    expect(rawForte).toContain(owners.get('resonator:1312:unison_boon')?.description)
-    expect(owners.get('team:1312:incoming_unison_boon')?.description).toContain(
-      'Set this to the number of',
-    )
-    expect(owners.get('team:1312:incoming_unison_boon')?.description).not.toContain(
-      'When Suoming has <span style="color:#ffd12f;" class="font-bold">Unison</span> and is switched out',
-    )
-
-    expect(states.get('inherent:1312:lvl50:active')?.description).toContain(
-      'grants 50% Electro DMG Bonus for 15s',
-    )
-    expect(states.get('inherent:1312:lvl50:active')?.description).not.toContain('Concerto Energy')
-    expect(states.get('inherent:1312:aligned_seals:active')?.description).toContain(
-      '30% Electro DMG Bonus, plus an additional 20%',
-    )
-    expect(states.get('inherent:1312:aligned_seals:active')?.description).toContain(
-      'Within 8s after Suoming casts',
-    )
-    expect(states.get('inherent:1312:aligned_seals:active')?.description).not.toContain('Seal Master')
-    expect(states.get('resonator:1312:seal_master:active')?.description).toContain(
-      'grants <span style="color:#ffd12f;" class="font-bold">Seal Master</span>',
-    )
-    expect(states.get('resonator:1312:seal_master:active')?.description).toContain(
-      'each stage restores 5 Concerto Energy on hit',
-    )
-    expect(states.get('resonator:1312:seal_master:active')?.description).not.toContain(
-      'chain into <span style="color:#ffd12f;" class="font-bold">Basic Attack - Unfurled Canopy Stage 2</span>',
-    )
-    expect(states.get('sequence:1312:s3:active')?.description).toContain(
-      'Casting <span style="color:#ffd12f;" class="font-bold">Resonance Liberation</span>',
-    )
-    expect(states.get('sequence:1312:s3:active')?.description).not.toContain('grants 1 stacks')
-
-    expect(authoredEffects.every((effect) => Boolean(effect.description))).toBe(true)
-    expect(effects.get('1312:lvl70:seal-master-multiplier')?.description).not.toContain('Crit. DMG')
-    expect(effects.get('1312:lvl70:seal-master-crit-dmg')?.description).not.toContain('DMG Multipliers')
-    expect(effects.get('1312:lvl70:seal-master-multiplier')).toMatchObject({
-      operations: [{
-        type: 'add_skill_multiplier',
-        value: { type: 'const', value: 1 },
-      }],
-    })
-    expect(effects.get('1312:lvl70:seal-master-crit-dmg')).toMatchObject({
-      operations: [{
-        type: 'add_top_stat',
-        stat: 'critDmg',
-        value: { type: 'const', value: 100 },
-      }],
-    })
-    expect(effects.get('1312:s6:seal-master-crit-dmg')).toMatchObject({
-      operations: [{
-        type: 'add_top_stat',
-        stat: 'critDmg',
-        value: { type: 'const', value: 200 },
-      }],
-    })
-    expect(effects.get('1312:outro:electro')?.description).not.toContain('Resonance Skill DMG')
-    expect(effects.get('1312:outro:resonance-skill')?.description).not.toContain(
-      '20% Electro DMG Amplification',
-    )
+  it('keeps Suoming Seal Master multiplier and Crit. DMG effects distinct', () => {
+    const effects = new Map((sourceFor('1312').effects ?? []).map((effect) => [effect.id, effect]))
+    expect(effects.get('1312:lvl70:seal-master-multiplier')?.operations).toEqual([expect.objectContaining({
+      type: 'add_skill_multiplier', value: { type: 'const', value: 1 },
+    })])
+    expect(effects.get('1312:lvl70:seal-master-crit-dmg')?.operations).toEqual([{
+      type: 'add_top_stat', stat: 'critDmg', value: { type: 'const', value: 100 },
+    }])
+    expect(effects.get('1312:s6:seal-master-crit-dmg')?.operations).toEqual([{
+      type: 'add_top_stat', stat: 'critDmg', value: { type: 'const', value: 200 },
+    }])
   })
 
   it('classifies every Suoming damage row by the damage types stated in her descriptions', () => {

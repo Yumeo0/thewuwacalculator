@@ -22,6 +22,7 @@ import { mkNdxMapXcld, mkJobCmbNdxn } from '@/engine/optimizer/combos/jobIndex.t
 import { runRdcPassIf } from '@/engine/optimizer/gpu/reduce.ts'
 import { dispCmptPass } from '@/engine/optimizer/gpu/dispatch.ts'
 import { getGpuDevice } from '@/engine/optimizer/gpu/getDevice.ts'
+import { GpuResourceSession } from '@/engine/optimizer/gpu/GpuResourceSession.ts'
 import {
   ptchTgtCtxDi,
   ptchTgtCtxFo,
@@ -117,8 +118,27 @@ interface RotGpuSttcSt {
   actLockMaiok: number
 }
 
-// singleton worker-side state for rotation gpu execution
-let rotGpuState: RotGpuSttcSt | null = null
+// Each worker keeps the buffers for one initialized rotation payload.
+const rotGpuSession = new GpuResourceSession<RotGpuSttcSt>((state) => {
+  destroyBuffer(state.paramsReuse)
+  destroyBuffer(state.candRs)
+  destroyBuffer(state.candRdbcRs)
+  destroyBuffer(state.comboRs)
+  destroyBuffer(state.reduceReuse.output)
+  destroyBuffer(state.reduceReuse.params)
+
+  state.statsBuffer.destroy()
+  state.setCnstLutns.destroy()
+  state.setsBuffer.destroy()
+  state.comboMapBox.destroy()
+  state.echoCstsBffr.destroy()
+  state.mainEchoBuff.destroy()
+  state.cstrsBffr.destroy()
+  state.kindBuffer.destroy()
+  state.cmbBnmBffr.destroy()
+  state.rotCntxBffr.destroy()
+  state.rotMetaBffr.destroy()
+})
 const BTCWGSIZE = 512
 
 // destroy one reusable buffer wrapper and reset it to an empty state
@@ -131,30 +151,7 @@ function destroyBuffer(reuse: ReusableBuffer): void {
 // fully destroy all persistent rotation gpu resources
 // release the current payload buffers before loading the next gpu state
 function dstrRotGpuSt(): void {
-  if (!rotGpuState) {
-    return
-  }
-
-  destroyBuffer(rotGpuState.paramsReuse)
-  destroyBuffer(rotGpuState.candRs)
-  destroyBuffer(rotGpuState.candRdbcRs)
-  destroyBuffer(rotGpuState.comboRs)
-  destroyBuffer(rotGpuState.reduceReuse.output)
-  destroyBuffer(rotGpuState.reduceReuse.params)
-
-  rotGpuState.statsBuffer.destroy()
-  rotGpuState.setCnstLutns.destroy()
-  rotGpuState.setsBuffer.destroy()
-  rotGpuState.comboMapBox.destroy()
-  rotGpuState.echoCstsBffr.destroy()
-  rotGpuState.mainEchoBuff.destroy()
-  rotGpuState.cstrsBffr.destroy()
-  rotGpuState.kindBuffer.destroy()
-  rotGpuState.cmbBnmBffr.destroy()
-  rotGpuState.rotCntxBffr.destroy()
-  rotGpuState.rotMetaBffr.destroy()
-
-  rotGpuState = null
+  rotGpuSession.dispose()
 }
 
 // helper: convert compact uint8 data into float32 for shader storage buffers
@@ -178,11 +175,11 @@ function toGpuIntRry(values: Uint16Array): Int32Array {
 
 // state guard used by runtime job execution functions
 function ensRotGpuStt(): RotGpuSttcSt {
-  if (!rotGpuState) {
+  if (!rotGpuSession.current) {
     throw new Error('Rotation GPU worker state has not been initialized')
   }
 
-  return rotGpuState
+  return rotGpuSession.current
 }
 
 // constraints are used as uniforms, so keep them in a uniform-compatible buffer
@@ -294,7 +291,7 @@ export async function initRotGpu(payload: PckdRotXctnP): Promise<void> {
   const { layout, pipeline } = await getRotGpuPpl(device)
   const batchPipeline = await getRotBatchPpl(device)
 
-  rotGpuState = {
+  rotGpuSession.current = {
     device,
     layout,
     pipeline,
@@ -347,7 +344,7 @@ export async function initRotGpu(payload: PckdRotXctnP): Promise<void> {
   // metadata layout:
   // [contextCount, contextStride, weaponCount, reserved1]
   device.queue.writeBuffer(
-      rotGpuState.rotMetaBffr,
+      rotGpuSession.current.rotMetaBffr,
       0,
       new Uint32Array([payload.contextCount, payload.contextStride, payload.weaponCount ?? 0, 0]),
   )

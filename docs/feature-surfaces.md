@@ -1,4 +1,4 @@
-# Feature Surfaces
+# Features And Pages
 
 ## Summary
 
@@ -33,7 +33,7 @@ Modulation is the primary everyday tool. It combines character progression, weap
 
 Primary root: [src/modules/simulation/surfaces/rotation](../src/modules/simulation/surfaces/rotation)
 
-Rotation builds, simulates, saves, imports, and shares ordered team programs. It has its own editor surface while reusing the canonical combat scenario and Simulation context.
+Rotation builds, simulates, saves, imports, and shares ordered team actions. Its editor uses the shared combat scenario and Simulation state.
 
 ### Showcase
 
@@ -61,7 +61,7 @@ Modulation, Showcase, and Optimizer share the same mounted roster and rail. The 
 
 Primary root: [src/modules/read](../src/modules/read)
 
-Read owns Guides, Docs, Changelog, Privacy, and Terms pages. What's New is an act on Home, read release by release along one hairline. Authored content lives under `src/data/content`.
+Read owns the Guides, Docs, Changelog, Privacy, and Terms pages. Home has a What's New section organized by release. Authored content is in `src/data/content`.
 
 ## Settings And System
 

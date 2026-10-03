@@ -13,6 +13,7 @@ import {
 } from '@/domain/entities/inventoryStorage'
 import { initWpnStts } from '@/engine/runtime/sourceStateInit'
 import { useAppStore } from '@/application/state'
+import { useInventoryUiStore } from '@/application/state/inventoryUiStore'
 import { selActRt, selInvSg, selScenarioProfiles } from '@/application/state'
 import { getEchoById } from '@/data/catalog/echoCatalogService'
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
@@ -25,8 +26,8 @@ import { Edit } from '@/modules/simulation/features/echoes/Edit.tsx'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
 
 export function InvLyr({ onReady }: { onReady: () => void }) {
-  const invOpen = useAppStore((state) => state.invOpen)
-  const invEchoSrch = useAppStore((state) => state.invEchoQ)
+  const invOpen = useInventoryUiStore((state) => state.open)
+  const invEchoSrch = useInventoryUiStore((state) => state.echoQuery)
   const setInvOpen = useAppStore((state) => state.setInvOpen)
   const setInvEchoSr = useAppStore((state) => state.setInvEchoQ)
   const runtime = useAppStore(selActRt)

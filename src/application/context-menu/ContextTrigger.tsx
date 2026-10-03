@@ -11,6 +11,7 @@ import {
   useCallback,
   useEffect,
   useRef,
+  type KeyboardEvent as RctKbdVnt,
   type MouseEvent as RctMsVnt,
   type PointerEvent as RctPntrVnt,
   type ReactElement,
@@ -20,7 +21,7 @@ import type { MenuEntry, CtxOpenEvent } from '@/shared/ui/CtxMenu.tsx'
 import { useAppCtxMen } from '@/application/context-menu/AppContextMenu'
 import { isDtblVntTgt } from '@/shared/lib/isEditableEventTarget'
 
-const TOUCH_HOLD_MS = 3000
+const TOUCH_HOLD_MS = 550
 const TOUCH_MOVE_MAX = 12
 const TOUCH_HOLD_CLS = 'context-menu-touch-hold-active'
 
@@ -33,10 +34,13 @@ type CtxTrggVnt = RctMsVnt<HTMLElement> | SyntCtxTrggV
 
 interface CtxTrggPrps {
   ariaLabel: string
+  location?: string
+  context?: unknown
   items?: MenuEntry[]
   getItems?: (event: CtxTrggVnt) => MenuEntry[]
   width?: number
   disabled?: boolean
+  touchLongPress?: boolean
   llwDtblTgt?: boolean
   asChild?: boolean
   children: ReactNode
@@ -44,6 +48,7 @@ interface CtxTrggPrps {
 
 type CtxTrggChldP = {
   onContextMenu?: (event: CtxTrggVnt) => void
+  onKeyDown?: (event: RctKbdVnt<HTMLElement>) => void
   onPointerDown?: (event: RctPntrVnt<HTMLElement>) => void
   onPointerMove?: (event: RctPntrVnt<HTMLElement>) => void
   onPointerUp?: (event: RctPntrVnt<HTMLElement>) => void
@@ -67,10 +72,13 @@ function resolveItems(
 // centralizes right-click wiring so feature features only supply menu content.
 export function ContextTrigger({
   ariaLabel,
+  location,
+  context,
   items,
   getItems,
   width,
   disabled = false,
+  touchLongPress = true,
   llwDtblTgt: llwDtblTrgt = false,
   asChild = false,
   children,
@@ -129,7 +137,7 @@ export function ContextTrigger({
   }
 
   const openRslvCtxM = (event: CtxTrggVnt) => {
-    if (disabled) {
+    if (disabled || !contextMenu.canOpen()) {
       return false
     }
 
@@ -137,14 +145,19 @@ export function ContextTrigger({
       return false
     }
 
+    const target = event.target
+    if (target instanceof Element && target.closest('a[href]')) return false
+    if (location === 'app.background' && target instanceof Element
+      && target.closest('button, input, select, textarea, [role="button"], [role="menuitem"]')) return false
+    if (window.getSelection()?.toString()) return false
+
     const resolveTimers = resolveItems(event, items, getItems)
-    if (resolveTimers.length === 0 && !contextMenu.hasGlblTms) {
-      return false
-    }
 
     return contextMenu.open(event, {
       ariaLabel,
       items: resolveTimers,
+      location,
+      context,
       width,
     })
   }
@@ -181,13 +194,17 @@ export function ContextTrigger({
   const onPntrDown = (event: RctPntrVnt<HTMLElement>) => {
     clrTchHold()
 
-    if (event.pointerType !== 'touch' || disabled) {
+    if (event.pointerType !== 'touch' || disabled || !touchLongPress || !contextMenu.canOpen()) {
       return
     }
 
     if (!llwDtblTrgt && isDtblVntTgt(event.target)) {
       return
     }
+
+    // A nested target owns its hold gesture; the parent must not open another
+    // menu when the same timer expires.
+    if (location || getItems || items?.length) event.stopPropagation()
 
     touchHoldRef.current = {
       pointerId: event.pointerId,
@@ -247,6 +264,22 @@ export function ContextTrigger({
     event.stopPropagation()
   }
 
+  const onKeyDown = (event: RctKbdVnt<HTMLElement>) => {
+    if (event.defaultPrevented) return
+    if (!(event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey))) return
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const opened = openRslvCtxM(mkSyntVnt(
+      event.target,
+      event.currentTarget,
+      bounds.left + Math.min(bounds.width / 2, 32),
+      bounds.top + Math.min(bounds.height / 2, 32),
+    ))
+    if (opened) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  }
+
   if (asChild) {
     const child = Children.only(children)
     if (!isVldElem(child)) {
@@ -255,6 +288,7 @@ export function ContextTrigger({
 
     const childElement = child as ReactElement<CtxTrggChldP>
     const chldOnCtxMen = childElement.props.onContextMenu
+    const chldOnKeyDown = childElement.props.onKeyDown
     const chldOnPntrDo = childElement.props.onPointerDown
     const chldOnPntrMo = childElement.props.onPointerMove
     const chldOnPntrUp = childElement.props.onPointerUp
@@ -269,6 +303,10 @@ export function ContextTrigger({
       }
 
       onCtxMenu(event)
+    }
+    const hndlKeyDown = (event: RctKbdVnt<HTMLElement>) => {
+      chldOnKeyDown?.(event)
+      if (!event.defaultPrevented) onKeyDown(event)
     }
     const hndlPntrDo = (event: RctPntrVnt<HTMLElement>) => {
       chldOnPntrDo?.(event)
@@ -308,6 +346,7 @@ export function ContextTrigger({
     }
     const injectedProps: Partial<CtxTrggChldP> = {
       onContextMenu: hndlCtxMen,
+      onKeyDown: hndlKeyDown,
       onPointerDown: hndlPntrDo,
       onPointerMove: hndlPntrMo,
       onPointerUp: hndlPntrUp,
@@ -325,6 +364,7 @@ export function ContextTrigger({
   return (
     <div
       onContextMenu={onCtxMenu}
+      onKeyDown={onKeyDown}
       onPointerDown={onPntrDown}
       onPointerMove={onPntrMove}
       onPointerUp={onPntrEnd}

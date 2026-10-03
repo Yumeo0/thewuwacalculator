@@ -42,8 +42,46 @@ const rotationEditorSessionStore = createStore<RotationEditorSessionState>(() =>
   byOwnerId: {},
   generationByOwnerId: {},
 }))
-const mountedOwners = new Map<string, number>()
-const dormantTimers = new Map<string, ReturnType<typeof setTimeout>>()
+/** Holds mounted owner leases and releases heavy traces after route transitions. */
+export class RotationEditorRetentionController {
+  private readonly mountedOwners = new Map<string, number>()
+  private readonly dormantTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+  clear(ownerId: string): void {
+    const pending = this.dormantTimers.get(ownerId)
+    if (pending) clearTimeout(pending)
+    this.dormantTimers.delete(ownerId)
+  }
+
+  clearAll(): void {
+    for (const timer of this.dormantTimers.values()) clearTimeout(timer)
+    this.dormantTimers.clear()
+  }
+
+  hold(ownerId: string): () => void {
+    this.clear(ownerId)
+    this.mountedOwners.set(ownerId, (this.mountedOwners.get(ownerId) ?? 0) + 1)
+    return () => {
+      const remaining = (this.mountedOwners.get(ownerId) ?? 1) - 1
+      if (remaining > 0) {
+        this.mountedOwners.set(ownerId, remaining)
+        return
+      }
+      this.mountedOwners.delete(ownerId)
+      // Wait past Strict Mode effect replay and route transitions before dropping
+      // the large execution trace. The authored draft and undo stack survive.
+      this.dormantTimers.set(ownerId, setTimeout(() => {
+        this.dormantTimers.delete(ownerId)
+        if (this.mountedOwners.has(ownerId)) return
+        updateRotationEditorSession(ownerId, (current) => current.result
+          ? { ...current, result: null, runInputIdentity: null }
+          : current)
+      }, 2_000))
+    }
+  }
+}
+
+const retention = new RotationEditorRetentionController()
 
 export function getRotationEditorSession(ownerId: string): RotationEditorSession | null {
   return rotationEditorSessionStore.getState().byOwnerId[ownerId] ?? null
@@ -131,9 +169,7 @@ export function updateRotationEditorSession(
  * load and a same-owner replacement both seed from the incoming scenario.
  */
 export function clearRotationEditorSession(ownerId: string): void {
-  const pending = dormantTimers.get(ownerId)
-  if (pending) clearTimeout(pending)
-  dormantTimers.delete(ownerId)
+  retention.clear(ownerId)
   rotationEditorSessionStore.setState((state) => {
     const next = { ...state.byOwnerId }
     delete next[ownerId]
@@ -148,33 +184,12 @@ export function clearRotationEditorSession(ownerId: string): void {
 }
 
 export function clearAllRotationEditorSessions(): void {
-  for (const timer of dormantTimers.values()) clearTimeout(timer)
-  dormantTimers.clear()
+  retention.clearAll()
   rotationEditorSessionStore.setState({ byOwnerId: {}, generationByOwnerId: {} })
 }
 
 export function holdRotationEditorOwner(ownerId: string): () => void {
-  const pending = dormantTimers.get(ownerId)
-  if (pending) clearTimeout(pending)
-  dormantTimers.delete(ownerId)
-  mountedOwners.set(ownerId, (mountedOwners.get(ownerId) ?? 0) + 1)
-  return () => {
-    const remaining = (mountedOwners.get(ownerId) ?? 1) - 1
-    if (remaining > 0) {
-      mountedOwners.set(ownerId, remaining)
-      return
-    }
-    mountedOwners.delete(ownerId)
-    // Wait past Strict Mode effect replay and route transitions before dropping
-    // the large execution trace. The authored draft and undo stack survive.
-    dormantTimers.set(ownerId, setTimeout(() => {
-      dormantTimers.delete(ownerId)
-      if (mountedOwners.has(ownerId)) return
-      updateRotationEditorSession(ownerId, (current) => current.result
-        ? { ...current, result: null, runInputIdentity: null }
-        : current)
-    }, 2_000))
-  }
+  return retention.hold(ownerId)
 }
 
 export function useRotationEditorSession(

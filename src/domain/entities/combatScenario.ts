@@ -84,6 +84,7 @@ export interface EnvironmentManualEffect {
   enabled: boolean
   label?: string
   selector: EnvironmentMemberSelector
+  excludedMemberIds?: readonly TeamMemberId[]
   buffs: ManualBuffs
 }
 

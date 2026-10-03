@@ -5,6 +5,7 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
+import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CSSProperties, RefObject } from 'react'
@@ -395,7 +396,7 @@ function PendingReportContent({
         <AppLdrVrly mode="overlay" className="rpt-loader" text="Preparing report..." />
       ) : (
         <div className="rpt-body">
-          <p className="workspace-empty">No detailed evaluation report is available for this build.</p>
+          <p className="wk-empty">No detailed evaluation report is available for this build.</p>
         </div>
       )}
     </>
@@ -506,7 +507,25 @@ export function ModulationView({
   const dmgGlyph = glyphVars(resNodeIcon(runtime.id, 'normalAttack'), '--g')
 
   return (
-    <div className="pgs workspace-ink rte-scope" ref={panel} style={memberAccent(forte.member)}>
+    <ContextTrigger
+      asChild
+      ariaLabel="Modulation actions"
+      getItems={(event) => {
+        const target = event.target
+        if (target instanceof Element && target.closest('button, input, select, textarea')) return []
+        return [
+          { id: 'modulation:views', label: 'Show panel...', submenu: (['stats', 'damage', 'states', 'forte'] as const).map((next) => ({
+            id: `modulation:view:${next}`, label: VIEW_TITLES[next],
+            disabled: view === next, onSelect: () => takeView(next),
+          })) },
+          ...(report ? [{
+            id: 'modulation:report', label: reportVisible ? 'Close report' : 'Open report',
+            onSelect: reportVisible ? closeReport : onReportOpen,
+          }] : []),
+        ]
+      }}
+    >
+    <div className="pgs wk-ink rte-scope" ref={panel} style={memberAccent(forte.member)}>
       <div className="pgs-head">
         <h4 className="pgs-title">{VIEW_TITLES[view]}</h4>
         <PanelSeat roster={roster} memberId={memberId} onMember={onMember} out={seatOut} />
@@ -602,7 +621,7 @@ export function ModulationView({
             aria-hidden="true"
           />
           <aside
-            className={reportVisible ? 'rpt rte-scope workspace-ink is-open' : 'rpt rte-scope workspace-ink'}
+            className={reportVisible ? 'rpt rte-scope wk-ink is-open' : 'rpt rte-scope wk-ink'}
             aria-label="Build Details"
             aria-hidden={reportVisible ? undefined : true}
             aria-busy={!detailReportReady || detailReportLoading}
@@ -640,7 +659,7 @@ export function ModulationView({
       ) : view === 'damage' ? (
         /* Keep component identity across member changes so panel-local state is
            not reset when only the inspected subject changes. */
-        <Suspense fallback={<p className="pgs-empty">Loading damage analysis…</p>}>
+        <Suspense fallback={<AppLdrVrly mode="inline" text="Loading damage analysis..." />}>
           <LazyModulationDamage runtime={runtime} simulation={memberAnalysis.simulation} />
         </Suspense>
       ) : view === 'forte' ? (
@@ -698,6 +717,7 @@ export function ModulationView({
         <p className="pgs-empty">This build has no combat states to set.</p>
       )}
     </div>
+    </ContextTrigger>
   )
 }
 
@@ -773,7 +793,7 @@ function ForteBody({
           <path d="M148 200 A152 64 0 0 1 452 200" fill="none" stroke="currentColor" />
         </svg>
 
-        <Suspense fallback={<p className="pgs-empty">Loading Forte…</p>}>
+        <Suspense fallback={<AppLdrVrly mode="inline" text="Loading Forte..." />}>
           <LazyForteTree
             surface="modulation"
             branches={branches}

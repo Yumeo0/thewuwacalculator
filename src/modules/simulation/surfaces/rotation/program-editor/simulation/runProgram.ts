@@ -1816,7 +1816,10 @@ interface FlatProjectionIndex {
   copyNodeById: Map<string, EditorNode>
 }
 
-function indexFlatProjection(sections: readonly EditorSection[]): FlatProjectionIndex {
+function indexFlatProjection(
+  sections: readonly EditorSection[],
+  conditionMeta: ReadonlyMap<string, ConditionHistoryMeta>,
+): FlatProjectionIndex {
   const nodesById = new Map<string, EditorNode[]>()
   const scopesById = new Map<string, EditorBlock[]>()
   const targetById = new Map<string, string>()
@@ -1848,7 +1851,7 @@ function indexFlatProjection(sections: readonly EditorSection[]): FlatProjection
       id: condition.id,
       sourceNode: condition,
       owner: ownerOf(ownerId),
-      label: condition.label ?? first?.path.split('.').pop() ?? 'Condition',
+      label: condition.label ?? conditionMeta.get(condition.id)?.label ?? first?.path.split('.').pop() ?? 'Condition',
       ...(first ? {
         path: first.path,
         change: first,
@@ -2008,7 +2011,7 @@ function buildExactFlatRows(
   sections: readonly EditorSection[],
   conditionMeta: ReadonlyMap<string, ConditionHistoryMeta>,
 ): FlatRow[] {
-  const index = indexFlatProjection(sections)
+  const index = indexFlatProjection(sections, conditionMeta)
   const featureRows = new Map<string, FeatureResult[]>()
   const featureCursors = new Map<string, number>()
   for (const feature of features) {

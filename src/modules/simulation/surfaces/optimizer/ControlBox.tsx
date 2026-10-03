@@ -247,7 +247,7 @@ export function ControlBox({
       <div className="sticky-wrapper">
         <div className="odk-rail" data-phase={dockPhase}>
           <div className="odk-rail__head">
-            <span className="odk-rail__title">Console</span>
+            <span className="odk-rail__title">Search controls</span>
             <RailManual />
           </div>
           <div className="odk-rail__body">

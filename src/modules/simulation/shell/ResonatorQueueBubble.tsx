@@ -196,16 +196,16 @@ export function ResQBbbl() {
   }
 
   return createPortal(
-    <div ref={bubbleRef} className="resonator-queue-bubble" style={style}>
+    <div ref={bubbleRef} className="rqb" style={style}>
       <DisplayImage
         src={queue[0].icon}
-        alt={queue[0].name} className="resonator-queue-bubble__icon"
+        alt={queue[0].name} className="rqb__icon"
         draggable={false}
         onError={withDefResMg}
         onClick={() => swtcToRes(queue[0].id)}
         title={`Switch to ${queue[0].name}`}
       />
-      <div className="resonator-queue-bubble__grip"
+      <div className="rqb__grip"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -216,7 +216,7 @@ export function ResQBbbl() {
       {queue.length > 1 && (
         <DisplayImage
           src={queue[1].icon}
-          alt={queue[1].name} className="resonator-queue-bubble__icon"
+          alt={queue[1].name} className="rqb__icon"
           draggable={false}
           onError={withDefResMg}
           onClick={() => swtcToRes(queue[1].id)}

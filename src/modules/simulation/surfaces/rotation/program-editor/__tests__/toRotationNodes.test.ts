@@ -4,7 +4,7 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import type { RotationNode } from '@/domain/gameData/contracts.ts'
+import type { RotationNode, SourceState } from '@/domain/gameData/contracts.ts'
 import {
   extractLoopTemplateBody,
   readPassForks,
@@ -715,7 +715,7 @@ describe('editorSectionsToRotation', () => {
         { type: 'add', path: 'runtime.foo.two', value: 3 },
       ])
   })
-  it('leaves an untouched handoff exactly as it was authored', () => {
+  it('omits the derived label from an untouched handoff', () => {
     const source: Extract<RotationNode, { type: 'condition' }> = {
       type: 'condition',
       id: 'swap-1',
@@ -727,7 +727,45 @@ describe('editorSectionsToRotation', () => {
       [source],
     )[0].items
 
-    expect(items).toEqual([source])
+    expect(items).toHaveLength(1)
+    expect(items[0]).toMatchObject({
+      type: 'condition',
+      id: source.id,
+      changes: source.changes,
+    })
+    expect(items[0]).not.toHaveProperty('label')
+  })
+
+  it('drops a catalogue condition label while retaining a distinct authored label', () => {
+    const state: SourceState = {
+      id: 'state-a',
+      label: 'Current catalogue name',
+      source: { type: 'resonator', id: 'res-a' },
+      ownerKey: 'res-a',
+      controlKey: 'state-a',
+      path: 'runtime.state.controls.state-a',
+      kind: 'toggle',
+    }
+    const serialize = (label: string) => {
+      const source: Extract<RotationNode, { type: 'condition' }> = {
+        type: 'condition',
+        id: 'condition-a',
+        label,
+        changes: [{ type: 'set', path: state.path, value: true }],
+      }
+      const editor = {
+        ...makeCondition(label, 'res-a'),
+        id: source.id,
+        sourceNode: source,
+        path: state.path,
+        state,
+        change: source.changes[0],
+      }
+      return editorSectionsToRotation(sectionsWith(editor), [source])[0].items[0]
+    }
+
+    expect(serialize(state.label)).not.toHaveProperty('label')
+    expect(serialize('My timing marker')).toHaveProperty('label', 'My timing marker')
   })
 
   it('rewrites only the active-resonator change when the handoff is retargeted', () => {

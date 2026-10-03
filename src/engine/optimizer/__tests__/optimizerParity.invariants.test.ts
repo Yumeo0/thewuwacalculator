@@ -26,7 +26,7 @@ import { prepSkill } from '@/engine/pipeline/prepareRuntimeSkill'
 import { calcSkillDamage } from '@/engine/formulas/damage'
 import { makeOptContext } from '@/engine/optimizer/context/compiled.ts'
 import { packTargetCtx } from '@/engine/optimizer/context/pack.ts'
-import { AUX0 } from '@/engine/optimizer/config/constants.ts'
+import { AUX0, DMG_AMP } from '@/engine/optimizer/config/constants.ts'
 import { getGameData } from '@/data/gameData'
 import { listSrcStts } from '@/data/gameData/registry'
 import { combatScenarioId, teamMemberId } from '@/domain/entities/combatScenario'
@@ -337,6 +337,7 @@ describe('optimizer parity invariants', () => {
 
     const finalStats = {
       ...prepared.context.finalStats,
+      amplify: 75,
       tbb: 40,
       finalDmg: 25,
     }
@@ -361,7 +362,53 @@ describe('optimizer parity invariants', () => {
     })
 
     expect(compiled.statFinalDmg).toBe(25)
+    expect(compiled.statAmp).toBe(0)
+    expect(packed[DMG_AMP]).toBe(1)
     expect(packed[AUX0]).toBeCloseTo(1.4 * 1.25, 6)
+
+    const negativeSkill: SkillDef = {
+      ...tuneSkill,
+      id: 'optimizer-spectro-frazzle',
+      archetype: 'spectroFrazzle',
+      element: 'spectro',
+      skillType: ['basicAtk', 'spectroFrazzle'],
+      skillBuffs: { amplify: 20 },
+      hits: [{ count: 1, multiplier: 1 }],
+    }
+    const negativeStats = {
+      ...finalStats,
+      attribute: {
+        ...finalStats.attribute,
+        spectro: { ...finalStats.attribute.spectro, amplify: 15 },
+      },
+      skillType: {
+        ...finalStats.skillType,
+        all: { ...finalStats.skillType.all, amplify: 25 },
+        basicAtk: { ...finalStats.skillType.basicAtk, amplify: 30 },
+        spectroFrazzle: { ...finalStats.skillType.spectroFrazzle, amplify: 40 },
+      },
+    }
+    const negativeCompiled = makeOptContext({
+      resonatorId: seed.id,
+      runtime,
+      skill: negativeSkill,
+      finalStats: negativeStats,
+      enemy,
+      combatState: { ...runtime.state.combat, spectroFrazzle: 1 },
+    })
+    const negativePacked = packTargetCtx({
+      compiled: negativeCompiled,
+      skill: negativeSkill,
+      runtime,
+      comboN: 5,
+      comboK: 5,
+      comboCount: 1,
+      comboBaseIndex: 0,
+      lockEchoIdx: -1,
+      setRtMask: 0,
+    })
+    expect(negativeCompiled.statAmp).toBe(60)
+    expect(negativePacked[DMG_AMP]).toBeCloseTo(1.6, 6)
   })
 
   it('finds targetable resonators to check', () => {
