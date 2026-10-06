@@ -5,9 +5,9 @@
                selecting passive params by rank, and applying fallback images.
 */
 
-import type { GenWpn } from '@/domain/entities/weapon.ts'
-import { getWpnById as getWpnFromCa } from '@/data/catalog/weaponCatalogService.ts'
-import { formatTruncCompact, truncTo } from '@/shared/lib/number.ts'
+import type { GenWpn } from '@wuwacalc/core/domain/entities/weapon.ts'
+import { getWpnById as getWpnFromCa } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
+import { formatTruncCompact, truncTo } from '@wuwacalc/core/shared/lib/number.ts'
 
 // user-facing labels for weapon secondary stat keys
 export const WPNSTATLBLS: Record<string, string> = {

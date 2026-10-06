@@ -4,7 +4,7 @@
 */
 
 import type { ReactNode } from 'react'
-import type { RotationImportLoad, RotationImportPick } from '@/domain/entities/preferences.ts'
+import type { RotationImportLoad, RotationImportPick } from '@wuwacalc/core/domain/entities/preferences.ts'
 
 export interface ImportReview {
   title: string

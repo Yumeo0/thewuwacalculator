@@ -5,12 +5,12 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import { makeResProfile, makeResRuntime, makeScenarioFromProfiles } from '@/engine/runtime/defaults.ts'
-import { listResSds } from '@/data/catalog/resonatorSeedService.ts'
-import { listEchoes } from '@/data/catalog/echoCatalogService.ts'
-import { ECHO_SET_DEFS, getEchoSetCn } from '@/data/gameData/echoSets/effects.ts'
-import { applyRuntimeToSimulation, materializeScenarioRuntime, runtimeFromSnapshot } from '@/engine/runtime/runtimeAdapters.ts'
-import type { EchoInstance } from '@/domain/entities/runtime.ts'
+import { makeResProfile, makeResRuntime, makeScenarioFromProfiles } from '@wuwacalc/core/engine/runtime/defaults.ts'
+import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { listEchoes } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
+import { ECHO_SET_DEFS, getEchoSetCn } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
+import { applyRuntimeToSimulation, materializeScenarioRuntime, runtimeFromSnapshot } from '@wuwacalc/core/engine/runtime/runtimeAdapters.ts'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime.ts'
 import {
   mergeEchoImportIntoProfile,
   resolveEchoImportRuntime,

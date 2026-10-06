@@ -4,7 +4,7 @@
 */
 
 import type { ReactNode } from 'react'
-import type { SavedEcho } from '@/domain/entities/inventoryStorage.ts'
+import type { SavedEcho } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
 
 interface InvMenu {

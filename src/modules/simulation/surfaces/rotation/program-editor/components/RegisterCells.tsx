@@ -9,7 +9,7 @@ import { Fragment, useLayoutEffect } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import type { EditorStep } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
-import type { OffTuneTrace } from '@/domain/entities/stats'
+import type { OffTuneTrace } from '@wuwacalc/core/domain/entities/stats'
 import {
   GROUP_NAMES,
   GROUP_SHORT,

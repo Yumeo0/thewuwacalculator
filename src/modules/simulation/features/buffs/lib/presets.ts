@@ -4,11 +4,11 @@
                and converts selected presets into static manual modifiers.
 */
 
-import { getGameData } from '@/data/gameData'
-import { getSntSetIco, getSntSetNam } from '@/data/gameData/catalog/sonataSets.ts'
-import { getEchoSetDe } from '@/data/gameData/echoSets/effects.ts'
-import type { MnlMod, MnlSkllMtchM } from '@/domain/entities/manualBuffs.ts'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
+import { getGameData } from '@wuwacalc/core/data/gameData'
+import { getSntSetIco, getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
+import type { MnlMod, MnlSkllMtchM } from '@wuwacalc/core/domain/entities/manualBuffs.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import type {
   AttributeKey,
   FinalStats,
@@ -16,7 +16,7 @@ import type {
   UnifiedBuffPool,
   ResBaseStats,
   SkillTypeKey,
-} from '@/domain/entities/stats.ts'
+} from '@wuwacalc/core/domain/entities/stats.ts'
 import type {
   DataSrcRef,
   EffectDef,
@@ -25,17 +25,17 @@ import type {
   FormExpr,
   SkllMtchRule,
   SourceState,
-} from '@/domain/gameData/contracts.ts'
-import { makeTeamComp } from '@/engine/gameData/teamComposition.ts'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
-import { getResSeedBy, resResBaseSt } from '@/data/catalog/resonatorSeedService.ts'
-import { getWpnById } from '@/data/catalog/weaponCatalogService.ts'
-import { listSkillsFor } from '@/data/catalog/gameDataService.ts'
-import { wpnAtkAt } from '@/engine/runtime/weaponState.ts'
-import { evalForm } from '@/engine/effects/evaluator.ts'
-import { calcFinalStats } from '@/engine/formulas/finalStats.ts'
-import { countEchoSets, mkRtBaseBuff } from '@/engine/pipeline/buildCombatContext.ts'
-import { mkNfdBuffPoo } from '@/engine/resolvers/buffPool.ts'
+} from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { makeTeamComp } from '@wuwacalc/core/engine/gameData/teamComposition.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
+import { getResSeedBy, resResBaseSt } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
+import { listSkillsFor } from '@wuwacalc/core/data/catalog/gameDataService.ts'
+import { wpnAtkAt } from '@wuwacalc/core/engine/runtime/weaponState.ts'
+import { evalForm } from '@wuwacalc/core/engine/effects/evaluator.ts'
+import { calcFinalStats } from '@wuwacalc/core/engine/formulas/finalStats.ts'
+import { countEchoSets, mkRtBaseBuff } from '@wuwacalc/core/engine/pipeline/buildCombatContext.ts'
+import { mkNfdBuffPoo } from '@wuwacalc/core/engine/resolvers/buffPool.ts'
 import {
   DVNCBASESTAT,
   DVNCBASESTuv,
@@ -48,7 +48,7 @@ import {
   SKLLSCLRPTNS,
 } from '@/modules/simulation/features/buffs/lib/options.ts'
 import { resPssvPrms } from '@/modules/simulation/features/weapons/lib/weapon.ts'
-import { truncTo } from '@/shared/lib/number.ts'
+import { truncTo } from '@wuwacalc/core/shared/lib/number.ts'
 import { getEffectName } from '@/modules/simulation/model/sourceStateDisplay.ts'
 import { makeModId } from './helpers.ts'
 

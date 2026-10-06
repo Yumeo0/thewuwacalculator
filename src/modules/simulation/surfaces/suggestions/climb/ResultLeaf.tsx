@@ -6,12 +6,12 @@
 
 import { useMemo, useState } from 'react'
 import type { CSSProperties as CssProps } from 'react'
-import type { EchoInstance, WeaponState } from '@/domain/entities/runtime.ts'
+import type { EchoInstance, WeaponState } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { glyphVars } from '@/shared/lib/gameAssets.ts'
 import { withDefIconM, withDefWpnMg } from '@/shared/lib/imageFallback.ts'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
-import { getSntSetNam } from '@/data/gameData/catalog/sonataSets.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
+import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
 import { cmptSetCnts } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
 import {
   fmtWpnStatDs,

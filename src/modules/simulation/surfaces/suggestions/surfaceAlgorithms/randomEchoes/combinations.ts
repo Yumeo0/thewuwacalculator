@@ -4,7 +4,7 @@
                plans and main-stat combinations.
 */
 
-import { ECHO_MAIN_STATS } from '@/data/gameData/catalog/echoStats'
+import { ECHO_MAIN_STATS } from '@wuwacalc/core/data/gameData/catalog/echoStats'
 
 export const TRIES_PER_COMBO = 5
 

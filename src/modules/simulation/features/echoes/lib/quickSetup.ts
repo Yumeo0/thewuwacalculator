@@ -5,16 +5,16 @@
                and repeated substat templates.
 */
 
-import type { EchoDef } from '@/domain/entities/catalog.ts'
-import type { EchoInstance } from '@/domain/entities/runtime.ts'
-import { getEchoById, listChsByCos } from '@/data/catalog/echoCatalogService.ts'
+import type { EchoDef } from '@wuwacalc/core/domain/entities/catalog.ts'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { getEchoById, listChsByCos } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import {
   ECHO_MAIN_STATS,
   SUBSTAT_KEYS,
   getSbstStepP,
   snapToNrstSb,
-} from '@/data/gameData/catalog/echoStats.ts'
-import { ECHO_SET_DEFS } from '@/data/gameData/echoSets/effects.ts'
+} from '@wuwacalc/core/data/gameData/catalog/echoStats.ts'
+import { ECHO_SET_DEFS } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
 import { cmptSetCnts, mkDefEchoNst } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
 
 export const QUICK_SLOT_COUNT = 5

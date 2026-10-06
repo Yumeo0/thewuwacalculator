@@ -5,7 +5,7 @@
 */
 
 import { create } from 'zustand'
-import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
+import type { CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScenario.ts'
 
 interface WeaponConsoleStore {
   target: { resonatorId: string; scenarioId?: CombatScenarioId | null } | null

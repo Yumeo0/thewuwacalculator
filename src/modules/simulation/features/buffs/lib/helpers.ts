@@ -4,7 +4,7 @@
                helpers used by Simulation buff controls.
 */
 
-import type { ManualBuffs, MnlMod } from '@/domain/entities/manualBuffs.ts'
+import type { ManualBuffs, MnlMod } from '@wuwacalc/core/domain/entities/manualBuffs.ts'
 import {
   DVNCBASESTuv,
   DVNCTOPSTATP,

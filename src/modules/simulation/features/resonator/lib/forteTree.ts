@@ -3,9 +3,9 @@
   Description: Owns forte tree behavior and state transitions for the lib module.
 */
 
-import type { ResSeed } from '@/domain/entities/runtime.ts'
+import type { ResSeed } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { resInherentIcon, resNodeIcon } from '@/shared/lib/gameAssets.ts'
-import { getResModeGroups } from '@/domain/gameData/resonatorStateGraph.ts'
+import { getResModeGroups } from '@wuwacalc/core/domain/gameData/resonatorStateGraph.ts'
 import type { ResView, ResSldrSkllT } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { TRCNODEICONM, visibleTabs } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { skllLblMap } from '@/modules/simulation/features/resonator/lib/panel.ts'

@@ -4,32 +4,44 @@ import ts from 'typescript'
 
 const ROOT = process.cwd()
 const SRC = path.join(ROOT, 'src')
+const CORE_SRC = path.join(ROOT, 'packages', 'core', 'src')
 const CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'])
-const LAYERS = new Set([
+
+const APP_LAYERS = new Set([
   'app',
   'application',
   'cloudflare',
   'data',
-  'domain',
-  'engine',
+  'echoParser',
   'infra',
   'modules',
   'shared',
 ])
 
+const CORE_LAYERS = new Set(['data', 'domain', 'engine', 'shared'])
+
 const ALLOWED = {
+  shared: new Set(['shared']),
+  data: new Set(['data', 'shared']),
+  echoParser: new Set(['echoParser', 'shared']),
+  infra: new Set(['infra', 'shared']),
+  application: new Set(['application', 'infra', 'data', 'shared']),
+  modules: new Set(['modules', 'application', 'data', 'echoParser', 'shared']),
+  app: new Set(['app', 'application', 'modules', 'infra', 'data', 'echoParser', 'shared']),
+  cloudflare: new Set(['cloudflare', 'application', 'infra', 'data', 'shared']),
+}
+
+const CORE_ALLOWED = {
   shared: new Set(['shared']),
   domain: new Set(['domain', 'shared']),
   data: new Set(['data', 'domain', 'shared']),
   engine: new Set(['engine', 'data', 'domain', 'shared']),
-  infra: new Set(['infra', 'domain', 'shared']),
-  application: new Set(['application', 'infra', 'engine', 'data', 'domain', 'shared']),
-  modules: new Set(['modules', 'application', 'engine', 'data', 'domain', 'shared']),
-  app: new Set(['app', 'application', 'modules', 'infra', 'engine', 'data', 'domain', 'shared']),
-  cloudflare: new Set(['cloudflare', 'application', 'infra', 'data', 'domain', 'shared']),
 }
 
+const FORBIDDEN_CORE_PACKAGES = ['react', 'react-dom', 'zustand']
+
 function listFiles(directory, result = []) {
+  if (!fs.existsSync(directory)) return result
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
     const absolute = path.join(directory, entry.name)
     if (entry.isDirectory()) {
@@ -64,75 +76,111 @@ function importSpecifiers(sourceFile) {
 function resolveSourceImport(sourceFile, specifier) {
   const clean = specifier.split('?')[0]
   if (clean.startsWith('@/')) return path.join(SRC, clean.slice(2))
+  if (clean.startsWith('@core/')) return path.join(CORE_SRC, clean.slice('@core/'.length))
+  if (clean.startsWith('@wuwacalc/core/')) return path.join(CORE_SRC, clean.slice('@wuwacalc/core/'.length))
   if (clean.startsWith('.')) return path.resolve(path.dirname(sourceFile), clean)
   return null
 }
 
-function sourceRelative(absolute) {
-  return path.relative(SRC, absolute).split(path.sep).join('/')
+function isInside(child, parent) {
+  const relative = path.relative(parent, child)
+  return Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative)
 }
 
-function layerOf(absolute) {
-  const first = sourceRelative(absolute).split('/')[0]
-  return LAYERS.has(first) ? first : null
+function rootOf(absolute) {
+  if (isInside(absolute, SRC)) return 'app'
+  if (isInside(absolute, CORE_SRC)) return 'core'
+  return null
+}
+
+function relativeOf(absolute) {
+  return path.relative(ROOT, absolute).split(path.sep).join('/')
+}
+
+function layerOf(absolute, root) {
+  const base = root === 'core' ? CORE_SRC : SRC
+  const first = path.relative(base, absolute).split(path.sep)[0]
+  const layers = root === 'core' ? CORE_LAYERS : APP_LAYERS
+  return layers.has(first) ? first : null
 }
 
 function moduleName(absolute) {
-  const parts = sourceRelative(absolute).split('/')
+  const parts = path.relative(SRC, absolute).split(path.sep)
   return parts[0] === 'modules' ? parts[1] : null
 }
 
 function isPublicModuleEntry(absolute) {
-  const relative = sourceRelative(absolute)
+  const relative = path.relative(SRC, absolute).split(path.sep).join('/')
   return relative.includes('/api/') || relative.includes('/pages/')
 }
 
 const errors = []
 
-for (const file of listFiles(SRC)) {
-  const sourceLayer = layerOf(file)
+for (const file of [...listFiles(SRC), ...listFiles(CORE_SRC)]) {
+  const sourceRoot = rootOf(file)
+  if (!sourceRoot) continue
+  const sourceLayer = layerOf(file, sourceRoot)
   if (!sourceLayer) continue
 
   const sourceText = fs.readFileSync(file, 'utf8')
   const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true)
 
   for (const specifier of importSpecifiers(sourceFile)) {
-    if (sourceLayer === 'engine' && ['react', 'react-dom', 'zustand'].some((pkg) => specifier === pkg || specifier.startsWith(`${pkg}/`))) {
-      errors.push(`${sourceRelative(file)} -> ${specifier}: engine cannot import React or Zustand`)
+    if (sourceRoot === 'core' && FORBIDDEN_CORE_PACKAGES.some((pkg) => specifier === pkg || specifier.startsWith(`${pkg}/`))) {
+      errors.push(`${relativeOf(file)} -> ${specifier}: core cannot import React or Zustand`)
+      continue
+    }
+
+    if (sourceRoot === 'app' && specifier.startsWith('@core/')) {
+      errors.push(`${relativeOf(file)} -> ${specifier}: app must import the core via @wuwacalc/core`)
+      continue
+    }
+
+    if (sourceRoot === 'core' && specifier.startsWith('@wuwacalc/core/')) {
+      errors.push(`${relativeOf(file)} -> ${specifier}: core must use the internal @core alias`)
       continue
     }
 
     const target = resolveSourceImport(file, specifier)
     if (!target) continue
-    const sourceRelativeTarget = path.relative(SRC, target)
-    if (sourceRelativeTarget === '..' || sourceRelativeTarget.startsWith(`..${path.sep}`) || path.isAbsolute(sourceRelativeTarget)) {
-      errors.push(`${sourceRelative(file)} -> ${specifier}: app source cannot import files outside src/`)
+    if (sourceRoot === 'app' && specifier.startsWith('.') && !isInside(target, SRC)) {
+      errors.push(`${relativeOf(file)} -> ${specifier}: app source cannot import files outside src/`)
       continue
     }
-    const targetLayer = layerOf(target)
+    const targetRoot = rootOf(target)
+    if (!targetRoot) continue
+
+    if (sourceRoot === 'core' && targetRoot === 'app') {
+      errors.push(`${relativeOf(file)} -> ${specifier}: core cannot import app modules`)
+      continue
+    }
+
+    if (sourceRoot !== targetRoot) continue
+
+    const targetLayer = layerOf(target, targetRoot)
     if (!targetLayer) continue
 
-    if (!ALLOWED[sourceLayer].has(targetLayer)) {
-      errors.push(`${sourceRelative(file)} -> ${specifier}: ${sourceLayer} cannot import ${targetLayer}`)
+    const allowed = sourceRoot === 'core' ? CORE_ALLOWED[sourceLayer] : ALLOWED[sourceLayer]
+    if (!allowed.has(targetLayer)) {
+      errors.push(`${relativeOf(file)} -> ${specifier}: ${sourceRoot} ${sourceLayer} cannot import ${targetLayer}`)
       continue
     }
 
-    if (sourceLayer === 'engine' && /\/shared\/(?:ui|hooks|navigation)\//.test(sourceRelative(target))) {
-      errors.push(`${sourceRelative(file)} -> ${specifier}: engine cannot import React-facing shared modules`)
+    if (sourceLayer === 'engine' && /\/shared\/(?:ui|hooks|navigation)\//.test(relativeOf(target))) {
+      errors.push(`${relativeOf(file)} -> ${specifier}: engine cannot import React-facing shared modules`)
       continue
     }
 
-
-    if (sourceLayer === 'app' && targetLayer === 'modules' && !isPublicModuleEntry(target)) {
-      errors.push(`${sourceRelative(file)} -> ${specifier}: app must use a module api/ or pages/ entry`)
+    if (sourceRoot === 'app' && sourceLayer === 'app' && targetLayer === 'modules' && !isPublicModuleEntry(target)) {
+      errors.push(`${relativeOf(file)} -> ${specifier}: app must use a module api/ or pages/ entry`)
       continue
     }
 
-    if (sourceLayer === 'modules' && targetLayer === 'modules') {
+    if (sourceRoot === 'app' && sourceLayer === 'modules' && targetLayer === 'modules') {
       const sourceModule = moduleName(file)
       const targetModule = moduleName(target)
       if (sourceModule !== targetModule && !isPublicModuleEntry(target)) {
-        errors.push(`${sourceRelative(file)} -> ${specifier}: cross-module imports must use api/ or pages/`)
+        errors.push(`${relativeOf(file)} -> ${specifier}: cross-module imports must use api/ or pages/`)
       }
     }
   }

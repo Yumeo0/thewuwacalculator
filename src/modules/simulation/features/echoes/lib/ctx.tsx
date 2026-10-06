@@ -5,7 +5,7 @@
                inventory behavior.
 */
 
-import type { EchoInstance } from '@/domain/entities/runtime.ts'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime.ts'
 import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
 
 interface EchoPaneMenu {

@@ -4,7 +4,7 @@
                submenus without mutating the current build.
 */
 
-import type { EchoInstance } from '@/domain/entities/runtime.ts'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { ArrowRight } from 'lucide-react'
 import { EchoCard } from '@/modules/simulation/workspace/ui.tsx'
 import { makeEchoSlot } from '@/modules/simulation/workspace/echoSlot.ts'

@@ -5,25 +5,25 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@/data/gameData/catalog/echoStats'
-import type { EchoDef } from '@/domain/entities/catalog'
-import type { EchoInstance } from '@/domain/entities/runtime'
-import { getEchoById, listEchoes } from '@/data/catalog/echoCatalogService'
+import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@wuwacalc/core/data/gameData/catalog/echoStats'
+import type { EchoDef } from '@wuwacalc/core/domain/entities/catalog'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
+import { getEchoById, listEchoes } from '@wuwacalc/core/data/catalog/echoCatalogService'
 import {
   initAppState,
   makeAppState,
   makeResProfile,
   makeTeamMember,
-} from '@/engine/runtime/defaults'
+} from '@wuwacalc/core/engine/runtime/defaults'
 import {
   inferSavedEchoCost,
   repairEchoLoadoutForCatalog,
-} from '@/engine/runtime/echoCatalogRepair'
-import { listResSds } from '@/data/catalog/resonatorSeedService'
-import type { PersistedUnknown } from '@/engine/runtime/defaults'
-import { makeSavedRotation } from '@/domain/entities/inventoryStorage'
-import { makeScenarioFromProfiles } from '@/engine/runtime/defaults'
-import { projectScenarioWorkspaceProfiles } from '@/engine/runtime/scenarioRuntime'
+} from '@wuwacalc/core/engine/runtime/echoCatalogRepair'
+import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import type { PersistedUnknown } from '@wuwacalc/core/engine/runtime/defaults'
+import { makeSavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage'
+import { makeScenarioFromProfiles } from '@wuwacalc/core/engine/runtime/defaults'
+import { projectScenarioWorkspaceProfiles } from '@wuwacalc/core/engine/runtime/scenarioRuntime'
 
 function makeEcho(definition: EchoDef, set: number, uid: string, slot = 0): EchoInstance {
   const primary = Object.entries(ECHO_MAIN_STATS[definition.cost] ?? {})[0]

@@ -4,22 +4,22 @@
                the receipt writes exactly what its switches say it will.
 */
 
-import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime.ts'
-import type { UiPrefs } from '@/domain/entities/preferences.ts'
-import type { ParsedBuildScreenshot } from '@/engine/echoParser/ocrParsing.ts'
-import { getWpnById } from '@/data/catalog/weaponCatalogService.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
-import { normResRtCnt } from '@/engine/gameData/controlOptions.ts'
-import { setResRtSequence } from '@/engine/gameData/resonatorMax.ts'
-import { getResDtlsBy } from '@/data/gameData/resonators/resonatorDataStore.ts'
-import { clampNumber } from '@/shared/lib/number.ts'
+import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { UiPrefs } from '@wuwacalc/core/domain/entities/preferences.ts'
+import type { ParsedBuildScreenshot } from '@/echoParser/ocrParsing.ts'
+import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { normResRtCnt } from '@wuwacalc/core/engine/gameData/controlOptions.ts'
+import { setResRtSequence } from '@wuwacalc/core/engine/gameData/resonatorMax.ts'
+import { getResDtlsBy } from '@wuwacalc/core/data/gameData/resonators/resonatorDataStore.ts'
+import { clampNumber } from '@wuwacalc/core/shared/lib/number.ts'
 import {
   setResLvl,
   setSkllLvl,
   setWpnLvl,
 } from '@/modules/simulation/features/resonator/lib/buildEdits.ts'
 import { applyWpnSel, setWpnRank } from '@/modules/simulation/features/weapons/lib/weaponSlotOps.ts'
-import type { CoreSkillLevels } from '@/engine/echoParser/buildMetadata.ts'
+import type { CoreSkillLevels } from '@/echoParser/buildMetadata.ts'
 
 type CardSkill = keyof CoreSkillLevels
 

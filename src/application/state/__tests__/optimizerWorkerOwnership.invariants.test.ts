@@ -5,7 +5,8 @@
 */
 
 import { afterEach, expect, it, vi } from 'vitest'
-import type { OptStartPay } from '@/engine/optimizer/types'
+import type { OptStartPay } from '@wuwacalc/core/engine/optimizer/types'
+import { configureCore } from '@wuwacalc/core/data/coreEnvironment'
 import { compOptPayIn, ensOptCompWr, stopOptCompW } from '../storeOptimizerRuntime'
 import { useOptimizerRunStore } from '../optimizerRunStore'
 
@@ -14,6 +15,7 @@ class WorkerStub extends EventTarget {
   terminate = vi.fn()
   onerror = null
 }
+configureCore({ createWorker: () => new Worker('stub:', { type: 'module' }) })
 afterEach(() => { stopOptCompW(); vi.unstubAllGlobals() })
 const input = { settings: { includeWeapons: false }, invChs: [] } as unknown as OptStartPay
 

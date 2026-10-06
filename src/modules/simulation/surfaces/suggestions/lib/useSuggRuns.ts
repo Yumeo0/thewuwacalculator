@@ -6,27 +6,27 @@
 
 import { useSuggestionTarget } from '@/modules/simulation/surfaces/suggestions/lib/useSuggestionTarget.ts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { EnemyProfile } from '@/domain/entities/appState.ts'
-import type { WeaponPlanSet } from '@/domain/entities/suggestions.ts'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import type { SntSetConds } from '@/domain/entities/sonataSetConditionals.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState.ts'
+import type { WeaponPlanSet } from '@wuwacalc/core/domain/entities/suggestions.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { SntSetConds } from '@wuwacalc/core/domain/entities/sonataSetConditionals.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
 import { selActTgtSlc } from '@/application/state'
 import { useAppStore } from '@/application/state'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
-import { cancelSuggestionsJobs, runCompactSuggestion } from '@/engine/suggestions/client.ts'
-import { clearSuggsSss, readSuggsSss, writeSuggsSs } from '@/engine/suggestions/sessionCache.ts'
-import { resSuggDmg } from '@/engine/suggestions/shared.ts'
-import { isOptRotTgt } from '@/engine/optimizer/rules/eligibility.ts'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
+import { cancelSuggestionsJobs, runCompactSuggestion } from '@wuwacalc/core/engine/suggestions/client.ts'
+import { clearSuggsSss, readSuggsSss, writeSuggsSs } from '@wuwacalc/core/engine/suggestions/sessionCache.ts'
+import { resSuggDmg } from '@wuwacalc/core/engine/suggestions/shared.ts'
+import { isOptRotTgt } from '@wuwacalc/core/engine/optimizer/rules/eligibility.ts'
 import type {
   CompactSetPlanSuggest,
   CompactSuggestionJob,
   MainStatSugg,
   SuggestionSimulation,
   WeaponEntry,
-} from '@/engine/suggestions/types.ts'
-import type { SimResult } from '@/engine/pipeline/types.ts'
-import { listWpnsByTy } from '@/data/catalog/weaponCatalogService.ts'
+} from '@wuwacalc/core/engine/suggestions/types.ts'
+import type { SimResult } from '@wuwacalc/core/engine/pipeline/types.ts'
+import { listWpnsByTy } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
 import {
   selectSuggestionTarget,
   suggestionTargetValue,

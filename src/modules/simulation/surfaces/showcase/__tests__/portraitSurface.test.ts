@@ -6,7 +6,7 @@
 
 import { existsSync, readdirSync } from 'node:fs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import surfaces from '@/data/gameData/portraitSurfaces.json'
+import surfaces from '@wuwacalc/core/data/gameData/portraitSurfaces.json'
 import { readPortraitSurface } from '../portraitSurface.ts'
 
 afterEach(() => vi.unstubAllGlobals())

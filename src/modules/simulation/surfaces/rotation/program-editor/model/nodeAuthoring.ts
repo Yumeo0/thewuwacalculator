@@ -8,9 +8,9 @@ import type {
   RtChng,
   RuntimeValue,
   SourceState,
-} from '@/domain/gameData/contracts.ts'
-import { openingConditionChoices } from '@/domain/gameData/rotationPreambleDefaults.ts'
-import type { SkillAggType } from '@/domain/entities/stats.ts'
+} from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { openingConditionChoices } from '@wuwacalc/core/domain/gameData/rotationPreambleDefaults.ts'
+import type { SkillAggType } from '@wuwacalc/core/domain/entities/stats.ts'
 import type { PaletteSpec } from './paletteSpec.ts'
 import { writesFromChanges } from './conditionWrites.ts'
 import type {
@@ -49,7 +49,7 @@ import { getSubHitLbl } from '@/modules/simulation/surfaces/rotation/shared/node
 import { skillDisplayColor } from '@/modules/simulation/surfaces/rotation/shared/skillDisplay.ts'
 import {
   ACTIVE_RESONATOR_PATH,
-} from '@/domain/gameData/rotationPaths.ts'
+} from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 import { regTextValue } from '@/modules/simulation/surfaces/rotation/program-editor/model/registerValues.ts'
 
 function regChangeValue(change: RtChng): string {

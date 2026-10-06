@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { makeLoopInfo } from '@/modules/simulation/surfaces/rotation/shared/loopMeta.ts'
-import type { FeatureResult, RotationNode } from '@/domain/gameData/contracts.ts'
+import type { FeatureResult, RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
 
 describe('loop totals', () => {
   it('uses only damage outputs for loop totals', () => {

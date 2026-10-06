@@ -5,7 +5,7 @@
 */
 
 import { useCallback } from 'react'
-import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime.ts'
+import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import type { RtUpdHnd } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
 import {
   makeEchoClip,

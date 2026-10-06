@@ -8,7 +8,7 @@ import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useMemo, useState } from 'react'
 import type { CSSProperties as CssProps } from 'react'
 import { ThumbsUp } from 'lucide-react'
-import type { GenWpn } from '@/domain/entities/weapon.ts'
+import type { GenWpn } from '@wuwacalc/core/domain/entities/weapon.ts'
 import { useAppStore } from '@/application/state'
 import {
   WPNSTATLBLS,
@@ -18,7 +18,7 @@ import {
 } from '@/modules/simulation/features/weapons/lib/weapon.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { PickerModal as ShrdPckrMdl } from '@/modules/simulation/ui/PickerModal.tsx'
-import { formatTruncCompact } from '@/shared/lib/number.ts'
+import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
 import { rarityVars } from '@/modules/simulation/model/display.ts'
 import {FaStar} from "react-icons/fa";
 

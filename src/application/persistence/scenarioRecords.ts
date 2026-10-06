@@ -5,15 +5,15 @@
 */
 
 import { compressToUTF16, decompressFromUTF16 } from 'lz-string'
-import type { PersistedState } from '@/domain/entities/appState'
-import { makeScenarioTeam, contextScenarioMember, type CombatScenario, type CombatScenarioId } from '@/domain/entities/combatScenario'
-import { summarizeScenario, type ScenarioSummary } from '@/domain/entities/scenarioLibrary'
-import { normalizeStoredCombatScenario } from '@/engine/runtime/defaults'
-import { isRotationSequence } from '@/domain/gameData/rotationSequence'
+import type { PersistedState } from '@wuwacalc/core/domain/entities/appState'
+import { makeScenarioTeam, contextScenarioMember, type CombatScenario, type CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScenario'
+import { summarizeScenario, type ScenarioSummary } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { normalizeStoredCombatScenario } from '@wuwacalc/core/engine/runtime/defaults'
+import { isRotationSequence } from '@wuwacalc/core/domain/gameData/rotationSequence'
 import {
   APP_STATE_VER, parseCombatScenario, parseScenarioMember, parseScenarioTarget,
   parseScenarioEnvironment, parseScenarioProgram, parseDormantScenarioMembers,
-} from '@/engine/runtime/schema'
+} from '@wuwacalc/core/engine/runtime/schema'
 import { readStoredScenarioIds } from './resonatorScope'
 import { APPSTORECMBT, APPSTORECMBTINDEX, APPSTORECMBTREC } from './storageKeys'
 import { COMPRESSED_ROTATIONS_PREFIX } from './storageCodec'

@@ -4,20 +4,20 @@
                recipe identity, set-plan normalization, and constraint helpers.
 */
 
-import type { EnemyProfile } from '@/domain/entities/appState.ts'
-import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime.ts'
-import { cloneSntSet, type SntSetConds } from '@/domain/entities/sonataSetConditionals.ts'
-import type { RandGnrtSets, WeaponPlanSet } from '@/domain/entities/suggestions.ts'
-import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@/data/gameData/catalog/echoStats.ts'
-import { ECHO_SET_DEFS } from '@/data/gameData/echoSets/effects.ts'
-import { runtimeSig } from '@/engine/runtime/runtimeSignature.ts'
-import type { MainStatRecipe } from '@/engine/suggestions/mainStat-suggestion/utils.ts'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState.ts'
+import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { cloneSntSet, type SntSetConds } from '@wuwacalc/core/domain/entities/sonataSetConditionals.ts'
+import type { RandGnrtSets, WeaponPlanSet } from '@wuwacalc/core/domain/entities/suggestions.ts'
+import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@wuwacalc/core/data/gameData/catalog/echoStats.ts'
+import { ECHO_SET_DEFS } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
+import { runtimeSig } from '@wuwacalc/core/engine/runtime/runtimeSignature.ts'
+import type { MainStatRecipe } from '@wuwacalc/core/engine/suggestions/mainStat-suggestion/utils.ts'
 import { formatCompactNum} from '@/modules/simulation/model/statsView.ts'
 import { getQppdEchoC} from '@/modules/simulation/features/echoes/lib/echoes.ts'
-import { formatTruncCompact } from '@/shared/lib/number.ts'
+import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
 
-export type { SuggsViewMod } from '@/domain/entities/suggestions.ts'
-export { runtimeSig } from '@/engine/runtime/runtimeSignature.ts'
+export type { SuggsViewMod } from '@wuwacalc/core/domain/entities/suggestions.ts'
+export { runtimeSig } from '@wuwacalc/core/engine/runtime/runtimeSignature.ts'
 
 const DEFRANDSETS: RandGnrtSets = {
   bias: 0.5,
@@ -279,7 +279,7 @@ export function mkCostSig(echoes: Array<EchoInstance | null>): string {
     .filter((echo): echo is EchoInstance => echo != null)
     .map((echo) => getQppdEchoC(echo))
     .sort((left, right) => right - left)
-    .join(' • ')
+    .join(' ÔÇó ')
 }
 
 // summarize only recipe costs for main-stat suggestions
@@ -287,5 +287,5 @@ export function costSig(recipes: MainStatRecipe[]): string {
   return recipes
     .map((recipe) => recipe.cost)
     .sort((left, right) => right - left)
-    .join(' • ')
+    .join(' ÔÇó ')
 }

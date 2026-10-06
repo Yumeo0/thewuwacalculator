@@ -4,43 +4,43 @@
                nested loop, register, summary, and inspection data for editors.
 */
 
-import type { EnemyProfile } from '@/domain/entities/appState.ts'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import type { ResSeed } from '@/domain/entities/runtime.ts'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { ResSeed } from '@wuwacalc/core/domain/entities/runtime.ts'
 import type {
   FeatDef,
   FeatureResult,
   RotationNode,
   RtChng,
-} from '@/domain/gameData/contracts.ts'
+} from '@wuwacalc/core/domain/gameData/contracts.ts'
 import {
   executeRotationProgram,
   prepareRunEnv,
   prepareRotationProgram,
   type ProgramResult,
   type InspectEntry,
-} from '@/engine/rotation/execute.ts'
-import { prepareResSimulation } from '@/engine/pipeline/index.ts'
+} from '@wuwacalc/core/engine/rotation/execute.ts'
+import { prepareResSimulation } from '@wuwacalc/core/engine/pipeline/index.ts'
 import {
   runPrepWorkDetailedProgramTimed,
   type PrepWork,
-} from '@/engine/pipeline/preparedWorkspace.ts'
+} from '@wuwacalc/core/engine/pipeline/preparedWorkspace.ts'
 import {
   getLoopAverageDivisor,
   getOtherLoopAverageDivisor,
   indexLoopDamageByRun,
   sumRotTtlsByAggPair,
   sumRotTtlsPair,
-} from '@/engine/pipeline/rotationTotals.ts'
-import { resolveSkill } from '@/engine/pipeline/resolveSkill.ts'
-import type { AttributeKey, SkillDef } from '@/domain/entities/stats.ts'
-import { ATTR_COLORS, getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
+} from '@wuwacalc/core/engine/pipeline/rotationTotals.ts'
+import { resolveSkill } from '@wuwacalc/core/engine/pipeline/resolveSkill.ts'
+import type { AttributeKey, SkillDef } from '@wuwacalc/core/domain/entities/stats.ts'
+import { ATTR_COLORS, getAttributeIconSrc } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
 import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
-import { getWpnById } from '@/data/catalog/weaponCatalogService.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
+import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
 import { weaponStatsAt } from '@/modules/simulation/features/weapons/lib/weapon.ts'
-import { getSntSetIco } from '@/data/gameData/catalog/sonataSets.ts'
-import type { DataSrcRef } from '@/domain/gameData/contracts.ts'
+import { getSntSetIco } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import type { DataSrcRef } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import {
   makeLoopInfo,
   ROT_LOOP_COLORS,
@@ -48,7 +48,7 @@ import {
 import {
   findRotWrapLoop,
   type RotWrapLoopPlan,
-} from '@/domain/gameData/rotationLoops.ts'
+} from '@wuwacalc/core/domain/gameData/rotationLoops.ts'
 import {
   adjacentFeatures,
   priorFeatures,
@@ -65,13 +65,13 @@ import {
   getCondChoice,
 } from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
 import { getEmbeddedEchoSource } from '@/modules/simulation/surfaces/rotation/shared/featureCatalog.ts'
-import { getNegFfctCm, getNegFfctEn } from '@/engine/gameData/negativeEffects.ts'
+import { getNegFfctCm, getNegFfctEn } from '@wuwacalc/core/engine/gameData/negativeEffects.ts'
 import {
   attachedConditionChanges,
   normalizeFeatureAttachments,
   stripFeatureAttachments,
-} from '@/domain/gameData/rotationAttached.ts'
-import { getSkillType } from '@/domain/gameData/skillTypes.ts'
+} from '@wuwacalc/core/domain/gameData/rotationAttached.ts'
+import { getSkillType } from '@wuwacalc/core/domain/gameData/skillTypes.ts'
 import { getSkillTabLabel } from '@/modules/simulation/model/skillTabs.ts'
 import type { CondChoice } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
 import type {
@@ -100,7 +100,7 @@ import {
   setBlockExtent,
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/treeEdit.ts'
 
-import { ACTIVE_RESONATOR_PATH } from '@/domain/gameData/rotationPaths.ts'
+import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 import { regDisplayValue } from '@/modules/simulation/surfaces/rotation/program-editor/model/registerValues.ts'
 import { writesFromChanges } from '@/modules/simulation/surfaces/rotation/program-editor/model/conditionWrites.ts'
 import type {

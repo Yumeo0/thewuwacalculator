@@ -4,9 +4,9 @@
                without treating newly introduced defaults as stored values.
 */
 
-import type { HydratedAppState, PersistedState } from '@/domain/entities/appState'
-import { makeAppState, initAppState } from '@/engine/runtime/defaults'
-import { persistedSchema } from '@/engine/runtime/schema'
+import type { HydratedAppState, PersistedState } from '@wuwacalc/core/domain/entities/appState'
+import { makeAppState, initAppState } from '@wuwacalc/core/engine/runtime/defaults'
+import { persistedSchema } from '@wuwacalc/core/engine/runtime/schema'
 import { APP_STORAGE_KEY } from './storageKeys'
 
 const LEGACY_STORAGE_VERSIONS = [26, 25, 24, 23, 22] as const

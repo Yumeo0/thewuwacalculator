@@ -6,11 +6,11 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useAppStore } from '@/application/state/store.ts'
 import { consumePersist } from '@/application/persistence/storage.ts'
-import { ensureResonatorData } from '@/data/gameData'
-import { listResSds } from '@/data/catalog/resonatorSeedService.ts'
-import { contextScenarioMember } from '@/domain/entities/combatScenario.ts'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
-import type { RotationNode } from '@/domain/gameData/contracts.ts'
+import { ensureResonatorData } from '@wuwacalc/core/data/gameData'
+import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { contextScenarioMember } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import { loadRotationScenario } from '../useLoadRotation.ts'
 
 describe('saved rotation loading', () => {

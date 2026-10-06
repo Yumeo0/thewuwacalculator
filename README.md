@@ -44,12 +44,12 @@ Browser side configuration uses `VITE_*` values. Server side OAuth exchange and 
 
 - `src/app`
   App bootstrap, providers, and router wiring.
+- `packages/core`
+  Framework-free calculation core (`@wuwacalc/core`): game data bootstrap, catalogs, domain entities and contracts, simulation pipeline, evaluation, Suggestions, and the Optimizer. See `packages/core/README.md`.
 - `src/data`
-  Checked in content plus game data bootstrap and catalog loaders.
-- `src/domain`
-  Durable entities, game-data contracts, pure value types, and domain services.
-- `src/engine`
-  Formulas, effects, simulation, suggestions, parser logic, and optimizer execution.
+  Authored app content such as guides and changelog entries.
+- `src/echoParser`
+  Echo card image import parsing (OCR, stat reading, and card regions).
 - `src/infra`
   Browser-platform storage, Google Drive sync, OAuth and share server handlers, cookies, and analytics.
 - `src/modules/home`

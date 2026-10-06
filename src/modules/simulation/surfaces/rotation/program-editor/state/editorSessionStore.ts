@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createStore, useStore } from 'zustand'
-import type { RotationNode } from '@/domain/gameData/contracts.ts'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import type {
   EditorSection,
   LoopRunSelections,

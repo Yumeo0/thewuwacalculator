@@ -15,12 +15,12 @@ import {
   MIN_CARD_WIDTH,
   getCardReadAreas,
   type CardReadGroup,
-} from '@/engine/echoParser/cardRegions'
+} from '@/echoParser/cardRegions'
 import {
   getReadFraction,
   type ReadProgress,
   type ReadStage,
-} from '@/engine/echoParser/readProgress'
+} from '@/echoParser/readProgress'
 
 const SAMPLE_CARD = '/assets/app/samples/sample-import-image.png'
 const DISCORD_HOME = 'https://discord.gg/wNaauhE4uH'

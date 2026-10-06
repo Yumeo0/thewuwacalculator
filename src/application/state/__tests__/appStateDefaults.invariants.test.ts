@@ -4,17 +4,17 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import { contextScenarioMember } from '@/domain/entities/combatScenario'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
-import { DEF_UI_PREFS } from '@/domain/entities/preferences'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
+import { contextScenarioMember } from '@wuwacalc/core/domain/entities/combatScenario'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { DEF_UI_PREFS } from '@wuwacalc/core/domain/entities/preferences'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
 import {
   DEF_RES_ID,
   initAppState,
   makeAppState,
   makeResProfile,
   makeScenarioFromProfiles,
-} from '@/engine/runtime/defaults'
+} from '@wuwacalc/core/engine/runtime/defaults'
 
 describe('app state defaults', () => {
   it('initializes the first resonator using the default max-on-init preference', () => {

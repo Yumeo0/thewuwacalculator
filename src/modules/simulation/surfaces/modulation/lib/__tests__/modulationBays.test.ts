@@ -5,8 +5,8 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import { listResSds } from '@/data/catalog/resonatorSeedService.ts'
-import { makeResRuntime } from '@/engine/runtime/defaults.ts'
+import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { makeResRuntime } from '@wuwacalc/core/engine/runtime/defaults.ts'
 import {
   countLive,
   countModulationEffects,

@@ -4,11 +4,11 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import type { SavedRotation } from '@/domain/entities/inventoryStorage.ts'
-import type { RotationComparisonSummary } from '@/domain/entities/rotationSummary.ts'
-import { defaultSavedPrefs, makeResProfile, makeScenarioFromProfiles } from '@/engine/runtime/defaults.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
-import type { RotationNode } from '@/domain/gameData/contracts.ts'
+import type { SavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
+import type { RotationComparisonSummary } from '@wuwacalc/core/domain/entities/rotationSummary.ts'
+import { defaultSavedPrefs, makeResProfile, makeScenarioFromProfiles } from '@wuwacalc/core/engine/runtime/defaults.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import {
   makeSavedEntry as buildSvdLstEnt,
   makeSavedEntries as buildSvdLstEnts,

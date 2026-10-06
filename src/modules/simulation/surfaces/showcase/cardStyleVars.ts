@@ -8,8 +8,8 @@
                mask/backdrop/colour vars can migrate in over time.
 */
 
-import { TEXT_SLOTS } from '@/domain/entities/preferences'
-import type { TextSlot, TextSlotStyle } from '@/domain/entities/preferences'
+import { TEXT_SLOTS } from '@wuwacalc/core/domain/entities/preferences'
+import type { TextSlot, TextSlotStyle } from '@wuwacalc/core/domain/entities/preferences'
 
 export type CardVarMap = Record<string, string | number>
 

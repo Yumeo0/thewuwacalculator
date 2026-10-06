@@ -5,19 +5,19 @@
 */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { EchoInstance } from '@/domain/entities/runtime'
-import type { SavedBuild, SavedEcho } from '@/domain/entities/inventoryStorage'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
+import type { SavedBuild, SavedEcho } from '@wuwacalc/core/domain/entities/inventoryStorage'
 import {
   cloneEchoFor,
   cloneEchoLoadout,
-} from '@/domain/entities/inventoryStorage'
-import { initWpnStts } from '@/engine/runtime/sourceStateInit'
+} from '@wuwacalc/core/domain/entities/inventoryStorage'
+import { initWpnStts } from '@wuwacalc/core/engine/runtime/sourceStateInit'
 import { useAppStore } from '@/application/state'
 import { useInventoryUiStore } from '@/application/state/inventoryUiStore'
 import { selActRt, selInvSg, selScenarioProfiles } from '@/application/state'
-import { getEchoById } from '@/data/catalog/echoCatalogService'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
-import { getWpnById } from '@/data/catalog/weaponCatalogService'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService'
 import { MODAL_EXIT_MS, useAppModal } from '@/shared/ui/useAppModal'
 import { mainPortal } from '@/shared/lib/portalTarget'
 import { useTstStr } from '@/shared/util/toastStore.ts'

@@ -4,8 +4,8 @@
                Echoes and replaces the least valuable substats when necessary.
 */
 
-import { getSbstStepP } from '@/data/gameData/catalog/echoStats'
-import type { OptStatWeight } from '@/engine/optimizer/search/filtering.ts'
+import { getSbstStepP } from '@wuwacalc/core/data/gameData/catalog/echoStats'
+import type { OptStatWeight } from '@wuwacalc/core/engine/optimizer/search/filtering.ts'
 import type { RandGenEcho } from './echoSetBuilder'
 import { getSbstScr } from './substats'
 

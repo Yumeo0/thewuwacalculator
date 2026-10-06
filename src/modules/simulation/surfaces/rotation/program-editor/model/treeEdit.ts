@@ -3,7 +3,7 @@
   Description: Applies immutable insert, move, remove, attach, and resize operations to rotation trees.
 */
 
-import type { RotationNode } from '@/domain/gameData/contracts.ts'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import type {
   ConditionWriteAction,
   EditorBlock,
@@ -27,13 +27,13 @@ import {
 } from '@/modules/simulation/surfaces/rotation/shared/loopMeta.ts'
 import {
   normLoopRuns,
-} from '@/domain/gameData/rotationLoops.ts'
+} from '@wuwacalc/core/domain/gameData/rotationLoops.ts'
 import { makeScopeLabel } from '@/modules/simulation/surfaces/rotation/shared/containerMeta.ts'
 import {
   makeNoteColor,
   makeNoteLabel,
 } from '@/modules/simulation/surfaces/rotation/shared/noteMeta.ts'
-import { makeNodeId } from '@/domain/gameData/rotationNodeId.ts'
+import { makeNodeId } from '@wuwacalc/core/domain/gameData/rotationNodeId.ts'
 import { resizeLoopBlockRuns } from '@/modules/simulation/surfaces/rotation/program-editor/model/passCheckout.ts'
 
 const ROT_NODE_PREFIX: Record<string, string> = {

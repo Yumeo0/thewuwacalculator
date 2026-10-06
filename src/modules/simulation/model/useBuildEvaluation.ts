@@ -3,23 +3,23 @@
   Description: Simulation-level hook for default-rotation evaluation reports.
 */
 
-import { runEvaluationSummary } from '@/engine/evaluation/buildEvaluationClient'
-import type { EvaluationSummary } from '@/engine/evaluation/buildEvaluationWorkerTypes'
+import { runEvaluationSummary } from '@wuwacalc/core/engine/evaluation/buildEvaluationClient'
+import type { EvaluationSummary } from '@wuwacalc/core/engine/evaluation/buildEvaluationWorkerTypes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { EnemyProfile } from '@/domain/entities/appState'
-import type { ResRuntime } from '@/domain/entities/runtime'
-import type { EvaluationReportOpts, BuildEvaluationReport, DefRotEvaluationIn } from '@/engine/evaluation/buildEvaluation.ts'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
+import type { EvaluationReportOpts, BuildEvaluationReport, DefRotEvaluationIn } from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
 import {
   runEvaluationReport,
   cancelEvaluationReport,
   peekEvaluationReport,
   runEvaluationScore,
-} from '@/engine/evaluation/buildEvaluationClient.ts'
-import type { SimResult } from '@/engine/pipeline/types'
+} from '@wuwacalc/core/engine/evaluation/buildEvaluationClient.ts'
+import type { SimResult } from '@wuwacalc/core/engine/pipeline/types'
 import { scheduleAfterSettled } from '@/shared/lib/scheduleAfterSettled.ts'
-import { combatScenarioId, teamMemberId } from '@/domain/entities/combatScenario.ts'
+import { combatScenarioId, teamMemberId } from '@wuwacalc/core/domain/entities/combatScenario.ts'
 import { useAppStore } from '@/application/state'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 
 export const FULL_EVALUATION_REPORT_OPTIONS: EvaluationReportOpts = Object.freeze({
   alternativesLimit: 12,

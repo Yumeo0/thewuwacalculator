@@ -4,13 +4,13 @@
                rotation format used by the calculator.
 */
 
-import type { RotationNode } from '@/domain/gameData/contracts'
-import type { SkillDef } from '@/domain/entities/stats'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts'
+import type { SkillDef } from '@wuwacalc/core/domain/entities/stats'
 import {
   listFeatsFor,
   listResFeats,
   listSkillsFor,
-} from '@/data/catalog/gameDataService'
+} from '@wuwacalc/core/data/catalog/gameDataService'
 import { cnvrLegEchoL } from './echoes'
 import {
   coerceNumber,

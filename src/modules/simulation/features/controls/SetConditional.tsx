@@ -16,13 +16,13 @@ import { ModalHeader } from '@/shared/ui/AppModalShell'
 import { Select } from '@/application/ui/Select'
 import type { SelectOption } from '@/application/ui/Select'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
-import { ECHO_SET_DEFS } from '@/data/gameData/echoSets/effects.ts'
-import { getSntSetClr, getSntSetIco } from '@/data/gameData/catalog/sonataSets.ts'
+import { ECHO_SET_DEFS } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
+import { getSntSetClr, getSntSetIco } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
 import {
   getSntSetOn,
   type SntSetConds,
   withSntSet,
-} from '@/domain/entities/sonataSetConditionals.ts'
+} from '@wuwacalc/core/domain/entities/sonataSetConditionals.ts'
 
 const PIECE_FILTERS = {
   all: 'All',

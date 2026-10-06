@@ -12,24 +12,24 @@ import type {
 import {createElement as mkElem} from "react";
 import type {MenuEntry} from "@/shared/ui/CtxMenu.tsx";
 import {ClipboardPaste, Copy, CopyPlus, Scissors, SquareDashedMousePointer as SqrDshdMsPnt} from "lucide-react";
-import type {ResRuntime} from "@/domain/entities/runtime.ts";
+import type {ResRuntime} from "@wuwacalc/core/domain/entities/runtime.ts";
 import type {
     FeatDef,
     RotationNode,
     RtChng,
     SourceState
-} from "@/domain/gameData/contracts.ts";
-import {isStateVisible} from "@/engine/services/sourceStateService.ts";
-import {listStatesFor} from "@/data/catalog/gameDataService.ts";
-import {makeNodeId} from "@/domain/gameData/rotationNodeId.ts";
-import {listEquippedSourceStates} from "@/engine/services/runtimeSourceService.ts";
-import {negEffectsFor} from "@/engine/gameData/negativeEffects.ts";
-import { getTuneStrainMaxForTeam } from '@/engine/gameData/tuneStrain.ts'
+} from "@wuwacalc/core/domain/gameData/contracts.ts";
+import {isStateVisible} from "@wuwacalc/core/engine/services/sourceStateService.ts";
+import {listStatesFor} from "@wuwacalc/core/data/catalog/gameDataService.ts";
+import {makeNodeId} from "@wuwacalc/core/domain/gameData/rotationNodeId.ts";
+import {listEquippedSourceStates} from "@wuwacalc/core/engine/services/runtimeSourceService.ts";
+import {negEffectsFor} from "@wuwacalc/core/engine/gameData/negativeEffects.ts";
+import { getTuneStrainMaxForTeam } from '@wuwacalc/core/engine/gameData/tuneStrain.ts'
 import {buildConditionChoices} from "@/modules/simulation/surfaces/rotation/shared/conditions.tsx";
-import type {SkillDef} from "@/domain/entities/stats.ts";
-import type {SimResult} from "@/engine/pipeline/types.ts";
-import { isDamageRotationEntry } from '@/engine/pipeline/rotationTotals.ts'
-import { formatTruncCompact } from '@/shared/lib/number.ts'
+import type {SkillDef} from "@wuwacalc/core/domain/entities/stats.ts";
+import type {SimResult} from "@wuwacalc/core/engine/pipeline/types.ts";
+import { isDamageRotationEntry } from '@wuwacalc/core/engine/pipeline/rotationTotals.ts'
+import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
 import {
     DEFAULT_ROT_BLOCK_COLOR,
     scopeLabelAt,

@@ -4,7 +4,7 @@
                and serialization.
 */
 
-import type { PersistedState } from '@/domain/entities/appState'
+import type { PersistedState } from '@wuwacalc/core/domain/entities/appState'
 import type { AppStore } from '@/application/state/store'
 
 // select the persisted subset of app state

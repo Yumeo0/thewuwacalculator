@@ -4,8 +4,8 @@
                configurable bias, and optional Energy Regen inclusion.
 */
 
-import { SUBSTAT_KEYS, getSbstStepP } from '@/data/gameData/catalog/echoStats'
-import type { OptStatWeight } from '@/engine/optimizer/search/filtering.ts'
+import { SUBSTAT_KEYS, getSbstStepP } from '@wuwacalc/core/data/gameData/catalog/echoStats'
+import type { OptStatWeight } from '@wuwacalc/core/engine/optimizer/search/filtering.ts'
 
 export function randSubVl(statKey: string, rollQuality = 0): number {
   const options = getSbstStepP(statKey)

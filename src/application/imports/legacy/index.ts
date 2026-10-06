@@ -4,16 +4,16 @@
                data into the current persistence schema.
 */
 
-import type { HydratedAppState, PersistedState, UiState } from '@/domain/entities/appState'
-import type { SavedBuild, SavedEcho } from '@/domain/entities/inventoryStorage'
-import type { ManualBuffs, MnlMod } from '@/domain/entities/manualBuffs'
-import type { ResProf } from '@/domain/entities/profile'
-import type { TeamMemRt, TeamSlots, TraceNodeBuffs, WeaponState } from '@/domain/entities/runtime'
-import type { AttributeKey, SkillTypeKey } from '@/domain/entities/stats'
-import { makeAppState, makeResProfile, makeSuggest, makeCustomBuff, makeEnemy, makeTeamMember, makeTraceNode, normProfTeam } from '@/engine/runtime/defaults'
-import { initAppState } from '@/engine/runtime/defaults'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
+import type { HydratedAppState, PersistedState, UiState } from '@wuwacalc/core/domain/entities/appState'
+import type { SavedBuild, SavedEcho } from '@wuwacalc/core/domain/entities/inventoryStorage'
+import type { ManualBuffs, MnlMod } from '@wuwacalc/core/domain/entities/manualBuffs'
+import type { ResProf } from '@wuwacalc/core/domain/entities/profile'
+import type { TeamMemRt, TeamSlots, TraceNodeBuffs, WeaponState } from '@wuwacalc/core/domain/entities/runtime'
+import type { AttributeKey, SkillTypeKey } from '@wuwacalc/core/domain/entities/stats'
+import { makeAppState, makeResProfile, makeSuggest, makeCustomBuff, makeEnemy, makeTeamMember, makeTraceNode, normProfTeam } from '@wuwacalc/core/engine/runtime/defaults'
+import { initAppState } from '@wuwacalc/core/engine/runtime/defaults'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
 import { cnvrLegEchoL } from './echoes'
 import {
   clampNumber,

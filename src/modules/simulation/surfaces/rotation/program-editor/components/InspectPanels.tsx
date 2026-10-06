@@ -38,14 +38,14 @@ import {
   MessageSquareText,
   MessageSquarePlus
 } from 'lucide-react'
-import { ATTR_COLORS, getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
+import { ATTR_COLORS, getAttributeIconSrc } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
 import { withDefEchoMg, withDefIconM, withDefResMg, withDefWpnMg } from '@/shared/lib/imageFallback.ts'
 import {
   getSntSetClr,
   getSntSetIco,
   getSntSetNam,
-} from '@/data/gameData/catalog/sonataSets.ts'
-import { getEchoSetDe } from '@/data/gameData/echoSets/effects.ts'
+} from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
 import type {
   ConditionWriteAction,
   EditorBlock,
@@ -79,7 +79,7 @@ import {
 import { Expandable } from '@/shared/ui/Expandable.tsx'
 import { Select, type SelectOption } from '@/application/ui/Select'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
-import type { SourceState } from '@/domain/gameData/contracts.ts'
+import type { SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import { HexColorInput, HexColorPicker } from 'react-colorful'
 import { ROT_LOOP_COLORS } from '@/modules/simulation/surfaces/rotation/shared/loopMeta.ts'
 import { ROT_BLOCK_COLORS } from '@/modules/simulation/surfaces/rotation/shared/containerMeta.ts'
@@ -95,7 +95,7 @@ import type {
 } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeNavigation.ts'
 import { condActionFromChange } from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
 import { ROT_FORMULA_OWNER_KEY } from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import { rarityVars } from '@/modules/simulation/model/display.ts'
 import {
   fmtWpnStatDs,

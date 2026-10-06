@@ -4,12 +4,12 @@
                catalog metadata, equipment, team members, and Sonata sets.
 */
 
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
-import type { ResRuntime } from '@/domain/entities/runtime'
-import { isNoWeaponId } from '@/domain/entities/runtime'
-import { getWpnById } from '@/data/catalog/weaponCatalogService'
-import { getSntSetNam } from '@/data/gameData/catalog/sonataSets'
-import { getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
+import { isNoWeaponId } from '@wuwacalc/core/domain/entities/runtime'
+import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService'
+import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
+import { getAttributeIconSrc } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display'
 import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
 import { spriteVars } from '@/modules/simulation/features/resonator/lib/resonator.ts'

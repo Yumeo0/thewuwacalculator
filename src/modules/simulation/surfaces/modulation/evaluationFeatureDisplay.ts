@@ -3,7 +3,7 @@
   Description: Shared labels, colors, and grouping for evaluation rotation features.
 */
 
-import type { EvaluationFeature } from '@/engine/evaluation/buildEvaluation.ts'
+import type { EvaluationFeature } from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
 import { getSkillTabLabel } from '@/modules/simulation/model/skillTabs'
 import { toTitle } from '@/shared/lib/format'
 

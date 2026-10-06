@@ -5,12 +5,12 @@
                local catalogs.
 */
 
-import { getResonatorSeedById, getEchoById } from '@/data/catalog/catalogService'
-import { getWpnsById } from '@/data/gameData/weapons/weaponDataStore'
+import { getResonatorSeedById, getEchoById } from '@wuwacalc/core/data/catalog/catalogService'
+import { getWpnsById } from '@wuwacalc/core/data/gameData/weapons/weaponDataStore'
 import { spineSetupUrl } from '@/shared/spine/spineManifest'
-import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay'
+import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay'
 import { WPNTYPELBLS } from '@/modules/simulation/api/display'
-import type { AttributeKey } from '@/domain/entities/stats'
+import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats'
 
 const MANIFEST_URL = 'https://static.nanoka.cc/manifest.json'
 // Bound the third-party request so catalog coverage never waits indefinitely.

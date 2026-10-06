@@ -4,12 +4,12 @@
                condition can change the state that controls their visibility.
 */
 
-import { getResDtlsBy } from '@/data/gameData/resonators/resonatorDataStore'
-import type { ResRuntime } from '@/domain/entities/runtime'
-import type { SkillDef } from '@/domain/entities/stats'
-import type { CondExpr } from '@/domain/gameData/contracts'
-import { getNegFfctCm, isNegFfctVsb } from '@/engine/gameData/negativeEffects'
-import { evalRuntimeSkillCondition } from '@/engine/pipeline/resolveSkill'
+import { getResDtlsBy } from '@wuwacalc/core/data/gameData/resonators/resonatorDataStore'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
+import type { SkillDef } from '@wuwacalc/core/domain/entities/stats'
+import type { CondExpr } from '@wuwacalc/core/domain/gameData/contracts'
+import { getNegFfctCm, isNegFfctVsb } from '@wuwacalc/core/engine/gameData/negativeEffects'
+import { evalRuntimeSkillCondition } from '@wuwacalc/core/engine/pipeline/resolveSkill'
 
 type ConditionEvaluator = (condition: CondExpr) => boolean
 

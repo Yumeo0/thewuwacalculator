@@ -13,8 +13,8 @@ import type {
   MnlSkllSclrK,
   MnlSkllMtchM,
   MnlTopStatKe,
-} from '@/domain/entities/manualBuffs.ts'
-import type { NegEffectKey } from '@/domain/entities/stats.ts'
+} from '@wuwacalc/core/domain/entities/manualBuffs.ts'
+import type { NegEffectKey } from '@wuwacalc/core/domain/entities/stats.ts'
 import { BUFF_SKILL_TABS, makeSkillTabOptions } from '@/modules/simulation/model/skillTabs.ts'
 
 export interface BuffOption<T extends string = string> {

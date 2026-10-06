@@ -16,7 +16,7 @@ import {
 } from '@/modules/simulation/features/echoes/lib/metric.ts'
 import { formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback.ts'
-import { formatTruncCompact } from '@/shared/lib/number.ts'
+import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
 import '@/styles/features/echoes/card.css'
 
 export interface EchoCardStat {

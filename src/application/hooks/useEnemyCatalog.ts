@@ -5,8 +5,8 @@
 */
 
 import { useEffect, useState } from 'react'
-import type { EnemyCatEnt } from '@/domain/entities/enemy.ts'
-import { loadEnemyCat } from '@/data/catalog/enemyCatalogService.ts'
+import type { EnemyCatEnt } from '@wuwacalc/core/domain/entities/enemy.ts'
+import { loadEnemyCat } from '@wuwacalc/core/data/catalog/enemyCatalogService.ts'
 
 // load enemy catalog data for ui consumers
 export function useEnemyCat() {

@@ -7,9 +7,9 @@
 
 import { decShareText, encShareText } from '@/shared/lib/shareCodec.ts'
 import { rememberWorkspaceClipboardText } from '@/shared/lib/workspaceClipboardCache.ts'
-import type { ResProf } from '@/domain/entities/profile.ts'
-import type { ResonatorId } from '@/domain/entities/runtime.ts'
-import { cloneResProf } from '@/engine/runtime/runtimeCloning.ts'
+import type { ResProf } from '@wuwacalc/core/domain/entities/profile.ts'
+import type { ResonatorId } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { cloneResProf } from '@wuwacalc/core/engine/runtime/runtimeCloning.ts'
 
 export const PROF_CLIP_KEY = 'evaluation-profile-clipboard'
 const LEGACY_PROF_CLIP_KEY = 'overview-profile-clipboard'

@@ -4,10 +4,10 @@
 */
 
 import { describe, expect, it, vi } from 'vitest'
-import { makeResProfile, makeScenarioFromProfiles } from '@/engine/runtime/defaults.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
-import { makeLiveRotationEntry } from '@/engine/runtime/liveRotationEntry.ts'
-import type { SavedRotation } from '@/domain/entities/inventoryStorage.ts'
+import { makeResProfile, makeScenarioFromProfiles } from '@wuwacalc/core/engine/runtime/defaults.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { makeLiveRotationEntry } from '@wuwacalc/core/engine/runtime/liveRotationEntry.ts'
+import type { SavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import type { RunResult } from '../simulation/runProgram.ts'
 import { pendingSavedRotationDetails, runSavedRotationDetailBatch } from '../simulation/simulation.ts'
 

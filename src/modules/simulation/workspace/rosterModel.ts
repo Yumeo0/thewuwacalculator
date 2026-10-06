@@ -3,9 +3,9 @@
   Description: Builds ordered roster groups and rotation-presence metadata from canonical profiles.
 */
 
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
-import type { ScenarioWorkspace } from '@/domain/entities/scenarioLibrary'
-import { listContextResonatorScenarios, summarizeScenario } from '@/domain/entities/scenarioLibrary'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import type { ScenarioWorkspace } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { listContextResonatorScenarios, summarizeScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import { ATTR_COLORS } from '@/modules/simulation/model/display'
 
 import { toTitle } from '@/shared/lib/format'

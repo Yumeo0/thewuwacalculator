@@ -4,7 +4,7 @@
                and says what the prompt should ask.
 */
 
-import type { ParsedBuildMetadata } from '@/engine/echoParser/buildMetadata'
+import type { ParsedBuildMetadata } from '@/echoParser/buildMetadata'
 
 export interface PlayerIdentity {
   playerId: string

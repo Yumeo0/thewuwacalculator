@@ -6,7 +6,7 @@
 
 import { decompressFromUTF16 } from 'lz-string'
 import { APP_STORAGE_KEY, APPSTORECMBT, APPSTORECMBTINDEX } from './storageKeys'
-import { DEF_RES_ID } from '@/data/gameData/constants'
+import { DEF_RES_ID } from '@wuwacalc/core/data/gameData/constants'
 
 export function collectResonatorIds(value: unknown): string[] {
   const ids = new Set<string>()

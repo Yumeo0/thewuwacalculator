@@ -4,24 +4,24 @@
                their own baselines and materializes candidates for application.
 */
 
-import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime.ts'
-import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@/data/gameData/catalog/echoStats.ts'
-import { getSntSetClr, getSntSetIco, getSntSetNam } from '@/data/gameData/catalog/sonataSets.ts'
-import { applySetPlan, mkEchoMainSt } from '@/engine/suggestions/mutate.ts'
-import { applyMainSta } from '@/engine/suggestions/mainStat-suggestion/utils.ts'
+import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@wuwacalc/core/data/gameData/catalog/echoStats.ts'
+import { getSntSetClr, getSntSetIco, getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { applySetPlan, mkEchoMainSt } from '@wuwacalc/core/engine/suggestions/mutate.ts'
+import { applyMainSta } from '@wuwacalc/core/engine/suggestions/mainStat-suggestion/utils.ts'
 import type {
   CompactSetPlanSuggest,
   MainStatSugg,
   SetPlanDisplayEntry,
   SetPlanEntry,
   WeaponEntry,
-} from '@/engine/suggestions/types.ts'
-import type { MainStatRecipe } from '@/engine/suggestions/mainStat-suggestion/utils.ts'
+} from '@wuwacalc/core/engine/suggestions/types.ts'
+import type { MainStatRecipe } from '@wuwacalc/core/engine/suggestions/mainStat-suggestion/utils.ts'
 import { formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import { getRarityColor } from '@/modules/simulation/model/display.ts'
 import { statIconSrc } from '@/modules/simulation/workspace/ui.tsx'
 import { readSetTiers } from '@/modules/simulation/workspace/LoadoutEffects.tsx'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import {
   recipeSig,
   percentDiff,

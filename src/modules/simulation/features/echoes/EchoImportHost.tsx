@@ -6,19 +6,19 @@
 */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ensureResonatorData, hasResonatorData, holdResonatorData } from '@/data/gameData'
+import { ensureResonatorData, hasResonatorData, holdResonatorData } from '@wuwacalc/core/data/gameData'
 import { useLocation } from 'react-router-dom'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { useAppStore } from '@/application/state'
 import { selInitRtLkp, selScenarioProfiles, selWorkDrvd } from '@/application/state'
-import { runtimeFromSnapshot } from '@/engine/runtime/runtimeAdapters.ts'
-import { scenarioIdForContextResonator } from '@/domain/entities/scenarioLibrary.ts'
+import { runtimeFromSnapshot } from '@wuwacalc/core/engine/runtime/runtimeAdapters.ts'
+import { scenarioIdForContextResonator } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 import { isSimulationRoute } from '@/shared/lib/appRoutes.ts'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import { RES_MENU } from '@/modules/simulation/features/resonator/lib/resonator.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
-import { makeResProfile } from '@/engine/runtime/defaults.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { makeResProfile } from '@wuwacalc/core/engine/runtime/defaults.ts'
 import { eligibleForSlot, useTeamSlots } from '@/modules/simulation/features/teams/lib/teamSlots.ts'
 import { useTstStr } from '@/shared/util/toastStore.ts'
 import { useImportLanding } from '@/modules/simulation/features/echoes/lib/importLanding.ts'
@@ -31,7 +31,7 @@ import {
   type EchoImportDestination,
 } from '@/modules/simulation/features/echoes/lib/echoImportDestination.ts'
 import { Parser } from '@/modules/simulation/features/echoes/Parser.tsx'
-import type { ParsedBuildScreenshot } from '@/engine/echoParser/ocrParsing.ts'
+import type { ParsedBuildScreenshot } from '@/echoParser/ocrParsing.ts'
 
 type PickerTarget =
   | { kind: 'context' }

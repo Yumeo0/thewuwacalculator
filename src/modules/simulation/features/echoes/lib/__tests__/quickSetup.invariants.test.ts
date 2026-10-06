@@ -5,8 +5,8 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import { getEchoById, listEchoes } from '@/data/catalog/echoCatalogService'
-import { ECHO_SET_DEFS } from '@/data/gameData/echoSets/effects'
+import { getEchoById, listEchoes } from '@wuwacalc/core/data/catalog/echoCatalogService'
+import { ECHO_SET_DEFS } from '@wuwacalc/core/data/gameData/echoSets/effects'
 import { cmptSetCnts } from '../echoPane'
 import { canMainEchoFitSetPlan, generateQuickBuild, makeQuickConfig } from '../quickSetup'
 

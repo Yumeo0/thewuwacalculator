@@ -1,0 +1,200 @@
+/*
+  Author: Runor Ewhro
+  Description: derives default optimizer settings from the current runtime,
+               selected target skill, and marginal stat weighting heuristics.
+*/
+
+import type { EnemyProfile } from '@core/domain/entities/appState'
+import type { OptSets } from '@core/domain/entities/optimizer'
+import type { ResRuntime } from '@core/domain/entities/runtime'
+import type { SkillDef } from '@core/domain/entities/stats'
+import { getResSeedBy } from '@core/data/catalog/resonatorSeedService'
+import { getDefaultRotation } from '@core/data/catalog/gameDataService'
+import { makeRuntimeMap } from '@core/engine/runtime/runtimeAdapters'
+import { makeStatWeights } from '@core/engine/optimizer/search/filtering'
+import { listOptTrgt } from '@core/engine/optimizer/target/skills'
+import { makeSkillCtx, prepareSkill } from '@core/engine/pipeline/prepareRuntimeSkill'
+
+const ELEMENT_KEYS = [
+  'glacio',
+  'fusion',
+  'electro',
+  'aero',
+  'spectro',
+  'havoc',
+] as const
+
+const MAIN_STAT_IDS = [
+  'atk%',
+  'hp%',
+  'def%',
+  'er',
+  'cr',
+  'cd',
+  'bonus',
+  'healing',
+] as const satisfies ReadonlyArray<OptSets['mainStatFilter'][number]>
+
+// map internal stat-weight keys back into user-facing main-stat filter ids
+function mapWeightKey(
+  key: string,
+): OptSets['mainStatFilter'][number] | null {
+  if (key === 'atkPercent') return 'atk%'
+  if (key === 'hpPercent') return 'hp%'
+  if (key === 'defPercent') return 'def%'
+  if (key === 'energyRegen') return 'er'
+  if (key === 'critRate') return 'cr'
+  if (key === 'critDmg') return 'cd'
+  if (key === 'healingBonus') return 'healing'
+  if (ELEMENT_KEYS.includes(key as (typeof ELEMENT_KEYS)[number])) return 'bonus'
+  return null
+}
+
+// pick the strongest elemental bonus bucket so defaults can prefer it
+function pickDefaultBonus(weights: Partial<Record<string, number>>): string | null {
+  let bestKey: string | null = null
+  let bestWeight = 0
+
+  for (const key of ELEMENT_KEYS) {
+    const weight = weights[key] ?? 0
+    if (weight > bestWeight) {
+      bestWeight = weight
+      bestKey = key
+    }
+  }
+
+  return bestKey
+}
+
+function makeTargetSkill(params: {
+  runtime: ResRuntime
+  runtimesById?: Record<string, ResRuntime>
+  enemy: EnemyProfile
+  selectedTargets?: Record<string, string | null>
+}): SkillDef | null {
+  const { runtime, runtimesById, enemy, selectedTargets } = params
+  const targetSkill = listOptTrgt(runtime)[0] ?? null
+  if (!targetSkill) {
+    return null
+  }
+
+  const seed = getResSeedBy(runtime.id)
+  if (!seed) {
+    return null
+  }
+
+  const { context } = makeSkillCtx({
+    runtime,
+    seed,
+    enemy,
+    runtimesById: makeRuntimeMap(runtime, runtimesById),
+    selectedTargets,
+  })
+
+  return prepareSkill(runtime, targetSkill.id, context)
+}
+
+// Carry execution/search preferences across resonator-specific reinitialization.
+// Each new resonator derives its own target independently of search preferences.
+export function preserveToggles(existing?: OptSets | null): Partial<OptSets> {
+  if (!existing) {
+    return {}
+  }
+
+  return {
+    searchMode: existing.searchMode,
+    enableGpu: existing.enableGpu,
+    lowMemoryMode: existing.lowMemoryMode,
+    resultsLimit: existing.resultsLimit,
+    keepPercent: existing.keepPercent,
+    excludeEquipped: existing.excludeEquipped,
+  }
+}
+
+export function deriveOptSets(params: {
+  runtime: ResRuntime
+  runtimesById?: Record<string, ResRuntime>
+  enemy: EnemyProfile
+  selectedTargets?: Record<string, string | null>
+}): Partial<OptSets> {
+  const { runtime, runtimesById, enemy, selectedTargets } = params
+  const defaultRotation = getDefaultRotation(runtime.id)
+  const targetDefaults: Partial<OptSets> = {
+    targetMode: defaultRotation ? 'combo' : 'skill',
+    rotationMode: Boolean(defaultRotation),
+    targetComboSourceId: defaultRotation ? `default:${runtime.id}` : null,
+  }
+  const targetSkill = listOptTrgt(runtime)[0] ?? null
+  if (!targetSkill) {
+    return targetDefaults
+  }
+
+  const preparedSkill = makeTargetSkill({
+    runtime,
+    runtimesById,
+    enemy,
+    selectedTargets,
+  })
+  if (!preparedSkill) {
+    return {
+      ...targetDefaults,
+      targetSkillId: targetSkill.id,
+    }
+  }
+
+  const seed = getResSeedBy(runtime.id)
+  if (!seed) {
+    return {
+      ...targetDefaults,
+      targetSkillId: targetSkill.id,
+    }
+  }
+
+  const { context } = makeSkillCtx({
+    runtime,
+    seed,
+    enemy,
+    runtimesById: makeRuntimeMap(runtime, runtimesById),
+    selectedTargets,
+  })
+
+  const weights = makeStatWeights({
+    finalStats: context.finalStats,
+    skill: preparedSkill,
+    enemy,
+    level: runtime.base.level,
+    combat: runtime.state.combat,
+  })
+
+  const filterSet = new Set<OptSets['mainStatFilter'][number]>()
+  for (const [key, value] of Object.entries(weights)) {
+    if ((value ?? 0) <= 0) {
+      continue
+    }
+    const filterKey = mapWeightKey(key)
+    if (filterKey) {
+      filterSet.add(filterKey)
+    }
+  }
+
+  const characterId = Number.parseInt(runtime.id, 10)
+  if (characterId === 1206 || characterId === 1209 || characterId === 1412 || characterId === 1505 || characterId === 1110) {
+    filterSet.add('er')
+  }
+
+  if (characterId === 1212) {
+    filterSet.add('hp%')
+  }
+
+  const selectedBonus = pickDefaultBonus(weights)
+  if (selectedBonus) {
+    filterSet.add('bonus')
+  }
+
+  return {
+    ...targetDefaults,
+    targetSkillId: targetSkill.id,
+    mainStatFilter: MAIN_STAT_IDS.filter((key) => filterSet.has(key)),
+    selectedBonus,
+  }
+}

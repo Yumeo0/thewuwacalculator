@@ -4,16 +4,16 @@
 */
 
 import { decShareText, encShareText } from '@/shared/lib/shareCodec.ts'
-import type { RotationNode } from '@/domain/gameData/contracts.ts'
-import type { SavedRotation } from '@/domain/entities/inventoryStorage.ts'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import type { SavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import {
   cloneRotationNodes,
   savedRotationItems,
   savedRotationResonatorId,
   savedRotationTeam,
-} from '@/domain/entities/inventoryStorage.ts'
-import type { ResonatorId, TeamSlots } from '@/domain/entities/runtime.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
+} from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
+import type { ResonatorId, TeamSlots } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
 import { normalizeImportedRotationEntries } from '@/application/imports/rotationPayload.ts'
 
 export const ROT_CLIP_KIND = 'rotation-clipboard'

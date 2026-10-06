@@ -179,8 +179,8 @@ export default defineConfig(({ mode }) => ({
           }
 
           if (
-            id.includes('/src/data/gameData/') ||
-            id.includes('/src/domain/gameData/')
+            id.includes('/packages/core/src/data/gameData/') ||
+            id.includes('/packages/core/src/domain/gameData/')
           ) {
             return 'simulation-effects'
           }
@@ -204,6 +204,8 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      '@wuwacalc/core': path.resolve(__dirname, 'packages/core/src'),
+      '@core': path.resolve(__dirname, 'packages/core/src'),
     },
   },
 }))

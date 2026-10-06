@@ -5,8 +5,8 @@
                changed runtime or persisted domains.
 */
 
-import type { HistoryMax, PersistedState } from '@/domain/entities/appState'
-import type { ResRuntime, TeamMemRtVie } from '@/domain/entities/runtime'
+import type { HistoryMax, PersistedState } from '@wuwacalc/core/domain/entities/appState'
+import type { ResRuntime, TeamMemRtVie } from '@wuwacalc/core/domain/entities/runtime'
 import type { PersistKey } from '@/application/persistence/storage'
 import { decompressFromUTF16 } from 'lz-string'
 

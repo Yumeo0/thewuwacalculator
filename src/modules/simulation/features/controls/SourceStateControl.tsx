@@ -4,18 +4,18 @@
 */
 
 import type { ReactNode } from 'react'
-import { getResDtlsBy } from '@/data/gameData/resonators/resonatorDataStore.ts'
-import { readRtPath } from '@/domain/gameData/runtimePath.ts'
-import type { SourceState } from '@/domain/gameData/contracts.ts'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import type { ResModeGroup } from '@/domain/entities/resonator.ts'
-import { getResModeGroups } from '@/domain/gameData/resonatorStateGraph.ts'
+import { getResDtlsBy } from '@wuwacalc/core/data/gameData/resonators/resonatorDataStore.ts'
+import { readRtPath } from '@wuwacalc/core/domain/gameData/runtimePath.ts'
+import type { SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { ResModeGroup } from '@wuwacalc/core/domain/entities/resonator.ts'
+import { getResModeGroups } from '@wuwacalc/core/domain/gameData/resonatorStateGraph.ts'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
 import { Select } from '@/application/ui/Select'
 import { ModeGlyph } from '@/modules/simulation/features/controls/ModeGlyph.tsx'
 import { NumberInput } from '@/modules/simulation/features/controls/NumberInput.tsx'
 import { getStateText } from '@/modules/simulation/model/sourceStateDisplay.ts'
-import { sourceOptions as sourceOptions } from '@/engine/services/sourceStateService.ts'
+import { sourceOptions as sourceOptions } from '@wuwacalc/core/engine/services/sourceStateService.ts'
 import {
   isSrcSttOn,
   setSourceState,
@@ -23,8 +23,8 @@ import {
 } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
 import type { RtUpdHnd } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
 import { getSrcSttDsb } from '@/modules/simulation/model/stateDisabledReason.ts'
-import { getSrcSttNct } from '@/engine/gameData/controlOptions.ts'
-import { srcSttNumMax } from '@/engine/runtime/sourceStateInit.ts'
+import { getSrcSttNct } from '@wuwacalc/core/engine/gameData/controlOptions.ts'
+import { srcSttNumMax } from '@wuwacalc/core/engine/runtime/sourceStateInit.ts'
 
 // renders the control for each resonator source state and wires into the runtime update helpers.
 interface SrcSttCntrPr {

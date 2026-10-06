@@ -8,9 +8,9 @@ import { useAppStore } from '@/application/state'
 import { useTstStr } from '@/shared/util/toastStore.ts'
 import type { NormalizedImportedRotation } from '@/application/imports/rotationPayload.ts'
 import type { ImportHandler, ImportPick } from '@/application/imports/types.ts'
-import { contextScenarioMember } from '@/domain/entities/combatScenario.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
-import { getWpnById } from '@/data/catalog/weaponCatalogService.ts'
+import { contextScenarioMember } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
 import { loadRotationScenario } from '@/modules/simulation/surfaces/rotation/program-editor/saved/useLoadRotation.ts'
 
 export const ROTATION_IMPORT_KIND = 'rotation'
@@ -56,7 +56,7 @@ export function useRotationImportHandler(): ImportHandler<NormalizedImportedRota
       const [{ normalizeImportedRotationEntries }, { collectResonatorIds }, { ensureResonatorData }] = await Promise.all([
         import('@/application/imports/rotationPayload.ts'),
         import('@/application/persistence/resonatorScope'),
-        import('@/data/gameData'),
+        import('@wuwacalc/core/data/gameData'),
       ])
       await ensureResonatorData(collectResonatorIds(parsed))
       const entries = normalizeImportedRotationEntries(parsed)

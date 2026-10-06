@@ -4,11 +4,11 @@
                calculator inventory shape.
 */
 
-import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@/data/gameData/catalog/echoStats'
-import type { EchoDef } from '@/domain/entities/catalog'
-import type { EchoInstance } from '@/domain/entities/runtime'
-import { makeEchoUid } from '@/domain/entities/runtime'
-import { getEchoById, listEchoes } from '@/data/catalog/echoCatalogService'
+import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@wuwacalc/core/data/gameData/catalog/echoStats'
+import type { EchoDef } from '@wuwacalc/core/domain/entities/catalog'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
+import { makeEchoUid } from '@wuwacalc/core/domain/entities/runtime'
+import { getEchoById, listEchoes } from '@wuwacalc/core/data/catalog/echoCatalogService'
 import {
   coerceNumber,
   xtrcLegAppBc,

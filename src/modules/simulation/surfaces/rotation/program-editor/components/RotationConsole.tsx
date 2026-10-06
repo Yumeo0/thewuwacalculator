@@ -16,7 +16,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from 'react'
-import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
+import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
 import { withDefResMg } from '@/shared/lib/imageFallback.ts'
 import {
   formatDamage,

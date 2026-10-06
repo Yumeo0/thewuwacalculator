@@ -5,15 +5,15 @@
 */
 
 import { Select } from '@/application/ui/Select'
-import { openingConditionValue } from '@/domain/gameData/rotationPreambleDefaults.ts'
+import { openingConditionValue } from '@wuwacalc/core/domain/gameData/rotationPreambleDefaults.ts'
 import {
   formatEffectConditionName,
   getStateEffectName,
   getStateText,
 } from '@/modules/simulation/model/sourceStateDisplay.ts'
-import { getWpnById } from '@/data/catalog/weaponCatalogService.ts'
+import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
 import { resPssvPrms } from '@/modules/simulation/features/weapons/lib/weapon.ts'
-import type { RotationNode, RtChng, SourceState } from '@/domain/gameData/contracts.ts'
+import type { RotationNode, RtChng, SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import type {
   CondAction,
   CondChoice,

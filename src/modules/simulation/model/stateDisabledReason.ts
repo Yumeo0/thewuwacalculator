@@ -3,10 +3,10 @@
   Description: Explains unmet control dependencies and condition expressions from canonical runtime state.
 */
 
-import type { CondExpr, EvalScpRoot, SourceState } from '@/domain/gameData/contracts'
-import { prsCntrKey } from '@/domain/gameData/stateKeys'
-import { getOwnForKey, getSttForCnt } from '@/data/catalog/gameDataService'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
+import type { CondExpr, EvalScpRoot, SourceState } from '@wuwacalc/core/domain/gameData/contracts'
+import { prsCntrKey } from '@wuwacalc/core/domain/gameData/stateKeys'
+import { getOwnForKey, getSttForCnt } from '@wuwacalc/core/data/catalog/gameDataService'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
 
 // friendly labels for common combat stack paths that would otherwise look too raw
 const STACK_LABELS: Partial<Record<string, string>> = {

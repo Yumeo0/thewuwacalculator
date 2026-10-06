@@ -4,12 +4,12 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
-import { ensureResonatorData } from '@/data/gameData'
+import { ensureResonatorData } from '@wuwacalc/core/data/gameData'
 import { useTstStr } from '@/shared/util/toastStore'
 import {type CSSProperties as CssProps, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import type { ReactNode } from 'react'
 import { Check, Flame, History } from 'lucide-react'
-import type { ResMenuEnt } from '@/domain/entities/resonator.ts'
+import type { ResMenuEnt } from '@wuwacalc/core/domain/entities/resonator.ts'
 import { useAppStore } from '@/application/state'
 import {
   ATTR_FILTERS,
@@ -25,7 +25,7 @@ import {
   orderRecs,
 } from '@/modules/simulation/features/resonator/lib/recommendations.ts'
 import { ATTR_COLORS, rarityVars } from '@/modules/simulation/model/display.ts'
-import { roverIsVisible } from '@/domain/entities/roverGender'
+import { roverIsVisible } from '@wuwacalc/core/domain/entities/roverGender'
 
 const ALL_ROLE_ID = '__all_roles__'
 

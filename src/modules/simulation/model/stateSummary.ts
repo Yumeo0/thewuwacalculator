@@ -5,40 +5,40 @@
                sets for Simulation report surfaces.
 */
 
-import type { CombatGraph, CombatPart } from '@/domain/entities/combatGraph'
-import { getSrcSttNct } from '@/engine/gameData/controlOptions'
-import { makeTeamComp } from '@/engine/gameData/teamComposition'
-import { readRtPath } from '@/domain/gameData/runtimePath'
+import type { CombatGraph, CombatPart } from '@wuwacalc/core/domain/entities/combatGraph'
+import { getSrcSttNct } from '@wuwacalc/core/engine/gameData/controlOptions'
+import { makeTeamComp } from '@wuwacalc/core/engine/gameData/teamComposition'
+import { readRtPath } from '@wuwacalc/core/domain/gameData/runtimePath'
 import type {
   DataSrcRef,
   EffectDef,
   EffectContext,
   SrcOwnDef,
   SourceState,
-} from '@/domain/gameData/contracts'
-import { isNoWeaponId, type ResRuntime } from '@/domain/entities/runtime'
-import type { SkillDef } from '@/domain/entities/stats'
-import { countEchoSets } from '@/engine/pipeline/buildCombatContext'
-import { makeCombatGraph, findCombatPart } from '@/engine/runtime/combatGraph'
-import { makeEnemy } from '@/engine/runtime/defaults'
-import { evalCond, evalForm } from '@/engine/effects/evaluator'
-import { mkSrcSttScp as mkSrcSttScp } from '@/engine/services/sourceStateService.ts'
-import { ffctTrgtRt } from '@/engine/effects/targetScope'
-import { makeCombatEnv } from '@/engine/pipeline/buildCombatContext'
-import type { CombatContext } from '@/engine/pipeline/types'
+} from '@wuwacalc/core/domain/gameData/contracts'
+import { isNoWeaponId, type ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
+import type { SkillDef } from '@wuwacalc/core/domain/entities/stats'
+import { countEchoSets } from '@wuwacalc/core/engine/pipeline/buildCombatContext'
+import { makeCombatGraph, findCombatPart } from '@wuwacalc/core/engine/runtime/combatGraph'
+import { makeEnemy } from '@wuwacalc/core/engine/runtime/defaults'
+import { evalCond, evalForm } from '@wuwacalc/core/engine/effects/evaluator'
+import { mkSrcSttScp as mkSrcSttScp } from '@wuwacalc/core/engine/services/sourceStateService.ts'
+import { ffctTrgtRt } from '@wuwacalc/core/engine/effects/targetScope'
+import { makeCombatEnv } from '@wuwacalc/core/engine/pipeline/buildCombatContext'
+import type { CombatContext } from '@wuwacalc/core/engine/pipeline/types'
 import {
   listFfctForO,
   listSkillsFor,
   listOwnersFor,
   listSttsForO,
-} from '@/data/catalog/gameDataService'
-import { getMainEchoS } from '@/engine/services/runtimeSourceService'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
-import { getSkillType } from '@/domain/gameData/skillTypes'
+} from '@wuwacalc/core/data/catalog/gameDataService'
+import { getMainEchoS } from '@wuwacalc/core/engine/services/runtimeSourceService'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import { getSkillType } from '@wuwacalc/core/domain/gameData/skillTypes'
 import { getSourceOwnerName } from '@/modules/simulation/model/sourceStateDisplay'
-import { getEchoSetDe } from '@/data/gameData/echoSets/effects'
+import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects'
 import { toTitle } from '@/shared/lib/format'
-import { truncTo } from '@/shared/lib/number.ts'
+import { truncTo } from '@wuwacalc/core/shared/lib/number.ts'
 
 export interface StateNode {
   id: string

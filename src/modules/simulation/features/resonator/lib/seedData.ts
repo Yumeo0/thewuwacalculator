@@ -3,7 +3,7 @@
   Description: Exposes resonator seed collections through the Simulation feature boundary.
 */
 
-import { listResSds, resSdsById } from '@/data/catalog/resonatorSeedService.ts'
+import { listResSds, resSdsById } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
 
 // eager list of all registered resonator seeds
 export const seedRsnt = listResSds()

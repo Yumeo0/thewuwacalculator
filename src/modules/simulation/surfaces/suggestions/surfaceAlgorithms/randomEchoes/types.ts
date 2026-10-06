@@ -4,11 +4,11 @@
                contracts shared by the suggestion host and worker.
 */
 
-import type { RandGnrtSets } from '@/domain/entities/suggestions'
-import type { EchoInstance } from '@/domain/entities/runtime'
-import type { GameDataMode } from '@/domain/entities/gameDataMode'
-import type { OptStatWeight } from '@/engine/optimizer/search/filtering'
-import type { SuggestContext} from '@/engine/suggestions/types'
+import type { RandGnrtSets } from '@wuwacalc/core/domain/entities/suggestions'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
+import type { GameDataMode } from '@wuwacalc/core/domain/entities/gameDataMode'
+import type { OptStatWeight } from '@wuwacalc/core/engine/optimizer/search/filtering'
+import type { SuggestContext} from '@wuwacalc/core/engine/suggestions/types'
 
 export interface RandomEchoPrep {
   context: SuggestContext

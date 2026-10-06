@@ -10,9 +10,9 @@
 import { useMemo } from 'react'
 import { useAppStore } from '@/application/state'
 import { selScenarioProfiles } from '@/application/state'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
-import { mkActTeamSlt } from '@/engine/runtime/runtimeAdapters'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { mkActTeamSlt } from '@wuwacalc/core/engine/runtime/runtimeAdapters'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
 import type { SimulationPageId } from '@/application/navigation/appIndex'
 
 export interface AppSnapshot {

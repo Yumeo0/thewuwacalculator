@@ -5,12 +5,12 @@
 */
 
 import { useCallback } from 'react'
-import { cloneRotationNodes, type SavedRotation } from '@/domain/entities/inventoryStorage.ts'
-import { contextScenarioMember, type CombatScenario } from '@/domain/entities/combatScenario.ts'
-import { scenarioIdForContextResonator } from '@/domain/entities/scenarioLibrary.ts'
+import { cloneRotationNodes, type SavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
+import { contextScenarioMember, type CombatScenario } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import { scenarioIdForContextResonator } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 import { useAppStore } from '@/application/state'
 import { collectResonatorIds } from '@/application/persistence/resonatorScope.ts'
-import { ensureResonatorData, holdResonatorData } from '@/data/gameData'
+import { ensureResonatorData, holdResonatorData } from '@wuwacalc/core/data/gameData'
 import { clearRotationEditorSession } from '@/modules/simulation/surfaces/rotation/program-editor/state/editorSessionStore.ts'
 
 export type RotationLoadMode = 'build' | 'rotation'

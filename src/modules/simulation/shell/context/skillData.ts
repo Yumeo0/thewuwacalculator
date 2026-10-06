@@ -4,10 +4,10 @@
                current resonator or feature-selection context.
 */
 
-import type { ResDtls, SkillTabKey } from '@/domain/entities/resonator.ts'
-import type { SkillTypeKey } from '@/domain/entities/stats.ts'
-import type { FeatureResult } from '@/domain/gameData/contracts.ts'
-import { getPrimarySkill } from '@/domain/gameData/skillTypes.ts'
+import type { ResDtls, SkillTabKey } from '@wuwacalc/core/domain/entities/resonator.ts'
+import type { SkillTypeKey } from '@wuwacalc/core/domain/entities/stats.ts'
+import type { FeatureResult } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { getPrimarySkill } from '@wuwacalc/core/domain/gameData/skillTypes.ts'
 
 const SKLLTYPETOTA: Partial<Record<SkillTypeKey, SkillTabKey>> = {
   basicAtk: 'normalAttack',

@@ -5,7 +5,7 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE } from '@/domain/entities/preferences.ts'
+import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE } from '@wuwacalc/core/domain/entities/preferences.ts'
 import { buildCardExport, parseCardImport } from '../cardTransfer.ts'
 
 describe('showcase surface transfer', () => {

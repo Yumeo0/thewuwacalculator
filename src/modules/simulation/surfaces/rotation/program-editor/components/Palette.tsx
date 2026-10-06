@@ -12,12 +12,12 @@ import { formatDescription } from '@/modules/simulation/model/formatDescription.
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
 import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
 import { useAppStore } from '@/application/state'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { selEnemyProf, selWorkDrvd } from '@/application/state'
-import { resolveSkill } from '@/engine/pipeline/resolveSkill.ts'
+import { resolveSkill } from '@wuwacalc/core/engine/pipeline/resolveSkill.ts'
 import { isRotationSkillVisible } from '@/modules/simulation/surfaces/rotation/shared/visibility.ts'
-import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
+import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import { withDefEchoMg, withDefIconM, withDefResMg } from '@/shared/lib/imageFallback.ts'
 import {
   buildGhostPill,
@@ -25,7 +25,7 @@ import {
   PALETTE_MIME,
 } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/dragPayload.ts'
 import type { PaletteSpec } from '@/modules/simulation/surfaces/rotation/program-editor/model/paletteSpec.ts'
-import { getEnemyIcon } from '@/domain/entities/enemy.ts'
+import { getEnemyIcon } from '@wuwacalc/core/domain/entities/enemy.ts'
 import {
   ROT_SKILL_TABS,
   SKILL_TAB_NAMES,
@@ -45,8 +45,8 @@ import {
 } from '@/modules/simulation/surfaces/rotation/program-editor/components/ConditionBrowser.tsx'
 import { isFormulaChoice } from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
 import type { CondChoice, RotationMember } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
-import type { FeatDef } from '@/domain/gameData/contracts.ts'
-import type { AttributeKey, SkillAggType, SkillDef } from '@/domain/entities/stats.ts'
+import type { FeatDef } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import type { AttributeKey, SkillAggType, SkillDef } from '@wuwacalc/core/domain/entities/stats.ts'
 import { skillDisplayColor } from '@/modules/simulation/surfaces/rotation/shared/skillDisplay.ts'
 
 type PaletteMode = 'features' | 'conditions'

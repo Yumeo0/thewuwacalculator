@@ -5,15 +5,15 @@
 */
 
 import { useMemo } from 'react'
-import type { EnemyProfile } from '@/domain/entities/appState.ts'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import type { SuggSets } from '@/domain/entities/suggestions.ts'
-import { getDefaultRotation } from '@/data/catalog/gameDataService.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
-import { runResSmlt } from '@/engine/pipeline'
-import type { SimResult } from '@/engine/pipeline/types.ts'
-import { makeRuntimeMap } from '@/engine/runtime/runtimeAdapters.ts'
-import { cloneRotationNodes } from '@/domain/entities/inventoryStorage.ts'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { SuggSets } from '@wuwacalc/core/domain/entities/suggestions.ts'
+import { getDefaultRotation } from '@wuwacalc/core/data/catalog/gameDataService.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { runResSmlt } from '@wuwacalc/core/engine/pipeline'
+import type { SimResult } from '@wuwacalc/core/engine/pipeline/types.ts'
+import { makeRuntimeMap } from '@wuwacalc/core/engine/runtime/runtimeAdapters.ts'
+import { cloneRotationNodes } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 
 export function useSuggestionTarget(
   liveRuntime: ResRuntime,

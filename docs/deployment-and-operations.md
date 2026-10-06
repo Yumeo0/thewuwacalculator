@@ -95,7 +95,7 @@ Primary roots:
 
 - [src/application/persistence](../src/application/persistence)
 - [src/infra/persistence](../src/infra/persistence)
-- [src/engine/runtime/schema.ts](../src/engine/runtime/schema.ts)
+- [packages/core/src/engine/runtime/schema.ts](../packages/core/src/engine/runtime/schema.ts)
 
 `src/application/persistence` owns app-state domains, migration, scenario records, codecs, and coordinated writes. `src/infra/persistence` owns platform-specific browser storage such as IndexedDB-backed image blobs and beta-notice acknowledgement.
 

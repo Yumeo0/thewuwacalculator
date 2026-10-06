@@ -8,7 +8,7 @@
 */
 
 import { saveMgBlob, loadMgBlob } from '@/infra/persistence/blobImageStore'
-import type { UploadPersistMode } from '@/domain/entities/preferences'
+import type { UploadPersistMode } from '@wuwacalc/core/domain/entities/preferences'
 
 export type UploadMode = 'session' | UploadPersistMode
 

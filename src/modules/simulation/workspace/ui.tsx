@@ -7,14 +7,14 @@ import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { resolveDisplayImage } from '@/shared/lib/displayAssets'
 import { currentPixelRatio } from '@/shared/lib/displayImageSizing'
 import type { CSSProperties, KeyboardEvent, MouseEvent, RefCallback } from 'react'
-import type { AttributeKey } from '@/domain/entities/stats'
-import type { EchoInstance } from '@/domain/entities/runtime'
+import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
 import type {
   EvaluationAlternative,
   EvaluationBuildKey,
   EvaluationEchoSlot,
   EvaluationSetSummary,
-} from '@/engine/evaluation/buildEvaluation.ts'
+} from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
 import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
 import { ArrowUpFromLine, LibraryBig, Undo2 } from 'lucide-react'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
@@ -26,14 +26,14 @@ import {
 } from '@/modules/simulation/features/echoes/ui/EchoCard.tsx'
 import { cmptEchoCrit } from '@/modules/simulation/features/echoes/lib/metric.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display'
-import { countEchoSets } from '@/engine/pipeline/buildCombatContext'
-import { makeEffectiveSetPlan } from '@/engine/gameData/sonataPlan'
-import { getSntSetClr, getSntSetIco } from '@/data/gameData/catalog/sonataSets'
-import { getEchoById } from '@/data/catalog/echoCatalogService'
+import { countEchoSets } from '@wuwacalc/core/engine/pipeline/buildCombatContext'
+import { makeEffectiveSetPlan } from '@wuwacalc/core/engine/gameData/sonataPlan'
+import { getSntSetClr, getSntSetIco } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'
 import { formatCompactNum, formatStatKeyLabel } from '@/modules/simulation/model/statsView.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { glyphVars, resSeqIcon, SEQ_NODES } from '@/shared/lib/gameAssets.ts'
-import { formatTruncCompact } from '@/shared/lib/number.ts'
+import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
 
 export type CssVars = CSSProperties & Record<string, string | number>
 

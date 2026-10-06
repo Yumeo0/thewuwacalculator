@@ -10,8 +10,8 @@ import { useEvaluationSummary } from '@/modules/simulation/model/useBuildEvaluat
 import { Suspense, startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BuildWorkspacePresentation } from './BuildWorkspacePresentation'
 import { useShowcaseAnalysis } from '@/modules/simulation/surfaces/showcase/useShowcaseAnalysis'
-import type { ShowcaseAnalysisInput } from '@/engine/evaluation/showcaseAnalysis'
-import { computeShowcaseStats } from '@/engine/evaluation/showcaseStats'
+import type { ShowcaseAnalysisInput } from '@wuwacalc/core/engine/evaluation/showcaseAnalysis'
+import { computeShowcaseStats } from '@wuwacalc/core/engine/evaluation/showcaseStats'
 import { useAppStore } from '@/application/state'
 import { useInventoryUiStore } from '@/application/state/inventoryUiStore'
 import { useOptimizerRunStore } from '@/application/state/optimizerRunStore'
@@ -21,13 +21,13 @@ import {
 } from '@/application/state'
 import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
 import { getResonator, type ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
-import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime'
+import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
 import type { WorkspaceSurface } from '@/shared/lib/appRoutes'
 import {
   flattenScenarioRouting,
   projectScenarioUiRuntimes,
-} from '@/engine/runtime/scenarioRuntime.ts'
-import { getSntSetNam } from '@/data/gameData/catalog/sonataSets'
+} from '@wuwacalc/core/engine/runtime/scenarioRuntime.ts'
+import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
 import { useEchoSrfcM } from '@/modules/simulation/features/echoes/lib/useEchoSurfaceMenu.tsx'
 import { parseEchoClip, pasteEchoes, readEchoClip, type EchoClipPayload } from '@/modules/simulation/features/echoes/lib/clipboard.ts'
 import { qpEchoAtSlot } from '@/modules/simulation/features/echoes/lib/equip.ts'
@@ -47,26 +47,26 @@ import {
   applyEvaluationMapAsm,
   makeEvaluationEnemy,
 } from '@/modules/simulation/model/evaluationAssumptions.ts'
-import { getTuneStrainMaxForTeam } from '@/engine/gameData/tuneStrain.ts'
+import { getTuneStrainMaxForTeam } from '@wuwacalc/core/engine/gameData/tuneStrain.ts'
 import {
   getBuildEvaluationGrade,
   getBuildEvaluationTone,
 } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
 import { makeStatsView } from '@/modules/simulation/model/statsView.ts'
-import { getMaxEchoSc } from '@/engine/evaluation/echoScoring.ts'
-import { makeEvaluationKey } from '@/engine/evaluation/buildEvaluationKey.ts'
-import { peekEvaluationReport } from '@/engine/evaluation/buildEvaluationClient.ts'
+import { getMaxEchoSc } from '@wuwacalc/core/engine/evaluation/echoScoring.ts'
+import { makeEvaluationKey } from '@wuwacalc/core/engine/evaluation/buildEvaluationKey.ts'
+import { peekEvaluationReport } from '@wuwacalc/core/engine/evaluation/buildEvaluationClient.ts'
 import { useEchoScores } from '@/application/hooks/useEchoScoringRevision.ts'
-import { getBuildStats } from '@/engine/pipeline/buildStats.ts'
-import { mkPrepWork, type PrepWork } from '@/engine/pipeline/preparedWorkspace.ts'
+import { getBuildStats } from '@wuwacalc/core/engine/pipeline/buildStats.ts'
+import { mkPrepWork, type PrepWork } from '@wuwacalc/core/engine/pipeline/preparedWorkspace.ts'
 import { selLiveRun } from '@/modules/simulation/model/selectors.ts'
-import type { SimResult } from '@/engine/pipeline/types.ts'
+import type { SimResult } from '@wuwacalc/core/engine/pipeline/types.ts'
 import { scheduleAfterSettled } from '@/shared/lib/scheduleAfterSettled.ts'
 import {
   cacheEchoMainStatScoringFromEvaluation,
   prepareEchoMainStatScoring,
-} from '@/engine/evaluation/echoMainStatProfile.ts'
-import { resResBaseSt } from '@/data/catalog/resonatorSeedService.ts'
+} from '@wuwacalc/core/engine/evaluation/echoMainStatProfile.ts'
+import { resResBaseSt } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
 import { useTstStr } from '@/shared/util/toastStore.ts'
 import { isDtblVntTgt } from '@/shared/lib/isEditableEventTarget.ts'
 import { lastWorkspaceClipboardText } from '@/shared/lib/workspaceClipboardCache.ts'
@@ -74,7 +74,7 @@ import { useImportLanding } from '@/modules/simulation/features/echoes/lib/impor
 import { useConfirm } from '@/shared/hooks/useConfirmation.ts'
 import { mainPortal } from '@/shared/lib/portalTarget'
 import { ConfirmHost } from '@/shared/ui/ConfirmationModal'
-import type { EvaluationBuildSnapshot } from '@/engine/evaluation/buildEvaluation.ts'
+import type { EvaluationBuildSnapshot } from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
 import { Clipboard, Copy } from 'lucide-react'
 import { useSel } from '@/modules/simulation/lib/sel.tsx'
 import {

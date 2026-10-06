@@ -2,8 +2,8 @@
   Author: Runor Ewhro
   Description: Persists Showcase cards independently, publishing the index only after records are safe.
 */
-import type { PersistedState } from '@/domain/entities/appState'
-import { showcaseCardSchema } from '@/engine/runtime/schema'
+import type { PersistedState } from '@wuwacalc/core/domain/entities/appState'
+import { showcaseCardSchema } from '@wuwacalc/core/engine/runtime/schema'
 import { APP_STORAGE_KEY } from './storageKeys'
 
 export const SHOWCASE_INDEX = `${APP_STORAGE_KEY}.ui.showcase-cards`

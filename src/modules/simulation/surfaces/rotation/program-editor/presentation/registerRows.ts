@@ -28,8 +28,8 @@ import {
   type RotationEditorPercentDisplay,
   type RotationEditorRegisterGroup,
   type RotationEditorStatKey,
-} from '@/domain/entities/rotationEditorPreferences.ts'
-import type { OffTuneTrace } from '@/domain/entities/stats'
+} from '@wuwacalc/core/domain/entities/rotationEditorPreferences.ts'
+import type { OffTuneTrace } from '@wuwacalc/core/domain/entities/stats'
 
 /**
  * Every value the simulator captured while evaluating an execution entry.

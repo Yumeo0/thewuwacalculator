@@ -3,8 +3,8 @@
   Description: Owns random-Echo worker requests and their idle lifecycle.
 */
 
-import { getGameDataMode } from '@/data/gameData'
-import { WorkerChannel } from '@/shared/lib/WorkerChannel'
+import { getGameDataMode } from '@wuwacalc/core/data/gameData'
+import { WorkerChannel } from '@wuwacalc/core/shared/lib/WorkerChannel'
 import type {
   RandomEchoEntry,
   RandomEchoPrep,

@@ -7,7 +7,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/application/state/store'
 import { consumePersist } from '@/application/persistence/storage'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import {
   applyHistoryEntry,
   makeHistoryEntry,

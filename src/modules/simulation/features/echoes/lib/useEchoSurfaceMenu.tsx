@@ -4,7 +4,7 @@
 */
 
 import { useCallback, useMemo } from 'react'
-import type { EchoInstance } from '@/domain/entities/runtime.ts'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { isEchoSaved, selectSavedEchoSignatures } from '@/application/state/savedGearStatus'
 import { useAppStore } from '@/application/state'
 import { useCtxBuilder } from '@/modules/simulation/shell/context-menu/useContextMenuBuilder.ts'

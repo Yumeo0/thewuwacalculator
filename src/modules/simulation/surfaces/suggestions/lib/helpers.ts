@@ -4,13 +4,13 @@
                and deterministic suggestion runs.
 */
 
-import type { SimResult } from '@/engine/pipeline/types.ts'
-import { isOptDmgSkll } from '@/engine/optimizer/rules/eligibility.ts'
-import type { OptDamageEligibilityOptions as DmgEligOpts } from '@/engine/optimizer/rules/eligibility.ts'
+import type { SimResult } from '@wuwacalc/core/engine/pipeline/types.ts'
+import { isOptDmgSkll } from '@wuwacalc/core/engine/optimizer/rules/eligibility.ts'
+import type { OptDamageEligibilityOptions as DmgEligOpts } from '@wuwacalc/core/engine/optimizer/rules/eligibility.ts'
 import type { SelectGroup, SelectOption } from '@/application/ui/Select'
 import { ROT_SKILL_TABS, getSkillTabLabel } from '@/modules/simulation/model/skillTabs.ts'
-import { getDefaultRotation } from '@/data/catalog/gameDataService.ts'
-import type { SuggSets } from '@/domain/entities/suggestions.ts'
+import { getDefaultRotation } from '@wuwacalc/core/data/catalog/gameDataService.ts'
+import type { SuggSets } from '@wuwacalc/core/domain/entities/suggestions.ts'
 
 export const DEFAULT_ROTATION_TARGET = '__default_rotation__'
 

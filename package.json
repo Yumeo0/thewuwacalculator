@@ -4,6 +4,9 @@
   "version": "0.0.0",
   "license": "UNLICENSED",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "engines": {
     "node": "24.x"
   },
@@ -51,7 +54,7 @@
     "sync:resonator-images": "node scripts/assets/syncResonatorImages.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "benchmark:rotation": "vitest bench src/engine/rotation/__benchmarks__/rotation.bench.ts --run",
+    "benchmark:rotation": "vitest bench packages/core/src/engine/rotation/__benchmarks__/rotation.bench.ts --run",
     "analyze:substats": "node scripts/analysis/evaluationSubstatWeights.mjs",
     "generate:char-stat-weights": "node scripts/analysis/generateCharStatWeights.mjs"
   },

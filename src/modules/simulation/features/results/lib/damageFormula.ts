@@ -3,13 +3,13 @@
   Description: Projects canonical damage factors into inspectable formula rows and formatted totals.
 */
 
-import type { FeatureResult } from '@/domain/gameData/contracts.ts'
-import type { EnemyProfile } from '@/domain/entities/appState.ts'
-import { ATTR_ENEMY_RES, isNoEnemy } from '@/domain/entities/appState.ts'
-import { getNegEffectDef } from '@/engine/gameData/negativeEffects.ts'
-import type { CombatState } from '@/domain/entities/runtime.ts'
-import type { FinalStats, NegEffectKey, SkillDef, SkillTypeKey } from '@/domain/entities/stats.ts'
-import { getNegBase as cmptNegFfctB } from '@/engine/formulas/negativeEffects.ts'
+import type { FeatureResult } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState.ts'
+import { ATTR_ENEMY_RES, isNoEnemy } from '@wuwacalc/core/domain/entities/appState.ts'
+import { getNegEffectDef } from '@wuwacalc/core/engine/gameData/negativeEffects.ts'
+import type { CombatState } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { FinalStats, NegEffectKey, SkillDef, SkillTypeKey } from '@wuwacalc/core/domain/entities/stats.ts'
+import { getNegBase as cmptNegFfctB } from '@wuwacalc/core/engine/formulas/negativeEffects.ts'
 import {
   calcBasePower,
   defenseReduction,
@@ -21,11 +21,11 @@ import {
   resolveHits,
   sumHitScale,
   type DamageFactors,
-} from '@/engine/formulas/damageFactors.ts'
-import { getEnemyMaxOffTune, getTuneLevel } from '@/engine/formulas/tuneRupture.ts'
-import { mergeSkillType } from '@/engine/resolvers/buffPool.ts'
-import { getSkillType, fmtSkllTypeL } from '@/domain/gameData/skillTypes.ts'
-import { formatTrunc, formatTruncCompact, truncTo } from '@/shared/lib/number.ts'
+} from '@wuwacalc/core/engine/formulas/damageFactors.ts'
+import { getEnemyMaxOffTune, getTuneLevel } from '@wuwacalc/core/engine/formulas/tuneRupture.ts'
+import { mergeSkillType } from '@wuwacalc/core/engine/resolvers/buffPool.ts'
+import { getSkillType, fmtSkllTypeL } from '@wuwacalc/core/domain/gameData/skillTypes.ts'
+import { formatTrunc, formatTruncCompact, truncTo } from '@wuwacalc/core/shared/lib/number.ts'
 
 /** The engine's factors, plus how this pane names the skill's types. */
 type ShrdDmgCtx = DamageFactors & { skillTypeLabel: string }

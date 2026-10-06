@@ -4,23 +4,23 @@
 */
 
 import type { SyntheticEvent as SyntVnt } from 'react'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import type { ResStateControl } from '@/domain/entities/resonator.ts'
-import { getResDtlsBy } from '@/data/gameData/resonators/resonatorDataStore.ts'
-import { getResStateGroups } from '@/domain/gameData/resonatorStateGraph.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { ResStateControl } from '@wuwacalc/core/domain/entities/resonator.ts'
+import { getResDtlsBy } from '@wuwacalc/core/data/gameData/resonators/resonatorDataStore.ts'
+import { getResStateGroups } from '@wuwacalc/core/domain/gameData/resonatorStateGraph.ts'
 import {
   getResCntrNc,
   getSrcSttNct,
   normResRtCnt,
-} from '@/engine/gameData/controlOptions.ts'
-import { writeRtPath } from '@/domain/gameData/runtimePath.ts'
-import type { CondExpr, EffectDef, FormExpr, SourceState } from '@/domain/gameData/contracts.ts'
+} from '@wuwacalc/core/engine/gameData/controlOptions.ts'
+import { writeRtPath } from '@wuwacalc/core/domain/gameData/runtimePath.ts'
+import type { CondExpr, EffectDef, FormExpr, SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import { getResonator } from '@/modules/simulation/features/resonator/lib/resonator.ts'
-import { listFfctForO, listStatesFor } from '@/data/catalog/gameDataService.ts'
+import { listFfctForO, listStatesFor } from '@wuwacalc/core/data/catalog/gameDataService.ts'
 import {
   isStateEnabled,
   isStateVisible,
-} from '@/engine/services/sourceStateService.ts'
+} from '@wuwacalc/core/engine/services/sourceStateService.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
 
 // shared helpers that keep runtime controls in sync across left pane panes and modals.

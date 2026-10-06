@@ -5,10 +5,10 @@
                active team, so its id alone is not enough to choose a runtime.
 */
 
-import type { ResProf } from '@/domain/entities/profile.ts'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import { maxRuntimeEffects } from '@/engine/runtime/maxRuntime.ts'
-import { maxEchoIfChg } from '@/engine/runtime/sourceStateInit.ts'
+import type { ResProf } from '@wuwacalc/core/domain/entities/profile.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { maxRuntimeEffects } from '@wuwacalc/core/engine/runtime/maxRuntime.ts'
+import { maxEchoIfChg } from '@wuwacalc/core/engine/runtime/sourceStateInit.ts'
 
 export type EchoImportDestination =
   | { kind: 'context'; resonatorId: string }

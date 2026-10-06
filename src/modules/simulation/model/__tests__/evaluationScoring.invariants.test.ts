@@ -1,0 +1,681 @@
+/*
+  Author: Runor Ewhro
+  Description: stable invariants for evaluation scoring internals, request-key
+               determinism, and anchor cache reuse.
+*/
+
+import { describe, expect, it, vi } from 'vitest'
+import { listChsByCos } from '@wuwacalc/core/data/catalog/echoCatalogService'
+import { getResSeedBy, listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import { makeEnemy, makeResRuntime, makeTeamMember } from '@wuwacalc/core/engine/runtime/defaults'
+import { makeRuntimeMap, runtimeFromSnapshot } from '@wuwacalc/core/engine/runtime/runtimeAdapters'
+import { initWpnStts } from '@wuwacalc/core/engine/runtime/sourceStateInit'
+import { catWpnAtk } from '@wuwacalc/core/engine/runtime/weaponState'
+import { maxResRt } from '@wuwacalc/core/engine/gameData/resonatorMax'
+import { getResDtlsBy } from '@wuwacalc/core/data/gameData/resonators/resonatorDataStore'
+import type { ResProf } from '@wuwacalc/core/domain/entities/profile'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
+import { runResSmlt } from '@wuwacalc/core/engine/pipeline'
+import { sumOptRotDmg } from '@wuwacalc/core/engine/optimizer/rules/eligibility'
+import { mkSuggMainEc, mkSuggVltnCt } from '@wuwacalc/core/engine/suggestions/shared'
+import type { SuggestContext } from '@wuwacalc/core/engine/suggestions/types'
+import { ECHO_MAIN_STATS, ECHO_SIDE_STATS, getSbstStepP } from '@wuwacalc/core/data/gameData/catalog/echoStats'
+import { assembleEvaluation, buildEvaluation, buildEvaluationAnchors, evaluationErTarget } from '@wuwacalc/core/engine/evaluation/evaluation/search.ts'
+import { findUsefulStatImpacts, makeEvaluationEchoFrame, preservedMainEchoFor } from '@wuwacalc/core/engine/evaluation/evaluation/echoDiscovery.ts'
+import { prepareRotationBuildScore, rotationBuildEvaluationScore, evaluationAnchorCacheKey } from '@wuwacalc/core/engine/evaluation/evaluation/report.ts'
+import { makeEvaluationOverviewStats, sumEncodedEnergyRegen } from '@wuwacalc/core/engine/evaluation/evaluation/stats.ts'
+import { REFERENCE_STEP_MODEL, tierStepIncreases } from '@wuwacalc/core/engine/evaluation/evaluation/stepAllocation'
+import { resolveEvaluationStats, scoreStats } from '@wuwacalc/core/engine/evaluation/evaluation/scoring.ts'
+import { CTX_FLOATS, ECHO_STAT_STRIDE, MAIN_BUFF_LEN, MV, SET_MASK, SKILL_ID } from '@wuwacalc/core/engine/optimizer/config/constants'
+import { rotationBuildEvaluationReport } from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
+import { makeEvaluationKey } from '@wuwacalc/core/engine/evaluation/buildEvaluationKey'
+import {
+  applyEvaluationAsm,
+  applyEvaluationMapAsm,
+  EVALUATION_ENEMY,
+  makeEvaluationEnemy,
+} from '@/modules/simulation/model/evaluationAssumptions'
+import { getTuneStrainMaxForTeam } from '@wuwacalc/core/engine/gameData/tuneStrain'
+import { combatScenarioId, teamMemberId } from '@wuwacalc/core/domain/entities/combatScenario'
+import referenceCalibration from './fixtures/referenceCalibration.json?raw'
+import { computeShowcaseAnalysis, type ShowcaseAnalysisProgress } from '@wuwacalc/core/engine/evaluation/showcaseAnalysis'
+import { computeShowcaseStats } from '@wuwacalc/core/engine/evaluation/showcaseStats'
+import { makeEchoMainStatProfileKey } from '@wuwacalc/core/engine/evaluation/echoMainStatProfile'
+import * as evaluationReport from '@wuwacalc/core/engine/evaluation/evaluation/report'
+
+function buildInvariantEchoes(subKey: string): Array<EchoInstance | null> {
+  // anchors should be reusable across different substat layouts, so this keeps
+  // cost and main-stat structure stable while swapping one rolled substat family
+  const spec: Array<[number, string]> = [
+    [4, 'critRate'],
+    [4, 'critDmg'],
+    [3, 'atkPercent'],
+    [1, 'atkPercent'],
+    [1, 'atkPercent'],
+  ]
+
+  return spec.map(([cost, mainKey], slot) => {
+    const definition = listChsByCos(cost)[0]
+    const mainVal = ECHO_MAIN_STATS[cost]?.[mainKey] ?? Object.values(ECHO_MAIN_STATS[cost] ?? {})[0] ?? 0
+
+    return {
+      uid: `cache-${cost}-${slot}`,
+      id: definition.id,
+      set: 0,
+      mainEcho: cost === 4 && slot === 0,
+      mainStats: {
+        primary: { key: mainKey, value: mainVal },
+        secondary: { ...ECHO_SIDE_STATS[cost] },
+      },
+      substats: { [subKey]: 9, atkPercent: 6 },
+    } as EchoInstance
+  })
+}
+
+function evaluationContextFor(seedId: string, echoes: Array<EchoInstance | null>): SuggestContext | null {
+  // evaluation anchors are built from suggestion context; the fixture therefore
+  // runs the same simulation path the app uses before entering scoring helpers
+  const enemy = makeEnemy()
+  const seed = listResSds().find((entry) => entry.id === seedId)
+  if (!seed) {
+    return null
+  }
+
+  const runtime = makeResRuntime(seed)
+  runtime.build.echoes = echoes
+  const simulation = runResSmlt(runtime, seed, enemy, makeRuntimeMap(runtime, {}), {})
+
+  return mkSuggVltnCt({
+    scenarioId: combatScenarioId('evaluation:test'),
+    memberId: teamMemberId(runtime.id),
+    runtime,
+    seed,
+    enemy,
+    runtimesById: {},
+    selectedTargets: {},
+    tgtFeatId: null,
+    rotationMode: false,
+  }, simulation)
+}
+
+function echoSlot(
+  id: string,
+  set: number,
+  mainEcho: boolean,
+  primary: EchoInstance['mainStats']['primary'],
+  secondary: EchoInstance['mainStats']['secondary'],
+  substats: EchoInstance['substats'] = {},
+): EchoInstance {
+  return {
+    uid: `evaluation-main-preserve-${id}-${mainEcho ? 'main' : 'slot'}`,
+    id,
+    set,
+    mainEcho,
+    mainStats: {
+      primary: { ...primary },
+      secondary: { ...secondary },
+    },
+    substats: { ...substats },
+  }
+}
+
+const norm = (value: unknown) => JSON.parse(
+  JSON.stringify(value, (key, entry) => (key === 'uid' ? undefined : entry)),
+)
+
+describe('evaluation scoring invariants', () => {
+  it('applies the ranked tier limits and fifth-ranked stat minimum to the supplied build', () => {
+    // wwcalc-current-resonator-1610-2026-09-24T01-56-29. The report always uses
+    // the default rotation; retain the supplied build, team, and combat state.
+    const profile = JSON.parse(referenceCalibration) as ResProf
+    const seed = getResSeedBy(profile.resonatorId)!
+    const runtime = applyEvaluationAsm(runtimeFromSnapshot(profile)!)
+    runtime.rotation = makeResRuntime(seed).rotation
+    const runtimesById = applyEvaluationMapAsm(makeRuntimeMap(runtime))
+    const enemy = makeEvaluationEnemy(getTuneStrainMaxForTeam(runtime))
+    const simulation = runResSmlt(runtime, seed, enemy, runtimesById, profile.runtime.routing.selectedTargetsByOwnerKey)
+    const report = rotationBuildEvaluationReport({
+      scenarioId: combatScenarioId('evaluation:reference-calibration'),
+      memberId: teamMemberId(runtime.id), runtime, simulation, enemy, runtimesById,
+    }, { sections: { rotationFeatures: false, upgradePaths: false, echoStatsTable: true } })!
+    expect(report).toBeTruthy()
+    // Pin the real build's score under the 16-line reference budget; its
+    // equipped damage is independent of the reference allocation.
+    expect(report.evaluation.percent * 100).toBeCloseTo(100.73, 2)
+    expect(report.evaluation.userDamage).toBeCloseTo(2128773.54, 0)
+    const reference = report.evaluation.builds.referenceBuild
+    const relevant = new Set(['atkPercent', 'atkFlat', 'critRate', 'critDmg', 'basicAtk', 'heavyAtk', 'energyRegen'])
+    expect(reference.statRows.reduce((sum, row) => sum + (relevant.has(row.key) ? row.substatCount : 0), 0)).toBe(16)
+    const values = reference.echoes.flatMap(echo => echo.equippedSubstats)
+    expect(values).toHaveLength(25)
+    expect(values.reduce((sum, stat) => sum + tierStepIncreases(getSbstStepP(stat.key), stat.value), 0)).toBe(32)
+    expect(values.filter(stat => stat.key === 'critRate').map(stat => stat.value)).toEqual([7.5, 7.5, 7.5, 7.5, 7.5])
+    expect(values.filter(stat => stat.key === 'critDmg').map(stat => stat.value)).toEqual([15, 15, 15, 15, 15])
+    expect(values.filter(stat => stat.key === 'atkFlat').map(stat => stat.value)).toEqual([60, 60])
+  }, 30_000)
+
+  it('charges non-damage filler, reserves total ER, and retains the no-Echo baseline', () => {
+    // Include ER mains so the target still requires substats after the search
+    // trades damage mains for ER. The reference must fund legal ER tiers.
+    const spec: Array<[number, string]> = [
+      [4, 'critRate'], [3, 'energyRegen'], [3, 'energyRegen'], [1, 'atkPercent'], [1, 'atkPercent'],
+    ]
+    const echoes = spec.map(([cost, main], index) => {
+      const definition = listChsByCos(cost).filter((echo) => echo.sets.includes(8))[index % 2]
+      if (!definition) throw new Error(`missing Moonlit fixture at cost ${cost}`)
+      return echoSlot(definition.id, 8, false,
+        { key: main, value: ECHO_MAIN_STATS[cost][main] }, { ...ECHO_SIDE_STATS[cost] },
+        { energyRegen: 9.2 })
+    })
+    const ctx = evaluationContextFor('1306', echoes)
+    if (!ctx) throw new Error('missing Augusta evaluation context')
+    const frame = makeEvaluationEchoFrame(ctx, echoes, mkSuggMainEc(ctx, echoes))
+    const resolved = resolveEvaluationStats(ctx, frame)
+    const target = evaluationErTarget(ctx, echoes)
+    expect(target).toBeCloseTo(resolved!.er, 8)
+    expect(target).toBeGreaterThan(ctx.sourceFinals.energyRegen + sumEncodedEnergyRegen(frame.stats, frame.comboIds))
+
+    const anchors = buildEvaluationAnchors(ctx, echoes)
+    if (!anchors) throw new Error('missing investment reference')
+    const subs = anchors.builds.referenceBuild.substats
+    const byKey = new Map(subs.map((entry) => [entry.key, entry]))
+    for (const row of subs) {
+      expect(row.count, row.key).toBeGreaterThanOrEqual(1)
+      expect(row.count, row.key).toBeLessThanOrEqual(5)
+      expect(row.effectiveCount, row.key).toBeCloseTo(row.count, 12)
+      expect(row.total, row.key).toBeCloseTo(row.count * row.rollValue, 10)
+    }
+    expect(subs.reduce((sum, row) => sum + row.count, 0)).toBe(25)
+    const er = byKey.get('energyRegen')
+    expect(er?.count).toBeGreaterThan(0)
+    expect(er?.count).toBeLessThanOrEqual(5)
+    expect(subs.every((row) => row.effectiveCount <= row.count + 1e-9)).toBe(true)
+    const report = assembleEvaluation(ctx, echoes, anchors)
+    expect(report.builds.active.statRows.find(row => row.key === 'energyRegen')!.substatCount).toBe(5)
+    for (const key of ['referenceBuild', 'maximumBuild'] as const) {
+      const build = report.builds[key]
+      const totalEr = build.overviewStats.secondaryStats.find((row) => row.key === 'energyRegen')!.total
+      const subEr = build.statRows.find((row) => row.key === 'energyRegen')!
+      if (key === 'referenceBuild') expect(totalEr).toBeGreaterThanOrEqual(target - 1e-4)
+      else expect(totalEr).toBeCloseTo(target, 3)
+      expect(subEr.substatCount).toBeLessThanOrEqual(5)
+      expect(subEr.substatTotal).toBeLessThanOrEqual(subEr.substatCount * 12.4 + 1e-4)
+    }
+    const referenceEchoes = anchors.builds.referenceBuild.echoes
+    let stepIncreases = 0
+    for (const echo of referenceEchoes) {
+      expect(Object.keys(echo.substats)).toHaveLength(5)
+      for (const [key, value] of Object.entries(echo.substats)) {
+        const tiers = getSbstStepP(key)
+        expect(tiers, key).toContain(value)
+        stepIncreases += tierStepIncreases(tiers, value)
+      }
+    }
+    expect(stepIncreases).toBeLessThanOrEqual(REFERENCE_STEP_MODEL.maxStepIncreases)
+    for (const row of subs) {
+      expect(referenceEchoes.reduce((sum, echo) => sum + (echo.substats[row.key] ?? 0), 0)).toBeCloseTo(row.total, 8)
+    }
+    const materialized = referenceEchoes.map((echo, index) => ({
+      ...echo, mainStats: { ...echo.mainStats, primary: anchors.builds.referenceBuild.primaryStats[index] },
+    }))
+    const materializedFrame = makeEvaluationEchoFrame(ctx, materialized, mkSuggMainEc(ctx, materialized))
+    expect(materializedFrame.score(materializedFrame.stats) / anchors.referenceDamage).toBeCloseTo(1, 6)
+    const mainsOnly = materialized.map(echo => ({ ...echo, substats: {} }))
+    const probeFrame = makeEvaluationEchoFrame(ctx, mainsOnly, mkSuggMainEc(ctx, mainsOnly))
+    const relevant = new Set(findUsefulStatImpacts(probeFrame, probeFrame.stats).map(stat => stat.key))
+    relevant.add('energyRegen')
+    expect(subs.reduce((sum, row) => sum + (relevant.has(row.key) ? row.count : 0), 0))
+      .toBeLessThanOrEqual(REFERENCE_STEP_MODEL.maxRelevantSubstats)
+    const empty = makeEvaluationEchoFrame(ctx, [], new Float32Array(MAIN_BUFF_LEN))
+    expect(anchors.builds.baselineBuild.echoes).toEqual([])
+    expect(anchors.baselineDamage).toBe(empty.score(empty.stats))
+
+    for (const id of ['1109', '1608']) {
+      expect(evaluationErTarget({ ...ctx, runtime: { ...ctx.runtime, id } }, echoes)).toBe(0)
+    }
+  }, 30000)
+
+  it('includes self main-Echo ER in the target and anchor cache identity', () => {
+    const echoes = buildInvariantEchoes('critDmg').map((echo) => echo ? { ...echo, mainEcho: false } : null)
+    echoes[0] = echoSlot('6000190', 25, true,
+      { key: 'critRate', value: 22 }, { ...ECHO_SIDE_STATS[4] })
+    const withoutMain = echoes.map((echo, index) => echo ? { ...echo, mainEcho: index === 1 } : null)
+    const ctx = evaluationContextFor('1306', echoes)
+    if (!ctx) throw new Error('missing Augusta evaluation context')
+    expect(evaluationErTarget(ctx, echoes) - evaluationErTarget(ctx, withoutMain)).toBeCloseTo(10, 6)
+    expect(preservedMainEchoFor(echoes)).toBeNull()
+    const runtime = { ...ctx.runtime, build: { ...ctx.runtime.build, echoes } }
+    const other = { ...runtime, build: { ...runtime.build, echoes: withoutMain } }
+    expect(evaluationAnchorCacheKey(ctx, runtime, makeEnemy()))
+      .not.toBe(evaluationAnchorCacheKey(ctx, other, makeEnemy()))
+  })
+
+  it('keeps prepared target and weighted rotation scores exact across repeated stat trials', () => {
+    for (const seedId of ['1311', '1506', '1212', '1209', '1505', '1306']) {
+      const echoes = buildInvariantEchoes('energyRegen').filter((echo): echo is EchoInstance => echo != null)
+      const direct = evaluationContextFor(seedId, echoes)
+      if (!direct || direct.mode !== 'target') throw new Error(`missing target context for ${seedId}`)
+      const contexts = new Float32Array(CTX_FLOATS * 4)
+      const packed = new Uint32Array(contexts.buffer)
+      for (let index = 0; index < 4; index += 1) {
+        contexts.set(direct.pckdCtx, index * CTX_FLOATS)
+        contexts[index * CTX_FLOATS + MV] *= index + 1
+        // Distinct skill/runtime masks must not share conditional set effects.
+        if (index > 0) {
+          packed[index * CTX_FLOATS + SKILL_ID] = (packed[index * CTX_FLOATS + SKILL_ID] & ~0x7fff) | (1 << (index === 1 ? 6 : 1))
+          packed[index * CTX_FLOATS + SET_MASK] = index === 3 ? 1 : 0
+        }
+      }
+      const rotation: SuggestContext = {
+        ...direct,
+        mode: 'rotation',
+        sklls: [direct.skll],
+        resIds: [seedId],
+        contexts,
+        contextStride: CTX_FLOATS,
+        contextWeight: new Float32Array([0.25, 1.5, 0]),
+        contextCount: 4,
+        displayContext: direct.pckdCtx,
+      }
+      for (const ctx of [direct, rotation]) {
+        for (const set of [0, 14, 22, 29, 33]) {
+          const frameEchoes = echoes.map((echo) => ({ ...echo, set }))
+          const frame = makeEvaluationEchoFrame(ctx, frameEchoes, mkSuggMainEc(ctx, frameEchoes))
+          const original = frame.stats.slice()
+          const scratch = frame.stats.slice()
+          const expected = (stats: Float32Array, sets = frame.sets) => scoreStats(
+            ctx, stats, sets, frame.kinds, frame.comboIds, frame.mainEchoBuffs, frame.mainIndex,
+          )
+          for (const factor of [2.25, 0, 1, 0.375]) {
+            for (let index = 0; index < scratch.length; index += 1) scratch[index] = original[index] * factor
+            expect(frame.score(scratch)).toBe(expected(scratch))
+            expect(frame.score(original)).toBe(expected(original))
+          }
+          const firstLaneScore = frame.prepareFirstLaneScore(original)
+          for (const factor of [2.25, 0, 1, 0.375]) {
+            scratch.set(original)
+            for (let index = 0; index < ECHO_STAT_STRIDE; index += 1) scratch[index] *= factor
+            expect(firstLaneScore(scratch)).toBe(frame.score(scratch))
+          }
+          // Alternate set buffers are live inputs, not part of the fixed frame.
+          const alternateSets = frame.sets.slice()
+          alternateSets.fill(1)
+          expect(frame.score(scratch, alternateSets)).toBe(expected(scratch, alternateSets))
+          alternateSets.fill(33)
+          expect(frame.score(scratch, alternateSets)).toBe(expected(scratch, alternateSets))
+          expect(frame.stats).toEqual(original)
+        }
+        const empty = makeEvaluationEchoFrame(ctx, [], mkSuggMainEc(ctx, []))
+        expect(empty.score(empty.stats)).toBe(scoreStats(
+          ctx, empty.stats, empty.sets, empty.kinds, empty.comboIds, empty.mainEchoBuffs, empty.mainIndex,
+        ))
+      }
+    }
+  })
+
+  it('produces the same report from sequence-only worker simulation input', () => {
+    const seed = getResSeedBy('1212')!
+    const runtime = applyEvaluationAsm(makeResRuntime(seed))
+    const enemy = EVALUATION_ENEMY
+    const runtimesById = makeRuntimeMap(runtime)
+    const simulation = runResSmlt(runtime, seed, enemy, runtimesById, {})
+    const input = {
+      scenarioId: combatScenarioId('evaluation:compact'),
+      memberId: teamMemberId(runtime.id),
+      runtime,
+      enemy,
+      runtimesById,
+    }
+    const complete = rotationBuildEvaluationReport({ ...input, simulation })
+    const compact = rotationBuildEvaluationReport({
+      ...input,
+      simulation: { rotation: { sequence: { entries: simulation.rotation.sequence.entries } } },
+      runtimesById: {},
+    })
+
+    expect(compact).toEqual(complete)
+    const score = rotationBuildEvaluationScore({ ...input, simulation })
+    expect(score).toEqual(complete ? { userDamage: complete.evaluation.userDamage, percent: complete.evaluation.percent } : null)
+    expect(prepareRotationBuildScore(input)?.calculatePercent() ?? null).toBe(complete?.evaluation.percent ?? null)
+    expect(prepareRotationBuildScore(input)?.calculateSummary()).toEqual(complete ? {
+      percent: complete.evaluation.percent,
+      userDamage: complete.evaluation.userDamage,
+      baselineDamage: complete.evaluation.baselineDamage,
+      referenceDamage: complete.evaluation.referenceDamage,
+      maximumDamage: complete.evaluation.maximumDamage,
+    } : null)
+  }, 60_000)
+
+  it('matches Showcase summary stats and score while keeping live Echo context separate', async () => {
+    const seed = getResSeedBy('1506')!
+    const live = makeResRuntime(seed)
+    live.base.level = 40
+    live.build.echoes = buildInvariantEchoes('critDmg')
+    const runtime = applyEvaluationAsm(live)
+    const enemy = EVALUATION_ENEMY
+    const runtimesById = makeRuntimeMap(runtime)
+    const simulation = runResSmlt(runtime, seed, enemy, runtimesById, {})
+    const identity = { scenarioId: combatScenarioId('showcase:parity'), memberId: teamMemberId(live.id) }
+    const expected = rotationBuildEvaluationReport({ ...identity, runtime, enemy, runtimesById, simulation })!
+    const liveContext = { runtime: live, runtimesById: makeRuntimeMap(live), enemy: makeEnemy(), selectedTargets: {} }
+    liveContext.enemy.level = 70
+    const evaluation = { runtime, enemy, runtimesById, selectedTargets: {} }
+    expect(computeShowcaseStats(evaluation)).toEqual(simulation.finalStats)
+    const progress: ShowcaseAnalysisProgress[] = []
+    const result = await computeShowcaseAnalysis({
+      ...identity,
+      evaluation,
+      live: liveContext,
+    }, undefined, (value) => progress.push(value))
+    expect(progress).toEqual([
+      { stage: 'damage', userDamage: expected.evaluation.userDamage },
+      { stage: 'score', percent: expected.evaluation.percent },
+    ])
+    expect(result.percent).toBe(expected.evaluation.percent)
+    expect(result.userDamage).toBe(expected.evaluation.userDamage)
+    expect(result.echoProfile?.cacheKey).toBe(makeEchoMainStatProfileKey({ ...identity, ...liveContext, seed }))
+    expect(Object.keys(result).sort()).toEqual(['echoProfile', 'percent', 'userDamage'])
+    expect(JSON.stringify(result).length).toBeLessThan(JSON.stringify(expected).length / 4)
+  }, 60_000)
+
+  it('publishes damage while anchor hydration is blocked and preserves it when scoring is cancelled', async () => {
+    const seed = getResSeedBy('1506')!
+    const runtime = applyEvaluationAsm(makeResRuntime(seed))
+    const context = { runtime, enemy: EVALUATION_ENEMY, runtimesById: makeRuntimeMap(runtime), selectedTargets: {} }
+    let release!: () => void
+    const hydration = vi.spyOn(evaluationReport, 'ensureAnchorStoreHydrated')
+      .mockImplementation(() => new Promise<void>((resolve) => { release = resolve }))
+    const progress: ShowcaseAnalysisProgress[] = []
+    let cancelled = false
+    try {
+      const pending = computeShowcaseAnalysis({
+        scenarioId: combatScenarioId('showcase:independent-damage'), memberId: teamMemberId(runtime.id),
+        evaluation: context, live: context,
+      }, () => { if (cancelled) throw new Error('cancelled after damage') }, (value) => progress.push(value))
+      expect(hydration).toHaveBeenCalledOnce()
+      expect(progress).toEqual([{ stage: 'damage', userDamage: expect.any(Number) }])
+      expect((progress[0] as { userDamage: number }).userDamage).toBeGreaterThan(0)
+      cancelled = true
+      release()
+      await expect(pending).rejects.toThrow('cancelled after damage')
+      expect(progress).toHaveLength(1)
+    } finally {
+      release?.()
+      hydration.mockRestore()
+    }
+  })
+
+  it('keeps ordinary Echo stat edits out of the anchor cache key', () => {
+    const seed = getResSeedBy('1212')
+    if (!seed) throw new Error('missing Jingran seed')
+
+    const baseEchoes = buildInvariantEchoes('hpPercent')
+    const editedEchoes = buildInvariantEchoes('critDmg')
+    const context = evaluationContextFor(seed.id, baseEchoes)
+    if (!context) throw new Error('missing Jingran evaluation context')
+
+    const baseRuntime = makeResRuntime(seed)
+    baseRuntime.build.echoes = baseEchoes
+    const editedRuntime = makeResRuntime(seed)
+    editedRuntime.build.echoes = editedEchoes
+
+    const enemy = makeEnemy()
+    expect(evaluationAnchorCacheKey(context, baseRuntime, enemy))
+      .toBe(evaluationAnchorCacheKey(context, editedRuntime, enemy))
+  })
+
+  it('uses conversion-aware evaluator totals in evaluation overview stats', () => {
+    const hpEchoes = buildInvariantEchoes('hpPercent')
+    const nonHpEchoes = buildInvariantEchoes('critDmg')
+    const context = evaluationContextFor('1212', hpEchoes)
+    if (!context) throw new Error('missing Jingran evaluation context')
+
+    const overviewFor = (echoes: Array<EchoInstance | null>) => {
+      const concrete = echoes.filter((echo): echo is EchoInstance => echo != null)
+      const frame = makeEvaluationEchoFrame(context, concrete, mkSuggMainEc(context, echoes))
+      const build = {
+        stats: frame.stats,
+        sets: frame.sets,
+        kinds: frame.kinds,
+        comboIds: frame.comboIds,
+        mainEchoBuffs: frame.mainEchoBuffs,
+        mainIndex: frame.mainIndex,
+      }
+      return {
+        overview: makeEvaluationOverviewStats({
+          ctx: context,
+          ...build,
+          setRows: frame.sets,
+        }),
+        resolved: resolveEvaluationStats(context, build),
+      }
+    }
+
+    const withoutHp = overviewFor(nonHpEchoes)
+    const withHp = overviewFor(hpEchoes)
+    const withoutHpAtk = withoutHp.overview.mainStats.find((row) => row.key === 'atk')?.total
+    const withHpAtk = withHp.overview.mainStats.find((row) => row.key === 'atk')?.total
+
+    expect(withoutHp.resolved).not.toBeNull()
+    expect(withHp.resolved).not.toBeNull()
+    expect(withoutHpAtk).toBeCloseTo(withoutHp.resolved?.atk ?? 0, 5)
+    expect(withHpAtk).toBeCloseTo(withHp.resolved?.atk ?? 0, 5)
+    expect(withHpAtk).toBeGreaterThan(withoutHpAtk ?? Number.POSITIVE_INFINITY)
+  })
+
+  it('builds compact deterministic request keys', () => {
+    const left = makeEvaluationKey({ runtime: { id: 'fixture-a', level: 90 }, values: new Float32Array([1, 2, 3]) })
+    const right = makeEvaluationKey({ values: new Float32Array([1, 2, 3]), runtime: { level: 90, id: 'fixture-a' } })
+
+    expect(left).toBe(right)
+    expect(left.length).toBeLessThan(40)
+    expect(makeEvaluationKey({ id: 'fixture-a', level: 90 })).not.toBe(makeEvaluationKey({ id: 'fixture-a', level: 80 }))
+  })
+
+  it('hashes typed-array views by their visible window rather than the shared backing buffer', () => {
+    const shared = new Uint8Array([1, 2, 3, 4]).buffer
+
+    expect(
+      makeEvaluationKey({ values: new Uint8Array(shared, 0, 3) }),
+    ).toBe(
+      makeEvaluationKey({ values: new Uint8Array([1, 2, 3]) }),
+    )
+    expect(
+      makeEvaluationKey({ values: new Uint8Array(shared, 0, 3) }),
+    ).not.toBe(
+      makeEvaluationKey({ values: new Uint8Array(shared, 1, 3) }),
+    )
+  })
+
+  it('remains deterministic for circular object graphs', () => {
+    const left: Record<string, unknown> = { id: 'fixture-a' }
+    left.self = left
+
+    const right: Record<string, unknown> = {}
+    right.self = right
+    right.id = 'fixture-a'
+
+    expect(makeEvaluationKey(left)).toBe(makeEvaluationKey(right))
+  })
+
+  it('reuses one build anchor set to score another build without changing the result', () => {
+    // anchor generation is expensive; this proves cached anchors can be reused
+    // when the target context is the same but equipped substats differ
+    const seedIds = listResSds().slice(0, 5).map((seed) => seed.id)
+    let checked = 0
+
+    for (const seedId of seedIds) {
+      const buildA = buildInvariantEchoes('critRate')
+      const buildB = buildInvariantEchoes('critDmg')
+      const ctxA = evaluationContextFor(seedId, buildA)
+      const ctxB = evaluationContextFor(seedId, buildB)
+      if (!ctxA || !ctxB) {
+        continue
+      }
+
+      const anchorsA = buildEvaluationAnchors(ctxA, buildA)
+      const full = buildEvaluation(ctxB, buildB)
+      if (!anchorsA || !full) {
+        continue
+      }
+      checked += 1
+
+      const cached = assembleEvaluation(ctxB, buildB, anchorsA)
+      const plainArrayAnchors = structuredClone(anchorsA)
+      for (const anchor of Object.values(plainArrayAnchors.builds)) {
+        // Older compact cache entries used regular arrays for this vector.
+        anchor.stats = Array.from(anchor.stats) as unknown as Float32Array
+      }
+      const cachedFromArrays = assembleEvaluation(ctxB, buildB, plainArrayAnchors)
+
+      expect(cached.baselineDamage).toBe(full.baselineDamage)
+      expect(norm(cachedFromArrays)).toEqual(norm(cached))
+      expect(cached.referenceDamage).toBe(full.referenceDamage)
+      expect(cached.maximumDamage).toBe(full.maximumDamage)
+      expect(norm(cached.builds.baselineBuild)).toEqual(norm(full.builds.baselineBuild))
+      expect(norm(cached.builds.referenceBuild)).toEqual(norm(full.builds.referenceBuild))
+      expect(norm(cached.builds.maximumBuild)).toEqual(norm(full.builds.maximumBuild))
+      expect(cached.userDamage).toBe(full.userDamage)
+      expect(cached.percent).toBe(full.percent)
+      expect(cached.grade).toBe(full.grade)
+      expect(norm(cached.builds.active)).toEqual(norm(full.builds.active))
+    }
+
+    expect(checked).toBeGreaterThan(0)
+  }, 120000)
+
+
+  it('keeps team-buffed Brant maximum-roll builds within the generated 200% anchor', () => {
+    const seed = getResSeedBy('1206')
+    if (!seed) throw new Error('missing Brant seed')
+    const lupaSeed = getResSeedBy('1207')
+    const mornyeSeed = getResSeedBy('1209')
+    if (!lupaSeed || !mornyeSeed) throw new Error('missing Brant teammate seed')
+
+    let runtime = maxResRt(
+      makeResRuntime(seed),
+      getResDtlsBy()[seed.id],
+      { targetSequence: 6 },
+    )
+    const previousWeaponId = runtime.build.weapon.id
+    runtime = {
+      ...runtime,
+      build: {
+        ...runtime.build,
+        weapon: catWpnAtk({
+          id: '21020036',
+          level: 90,
+          rank: 5,
+        }),
+      },
+    }
+    runtime = applyEvaluationAsm(initWpnStts(runtime, {
+      weaponId: runtime.build.weapon.id,
+      prevWpnId: previousWeaponId,
+      maxed: true,
+    }))
+
+    const maxSubstats = {
+      energyRegen: 12.4,
+      critDmg: 21,
+      critRate: 10.5,
+      atkPercent: 11.6,
+      basicAtk: 11.6,
+    }
+    runtime.build.echoes = [
+      echoSlot('6000084', 14, true, { key: 'critDmg', value: 44 }, { key: 'atkFlat', value: 150 }, maxSubstats),
+      echoSlot('6000074', 14, false, { key: 'energyRegen', value: 32 }, { key: 'atkFlat', value: 100 }, maxSubstats),
+      echoSlot('6000079', 14, false, { key: 'energyRegen', value: 32 }, { key: 'atkFlat', value: 100 }, maxSubstats),
+      echoSlot('6000064', 14, false, { key: 'atkPercent', value: 18 }, { key: 'hpFlat', value: 2280 }, maxSubstats),
+      echoSlot('6000070', 14, false, { key: 'atkPercent', value: 18 }, { key: 'hpFlat', value: 2280 }, maxSubstats),
+    ]
+
+    const lupa = makeTeamMember(lupaSeed)
+    lupa.build.weapon = { id: '21010036', rank: 1, baseAtk: 587.5 }
+    const mornye = makeTeamMember(mornyeSeed)
+    mornye.build.weapon = { id: '21010066', rank: 1, baseAtk: 412.5 }
+    runtime.build.team = ['1206', '1207', '1209']
+    runtime.teamRuntimes = [lupa, mornye]
+    Object.assign(runtime.state.controls, {
+      'team:1207:resonator:1207:wildfire_banner:active': true,
+      'team:1207:team:1207:pack_hunt:active': true,
+      'team:1207:team:1207:pack_hunt:stacks': '2',
+      'team:1207:team:1207:stand_by_me_warrior:active': true,
+      'team:1207:inherent:1207:lvl70:stacks': '3',
+      'team:1207:weapon:21010036:passive:ult_buff': true,
+      'team:1207:weapon:21010036:passive:fusion_buff': true,
+      'team:1209:resonator:1209:interfered_marker:active': true,
+      'team:1209:resonator:1209:recursion:active': true,
+      'team:1209:resonator:1209:decoupling:active': true,
+      'team:1209:team:1209:high_syntony_field:active': true,
+      'team:1209:weapon:21010066:passive:active': true,
+    })
+
+    expect(runtime.state.controls['resonator:1206:my_moment:active']).toBe(true)
+
+    const runtimesById = makeRuntimeMap(runtime)
+    const enemy = makeEvaluationEnemy(getTuneStrainMaxForTeam(runtime))
+    const simulation = runResSmlt(runtime, seed, enemy, runtimesById, {})
+    const report = rotationBuildEvaluationReport({
+      scenarioId: combatScenarioId('evaluation:test'),
+      memberId: teamMemberId(runtime.id),
+      runtime,
+      simulation,
+      enemy,
+      runtimesById,
+    })
+    const evaluation = report?.evaluation
+    if (!evaluation) throw new Error('missing Brant evaluation')
+    const rotationDamage = sumOptRotDmg(
+      simulation.rotation.sequence.entries,
+      runtime.id,
+    )
+
+    // The 100-to-200 damage interval scales Float32 error in the percentage.
+    // The damage-space ceiling below remains the primary engine invariant.
+    expect(evaluation.percent * 100).toBeLessThanOrEqual(200.0001)
+    expect(simulation.finalStats.attribute.all.dmgBonus).toBeGreaterThanOrEqual(30)
+    expect(Math.abs(rotationDamage - evaluation.userDamage))
+      .toBeLessThanOrEqual(Math.max(1, rotationDamage * 1e-4))
+    expect(evaluation.userDamage).toBeLessThanOrEqual(
+      evaluation.maximumDamage + Math.max(1, evaluation.maximumDamage * 1e-7),
+    )
+    expect(evaluation.builds.maximumBuild.echoes.map((echo) => echo.primary.key))
+      .toContain('atkPercent')
+    expect(evaluation.builds.maximumBuild.statRows.find((row) => row.key === 'basicAtk')?.substatCount)
+      .toBe(5)
+    expect(evaluation.builds.maximumBuild.statRows.reduce((total, row) => total + row.substatCount, 0))
+      .toBeCloseTo(25, 8)
+  }, 120000)
+
+  it('does not lock a self-only non-4-cost main echo into generated evaluation anchors', () => {
+    const seed = getResSeedBy('1506')
+    if (!seed) throw new Error('missing Phoebe seed')
+
+    const runtime = applyEvaluationAsm(makeResRuntime(seed))
+    runtime.build.echoes = [
+      echoSlot('6000104', 11, true, { key: 'spectro', value: 30 }, { key: 'atkFlat', value: 100 }),
+      echoSlot('6000071', 11, false, { key: 'atkPercent', value: 18 }, { key: 'hpFlat', value: 2280 }),
+      echoSlot('6000093', 11, false, { key: 'atkPercent', value: 18 }, { key: 'hpFlat', value: 2280 }),
+      echoSlot('6000092', 11, false, { key: 'critDmg', value: 44 }, { key: 'atkFlat', value: 150 }),
+      echoSlot('6000096', 11, false, { key: 'spectro', value: 30 }, { key: 'atkFlat', value: 100 }),
+    ]
+    expect(preservedMainEchoFor(runtime.build.echoes)).toBeNull()
+
+    const runtimesById = makeRuntimeMap(runtime)
+    const simulation = runResSmlt(runtime, seed, EVALUATION_ENEMY, runtimesById, {})
+    const report = rotationBuildEvaluationReport({
+      scenarioId: combatScenarioId('evaluation:test'),
+      memberId: teamMemberId(runtime.id),
+      runtime,
+      simulation,
+      enemy: EVALUATION_ENEMY,
+      runtimesById,
+    })
+
+    expect(report?.evaluation.builds.referenceBuild.echoes.find((echo) => echo.mainEcho)?.echoId).toBe('6000104')
+    // Corrected legal-substat ranking makes Capitaneus the independent maximum
+    // winner too; `preservedMainEchoFor` remaining null is the no-lock contract.
+    expect(report?.evaluation.builds.maximumBuild.echoes.find((echo) => echo.mainEcho)?.echoId).toBe('6000104')
+  }, 120000)
+})

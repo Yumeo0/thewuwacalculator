@@ -3,7 +3,7 @@
   Description: Builds and parses saved-rotation share documents with compatibility metadata.
 */
 
-import type { SavedRotation } from '@/domain/entities/inventoryStorage.ts'
+import type { SavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import { createRemoteShare, encShareLink, encShareText } from '@/shared/lib/shareCodec.ts'
 
 export function slugifyRotationFileName(value: string): string {

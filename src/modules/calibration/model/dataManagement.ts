@@ -4,23 +4,23 @@
                envelopes, and merges selected domains into persisted snapshots.
 */
 
-import type { HydratedAppState, LegacyProfileMap, PersistedState } from '@/domain/entities/appState'
-import type { ResProf } from '@/domain/entities/profile'
-import type { CombatSession } from '@/domain/entities/session'
-import type { SuggestState } from '@/domain/entities/suggestions'
-import { initAppState, makeScenarioFromProfiles, makeSuggest } from '@/engine/runtime/defaults'
+import type { HydratedAppState, LegacyProfileMap, PersistedState } from '@wuwacalc/core/domain/entities/appState'
+import type { ResProf } from '@wuwacalc/core/domain/entities/profile'
+import type { CombatSession } from '@wuwacalc/core/domain/entities/session'
+import type { SuggestState } from '@wuwacalc/core/domain/entities/suggestions'
+import { initAppState, makeScenarioFromProfiles, makeSuggest } from '@wuwacalc/core/engine/runtime/defaults'
 import {
   addScenario,
   replaceScenario,
   scenarioIdForContextResonator,
   selectScenario,
   selectedCombatScenario,
-} from '@/domain/entities/scenarioLibrary'
-import { combatScenarioId, contextScenarioMember } from '@/domain/entities/combatScenario'
+} from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { combatScenarioId, contextScenarioMember } from '@wuwacalc/core/domain/entities/combatScenario'
 import type { AppStore } from '@/application/state'
 import { selectPersisted } from '@/application/state/serialization'
 import { parsePersisted } from '@/application/persistence/appStorage'
-import { projectScenarioWorkspaceProfiles } from '@/engine/runtime/scenarioRuntime'
+import { projectScenarioWorkspaceProfiles } from '@wuwacalc/core/engine/runtime/scenarioRuntime'
 
 export type DataXprtKind =
   | 'current-resonator'

@@ -19,7 +19,7 @@ import type {
 import { ColumnRack } from '@/modules/simulation/surfaces/rotation/program-editor/components/ColumnRack.tsx'
 import { useColumnCeiling } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/useColumnCeiling'
 import { useAppStore } from '@/application/state'
-import type { RotationDamageBasis } from '@/domain/entities/rotationEditorPreferences.ts'
+import type { RotationDamageBasis } from '@wuwacalc/core/domain/entities/rotationEditorPreferences.ts'
 import { useMobileUi } from '@/shared/responsive/mobileUi'
 import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'

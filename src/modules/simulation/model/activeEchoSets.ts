@@ -4,9 +4,9 @@
                is satisfied by the current loadout.
 */
 
-import type { EchoInstance } from '@/domain/entities/runtime.ts'
-import { getEchoSetDe } from '@/data/gameData/echoSets/effects.ts'
-import { countEchoSets } from '@/engine/pipeline/buildCombatContext.ts'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
+import { countEchoSets } from '@wuwacalc/core/engine/pipeline/buildCombatContext.ts'
 
 export interface ActiveEchoSet {
   setId: number

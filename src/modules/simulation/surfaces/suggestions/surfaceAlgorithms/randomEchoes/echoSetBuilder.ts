@@ -4,8 +4,8 @@
                assigning fixed secondary stats and distinct sampled substats.
 */
 
-import { ECHO_MAIN_STATS, ECHO_SIDE_STATS, SUBSTAT_KEYS } from '@/data/gameData/catalog/echoStats'
-import type { OptStatWeight } from '@/engine/optimizer/search/filtering.ts'
+import { ECHO_MAIN_STATS, ECHO_SIDE_STATS, SUBSTAT_KEYS } from '@wuwacalc/core/data/gameData/catalog/echoStats'
+import type { OptStatWeight } from '@wuwacalc/core/engine/optimizer/search/filtering.ts'
 import { getRandSbst, randSubVl } from './substats'
 
 // Zero stays outside the authored set-id range until a plan assigns a real set.

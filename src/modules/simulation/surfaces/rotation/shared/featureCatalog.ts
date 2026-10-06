@@ -3,8 +3,8 @@
   Description: resolves rotation feature nodes back to catalog skill metadata.
 */
 
-import type { DataSrcRef, FeatDef, RotationNode } from '@/domain/gameData/contracts.ts'
-import type { SkillDef } from '@/domain/entities/stats.ts'
+import type { DataSrcRef, FeatDef, RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import type { SkillDef } from '@wuwacalc/core/domain/entities/stats.ts'
 import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
 import {
   listFeatsFor,
@@ -12,7 +12,7 @@ import {
   listResSkll,
   listSkillsFor,
   listSources,
-} from '@/data/catalog/gameDataService.ts'
+} from '@wuwacalc/core/data/catalog/gameDataService.ts'
 
 interface Features {
   source: DataSrcRef

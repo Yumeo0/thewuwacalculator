@@ -5,14 +5,14 @@
                access.
 */
 
-import type { SuggestState } from '@/domain/entities/suggestions'
-import type { ResonatorId } from '@/domain/entities/runtime'
+import type { SuggestState } from '@wuwacalc/core/domain/entities/suggestions'
+import type { ResonatorId } from '@wuwacalc/core/domain/entities/runtime'
 import {
   makeAppState,
   makeSuggest,
-} from '@/engine/runtime/defaults'
+} from '@wuwacalc/core/engine/runtime/defaults'
 import { loadPrssAppS } from '@/application/persistence/storage'
-import type { HydratedAppState } from '@/domain/entities/appState'
+import type { HydratedAppState } from '@wuwacalc/core/domain/entities/appState'
 import type { AppStore } from './store'
 
 export function mkDefMkName(resName: string, xstnCnt: number): string {

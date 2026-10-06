@@ -4,13 +4,13 @@
                membership checks without rescanning unchanged libraries.
 */
 
-import type { EchoInstance } from '@/domain/entities/runtime'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
 import {
   getBuildSig,
   getEchoSignature,
   type SavedArtifactLibrary,
   type SavedBuildSnap,
-} from '@/domain/entities/inventoryStorage'
+} from '@wuwacalc/core/domain/entities/inventoryStorage'
 
 const echoIndexes = new WeakMap<SavedArtifactLibrary['echoes'], ReadonlySet<string>>()
 const buildIndexes = new WeakMap<SavedArtifactLibrary['builds'], ReadonlySet<string>>()

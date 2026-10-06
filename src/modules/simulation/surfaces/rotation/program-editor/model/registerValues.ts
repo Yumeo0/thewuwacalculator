@@ -3,7 +3,7 @@
   Description: Projects execution rows into formatted register values and grouped stat columns.
 */
 
-import type { RtChng, RuntimeValue, SourceState } from '@/domain/gameData/contracts.ts'
+import type { RtChng, RuntimeValue, SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
 
 /**
  * Form used by edit controls and authored write fields.

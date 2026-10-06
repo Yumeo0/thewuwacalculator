@@ -4,10 +4,10 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import type { ResSeed } from '@/domain/entities/runtime.ts'
-import type { FeatureResult, FeatDef, RotationNode } from '@/domain/gameData/contracts.ts'
-import type { SkillDef } from '@/domain/entities/stats.ts'
-import { makeEnemy, makeResRuntime } from '@/engine/runtime/defaults.ts'
+import type { ResSeed } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { FeatureResult, FeatDef, RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import type { SkillDef } from '@wuwacalc/core/domain/entities/stats.ts'
+import { makeEnemy, makeResRuntime } from '@wuwacalc/core/engine/runtime/defaults.ts'
 import {
   buildRun,
   buildRotationSummary,
@@ -21,10 +21,10 @@ import {
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/cleanup.ts'
 import type { RotationMember } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
 import { makeFeatureMeta } from '@/modules/simulation/surfaces/rotation/shared/catalog.ts'
-import type { InspectEntry } from '@/engine/rotation/execute.ts'
-import { mkPrepWork } from '@/engine/pipeline/preparedWorkspace.ts'
+import type { InspectEntry } from '@wuwacalc/core/engine/rotation/execute.ts'
+import { mkPrepWork } from '@wuwacalc/core/engine/pipeline/preparedWorkspace.ts'
 import { ROT_LOOP_COLORS } from '@/modules/simulation/surfaces/rotation/shared/loopMeta.ts'
-import { ACTIVE_RESONATOR_PATH } from '@/domain/gameData/rotationPaths.ts'
+import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 
 const seed: ResSeed = {
   id: 'rotation-editor-test',

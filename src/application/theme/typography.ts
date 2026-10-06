@@ -12,7 +12,7 @@ import {
   WUWA_FONT_NAME,
   WUWA_FONT_STACK,
   type ResolvedBodyFont,
-} from '@/domain/entities/appearance.ts'
+} from '@wuwacalc/core/domain/entities/appearance.ts'
 
 // Families used by shared chrome stay together; customization-only families
 // are requested when Showcase actually needs its typography controls.

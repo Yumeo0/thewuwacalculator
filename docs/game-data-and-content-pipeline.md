@@ -22,7 +22,7 @@ These files are part of the deployed app contract. Core routes load the smaller 
 
 Primary file:
 
-- [src/data/gameData/index.ts](../src/data/gameData/index.ts)
+- [packages/core/src/data/gameData/index.ts](../packages/core/src/data/gameData/index.ts)
 
 Initialization sequence:
 

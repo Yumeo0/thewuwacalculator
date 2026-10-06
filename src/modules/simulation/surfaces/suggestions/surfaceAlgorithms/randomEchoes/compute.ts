@@ -4,15 +4,15 @@
                and retains the strongest unique results.
 */
 
-import type { EchoInstance } from '@/domain/entities/runtime'
-import { makeEchoUid } from '@/domain/entities/runtime'
-import type { RandGnrtSetP } from '@/domain/entities/suggestions'
-import type { EchoDef } from '@/domain/entities/catalog'
-import { getEchoById, listChsByCos } from '@/data/catalog/echoCatalogService'
-import { evalSuggChs } from '@/engine/suggestions/shared'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
+import { makeEchoUid } from '@wuwacalc/core/domain/entities/runtime'
+import type { RandGnrtSetP } from '@wuwacalc/core/domain/entities/suggestions'
+import type { EchoDef } from '@wuwacalc/core/domain/entities/catalog'
+import { getEchoById, listChsByCos } from '@wuwacalc/core/data/catalog/echoCatalogService'
+import { evalSuggChs } from '@wuwacalc/core/engine/suggestions/shared'
 import type { RandomEchoEntry, RandomEchoPrep } from './types'
-import { getDefMainSt } from '@/engine/suggestions/mainStat-suggestion/ctx-builder'
-import type { OptStatWeight } from '@/engine/optimizer/search/filtering.ts'
+import { getDefMainSt } from '@wuwacalc/core/engine/suggestions/mainStat-suggestion/ctx-builder'
+import type { OptStatWeight } from '@wuwacalc/core/engine/optimizer/search/filtering.ts'
 import {
   makeRandomEchoCostPlans,
   mkMainStatCo,

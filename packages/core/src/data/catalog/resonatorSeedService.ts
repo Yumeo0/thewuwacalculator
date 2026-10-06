@@ -1,0 +1,91 @@
+/*
+  Author: Runor Ewhro
+  Description: Provides resonator seed catalog helpers and resolves base
+               stats by level using exact values or interpolation.
+*/
+
+import { getResCat, getResCatByI } from '@core/data/gameData/resonators/resonatorDataStore'
+import type { ResSeed } from '@core/domain/entities/runtime'
+import type { ResBaseStats } from '@core/domain/entities/stats'
+import {ATTR_COLORS} from "@core/domain/gameData/attributeDisplay";
+
+// proxy so existing callers doing resonatorSeedsById[id] still work
+export const resSdsById: Record<string, ResSeed> = new Proxy(
+  {} as Record<string, ResSeed>,
+  {
+    get(_, key: string) {
+      return getResCatByI()[key]
+    },
+  },
+)
+
+// list all resonator seeds
+export function listResSds(): ResSeed[] {
+  return getResCat()
+}
+
+// get one resonator seed by id
+export function getResSeedBy(resonatorId: string): ResSeed | null {
+  return getResCatByI()[resonatorId] ?? null
+}
+
+// resolve base stats at a given level using exact values or interpolation
+export function resResBaseSt(
+    resonator: Pick<ResSeed, 'baseStats' | 'baseStatsByLevel'>,
+    level: number,
+): ResBaseStats {
+  const resolvedLevel = Math.max(1, Math.min(90, Math.round(level)))
+  const exact = resonator.baseStatsByLevel?.[resolvedLevel]
+
+  if (exact) {
+    return {
+      ...resonator.baseStats,
+      ...exact,
+    }
+  }
+
+  const vlblLvls = Object.keys(resonator.baseStatsByLevel ?? {})
+      .map(Number)
+      .filter((value) => Number.isFinite(value))
+      .sort((a, b) => a - b)
+
+  if (vlblLvls.length === 0) {
+    return resonator.baseStats
+  }
+
+  const lowerLevel =
+      [...vlblLvls].reverse().find((value) => value <= resolvedLevel) ?? vlblLvls[0]
+  const upperLevel =
+      vlblLvls.find((value) => value >= resolvedLevel) ?? vlblLvls[vlblLvls.length - 1]
+
+  const lowerStats = resonator.baseStatsByLevel?.[lowerLevel]
+  const upperStats = resonator.baseStatsByLevel?.[upperLevel]
+
+  if (!lowerStats && !upperStats) {
+    return resonator.baseStats
+  }
+
+  if (!lowerStats || lowerLevel === upperLevel || !upperStats) {
+    return {
+      ...resonator.baseStats,
+      ...(lowerStats ?? upperStats),
+    }
+  }
+
+  const progress = (resolvedLevel - lowerLevel) / (upperLevel - lowerLevel)
+  const lerp = (start: number, end: number) => start + (end - start) * progress
+
+  return {
+    ...resonator.baseStats,
+    hp: lerp(lowerStats.hp, upperStats.hp),
+    atk: lerp(lowerStats.atk, upperStats.atk),
+    def: lerp(lowerStats.def, upperStats.def),
+  }
+}
+
+// returns the accent color for a resonator, or null if none is defined
+export function getResAccent(resonatorId: string): string | null {
+  const seed = getResSeedBy(resonatorId)
+  if (seed) return ATTR_COLORS[seed.attribute] ?? null
+  return null
+}

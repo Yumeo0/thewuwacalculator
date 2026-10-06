@@ -5,8 +5,8 @@
 
 /* Simulation-backed details displayed for one editor node. */
 
-import type { EnemyProfile } from '@/domain/entities/appState.ts'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { srcAssetIcon, type RunResult } from '@/modules/simulation/surfaces/rotation/program-editor/simulation/runProgram.ts'
 import type { BuffLine, EditorStep } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import { stepHasRun } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'

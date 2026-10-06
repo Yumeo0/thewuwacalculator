@@ -5,9 +5,9 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import { listSkillsFor } from '@/data/catalog/gameDataService.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
-import { makeResRuntime } from '@/engine/runtime/defaults.ts'
+import { listSkillsFor } from '@wuwacalc/core/data/catalog/gameDataService.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { makeResRuntime } from '@wuwacalc/core/engine/runtime/defaults.ts'
 import { makeStateSummary } from '@/modules/simulation/model/stateSummary.ts'
 
 describe('state summary invariants', () => {

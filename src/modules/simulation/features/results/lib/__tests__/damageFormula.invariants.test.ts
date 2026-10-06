@@ -1,0 +1,661 @@
+/*
+  Author: Runor Ewhro
+  Description: verifies shared damage math and formatted formula breakdowns for
+               ordinary damage, fixed damage, support outputs, tune rupture,
+               and hack branches.
+*/
+
+import { describe, expect, it } from 'vitest'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState'
+import type { FeatureResult } from '@wuwacalc/core/domain/gameData/contracts'
+import type { FinalStats, SkillDef } from '@wuwacalc/core/domain/entities/stats'
+import { makeCombatState } from '@wuwacalc/core/engine/runtime/defaults'
+import { calcSkillDamage, calcSkillDamageScoreInto } from '@wuwacalc/core/engine/formulas/damage'
+import { getEnemyMaxOffTune, getTuneLevel } from '@wuwacalc/core/engine/formulas/tuneRupture'
+import { formBrkd, fmtBreakdown } from '@/modules/simulation/features/results/lib/damageFormula'
+
+function makeBuff() {
+  return {
+    resShred: 0,
+    dmgBonus: 0,
+    amplify: 0,
+    defIgnore: 0,
+    defShred: 0,
+    dmgVuln: 0,
+    critRate: 0,
+    critDmg: 0,
+  }
+}
+
+function makeNegativeEffectBuff() {
+  return {
+    critRate: 0,
+    critDmg: 0,
+    multiplier: 0,
+  }
+}
+
+function makeFinalStats(overrides: Partial<FinalStats> = {}): FinalStats {
+  // start with a fully populated stats tree so each test can override only the
+  // branch being asserted without relying on undefined defaults in damage math
+  return {
+    atk: { base: 1000, final: 1000 },
+    hp: { base: 1000, final: 1000 },
+    def: { base: 1000, final: 1000 },
+    attribute: {
+      all: makeBuff(),
+      physical: makeBuff(),
+      glacio: makeBuff(),
+      fusion: makeBuff(),
+      electro: makeBuff(),
+      aero: makeBuff(),
+      spectro: makeBuff(),
+      havoc: makeBuff(),
+    },
+    skillType: {
+      all: makeBuff(),
+      basicAtk: makeBuff(),
+      heavyAtk: makeBuff(),
+      resonanceSkill: makeBuff(),
+      resonanceLiberation: makeBuff(),
+      introSkill: makeBuff(),
+      outroSkill: makeBuff(),
+      echoSkill: makeBuff(),
+      coord: makeBuff(),
+      spectroFrazzle: makeBuff(),
+      aeroErosion: makeBuff(),
+      fusionBurst: makeBuff(),
+      havocBane: makeBuff(),
+      glacioChafe: makeBuff(),
+      electroFlare: makeBuff(),
+      healing: makeBuff(),
+      shield: makeBuff(),
+      tuneRupture: makeBuff(),
+      hack: makeBuff(),
+    },
+    negativeEffect: {
+      spectroFrazzle: makeNegativeEffectBuff(),
+      aeroErosion: makeNegativeEffectBuff(),
+      fusionBurst: makeNegativeEffectBuff(),
+      havocBane: makeNegativeEffectBuff(),
+      glacioChafe: makeNegativeEffectBuff(),
+      electroFlare: makeNegativeEffectBuff(),
+    },
+    offTuneBuildupRate: 1,
+    flatDmg: 0,
+    amplify: 0,
+    critRate: 5,
+    critDmg: 150,
+    energyRegen: 100,
+    healingBonus: 0,
+    shieldBonus: 0,
+    dmgBonus: 0,
+    defIgnore: 0,
+    defShred: 0,
+    dmgVuln: 0,
+    tbb: 0,
+    finalDmg: 0,
+    ...overrides,
+  }
+}
+
+const enemy: EnemyProfile = {
+  id: 'enemy',
+  level: 90,
+  class: 0,
+  toa: false,
+  res: {
+    0: 20,
+    1: 20,
+    2: 20,
+    3: 20,
+    4: 20,
+    5: 20,
+    6: 20,
+  },
+}
+
+const skill: SkillDef = {
+  id: 'skill',
+  label: 'Skill',
+  tab: 'resonanceSkill',
+  element: 'fusion',
+  skillType: ['resonanceSkill'],
+  archetype: 'skillDamage',
+  aggregationType: 'damage',
+  scaling: { atk: 1, hp: 0, def: 0, energyRegen: 0 },
+  multiplier: 1,
+  flat: 0,
+  hits: [{ count: 1, multiplier: 1 }],
+}
+
+const fixedDamageSkill: SkillDef = {
+  ...skill,
+  id: 'fixed-damage-skill',
+  label: 'Fixed Damage Skill',
+  skillType: ['basicAtk'],
+  fixedDmg: 666,
+}
+
+const healingSkill: SkillDef = {
+  id: 'healing-skill',
+  label: 'Healing Skill',
+  tab: 'resonanceSkill',
+  element: 'spectro',
+  skillType: ['healing'],
+  archetype: 'healing',
+  aggregationType: 'healing',
+  scaling: { atk: 1, hp: 0, def: 0, energyRegen: 0 },
+  multiplier: 0.25,
+  flat: 100,
+  hits: [],
+}
+
+const shieldSkill: SkillDef = {
+  id: 'shield-skill',
+  label: 'Shield Skill',
+  tab: 'forteCircuit',
+  element: 'spectro',
+  skillType: ['shield'],
+  archetype: 'shield',
+  aggregationType: 'shield',
+  scaling: { atk: 0, hp: 1, def: 0, energyRegen: 0 },
+  multiplier: 0.1,
+  flat: 300,
+  hits: [],
+}
+
+const tuneRuptureSkill: SkillDef = {
+  id: 'tune-rupture',
+  label: 'Tune Rupture',
+  tab: 'tuneBreak',
+  element: 'physical',
+  skillType: ['tuneRupture'],
+  archetype: 'tuneRupture',
+  aggregationType: 'damage',
+  scaling: { atk: 0, hp: 0, def: 0, energyRegen: 0 },
+  multiplier: 0,
+  flat: 0,
+  tuneRuptureCritRate: 0,
+  tuneRuptureCritDmg: 1,
+  hits: [
+    { count: 4, multiplier: 1 },
+    { count: 1, multiplier: 12 },
+  ],
+}
+
+const hackSkill: SkillDef = {
+  id: 'hack-damage',
+  label: 'Hack Damage',
+  tab: 'forteCircuit',
+  element: 'spectro',
+  skillType: ['hack'],
+  archetype: 'hack',
+  aggregationType: 'damage',
+  scaling: { atk: 0, hp: 0, def: 0, energyRegen: 0 },
+  multiplier: 2,
+  flat: 0,
+  hits: [{ count: 1, multiplier: 2 }],
+}
+
+const negativeEffectSkill: SkillDef = {
+  id: 'spectro-frazzle',
+  label: 'Spectro Frazzle',
+  tab: 'forteCircuit',
+  element: 'spectro',
+  skillType: ['spectroFrazzle'],
+  archetype: 'spectroFrazzle',
+  aggregationType: 'damage',
+  scaling: { atk: 0, hp: 0, def: 0, energyRegen: 0 },
+  multiplier: 0,
+  flat: 0,
+  hits: [{ count: 1, multiplier: 1 }],
+}
+
+function expectedDefenseMult(
+  charLevel: number,
+  enemyLevel: number,
+  defIgnore: number,
+  defShred: number,
+): number {
+  const enemyDefense = ((8 * enemyLevel) + 792) * (1 - defShred / 100) * (1 - defIgnore / 100)
+  return (800 + 8 * charLevel) / ((800 + 8 * charLevel) + Math.max(0, enemyDefense))
+}
+
+function makeFeatureResult(
+  skillDefinition: SkillDef,
+  result = calcSkillDamage(makeFinalStats(), skillDefinition, enemy, 90),
+): FeatureResult {
+  // formula rendering consumes feature rows rather than raw skill definitions,
+  // so the fixture mirrors the pipeline object shape with a supplied result
+  return {
+    id: skillDefinition.id,
+    resonatorId: 'resonator',
+    resonatorName: 'Resonator',
+    feature: {
+      id: skillDefinition.id,
+      label: skillDefinition.label,
+      source: { type: 'resonator', id: 'resonator' },
+      skillId: skillDefinition.id,
+    },
+    skill: skillDefinition,
+    archetype: skillDefinition.archetype,
+    aggregationType: skillDefinition.aggregationType,
+    multiplier: skillDefinition.multiplier,
+    weight: 1,
+    normal: result.normal,
+    crit: result.crit,
+    avg: result.avg,
+    subHits: result.subHits,
+  }
+}
+
+describe('damage formula invariants', () => {
+  it('keeps the allocation-free scalar kernel exact across every formula family', () => {
+    const cases: Array<{ skill: SkillDef; combat?: Parameters<typeof calcSkillDamage>[4] }> = [
+      { skill },
+      { skill: fixedDamageSkill },
+      { skill: healingSkill },
+      { skill: shieldSkill },
+      { skill: tuneRuptureSkill },
+      { skill: hackSkill },
+      { skill: negativeEffectSkill, combat: { spectroFrazzle: 6 } },
+      {
+        skill: {
+          ...negativeEffectSkill,
+          id: 'aero-erosion',
+          archetype: 'aeroErosion',
+          skillType: ['aeroErosion'],
+        },
+        combat: { aeroErosion: 4 },
+      },
+      {
+        skill: {
+          ...negativeEffectSkill,
+          id: 'fusion-burst',
+          archetype: 'fusionBurst',
+          skillType: ['fusionBurst'],
+        },
+        combat: { fusionBurst: 8 },
+      },
+      {
+        skill: {
+          ...negativeEffectSkill,
+          id: 'glacio-chafe',
+          archetype: 'glacioChafe',
+          skillType: ['glacioChafe'],
+        },
+        combat: { glacioChafe: 5 },
+      },
+      {
+        skill: {
+          ...negativeEffectSkill,
+          id: 'electro-flare',
+          archetype: 'electroFlare',
+          skillType: ['electroFlare'],
+        },
+        combat: { electroFlare: 12, electroRage: 3 },
+      },
+    ]
+    const stats = makeFinalStats({
+      flatDmg: 37,
+      amplify: 14,
+      dmgVuln: 9,
+      finalDmg: 5,
+      tbb: 21,
+    })
+    const values = new Float64Array(3)
+
+    for (const entry of cases) {
+      const captured = calcSkillDamage(stats, entry.skill, enemy, 90, entry.combat, {
+        includeSubHits: false,
+      })
+      calcSkillDamageScoreInto({ values }, stats, entry.skill, enemy, 90, entry.combat)
+      expect([...values], entry.skill.id).toEqual([captured.normal, captured.crit, captured.avg])
+
+      const multiplierScale = 2.375
+      const scaledSkill: SkillDef = {
+        ...entry.skill,
+        multiplier: entry.skill.multiplier * multiplierScale,
+        hits: entry.skill.hits.map((hit) => ({
+          ...hit,
+          multiplier: hit.multiplier * multiplierScale,
+        })),
+      }
+      const scaledCaptured = calcSkillDamage(stats, scaledSkill, enemy, 90, entry.combat, {
+        includeSubHits: false,
+      })
+      calcSkillDamageScoreInto(
+        { values },
+        stats,
+        entry.skill,
+        enemy,
+        90,
+        entry.combat,
+        multiplierScale,
+      )
+      expect([...values], `${entry.skill.id}:scaled`).toEqual([
+        scaledCaptured.normal,
+        scaledCaptured.crit,
+        scaledCaptured.avg,
+      ])
+    }
+  })
+
+  it('applies shared damage modifiers before final output', () => {
+    const baseline = calcSkillDamage(makeFinalStats(), skill, enemy, 90)
+    const buffed = calcSkillDamage(
+      makeFinalStats({
+        flatDmg: 500,
+        amplify: 25,
+        skillType: {
+          ...makeFinalStats().skillType,
+          all: {
+            ...makeBuff(),
+            dmgBonus: 25,
+          },
+          resonanceSkill: {
+            ...makeBuff(),
+            defShred: 20,
+          },
+        },
+      }),
+      skill,
+      enemy,
+      90,
+    )
+
+    expect(buffed.normal).toBeGreaterThan(baseline.normal)
+    expect(buffed.crit).toBeGreaterThan(baseline.crit)
+    expect(buffed.avg).toBeGreaterThan(baseline.avg)
+  })
+
+  it('sums ordinary Amplify sources and limits special damage to its own scope', () => {
+    const baseline = calcSkillDamage(makeFinalStats(), skill, enemy, 90)
+    const ordinarySkill = { ...skill, skillBuffs: { ...makeBuff(), amplify: 40 } }
+    const ordinaryStats = makeFinalStats({
+      amplify: 10,
+      attribute: {
+        ...makeFinalStats().attribute,
+        [skill.element]: { ...makeBuff(), amplify: 20 },
+      },
+      skillType: {
+        ...makeFinalStats().skillType,
+        [skill.skillType[0]!]: { ...makeBuff(), amplify: 30 },
+      },
+    })
+    expect(calcSkillDamage(ordinaryStats, ordinarySkill, enemy, 90).normal)
+      .toBeCloseTo(baseline.normal * 2, 10)
+
+    const negativeSkill = {
+      ...negativeEffectSkill,
+      skillType: ['basicAtk', 'spectroFrazzle'] as SkillDef['skillType'],
+    }
+    const combat = { spectroFrazzle: 1 }
+    const negativeBase = calcSkillDamage(makeFinalStats(), negativeSkill, enemy, 90, combat)
+    const unrelatedStats = makeFinalStats({
+      amplify: 25,
+      attribute: {
+        ...makeFinalStats().attribute,
+        all: { ...makeBuff(), amplify: 15 },
+        spectro: { ...makeBuff(), amplify: 10 },
+      },
+      skillType: {
+        ...makeFinalStats().skillType,
+        all: { ...makeBuff(), amplify: 20 },
+        basicAtk: { ...makeBuff(), amplify: 30 },
+        spectroFrazzle: { ...makeBuff(), amplify: 40 },
+      },
+    })
+    const negativeEffectAmp = calcSkillDamage(unrelatedStats, negativeSkill, enemy, 90, combat)
+    expect(negativeEffectAmp.normal).toBeCloseTo(negativeBase.normal * 1.4, 10)
+    const ownSkill = { ...negativeSkill, skillBuffs: { ...makeBuff(), amplify: 20 } }
+    const negativeOwnAmp = calcSkillDamage(unrelatedStats, ownSkill, enemy, 90, combat)
+    expect(negativeOwnAmp.normal).toBeCloseTo(negativeBase.normal * 1.6, 10)
+    const negativeBreakdown = formBrkd(
+      makeFeatureResult(ownSkill, negativeOwnAmp), unrelatedStats, enemy, 90,
+      { ...makeCombatState(), spectroFrazzle: 1 },
+    )
+    expect(negativeBreakdown.sections.find((section) => section.label === 'mods')?.lines)
+      .toContain('mod.amp = 60% = Effect 40% + Skill 20%')
+
+    const tuneBase = calcSkillDamage(makeFinalStats(), tuneRuptureSkill, enemy, 90)
+    const tuneAmplified = calcSkillDamage(unrelatedStats, tuneRuptureSkill, enemy, 90)
+    expect(tuneAmplified.normal).toBeCloseTo(tuneBase.normal, 10)
+    const tuneBreakdown = formBrkd(
+      makeFeatureResult(tuneRuptureSkill, tuneAmplified), unrelatedStats, enemy, 90,
+      makeCombatState(),
+    )
+    expect(tuneBreakdown.sections.find((section) => section.label === 'mods')?.lines)
+      .toContain('mod.amp = 0% = Tune Break ignores Amplify')
+  })
+
+  it('keeps fixed damage isolated from ordinary damage buffs', () => {
+    // fixed damage is an override branch, not a normal skill damage branch, so
+    // it must ignore crit, amplify, flat damage, and skill-type bonuses
+    const baseline = calcSkillDamage(makeFinalStats(), fixedDamageSkill, enemy, 90)
+    const withBuffs = calcSkillDamage(
+      makeFinalStats({
+        flatDmg: 500,
+        amplify: 25,
+        dmgBonus: 40,
+        finalDmg: 250,
+        skillType: {
+          ...makeFinalStats().skillType,
+          basicAtk: {
+            ...makeBuff(),
+            amplify: 50,
+            dmgBonus: 60,
+            critRate: 100,
+            critDmg: 300,
+          },
+        },
+      }),
+      fixedDamageSkill,
+      enemy,
+      90,
+    )
+
+    expect(baseline.normal).toBe(666)
+    expect(withBuffs.normal).toBe(666)
+    expect(withBuffs.crit).toBe(666)
+    expect(withBuffs.avg).toBe(666)
+  })
+
+  it('treats 100 base resistance as immunity', () => {
+    const immuneEnemy: EnemyProfile = {
+      ...enemy,
+      res: {
+        ...enemy.res,
+        2: 100,
+      },
+    }
+
+    const result = calcSkillDamage(makeFinalStats(), skill, immuneEnemy, 90)
+    expect(result.normal).toBe(0)
+    expect(result.crit).toBe(0)
+    expect(result.avg).toBe(0)
+  })
+
+  it('combines defense shred and defense ignore as separate enemy-defense factors', () => {
+    const finalStats = makeFinalStats({
+      critRate: 0,
+      critDmg: 100,
+      defIgnore: 20,
+      defShred: 30,
+    })
+    const result = calcSkillDamage(finalStats, skill, enemy, 90)
+    const expectedNormal = 1000 * 0.8 * expectedDefenseMult(90, 90, 20, 30)
+    const additiveNormal = 1000 * 0.8 * expectedDefenseMult(90, 90, 50, 0)
+    const breakdown = formBrkd(makeFeatureResult(skill, result), finalStats, enemy, 90, makeCombatState())
+
+    expect(result.normal).toBeCloseTo(expectedNormal, 10)
+    expect(result.normal).not.toBeCloseTo(additiveNormal, 10)
+    expect(fmtBreakdown(breakdown)).toContain('x (1 - 30%) x (1 - 20%)')
+  })
+
+  it('computes healing and shield as support outcomes', () => {
+    const healing = calcSkillDamage(makeFinalStats(), healingSkill, enemy, 90)
+    const shield = calcSkillDamage(makeFinalStats(), shieldSkill, enemy, 90)
+
+    expect(healing.normal).toBe(0)
+    expect(healing.crit).toBe(0)
+    expect(healing.avg).toBeGreaterThan(0)
+    expect(shield.normal).toBe(0)
+    expect(shield.crit).toBe(0)
+    expect(shield.avg).toBeGreaterThan(0)
+  })
+
+  it('computes tune rupture and hack through their dedicated branches', () => {
+    // tune rupture and hack both reuse damage output fields, but each takes its
+    // multiplier from different stat channels and must stay separately testable
+    const tuneResult = calcSkillDamage(makeFinalStats({ tbb: 40 }), tuneRuptureSkill, enemy, 90)
+    const finalTune = calcSkillDamage(
+      makeFinalStats({ tbb: 40, finalDmg: 25 }),
+      tuneRuptureSkill,
+      enemy,
+      90,
+    )
+    const baseHack = calcSkillDamage(makeFinalStats(), hackSkill, enemy, 90)
+    const finalHack = calcSkillDamage(makeFinalStats({ finalDmg: 25 }), hackSkill, enemy, 90)
+    const buffedHack = calcSkillDamage(
+      makeFinalStats({
+        tbb: 999,
+        skillType: {
+          ...makeFinalStats().skillType,
+          hack: { ...makeBuff(), dmgBonus: 25 },
+        },
+      }),
+      hackSkill,
+      enemy,
+      90,
+    )
+
+    expect(tuneResult.avg).toBeGreaterThan(0)
+    expect(finalTune.avg).toBeCloseTo(tuneResult.avg * 1.25, 10)
+    expect(tuneResult.subHits).toHaveLength(2)
+    expect(baseHack.avg).toBeGreaterThan(0)
+    expect(finalHack.avg).toBeCloseTo(baseHack.avg * 1.25, 10)
+    expect(buffedHack.avg).toBeGreaterThan(baseHack.avg)
+  })
+
+  it('uses the revised level table and enemy max Off-Tune for tune rupture and hack', () => {
+    expect(getTuneLevel(90)).toBeCloseTo(255.83427675, 10)
+    const defense = 1520 / (1520 + 1512)
+    for (const [enemyClass, maxOffTune] of [[1, 2.8], [2, 8.4], [3, 39.2], [4, 39.2]]) {
+      const target = { ...enemy, class: enemyClass }
+      expect(getEnemyMaxOffTune(enemyClass)).toBe(maxOffTune)
+      expect(calcSkillDamage(makeFinalStats(), tuneRuptureSkill, target, 90).normal)
+        .toBeCloseTo(255.83427675 * 16 * defense * 0.8 * maxOffTune, 7)
+      expect(calcSkillDamage(makeFinalStats(), hackSkill, target, 90).normal)
+        .toBeCloseTo(255.83427675 * 2 * defense * 0.8 * maxOffTune, 7)
+    }
+  })
+
+  it('applies defense ignore to special damage only when the special branch is targeted', () => {
+    const baseHack = calcSkillDamage(makeFinalStats(), hackSkill, enemy, 90)
+    const globalIgnoreHack = calcSkillDamage(makeFinalStats({ defIgnore: 20 }), hackSkill, enemy, 90)
+    const targetedHack = calcSkillDamage(
+      makeFinalStats({
+        skillType: {
+          ...makeFinalStats().skillType,
+          hack: { ...makeBuff(), defIgnore: 20 },
+        },
+      }),
+      hackSkill,
+      enemy,
+      90,
+    )
+    const onlyShred = calcSkillDamage(
+      makeFinalStats({ defShred: 30 }),
+      negativeEffectSkill,
+      enemy,
+      90,
+      { spectroFrazzle: 1 },
+    )
+    const globalIgnore = calcSkillDamage(
+      makeFinalStats({ defShred: 30, defIgnore: 20 }),
+      negativeEffectSkill,
+      enemy,
+      90,
+      { spectroFrazzle: 1 },
+    )
+    const targetedIgnore = calcSkillDamage(
+      makeFinalStats({
+        defShred: 30,
+        skillType: {
+          ...makeFinalStats().skillType,
+          spectroFrazzle: { ...makeBuff(), defIgnore: 20 },
+        },
+      }),
+      negativeEffectSkill,
+      enemy,
+      90,
+      { spectroFrazzle: 1 },
+    )
+
+    expect(globalIgnoreHack.avg).toBeCloseTo(baseHack.avg, 10)
+    expect(targetedHack.avg).toBeGreaterThan(baseHack.avg)
+    expect(globalIgnore.normal).toBeCloseTo(onlyShred.normal, 10)
+    expect(targetedIgnore.normal).toBeGreaterThan(onlyShred.normal)
+  })
+
+  it('builds a compact direct-damage formula breakdown', () => {
+    const finalStats = makeFinalStats({
+      amplify: 25,
+      dmgBonus: 40,
+      dmgVuln: 15,
+      finalDmg: 10,
+      skillType: {
+        ...makeFinalStats().skillType,
+        resonanceSkill: {
+          ...makeBuff(),
+          critRate: 70,
+          critDmg: 80,
+        },
+      },
+    })
+    const result = calcSkillDamage(finalStats, skill, enemy, 90)
+    const breakdown = formBrkd(makeFeatureResult(skill, result), finalStats, enemy, 90, makeCombatState())
+    const text = fmtBreakdown(breakdown)
+
+    expect(breakdown.title).toBe('Skill DMG')
+    expect(breakdown.sections.map((section) => section.label)).toEqual(['core', 'enemy', 'mods'])
+    expect(text).toContain('// Skill DMG')
+    expect(text).toContain('out.normal =')
+    expect(text).toContain('mod.dmgBonus =')
+    expect(text).toContain('mod.finalDmg =')
+    expect(text).toContain('crit.rate =')
+  })
+
+  it('builds tune rupture and hack breakdowns without duplicated output', () => {
+    // the text formatter should expose the special branch math while still
+    // emitting one final output assignment per breakdown
+    const tuneStats = makeFinalStats({ tbb: 40, finalDmg: 25 })
+    const tuneResult = calcSkillDamage(tuneStats, tuneRuptureSkill, enemy, 90)
+    const tuneBreakdown = formBrkd(
+      makeFeatureResult(tuneRuptureSkill, tuneResult),
+      tuneStats,
+      enemy,
+      90,
+      makeCombatState(),
+    )
+
+    const hackStats = makeFinalStats({ tbb: 40 })
+    const hackResult = calcSkillDamage(hackStats, hackSkill, enemy, 90)
+    const hackBreakdown = formBrkd(
+      makeFeatureResult(hackSkill, hackResult),
+      hackStats,
+      enemy,
+      90,
+      makeCombatState(),
+    )
+
+    expect(tuneBreakdown.sections.flatMap((section) => section.lines).join('\n')).toContain('core.tuneAmp')
+    expect(fmtBreakdown(tuneBreakdown)).toContain('mod.finalDmg = 25%')
+    expect(fmtBreakdown(tuneBreakdown)).toContain('enemy.maxOffTune = 2.8')
+    expect(hackBreakdown.sections.flatMap((section) => section.lines).join('\n')).toContain('core.hackAmp')
+    expect(fmtBreakdown(hackBreakdown)).toContain('mod.tuneBoost')
+    expect(fmtBreakdown(tuneBreakdown).split('\n').filter((line) => line.startsWith('out.normal ='))).toHaveLength(1)
+  })
+})

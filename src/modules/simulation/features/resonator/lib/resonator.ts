@@ -14,11 +14,11 @@ import type {
   ResSkllPnl,
   SkillTabKey,
   ResStateControl,
-} from '@/domain/entities/resonator.ts'
-import type { ResSeed } from '@/domain/entities/runtime.ts'
-import type { AttributeKey } from '@/domain/entities/stats.ts'
-import { getResDtlsBy } from '@/data/gameData/resonators/resonatorDataStore.ts'
-import { getResSeedBy, listResSds } from '@/data/catalog/resonatorSeedService.ts'
+} from '@wuwacalc/core/domain/entities/resonator.ts'
+import type { ResSeed } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats.ts'
+import { getResDtlsBy } from '@wuwacalc/core/data/gameData/resonators/resonatorDataStore.ts'
+import { getResSeedBy, listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
 import {
   WPNTYPEPTNS,
   WPNTYPETOKEY as DSPLWPNTYPET,

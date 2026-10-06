@@ -4,7 +4,7 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import type { RotationNode, SourceState } from '@/domain/gameData/contracts.ts'
+import type { RotationNode, SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import { mkSqnc } from '@/modules/simulation/surfaces/modulation/lib/rotationSequence.ts'
 import type { CondChoice } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
 

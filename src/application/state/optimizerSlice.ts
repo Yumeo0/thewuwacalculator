@@ -7,13 +7,13 @@
 import type { AppStore } from './store'
 import type { StoreSliceContext } from './storeContracts'
 import { idleOptimizerRun, resetOptimizerRun, updateOptimizerRun, useOptimizerRunStore } from './optimizerRunStore'
-import { compactTheoryEchoes, matThryRsltCh } from '@/engine/optimizer/results/theoryEchoes'
-import { CPU_JOB_SIZE, CPU_THEORY_JOB, GPU_THEORY_JOB, ROT_GPU_JOB, TARGET_GPU_JOB } from '@/engine/optimizer/config/constants'
-import type { EchoInstance } from '@/domain/entities/runtime'
-import { cloneEchoFor } from '@/domain/entities/inventoryStorage'
-import type { OptBagResult, OptStartPay } from '@/engine/optimizer/types'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
-import { getActResId } from '@/engine/runtime/runtimeAdapters'
+import { compactTheoryEchoes, matThryRsltCh } from '@wuwacalc/core/engine/optimizer/results/theoryEchoes'
+import { CPU_JOB_SIZE, CPU_THEORY_JOB, GPU_THEORY_JOB, ROT_GPU_JOB, TARGET_GPU_JOB } from '@wuwacalc/core/engine/optimizer/config/constants'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
+import { cloneEchoFor } from '@wuwacalc/core/domain/entities/inventoryStorage'
+import type { OptBagResult, OptStartPay } from '@wuwacalc/core/engine/optimizer/types'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { getActResId } from '@wuwacalc/core/engine/runtime/runtimeAdapters'
 
 type OptimizerRunModule = typeof import('./optimizerRun')
 let optimizerRunModule: OptimizerRunModule | null = null

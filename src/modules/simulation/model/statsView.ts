@@ -5,15 +5,15 @@
                and grouped modifier breakdowns.
 */
 
-import { isNoWeaponId, type ResRuntime } from '@/domain/entities/runtime.ts'
-import type { AttributeKey, FinalStats, ModBuff, SkillTypeKey } from '@/domain/entities/stats.ts'
-import { resResBaseSt } from '@/data/catalog/resonatorSeedService.ts'
-import { getWpnById } from '@/data/catalog/weaponCatalogService.ts'
-import { getSkillType } from '@/domain/gameData/skillTypes.ts'
+import { isNoWeaponId, type ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { AttributeKey, FinalStats, ModBuff, SkillTypeKey } from '@wuwacalc/core/domain/entities/stats.ts'
+import { resResBaseSt } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
+import { getSkillType } from '@wuwacalc/core/domain/gameData/skillTypes.ts'
 import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display.ts'
 import { toTitle } from '@/shared/lib/format.ts'
-import { formatTruncCompact, truncTo } from '@/shared/lib/number.ts'
+import { formatTruncCompact, truncTo } from '@wuwacalc/core/shared/lib/number.ts'
 
 export interface StatViewRow {
   key: string

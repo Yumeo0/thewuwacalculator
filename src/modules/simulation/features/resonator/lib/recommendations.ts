@@ -4,7 +4,7 @@
                badges from recent and frequent usage history.
 */
 
-import type { ResMenuEnt } from '@/domain/entities/resonator'
+import type { ResMenuEnt } from '@wuwacalc/core/domain/entities/resonator'
 
 type ResRcmmKind = 'last-active' | 'frequent'
 const MAXFRQNRCMM = 2

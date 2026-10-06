@@ -5,8 +5,8 @@
 
 /* Shared first-class display identity for calculated skills. */
 
-import type { AttributeKey, SkillAggType } from '@/domain/entities/stats.ts'
-import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
+import type { AttributeKey, SkillAggType } from '@wuwacalc/core/domain/entities/stats.ts'
+import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
 
 export interface SupportSkillStyle {
   label: string

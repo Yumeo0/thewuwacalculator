@@ -7,12 +7,12 @@ import { isBuildSaved, selectSavedBuildSignatures } from '@/application/state/sa
 
 import { useCallback, useMemo, useRef } from 'react'
 import type { ReactNode, RefObject } from 'react'
-import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime'
-import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
+import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
+import type { CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScenario.ts'
 import {
   cloneEchoLoadout,
   saveEchoSlots,
-} from '@/domain/entities/inventoryStorage.ts'
+} from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import { useAppStore } from '@/application/state'
 import { cmptTtlEchoC, MAX_ECHO_COST } from '@/modules/simulation/features/echoes/lib/echoes.ts'
 import { QuickSetup } from '@/modules/simulation/features/echoes/QuickSetup.tsx'

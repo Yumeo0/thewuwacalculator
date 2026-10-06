@@ -10,7 +10,7 @@ import type {
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import { isEditorBlock } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import { editorLoopId } from '@/modules/simulation/surfaces/rotation/program-editor/model/executionScope.ts'
-import { normLoopRuns } from '@/domain/gameData/rotationLoops.ts'
+import { normLoopRuns } from '@wuwacalc/core/domain/gameData/rotationLoops.ts'
 import type { RotationNodeTarget } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeNavigation.ts'
 
 type SearchKind = 'step' | 'state' | 'swap' | 'block' | 'note'

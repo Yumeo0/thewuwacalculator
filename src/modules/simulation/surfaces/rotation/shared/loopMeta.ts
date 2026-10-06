@@ -2,23 +2,23 @@
   Author: Runor Ewhro
   Description: Names, colours, and totals for the loops the rotation editor
                draws. The markers themselves live in
-               `@/domain/gameData/rotationLoops.ts`.
+               `@wuwacalc/core/domain/gameData/rotationLoops.ts`.
 */
 
-import type { DamageFeature, RotationNode } from '@/domain/gameData/contracts.ts'
+import type { DamageFeature, RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import {
   normLoopRuns,
   type RotLoopEnd,
   type RotLoopNode,
   type RotLoopStart,
-} from '@/domain/gameData/rotationLoops.ts'
+} from '@wuwacalc/core/domain/gameData/rotationLoops.ts'
 import {
   makePaletteColor,
   ROT_LOOP_COLORS,
   scopeLabelAt,
 } from './containerMeta.ts'
 import type { NodeTotals } from './authoringTypes.ts'
-import { isDamageRotationEntry } from '@/engine/pipeline/rotationTotals.ts'
+import { isDamageRotationEntry } from '@wuwacalc/core/engine/pipeline/rotationTotals.ts'
 
 export { makeBlockColor, ROT_LOOP_COLORS } from './containerMeta.ts'
 

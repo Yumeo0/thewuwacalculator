@@ -4,12 +4,12 @@
                eligibility, stat-filter keys, and weapon-state replacements.
 */
 
-import { getSntSetIco } from '@/data/gameData/catalog/sonataSets.ts'
-import { getEchoSetDe } from '@/data/gameData/echoSets/effects.ts'
-import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime.ts'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
-import { makeTeamMember } from '@/engine/runtime/defaults.ts'
-import { materializeLegacyTeamMember } from '@/engine/runtime/runtimeMaterialization.ts'
+import { getSntSetIco } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
+import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
+import { makeTeamMember } from '@wuwacalc/core/engine/runtime/defaults.ts'
+import { materializeLegacyTeamMember } from '@wuwacalc/core/engine/runtime/runtimeMaterialization.ts'
 import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
 import type { OptDisplayRow, OptDsplSetEn } from '../Row.tsx'
 import type { EchoPlan } from './teammateEchoPlan.ts'
@@ -22,7 +22,7 @@ type OpSlot = 'active' | 0 | 1
 export type OpEchoTarget = 'filter' | 0 | 1
 
 // keep the idle progress object in one place so the stage can reset consistently.
-export function mkMptyPrgr(): import('@/engine/optimizer/types').OptPrgr {
+export function mkMptyPrgr(): import('@wuwacalc/core/engine/optimizer/types').OptPrgr {
   return {
     progress: 0,
     elapsedMs: 0,

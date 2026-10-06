@@ -8,8 +8,8 @@ import type {
   CondExpr,
   FormExpr,
   RtChng,
-} from '@/domain/gameData/contracts'
-import { truncTo } from '@/shared/lib/number.ts'
+} from '@wuwacalc/core/domain/gameData/contracts'
+import { truncTo } from '@wuwacalc/core/shared/lib/number.ts'
 
 // format a runtime path into readable title-cased text
 function formatPath(path: string): string {

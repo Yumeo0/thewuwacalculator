@@ -3,7 +3,7 @@
   Description: small shared formatters for display-only ui values.
 */
 
-import { formatTruncCompact } from '@/shared/lib/number.ts'
+import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
 
 export function fmtPrcn(value: number, digits = 1): string {
   if (!Number.isFinite(value)) return '-'

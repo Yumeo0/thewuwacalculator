@@ -5,18 +5,18 @@
                sources and land the same nodes.
 */
 
-import type { RotDef, RotationNode } from '@/domain/gameData/contracts.ts'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import type { SavedRotation } from '@/domain/entities/inventoryStorage.ts'
-import { listResRttn } from '@/data/catalog/gameDataService.ts'
+import type { RotDef, RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { SavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
+import { listResRttn } from '@wuwacalc/core/data/catalog/gameDataService.ts'
 import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
 import { currentTeamIds } from '@/modules/simulation/surfaces/rotation/shared/catalog.ts'
 import {
   cloneRotationNodes,
   savedRotationItems,
   savedRotationResonatorId,
-} from '@/domain/entities/inventoryStorage.ts'
-import { isRotationSequence } from '@/domain/gameData/rotationSequence.ts'
+} from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
+import { isRotationSequence } from '@wuwacalc/core/domain/gameData/rotationSequence.ts'
 
 /** one rotation source that can be appended to a program */
 export interface AppendSource {

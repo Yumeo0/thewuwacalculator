@@ -11,15 +11,15 @@ import {
   contextScenarioMember, instantiateCombatScenario, makeScenarioTeam,
   reviseCombatEnvironment, reviseCombatScenario, scenarioMemberIndex,
   type CombatScenario, type CombatScenarioId,
-} from '@/domain/entities/combatScenario'
+} from '@wuwacalc/core/domain/entities/combatScenario'
 import {
   addScenario, replaceScenario, scenarioIdForContextResonator, selectScenario,
-} from '@/domain/entities/scenarioLibrary'
+} from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import {
   insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember,
-} from '@/engine/runtime/scenarioMembers'
+} from '@wuwacalc/core/engine/runtime/scenarioMembers'
 import { convertMemberRoverGender, convertScenarioRoverGender } from './roverGenderConversion'
-import { roverIdForGender } from '@/domain/entities/roverGender'
+import { roverIdForGender } from '@wuwacalc/core/domain/entities/roverGender'
 
 interface ScenarioSliceContext extends Pick<StoreSliceContext, 'get' | 'persistedSet'> {
   deferForData: (ids: string[], action: () => void, key?: string) => boolean

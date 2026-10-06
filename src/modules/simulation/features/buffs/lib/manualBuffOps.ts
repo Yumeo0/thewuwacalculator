@@ -15,9 +15,9 @@ import type {
   MnlSkllMtchM,
   MnlSkllSclrK,
   MnlTopStatKe,
-} from '@/domain/entities/manualBuffs.ts'
-import type { AttributeKey, NegEffectKey, SkillTypeKey } from '@/domain/entities/stats.ts'
-import { mkDefMnlMod } from '@/engine/runtime/defaults.ts'
+} from '@wuwacalc/core/domain/entities/manualBuffs.ts'
+import type { AttributeKey, NegEffectKey, SkillTypeKey } from '@wuwacalc/core/domain/entities/stats.ts'
+import { mkDefMnlMod } from '@wuwacalc/core/engine/runtime/defaults.ts'
 import { clmpMnlModVl } from '@/modules/simulation/features/buffs/lib/helpers.ts'
 import {
   ADV_SKILL_TYPES,

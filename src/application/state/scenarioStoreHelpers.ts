@@ -5,8 +5,8 @@
 */
 
 import type { AppStore } from './store'
-import { combatScenarioId, type CombatScenario, type CombatScenarioId } from '@/domain/entities/combatScenario'
-import { replaceScenario, selectScenario, type ScenarioWorkspace } from '@/domain/entities/scenarioLibrary'
+import { combatScenarioId, type CombatScenario, type CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScenario'
+import { replaceScenario, selectScenario, type ScenarioWorkspace } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 
 export function replaceScenarioInWorkspace(
   state: AppStore,

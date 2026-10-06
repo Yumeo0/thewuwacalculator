@@ -8,25 +8,26 @@ import { createOptimizerProgress } from './lib/progressStore'
 import {type ReactNode, lazy, Suspense, useCallback, useRef} from 'react'
 import {useEffect, useLayoutEffect as useLytFfct, useMemo, useState} from 'react'
 import { useNavX } from '@/shared/navigation/useNavX'
-import type {RotationNode} from '@/domain/gameData/contracts'
+import type {RotationNode} from '@wuwacalc/core/domain/gameData/contracts'
 import {
   cloneEchoLoadout,
-} from '@/domain/entities/inventoryStorage.ts'
+} from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import { OptimizerLab } from './transport/OptimizerLab.tsx'
 import { OptStage } from './transport/OptStage.tsx'
 import { OptTransport } from './transport/OptTransport.tsx'
-import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime'
-import { cloneOptSets } from '@/engine/runtime/defaults'
+import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
+import { cloneOptSets } from '@wuwacalc/core/engine/runtime/defaults'
 import { AppModal } from '@/shared/ui/AppModal.tsx'
 import { useAppModal, useAppModalValue } from '@/shared/ui/useAppModal.ts'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import type {SelectOption, SelectGroup} from '@/application/ui/Select'
-import {getGameDataMode} from '@/data/gameData'
-import {getEchoById, listEchoes} from '@/data/catalog/echoCatalogService'
-import {weaponEquipState} from '@/engine/optimizer/context/weaponOverlays.ts'
-import {getWpnById} from '@/data/catalog/weaponCatalogService'
-import { makeRuntimeMap, mkPartRtLkp } from '@/engine/runtime/runtimeAdapters'
+import {getGameDataMode} from '@wuwacalc/core/data/gameData'
+import {getEchoById, listEchoes} from '@wuwacalc/core/data/catalog/echoCatalogService'
+import {weaponEquipState} from '@wuwacalc/core/engine/optimizer/context/weaponOverlays.ts'
+import {createCoreWorker} from '@wuwacalc/core/data/coreEnvironment'
+import {getWpnById} from '@wuwacalc/core/data/catalog/weaponCatalogService'
+import { makeRuntimeMap, mkPartRtLkp } from '@wuwacalc/core/engine/runtime/runtimeAdapters'
 import {useAppStore} from '@/application/state'
 import { useOptimizerRunStore } from '@/application/state/optimizerRunStore'
 import {
@@ -34,18 +35,18 @@ import {
   selEnemyProf,
   selScenarioProfiles,
 } from '@/application/state'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
-import { contextScenarioMember } from '@/domain/entities/combatScenario.ts'
-import { indexEquippedEchoes } from '@/engine/runtime/inventoryUsage.ts'
-import {deriveOptSets, preserveToggles} from '@/engine/optimizer/config/defaultSettings.ts'
-import { getDefaultRotation } from '@/data/catalog/gameDataService.ts'
-import {applyKeepPrc, makeStatWeights} from '@/engine/optimizer/search/filtering.ts'
-import {compOptTgtCt} from '@/engine/optimizer/target/context'
-import {listOptTrgt} from '@/engine/optimizer/target/skills'
-import {countOptCombos, countTheory} from '@/engine/optimizer/search/counting'
-import { optSetIdSet } from '@/engine/optimizer/config/allowedSets.ts'
-import type {CompactTheoryResult, OptBagResult, OptResultStats, TheoryResult, TheoryResultRow} from '@/engine/optimizer/types'
-import type { OptBaselineInput, OptCompOutMs } from '@/engine/optimizer/compiler/compileWorker.types.ts'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { contextScenarioMember } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import { indexEquippedEchoes } from '@wuwacalc/core/engine/runtime/inventoryUsage.ts'
+import {deriveOptSets, preserveToggles} from '@wuwacalc/core/engine/optimizer/config/defaultSettings.ts'
+import { getDefaultRotation } from '@wuwacalc/core/data/catalog/gameDataService.ts'
+import {applyKeepPrc, makeStatWeights} from '@wuwacalc/core/engine/optimizer/search/filtering.ts'
+import {compOptTgtCt} from '@wuwacalc/core/engine/optimizer/target/context'
+import {listOptTrgt} from '@wuwacalc/core/engine/optimizer/target/skills'
+import {countOptCombos, countTheory} from '@wuwacalc/core/engine/optimizer/search/counting'
+import { optSetIdSet } from '@wuwacalc/core/engine/optimizer/config/allowedSets.ts'
+import type {CompactTheoryResult, OptBagResult, OptResultStats, TheoryResult, TheoryResultRow} from '@wuwacalc/core/engine/optimizer/types'
+import type { OptBaselineInput, OptCompOutMs } from '@wuwacalc/core/engine/optimizer/compiler/compileWorker.types.ts'
 import {seedRsntById} from '@/modules/simulation/features/resonator/lib/seedData.ts'
 import AppLdrVrly from '@/shared/ui/AppLoaderOverlay'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
@@ -461,7 +462,7 @@ export function Optimizer() {
 
     return defaultRotation ? [{
       value: `default:${optResId}`,
-      label: `${displayName} · Default Rotation`,
+      label: `${displayName} ┬À Default Rotation`,
     }] : []
   })()
 
@@ -762,10 +763,7 @@ export function Optimizer() {
     const mainIndex = Math.max(0, qppdChs.findIndex((echo) => echo.mainEcho))
     const timer = window.setTimeout(() => {
       if (disposed) return
-      worker = new Worker(
-        new URL('@/engine/optimizer/workers/compile.worker.ts', import.meta.url),
-        { type: 'module' },
-      )
+      worker = createCoreWorker('optimizer-compile')
       worker.onmessage = (event: MessageEvent<OptCompOutMs>) => {
         const message = event.data
         if (message.type !== 'baselineDone' || disposed) return
@@ -1120,7 +1118,7 @@ export function Optimizer() {
 
   const vsblHdrTtls = useMemo(() => {
     const base = rotationMode
-      ? HEADER_TITLES.filter((title) => title !== 'Ʃ BNS%' && title !== 'Ʃ AMP%')
+      ? HEADER_TITLES.filter((title) => title !== 'ã® BNS%' && title !== 'ã® AMP%')
       : HEADER_TITLES
     if (!showWeapon) {
       return base
@@ -1365,7 +1363,7 @@ export function Optimizer() {
                       setPageIndex((value) => Math.max(0, value - 1))
                     }}
                   >
-                    ‹
+                    ÔÇ╣
                   </button>
 
                   {pageItems.map((item, index) =>
@@ -1378,7 +1376,7 @@ export function Optimizer() {
                           inputMode="numeric"
                           pattern="[0-9]*"
                           aria-label={`Jump to page (1 to ${totalPages})`}
-                          placeholder={`1–${totalPages}`}
+                          placeholder={`1ÔÇô${totalPages}`}
                           value={jumpDraft}
                           onChange={(event) => {
                             const next = event.target.value.replace(/[^0-9]/g, '')
@@ -1436,7 +1434,7 @@ export function Optimizer() {
                       setPageIndex((value) => Math.min(totalPages - 1, value + 1))
                     }}
                   >
-                    ›
+                    ÔÇ║
                   </button>
                 </div>
               ) : null}

@@ -4,13 +4,13 @@
 */
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
-import type { EchoInstance } from '@/domain/entities/runtime'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
 import {
   getEchoLoadoutScores,
   getEchoScoringRevision,
   getMaxEchoSc,
   subscribeEchoScoring,
-} from '@/engine/evaluation/echoScoring'
+} from '@wuwacalc/core/engine/evaluation/echoScoring'
 
 export function useEchoScoringRevision(charId: string | null | undefined): number {
   const subscribe = useCallback((listener: () => void) => (

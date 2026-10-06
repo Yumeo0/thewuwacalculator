@@ -4,7 +4,7 @@
 */
 import { lazy, memo, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode, type RefObject } from 'react'
 import { useAppStore } from '@/application/state'
-import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE, type ShowcaseCardStyle } from '@/domain/entities/preferences'
+import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE, type ShowcaseCardStyle } from '@wuwacalc/core/domain/entities/preferences'
 import { type StoredImage } from '@/application/media/imageUpload'
 import { resolveShowcaseImage, type ShowcaseImage } from '@/application/media/showcaseImage'
 import { useAppModal } from '@/shared/ui/useAppModal'

@@ -30,6 +30,8 @@ vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
     const text = await readFile(filePath, 'utf8')
 
     return {
+      ok: true,
+      status: 200,
       text: async () => text,
       json: async () => JSON.parse(text),
     } as Response
@@ -42,5 +44,5 @@ vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
   throw new Error(`Unhandled test fetch request: ${url}`)
 })
 
-const { initGameData } = await import('@/data/gameData')
+const { initGameData } = await import('@wuwacalc/core/data/gameData')
 await initGameData()

@@ -5,8 +5,8 @@
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { Fragment, type CSSProperties, type MouseEvent, useMemo, useState } from 'react'
-import type { SkillTabKey } from '@/domain/entities/resonator'
-import type { ResRuntime } from '@/domain/entities/runtime'
+import type { SkillTabKey } from '@wuwacalc/core/domain/entities/resonator'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
 import { AppModal } from '@/shared/ui/AppModal'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription'
 import { ModalHeader } from '@/shared/ui/AppModalShell'

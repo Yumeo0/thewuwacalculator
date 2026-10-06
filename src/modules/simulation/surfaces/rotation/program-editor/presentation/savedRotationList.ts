@@ -10,15 +10,15 @@
 import {
   savedRotationContextMember,
   type SavedRotation,
-} from '@/domain/entities/inventoryStorage'
-import type { RotationComparisonSummary } from '@/domain/entities/rotationSummary'
-import type { ResonatorId } from '@/domain/entities/runtime'
-import type { UiState } from '@/domain/entities/appState'
-import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
-import { isLiveRotEntId } from '@/engine/runtime/liveRotationEntry'
+} from '@wuwacalc/core/domain/entities/inventoryStorage'
+import type { RotationComparisonSummary } from '@wuwacalc/core/domain/entities/rotationSummary'
+import type { ResonatorId } from '@wuwacalc/core/domain/entities/runtime'
+import type { UiState } from '@wuwacalc/core/domain/entities/appState'
+import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import { isLiveRotEntId } from '@wuwacalc/core/engine/runtime/liveRotationEntry'
 import { DEF_ICON_SRC } from '@/shared/lib/imageFallback'
-import { formatTrunc, formatTruncCompact } from '@/shared/lib/number.ts'
+import { formatTrunc, formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
 
 export const CMP_MAX = 4
 

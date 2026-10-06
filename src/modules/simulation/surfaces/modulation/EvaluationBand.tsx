@@ -3,8 +3,8 @@
   Description: Shared evaluation score band used by every build-analysis page.
 */
 
-import { GRADE_LADDER } from '@/engine/evaluation/evaluation/grades.ts'
-import type { EvaluationSummary } from '@/engine/evaluation/buildEvaluationWorkerTypes'
+import { GRADE_LADDER } from '@wuwacalc/core/engine/evaluation/evaluation/grades.ts'
+import type { EvaluationSummary } from '@wuwacalc/core/engine/evaluation/buildEvaluationWorkerTypes'
 import {
   formatBuildEvaluationScore,
   getBuildEvaluationEmoji,

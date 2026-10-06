@@ -12,7 +12,7 @@
 */
 
 import { Fragment, useState, type CSSProperties as CssProps } from 'react'
-import type { SkillTabKey } from '@/domain/entities/resonator'
+import type { SkillTabKey } from '@wuwacalc/core/domain/entities/resonator'
 import { glyphVars } from '@/shared/lib/gameAssets.ts'
 import {
   FORTE_SPINE,

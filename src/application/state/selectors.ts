@@ -5,20 +5,20 @@
 */
 
 import {type AppStore} from '@/application/state/store'
-import type { LegacyProfileMap } from '@/domain/entities/appState'
-import type { EnemyProfile } from '@/domain/entities/appState'
+import type { LegacyProfileMap } from '@wuwacalc/core/domain/entities/appState'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState'
 import {
   contextScenarioMember,
   type CombatScenario,
   type TeamMemberId,
-} from '@/domain/entities/combatScenario'
-import type { CombatGraph } from '@/domain/entities/combatGraph'
-import type { ResRuntime } from '@/domain/entities/runtime'
-import type { PrepWork } from '@/engine/pipeline/preparedWorkspace'
-import { mkInvSgDrvd, type InvSgDrvd } from '@/engine/runtime/inventoryUsage'
-import { prepareCombatScenarioForUi } from '@/engine/pipeline/combatScenario'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
-import { projectScenarioProfiles, projectScenarioUiRuntimes } from '@/engine/runtime/scenarioRuntime'
+} from '@wuwacalc/core/domain/entities/combatScenario'
+import type { CombatGraph } from '@wuwacalc/core/domain/entities/combatGraph'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
+import type { PrepWork } from '@wuwacalc/core/engine/pipeline/preparedWorkspace'
+import { mkInvSgDrvd, type InvSgDrvd } from '@wuwacalc/core/engine/runtime/inventoryUsage'
+import { prepareCombatScenarioForUi } from '@wuwacalc/core/engine/pipeline/combatScenario'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { projectScenarioProfiles, projectScenarioUiRuntimes } from '@wuwacalc/core/engine/runtime/scenarioRuntime'
 
 export interface WorkDrvdStt {
   scenario: CombatScenario | null

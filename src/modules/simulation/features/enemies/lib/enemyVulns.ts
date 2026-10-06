@@ -16,16 +16,16 @@
                type, so it is kept aside rather than summed into the whole.
 */
 
-import type { EnemyProfile } from '@/domain/entities/appState'
-import type { EffectScope, EffectDef, SourceState } from '@/domain/gameData/contracts'
-import type { ResRuntime } from '@/domain/entities/runtime'
-import type { SimResult } from '@/engine/pipeline/types'
-import { getResDtlsBy } from '@/data/gameData/resonators/resonatorDataStore'
-import { listEffectsFor, listFfctForO, listStatesFor } from '@/data/catalog/gameDataService'
-import { isStateVisible, mkSrcSttScp } from '@/engine/services/sourceStateService'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState'
+import type { EffectScope, EffectDef, SourceState } from '@wuwacalc/core/domain/gameData/contracts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
+import type { SimResult } from '@wuwacalc/core/engine/pipeline/types'
+import { getResDtlsBy } from '@wuwacalc/core/data/gameData/resonators/resonatorDataStore'
+import { listEffectsFor, listFfctForO, listStatesFor } from '@wuwacalc/core/data/catalog/gameDataService'
+import { isStateVisible, mkSrcSttScp } from '@wuwacalc/core/engine/services/sourceStateService'
 import { getStateText } from '@/modules/simulation/model/sourceStateDisplay'
 import { fmtSkllKey, skllLblMap } from '@/modules/simulation/features/resonator/lib/panel.ts'
-import { evalCond, evalForm } from '@/engine/effects/evaluator'
+import { evalCond, evalForm } from '@wuwacalc/core/engine/effects/evaluator'
 
 /** which multiplier a line lands in, since the pipeline keeps them apart */
 export type VulnStat = 'dmgVuln' | 'finalDmg'

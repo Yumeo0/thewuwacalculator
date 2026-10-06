@@ -9,8 +9,8 @@ import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AnchoredAppPopup, useAppPopup, useAppPopupDismiss } from '@/shared/ui/AppPopup.tsx'
 import type { CSSProperties as CssProps, KeyboardEvent as ReactKeyEvt, ReactNode } from 'react'
-import type { WeaponPlanSet } from '@/domain/entities/suggestions.ts'
-import type { SntSetConds } from '@/domain/entities/sonataSetConditionals.ts'
+import type { WeaponPlanSet } from '@wuwacalc/core/domain/entities/suggestions.ts'
+import type { SntSetConds } from '@wuwacalc/core/domain/entities/sonataSetConditionals.ts'
 import { formatCompactNum, formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import { statIconSrc } from '@/modules/simulation/workspace/ui.tsx'
 import { Select, type SelectGroup } from '@/application/ui/Select'
@@ -25,7 +25,7 @@ import {
 } from '@/modules/simulation/surfaces/suggestions/climb/model.ts'
 
 const pct = (value: number) =>
-  `${value > 0 ? '+' : value < 0 ? '−' : ''}${getDiffLabel(value, false)}`
+  `${value > 0 ? '+' : value < 0 ? 'ÔêÆ' : ''}${getDiffLabel(value, false)}`
 
 const tone = (value: number) => {
   const result = getDiffTone(value)
@@ -92,7 +92,7 @@ function Build({ kind, row }: { kind: ClimbKind, row: ClimbRow }) {
         <span className="clb__wtxt">
           <b>{weapon.name}</b>
           <span className="clb__wstats">
-            <em>{weapon.rarity}★ R{weapon.rank}</em>
+            <em>{weapon.rarity}Ôÿà R{weapon.rank}</em>
             <span className="clb__wstat" title={`ATK ${Math.round(weapon.baseAtk)}`}>
               <i className="sst-icon" style={maskStyle(statIconSrc('atk'))} />
               {Math.round(weapon.baseAtk)}
@@ -182,7 +182,7 @@ function Plate({ row, leaf, onApply }: { row: ClimbRow, leaf: ReactNode, onApply
     name = weapon.name
     band = (
       <>
-        <span className="clb__bar-stars" title={`${weapon.rarity}★`}>
+        <span className="clb__bar-stars" title={`${weapon.rarity}Ôÿà`}>
           {Array.from({ length: weapon.rarity }, (_, index) => <Spark key={index} />)}
         </span>
         <span>R{weapon.rank}</span>
@@ -426,7 +426,7 @@ export function Climb({
   const configSummary = useMemo(() => {
     if (kind === 'weapons') {
       const rarities = [5, 4, 3, 2, 1].filter((rarity) => wpnSets.visible?.[rarity])
-      const ranks = rarities.map((rarity) => `${rarity}★ R${wpnSets.ranks?.[rarity] ?? wpnSets.stdRank}`)
+      const ranks = rarities.map((rarity) => `${rarity}Ôÿà R${wpnSets.ranks?.[rarity] ?? wpnSets.stdRank}`)
       const shown = wpnSets.mode === 'both'
         ? `resting and stacked, ranked on ${wpnSets.target === 'max' ? 'stacked' : 'resting'}`
         : wpnSets.mode === 'max' ? 'stacked only' : 'resting only'

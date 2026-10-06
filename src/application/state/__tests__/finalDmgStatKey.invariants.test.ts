@@ -4,8 +4,8 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import { getRotFormulaStatKey } from '@/domain/gameData/rotationFormulaStats'
-import { mnlBffsSchm } from '@/engine/runtime/manualBuffsSchema'
+import { getRotFormulaStatKey } from '@wuwacalc/core/domain/gameData/rotationFormulaStats'
+import { mnlBffsSchm } from '@wuwacalc/core/engine/runtime/manualBuffsSchema'
 
 const quickBuffs = {
   atk: { percent: 0, flat: 0 },

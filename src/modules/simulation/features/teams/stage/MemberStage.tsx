@@ -20,22 +20,22 @@ import {
   useState,
 } from 'react'
 import { ArrowRightLeft, Clipboard, Copy, Gem, Layers, Network, Package, Pencil, Save, Scissors, Sparkles, Trash2, X, Zap } from 'lucide-react'
-import { isNoWeaponId, type EchoInstance, type ResRuntime } from '@/domain/entities/runtime.ts'
-import type { GenWpn } from '@/domain/entities/weapon.ts'
-import { cloneEchoFor, cloneEchoLoadout, sameEchoUid, saveEchoSlots, type SavedBuild, type SavedEcho } from '@/domain/entities/inventoryStorage.ts'
-import type { SourceState } from '@/domain/gameData/contracts.ts'
-import { getResStateControls } from '@/domain/gameData/resonatorStateGraph'
-import { initWpnStts } from '@/engine/runtime/sourceStateInit.ts'
+import { isNoWeaponId, type EchoInstance, type ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { GenWpn } from '@wuwacalc/core/domain/entities/weapon.ts'
+import { cloneEchoFor, cloneEchoLoadout, sameEchoUid, saveEchoSlots, type SavedBuild, type SavedEcho } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
+import type { SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { getResStateControls } from '@wuwacalc/core/domain/gameData/resonatorStateGraph'
+import { initWpnStts } from '@wuwacalc/core/engine/runtime/sourceStateInit.ts'
 import { useAppStore } from '@/application/state'
-import { listWpnsByTy } from '@/data/catalog/weaponCatalogService.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
-import { getOwnForKey, listStatesFor, listOwnersFor } from '@/data/catalog/gameDataService.ts'
-import { getMainEchoS } from '@/engine/services/runtimeSourceService.ts'
-import { getEchoById, listEchoes } from '@/data/catalog/echoCatalogService.ts'
-import { getEchoSetDe } from '@/data/gameData/echoSets/effects.ts'
-import { getSntSetIco, getSntSetNam } from '@/data/gameData/catalog/sonataSets.ts'
+import { listWpnsByTy } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { getOwnForKey, listStatesFor, listOwnersFor } from '@wuwacalc/core/data/catalog/gameDataService.ts'
+import { getMainEchoS } from '@wuwacalc/core/engine/services/runtimeSourceService.ts'
+import { getEchoById, listEchoes } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
+import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
+import { getSntSetIco, getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
 import { fmtEchoStatL, fmtEchoStatV, getEchoStatI, mkDefEchoNst } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
-import { isStateVisible } from '@/engine/services/sourceStateService.ts'
+import { isStateVisible } from '@wuwacalc/core/engine/services/sourceStateService.ts'
 import { buildSonataPlan } from '@/modules/simulation/workspace/ui.tsx'
 import {
   applyCscdRst,
@@ -43,9 +43,9 @@ import {
   getTeamTgtPt,
   isSourceVisible,
 } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
-import { readRtPath, writeRtPath } from '@/domain/gameData/runtimePath.ts'
-import { mkCntrPath } from '@/domain/gameData/stateKeys.ts'
-import { getSrcSttNct } from '@/engine/gameData/controlOptions.ts'
+import { readRtPath, writeRtPath } from '@wuwacalc/core/domain/gameData/runtimePath.ts'
+import { mkCntrPath } from '@wuwacalc/core/domain/gameData/stateKeys.ts'
+import { getSrcSttNct } from '@wuwacalc/core/engine/gameData/controlOptions.ts'
 import type { RtUpdHnd } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
 import { TeammateManualBuffs } from '@/modules/simulation/features/teams/TeammateManualBuffs.tsx'
 import {
@@ -64,7 +64,7 @@ import {
   WPNSTATLBLS,
   WPN_STAT_CNS,
 } from '@/modules/simulation/features/weapons/lib/weapon.ts'
-import { scopedTargetOwnerKey } from '@/domain/gameData/targetRouting.ts'
+import { scopedTargetOwnerKey } from '@wuwacalc/core/domain/gameData/targetRouting.ts'
 import { listActiveSets } from '@/modules/simulation/model/activeEchoSets.ts'
 import { useEchoClipboard } from '@/modules/simulation/model/useEchoClipboard.ts'
 import { getEchoMptyC, getEchoPaneC, getEchoSlotC } from '@/modules/simulation/features/echoes/lib/ctx.tsx'

@@ -13,8 +13,8 @@ import { isEditorBlock } from '@/modules/simulation/surfaces/rotation/program-ed
 import { editorLoopId } from '@/modules/simulation/surfaces/rotation/program-editor/model/executionScope.ts'
 import {
   normLoopRuns,
-} from '@/domain/gameData/rotationLoops.ts'
-import { resolveInheritedPassBody } from '@/domain/gameData/loopPasses.ts'
+} from '@wuwacalc/core/domain/gameData/rotationLoops.ts'
+import { resolveInheritedPassBody } from '@wuwacalc/core/domain/gameData/loopPasses.ts'
 
 export type EditorPassForks = Record<number, EditorNode[]>
 

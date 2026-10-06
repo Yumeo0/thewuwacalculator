@@ -5,7 +5,7 @@
 
 import { useState } from 'react'
 import { Clock3, Save } from 'lucide-react'
-import type { SavedRotation } from '@/domain/entities/inventoryStorage.ts'
+import type { SavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import { AppModal } from '@/shared/ui/AppModal.tsx'
 import { ModalHeader } from '@/shared/ui/AppModalShell.tsx'
 

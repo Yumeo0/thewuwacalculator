@@ -7,8 +7,8 @@
 
 import { decShareText, encShareText } from '@/shared/lib/shareCodec.ts'
 import { rememberWorkspaceClipboardText } from '@/shared/lib/workspaceClipboardCache.ts'
-import type { EchoInstance, ResonatorId } from '@/domain/entities/runtime.ts'
-import { equalEchoes, cloneEchoFor } from '@/domain/entities/inventoryStorage.ts'
+import type { EchoInstance, ResonatorId } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { equalEchoes, cloneEchoFor } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import { getEchoCostB } from '@/modules/simulation/features/echoes/lib/echoes.ts'
 
 export const ECHO_CLIP_KIND = 'echo-clipboard'

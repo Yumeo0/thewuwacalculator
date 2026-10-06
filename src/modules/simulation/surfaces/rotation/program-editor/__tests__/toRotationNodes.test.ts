@@ -4,12 +4,12 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import type { RotationNode, SourceState } from '@/domain/gameData/contracts.ts'
+import type { RotationNode, SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import {
   extractLoopTemplateBody,
   readPassForks,
   resolveLoopPassBody,
-} from '@/domain/gameData/loopPasses.ts'
+} from '@wuwacalc/core/domain/gameData/loopPasses.ts'
 import type {
   EditorBlock,
   EditorNode,

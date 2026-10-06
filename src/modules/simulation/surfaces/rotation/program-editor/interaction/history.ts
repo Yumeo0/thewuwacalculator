@@ -3,9 +3,9 @@
   Description: Applies undoable program edits and maintains bounded undo and redo stacks.
 */
 
-import type { RotationNode } from '@/domain/gameData/contracts.ts'
-import { stripRotationNotes } from '@/domain/gameData/rotationNotes.ts'
-import { extractLoopTemplateBody } from '@/domain/gameData/loopPasses.ts'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { stripRotationNotes } from '@wuwacalc/core/domain/gameData/rotationNotes.ts'
+import { extractLoopTemplateBody } from '@wuwacalc/core/domain/gameData/loopPasses.ts'
 import type {
   EditorSection,
   LoopRunSelections,

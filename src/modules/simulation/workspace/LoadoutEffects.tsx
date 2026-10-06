@@ -5,12 +5,12 @@
 */
 
 import { useMemo } from 'react'
-import type { EchoInstance } from '@/domain/entities/runtime'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
 import { DisplayImage } from '@/shared/ui/DisplayImage'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
-import { getSntSetIco } from '@/data/gameData/catalog/sonataSets.ts'
-import { getEchoSetDe } from '@/data/gameData/echoSets/effects.ts'
-import type { SetDef } from '@/data/gameData/echoSets/effects.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
+import { getSntSetIco } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
+import type { SetDef } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
 import { cmptSetCnts } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'

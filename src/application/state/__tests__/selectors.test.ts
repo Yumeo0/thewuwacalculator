@@ -5,15 +5,15 @@
 
 import { describe, expect, it } from 'vitest'
 import type { AppStore } from '@/application/state/store.ts'
-import type { RotationNode } from '@/domain/gameData/contracts.ts'
-import { makeScenarioTeam } from '@/domain/entities/combatScenario.ts'
-import { addScenario, selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { makeScenarioTeam } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import { addScenario, selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 import {
   makeAppState,
   makeResProfile,
   makeScenarioMemberFromProfile,
   makeScenarioFromProfiles,
-} from '@/engine/runtime/defaults.ts'
+} from '@wuwacalc/core/engine/runtime/defaults.ts'
 import {
   selActResId,
   selContextMemberId,
@@ -24,8 +24,8 @@ import {
   selVrvwDrvd,
   selWorkDrvd,
 } from '@/application/state/selectors.ts'
-import { listResSds } from '@/data/catalog/resonatorSeedService.ts'
-import { makeLiveRotationEntry } from '@/engine/runtime/liveRotationEntry.ts'
+import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { makeLiveRotationEntry } from '@wuwacalc/core/engine/runtime/liveRotationEntry.ts'
 
 describe('workspace selectors', () => {
   it('uses scenario member zero for active-based UI selection', () => {

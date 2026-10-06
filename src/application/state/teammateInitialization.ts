@@ -4,13 +4,13 @@
                keeping ordinary initialization for their controls and effects.
 */
 
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
-import { contextScenarioMember, type CombatScenario, type ScenarioTeamMember } from '@/domain/entities/combatScenario'
-import type { SavedBuild, SavedBuildSnap } from '@/domain/entities/inventoryStorage'
-import { scenarioForContextResonator } from '@/domain/entities/scenarioLibrary'
-import { makeResProfile, makeScenarioMemberFromProfile } from '@/engine/runtime/defaults'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import { contextScenarioMember, type CombatScenario, type ScenarioTeamMember } from '@wuwacalc/core/domain/entities/combatScenario'
+import type { SavedBuild, SavedBuildSnap } from '@wuwacalc/core/domain/entities/inventoryStorage'
+import { scenarioForContextResonator } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { makeResProfile, makeScenarioMemberFromProfile } from '@wuwacalc/core/engine/runtime/defaults'
 import { useAppStore } from './store'
-import { roverIdForGender } from '@/domain/entities/roverGender'
+import { roverIdForGender } from '@wuwacalc/core/domain/entities/roverGender'
 
 function filledEchoSlots(build: SavedBuildSnap): number {
   let filled = 0

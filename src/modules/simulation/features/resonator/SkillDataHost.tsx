@@ -4,10 +4,10 @@
 */
 
 import { createContext as mkCtx, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { ensureResonatorData, hasResonatorData, holdResonatorData } from '@/data/gameData'
+import { ensureResonatorData, hasResonatorData, holdResonatorData } from '@wuwacalc/core/data/gameData'
 import { useTstStr } from '@/shared/util/toastStore'
 import type { ReactNode } from 'react'
-import type { SkillTabKey } from '@/domain/entities/resonator'
+import type { SkillTabKey } from '@wuwacalc/core/domain/entities/resonator'
 import { useAppStore } from '@/application/state'
 import { selWorkDrvd } from '@/application/state'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'

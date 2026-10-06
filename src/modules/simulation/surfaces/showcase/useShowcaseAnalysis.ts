@@ -3,9 +3,9 @@
   Description: Publishes Showcase damage before grading and releases results when the surface leaves.
 */
 import { useEffect, useState } from 'react'
-import { cancelEvaluationReport, runShowcaseAnalysis } from '@/engine/evaluation/buildEvaluationClient'
-import { cacheEchoMainStatScoreProfile, activateEchoMainStatScoreProfile } from '@/engine/evaluation/echoScoring'
-import type { ShowcaseAnalysisInput, ShowcaseAnalysisResult } from '@/engine/evaluation/showcaseAnalysis'
+import { cancelEvaluationReport, runShowcaseAnalysis } from '@wuwacalc/core/engine/evaluation/buildEvaluationClient'
+import { cacheEchoMainStatScoreProfile, activateEchoMainStatScoreProfile } from '@wuwacalc/core/engine/evaluation/echoScoring'
+import type { ShowcaseAnalysisInput, ShowcaseAnalysisResult } from '@wuwacalc/core/engine/evaluation/showcaseAnalysis'
 
 export function useShowcaseAnalysis(input: ShowcaseAnalysisInput | null, enabled = true) {
   const [completed, setCompleted] = useState<{ owner: string; value: ShowcaseAnalysisResult } | null>(null)

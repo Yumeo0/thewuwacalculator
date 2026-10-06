@@ -3,10 +3,10 @@
   Description: Owns utils behavior and state transitions for the lib module.
 */
 
-import type { SkillDef, SkillSubHit } from '@/domain/entities/stats.ts'
-import type { SimResult } from '@/engine/pipeline/types.ts'
-import type { RotationMemberContribution } from '@/domain/entities/rotationSummary.ts'
-import { getLoopAverageDivisor } from '@/engine/pipeline/rotationTotals.ts'
+import type { SkillDef, SkillSubHit } from '@wuwacalc/core/domain/entities/stats.ts'
+import type { SimResult } from '@wuwacalc/core/engine/pipeline/types.ts'
+import type { RotationMemberContribution } from '@wuwacalc/core/domain/entities/rotationSummary.ts'
+import { getLoopAverageDivisor } from '@wuwacalc/core/engine/pipeline/rotationTotals.ts'
 
 export interface CntrBrkdItem {
   label: string

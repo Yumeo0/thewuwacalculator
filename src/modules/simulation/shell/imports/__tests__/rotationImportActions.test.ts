@@ -6,9 +6,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useAppStore } from '@/application/state/store'
 import type { NormalizedImportedRotation } from '@/application/imports/rotationPayload.ts'
-import type { RotationNode } from '@/domain/gameData/contracts.ts'
-import { contextScenarioMember } from '@/domain/entities/combatScenario.ts'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { contextScenarioMember } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 import { consumePersist } from '@/application/persistence/storage.ts'
 import { applyRotationImport } from '../rotationImport.ts'
 

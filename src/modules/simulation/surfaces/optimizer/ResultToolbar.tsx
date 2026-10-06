@@ -18,9 +18,9 @@ import {
 import { Expandable } from '@/shared/ui/Expandable'
 import { Select, type SelectOption } from '@/application/ui/Select'
 import { SonataTokens } from '@/modules/simulation/workspace/ui.tsx'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
-import { getEchoSetDe } from '@/data/gameData/echoSets/effects.ts'
-import { getSntSetIco } from '@/data/gameData/catalog/sonataSets.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
+import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
+import { getSntSetIco } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
 import {
   OP_SYMBOL,
   VIEW_COLUMNS,

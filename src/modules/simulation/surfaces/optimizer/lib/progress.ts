@@ -5,7 +5,7 @@
 */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { OptPrgr } from '@/engine/optimizer/types'
+import type { OptPrgr } from '@wuwacalc/core/engine/optimizer/types'
 
 const WAVE_SLOTS = 44
 

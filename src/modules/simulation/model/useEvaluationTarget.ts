@@ -4,13 +4,13 @@
 */
 
 import { useEffect, useMemo, useState } from 'react'
-import type { EnemyProfile } from '@/domain/entities/appState'
-import type { ResRuntime, ResSeed } from '@/domain/entities/runtime'
-import { makeCombatGraph } from '@/engine/runtime/combatGraph'
-import { makeRuntimeMap } from '@/engine/runtime/runtimeAdapters'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState'
+import type { ResRuntime, ResSeed } from '@wuwacalc/core/domain/entities/runtime'
+import { makeCombatGraph } from '@wuwacalc/core/engine/runtime/combatGraph'
+import { makeRuntimeMap } from '@wuwacalc/core/engine/runtime/runtimeAdapters'
 import { mkPrepLiveCm } from '@/modules/simulation/model/selectors.ts'
-import { mkPrepWork } from '@/engine/pipeline/preparedWorkspace'
-import type { SimResult } from '@/engine/pipeline/types'
+import { mkPrepWork } from '@wuwacalc/core/engine/pipeline/preparedWorkspace'
+import type { SimResult } from '@wuwacalc/core/engine/pipeline/types'
 import { scheduleAfterSettled } from '@/shared/lib/scheduleAfterSettled.ts'
 
 interface EvaluationTargetIn {

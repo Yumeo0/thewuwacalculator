@@ -3,20 +3,20 @@
   Description: Builds the evaluation report's authored rotation sequence.
 */
 
-import type { RotationNode, RotVl, RtChng } from '@/domain/gameData/contracts'
-import type { CombatState } from '@/domain/entities/runtime'
-import type { AttributeKey } from '@/domain/entities/stats'
+import type { RotationNode, RotVl, RtChng } from '@wuwacalc/core/domain/gameData/contracts'
+import type { CombatState } from '@wuwacalc/core/domain/entities/runtime'
+import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats'
 import {
   getNegFfctCm,
   NEG_EFFECT_KEYS,
   type NegEffectKey,
-} from '@/engine/gameData/negativeEffects'
+} from '@wuwacalc/core/engine/gameData/negativeEffects'
 import { fmtFormExpr } from '@/modules/simulation/model/formatGameData'
-import { truncTo } from '@/shared/lib/number.ts'
+import { truncTo } from '@wuwacalc/core/shared/lib/number.ts'
 import {featureMeta} from "@/modules/simulation/surfaces/rotation/shared/featureCatalog.ts";
 import {seedRsntById} from "@/modules/simulation/features/resonator/lib/seedData.ts";
 import { ROT_LOOP_COLORS } from "@/modules/simulation/surfaces/rotation/shared/loopMeta.ts";
-import { normLoopRuns } from '@/domain/gameData/rotationLoops.ts'
+import { normLoopRuns } from '@wuwacalc/core/domain/gameData/rotationLoops.ts'
 import type { CondChoice } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
 import { getCondChoice } from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
 
@@ -27,7 +27,7 @@ function getRotNodeItems(node: RotationNode): RotationNode[] {
 function getRotNodeSetup(node: RotationNode): RotationNode[] {
   return 'setup' in node && Array.isArray(node.setup) ? node.setup : []
 }
-import { attachedConditionChanges } from '@/domain/gameData/rotationAttached.ts'
+import { attachedConditionChanges } from '@wuwacalc/core/domain/gameData/rotationAttached.ts'
 
 export interface RotSqncCtnEn {
   key: string

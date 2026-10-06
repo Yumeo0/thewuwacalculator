@@ -3,11 +3,11 @@
   Description: Applies weapon selection and rank changes while resetting weapon-owned runtime state.
 */
 
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import type { GenWpn } from '@/domain/entities/weapon.ts'
-import { initWpnStts, maxWpnRt } from '@/engine/runtime/sourceStateInit.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { GenWpn } from '@wuwacalc/core/domain/entities/weapon.ts'
+import { initWpnStts, maxWpnRt } from '@wuwacalc/core/engine/runtime/sourceStateInit.ts'
 import { weaponStatsAt } from '@/modules/simulation/features/weapons/lib/weapon.ts'
-import { clampNumber } from '@/shared/lib/number.ts'
+import { clampNumber } from '@wuwacalc/core/shared/lib/number.ts'
 
 export const WPN_RANK_MIN = 1
 export const WPN_RANK_MAX = 5

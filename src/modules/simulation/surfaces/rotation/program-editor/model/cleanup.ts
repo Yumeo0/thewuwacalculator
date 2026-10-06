@@ -10,16 +10,16 @@ import type {
   EditorStep,
   EditorBlock,
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
-import type { DataSrcRef, RtChng } from '@/domain/gameData/contracts.ts'
-import { makeSourceKey } from '@/data/gameData/registry.ts'
+import type { DataSrcRef, RtChng } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { makeSourceKey } from '@wuwacalc/core/data/gameData/registry.ts'
 import { isEditorBlock } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import {
   isCheckoutableLoop,
   resolveEditorPassBody,
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/passCheckout.ts'
 import { editorLoopId } from '@/modules/simulation/surfaces/rotation/program-editor/model/executionScope.ts'
-import { normLoopRuns } from '@/domain/gameData/rotationLoops.ts'
-import { ACTIVE_RESONATOR_PATH } from '@/domain/gameData/rotationPaths.ts'
+import { normLoopRuns } from '@wuwacalc/core/domain/gameData/rotationLoops.ts'
+import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 
 export type CleanupReason =
   /** ran, and wrote only what the state already held */

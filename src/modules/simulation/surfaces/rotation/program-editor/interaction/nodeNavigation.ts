@@ -22,7 +22,7 @@ import {
 import { computeRowFoldParents } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 import {
   normLoopRuns,
-} from '@/domain/gameData/rotationLoops.ts'
+} from '@wuwacalc/core/domain/gameData/rotationLoops.ts'
 import {
   checkoutAllLoopPasses,
   isCheckoutableLoop,

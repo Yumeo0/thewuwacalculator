@@ -4,10 +4,10 @@
                and weapon-level mutations shared by build-editing surfaces.
 */
 
-import type { ResRuntime, ResSeed } from '@/domain/entities/runtime.ts'
-import { cmptTrcNodeB } from '@/engine/runtime/traceNodes.ts'
-import { clampNumber } from '@/shared/lib/number.ts'
-import type { GenWpn } from '@/domain/entities/weapon.ts'
+import type { ResRuntime, ResSeed } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { cmptTrcNodeB } from '@wuwacalc/core/engine/runtime/traceNodes.ts'
+import { clampNumber } from '@wuwacalc/core/shared/lib/number.ts'
+import type { GenWpn } from '@wuwacalc/core/domain/entities/weapon.ts'
 import { weaponStatsAt } from '@/modules/simulation/features/weapons/lib/weapon.ts'
 import type { ResSldrSkllT } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 

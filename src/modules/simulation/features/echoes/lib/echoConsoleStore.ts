@@ -6,7 +6,7 @@
 */
 
 import { create } from 'zustand'
-import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
+import type { CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScenario.ts'
 
 interface EchoSlotTarget {
   resonatorId: string

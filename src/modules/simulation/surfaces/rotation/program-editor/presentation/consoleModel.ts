@@ -3,8 +3,8 @@
   Description: Projects executed trace rows into container, handoff, and runtime-state console tracks.
 */
 
-import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
-import { skllTypeDspl } from '@/domain/gameData/skillTypes.ts'
+import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
+import { skllTypeDspl } from '@wuwacalc/core/domain/gameData/skillTypes.ts'
 import { stepDamageAt } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 import { flatTargetMatchesRuns } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/flatRows.ts'
 import { isEditorBlock } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'

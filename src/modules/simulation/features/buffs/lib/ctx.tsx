@@ -10,7 +10,7 @@ import {
   SquareDashedMousePointer,
   XSquare,
 } from 'lucide-react'
-import type { MnlMod } from '@/domain/entities/manualBuffs.ts'
+import type { MnlMod } from '@wuwacalc/core/domain/entities/manualBuffs.ts'
 import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
 import type { BuffPresetEntry } from '@/modules/simulation/features/buffs/lib/presets.ts'
 

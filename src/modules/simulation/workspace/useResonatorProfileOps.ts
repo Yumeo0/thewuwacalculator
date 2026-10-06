@@ -4,8 +4,8 @@
 */
 
 import { useCallback, useMemo } from 'react'
-import { contextScenarioMember } from '@/domain/entities/combatScenario.ts'
-import { projectScenarioMemberProfile } from '@/engine/runtime/scenarioRuntime.ts'
+import { contextScenarioMember } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import { projectScenarioMemberProfile } from '@wuwacalc/core/engine/runtime/scenarioRuntime.ts'
 import { useAppStore } from '@/application/state'
 import { nextResonatorSelection } from '@/modules/simulation/model/resonatorProfileActions.ts'
 import {

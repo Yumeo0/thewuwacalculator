@@ -8,16 +8,16 @@ import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { AnimationEvent, CSSProperties, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import type { ResDtls, SkillTabKey } from '@/domain/entities/resonator'
-import type { ResRuntime, SkillLevels } from '@/domain/entities/runtime'
-import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
-import { getResDtlsBy } from '@/data/gameData/resonators/resonatorDataStore.ts'
-import { isRuntimeMaxed, maxRuntime } from '@/engine/runtime/maxRuntime.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
-import { loadEnemySummary, type EnemySummary } from '@/data/catalog/enemyCatalogService.ts'
+import type { ResDtls, SkillTabKey } from '@wuwacalc/core/domain/entities/resonator'
+import type { ResRuntime, SkillLevels } from '@wuwacalc/core/domain/entities/runtime'
+import type { CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import { getResDtlsBy } from '@wuwacalc/core/data/gameData/resonators/resonatorDataStore.ts'
+import { isRuntimeMaxed, maxRuntime } from '@wuwacalc/core/engine/runtime/maxRuntime.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import { loadEnemySummary, type EnemySummary } from '@wuwacalc/core/data/catalog/enemyCatalogService.ts'
 import { useAppStore, selEnemyProf } from '@/application/state'
-import type { EnemyProfile } from '@/domain/entities/appState'
-import type { AttributeKey } from '@/domain/entities/stats'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState'
+import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats'
 import {
   ENEMY_CLASS_TXT,
   ENEMY_ELEM_ATTR,
@@ -25,8 +25,8 @@ import {
   getEnemyIcon,
   isEnemyClssI,
   type EnemyElemId,
-} from '@/domain/entities/enemy'
-import { ATTR_COLORS, getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
+} from '@wuwacalc/core/domain/entities/enemy'
+import { ATTR_COLORS, getAttributeIconSrc } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
 import { openEnemyCnsl } from '@/modules/simulation/features/enemies/consoleRequest'
 import { openEchoImport } from '@/modules/simulation/features/echoes/lib/echoImportStore.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback'

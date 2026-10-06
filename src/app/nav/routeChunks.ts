@@ -14,8 +14,8 @@ export { createRouteChunk } from '@/shared/navigation/routeChunk'
 export const simulationChunk = createRouteChunk(async () => {
   const [{ useAppStore }, { selectedCombatScenario }, { initGameData, getGameDataMode }] = await Promise.all([
     import('@/application/state'),
-    import('@/domain/entities/scenarioLibrary'),
-    import('@/data/gameData'),
+    import('@wuwacalc/core/domain/entities/scenarioLibrary'),
+    import('@wuwacalc/core/data/gameData'),
   ])
   const team = selectedCombatScenario(useAppStore.getState().combat).team.members
   await initGameData({ mode: getGameDataMode(), resonatorIds: team.map((member) => member.resonatorId) })

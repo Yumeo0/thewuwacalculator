@@ -8,11 +8,11 @@ The composed app store owns saved preferences, combat scenarios, Simulation sett
 
 Primary files:
 
-- [src/domain/entities/appState.ts](../src/domain/entities/appState.ts)
+- [packages/core/src/domain/entities/appState.ts](../packages/core/src/domain/entities/appState.ts)
 - [src/application/state/store.ts](../src/application/state/store.ts)
 - [src/application/state/optimizerRunStore.ts](../src/application/state/optimizerRunStore.ts)
 - [src/application/state/inventoryUiStore.ts](../src/application/state/inventoryUiStore.ts)
-- [src/engine/runtime/schema.ts](../src/engine/runtime/schema.ts)
+- [packages/core/src/engine/runtime/schema.ts](../packages/core/src/engine/runtime/schema.ts)
 - [src/application/persistence/storage.ts](../src/application/persistence/storage.ts)
 - [src/application/persistence/scenarioRecords.ts](../src/application/persistence/scenarioRecords.ts)
 - [src/application/persistence/persistenceCoordinator.ts](../src/application/persistence/persistenceCoordinator.ts)
@@ -51,9 +51,9 @@ Saved rotations contain immutable scenario snapshots and can become substantiall
 
 Primary files:
 
-- [src/engine/runtime/runtimeAdapters.ts](../src/engine/runtime/runtimeAdapters.ts)
-- [src/engine/runtime/runtimeMaterialization.ts](../src/engine/runtime/runtimeMaterialization.ts)
-- [src/engine/runtime/combatGraph.ts](../src/engine/runtime/combatGraph.ts)
+- [packages/core/src/engine/runtime/runtimeAdapters.ts](../packages/core/src/engine/runtime/runtimeAdapters.ts)
+- [packages/core/src/engine/runtime/runtimeMaterialization.ts](../packages/core/src/engine/runtime/runtimeMaterialization.ts)
+- [packages/core/src/engine/runtime/combatGraph.ts](../packages/core/src/engine/runtime/combatGraph.ts)
 
 Runtime adapters convert saved scenario members, team assignments, controls, and conditions into calculation inputs for each resonator and teammate. Selectors provide those inputs to Modulation, Rotation, Showcase, Optimizer, Suggestions, and evaluation.
 

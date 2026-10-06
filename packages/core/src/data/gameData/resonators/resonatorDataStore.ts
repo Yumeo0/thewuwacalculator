@@ -1,0 +1,65 @@
+/*
+  Author: Runor Ewhro
+  Description: Module-level cache for resonator catalog and detail data,
+               populated by initializeGameData() before the app renders.
+*/
+
+import type { ResDtls } from '@core/domain/entities/resonator'
+import type { ResSeed } from '@core/domain/entities/runtime'
+
+const SKILL_TABS = [
+  'normalAttack',
+  'resonanceSkill',
+  'forteCircuit',
+  'resonanceLiberation',
+  'introSkill',
+  'outroSkill',
+  'tuneBreak',
+] as const
+
+const normalizedDetails = new WeakMap<ResDtls, ResDtls>()
+
+let catalogCache: ResSeed[] = []
+let catByIdCch: Record<string, ResSeed> = {}
+let dtlsByIdCch: Record<string, ResDtls> = {}
+
+export function initResCat(catalog: ResSeed[]): void {
+  catalogCache = catalog
+  catByIdCch = Object.fromEntries(catalog.map((r) => [r.id, r]))
+}
+
+export function initResKitSeeds(seeds: Record<string, ResSeed>): void {
+  catByIdCch = { ...Object.fromEntries(catalogCache.map((seed) => [seed.id, seed])), ...seeds }
+}
+
+export function initResDtls(details: Record<string, ResDtls>): void {
+  dtlsByIdCch = Object.fromEntries(Object.entries(details).map(([id, detail]) => {
+    let normalized = normalizedDetails.get(detail)
+    if (!normalized) {
+      normalized = {
+        ...detail,
+        skillTabs: SKILL_TABS.filter((tab) => Boolean(detail.skillsByTab[tab])),
+        statePanels: detail.statePanels ?? [],
+        combatStates: detail.combatStates ?? [],
+        inherentSkills: detail.inherentSkills ?? [],
+        outroSkills: detail.outroSkills ?? [],
+        resonanceChains: detail.resonanceChains ?? [],
+        traceNodes: detail.traceNodes ?? catByIdCch[id]?.traceNodes ?? [],
+      }
+      normalizedDetails.set(detail, normalized)
+    }
+    return [id, normalized]
+  }))
+}
+
+export function getResCat(): ResSeed[] {
+  return catalogCache
+}
+
+export function getResCatByI(): Record<string, ResSeed> {
+  return catByIdCch
+}
+
+export function getResDtlsBy(): Record<string, ResDtls> {
+  return dtlsByIdCch
+}

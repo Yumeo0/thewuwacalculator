@@ -7,16 +7,16 @@ import {
   cloneRotationNodes,
   normalizeDuration,
   normalizeRotNote,
-} from '@/domain/entities/inventoryStorage.ts'
-import { combatScenarioId, contextScenarioMember } from '@/domain/entities/combatScenario.ts'
-import type { CombatScenario } from '@/domain/entities/combatScenario.ts'
-import type { ResProf } from '@/domain/entities/profile.ts'
-import type { RotationNode } from '@/domain/gameData/contracts.ts'
-import { migrateLegacyRotationItems } from '@/domain/gameData/loopPasses.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
-import { makeResProfile, makeScenarioFromProfiles } from '@/engine/runtime/defaults.ts'
-import { migrateLegacySavedRotationRecord } from '@/engine/runtime/savedRotationMigration.ts'
-import { parseCombatScenario } from '@/engine/runtime/schema.ts'
+} from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
+import { combatScenarioId, contextScenarioMember } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import type { CombatScenario } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import type { ResProf } from '@wuwacalc/core/domain/entities/profile.ts'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { migrateLegacyRotationItems } from '@wuwacalc/core/domain/gameData/loopPasses.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { makeResProfile, makeScenarioFromProfiles } from '@wuwacalc/core/engine/runtime/defaults.ts'
+import { migrateLegacySavedRotationRecord } from '@wuwacalc/core/engine/runtime/savedRotationMigration.ts'
+import { parseCombatScenario } from '@wuwacalc/core/engine/runtime/schema.ts'
 
 function normalizeImportedRotation(raw: unknown): {
   name: string

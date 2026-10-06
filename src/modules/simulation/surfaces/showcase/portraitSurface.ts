@@ -4,7 +4,7 @@
                custom-image sampling to the persistent reference cache.
 */
 
-import surfaces from '@/data/gameData/portraitSurfaces.json'
+import surfaces from '@wuwacalc/core/data/gameData/portraitSurfaces.json'
 import { readCachedPortraitSurface } from '@/application/media/portraitSurfaceCache.ts'
 import { DEFAULT_PORTRAIT_SURFACE } from '@/shared/lib/portraitSurface.ts'
 export { DEFAULT_PORTRAIT_SURFACE, surfaceFromPortraitPixels } from '@/shared/lib/portraitSurface.ts'

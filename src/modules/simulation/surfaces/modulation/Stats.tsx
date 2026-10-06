@@ -14,10 +14,10 @@ import type {
   EvaluationOverviewStats,
   EvaluationOverviewStatRow,
   EvaluationStatContribution,
-} from '@/engine/evaluation/buildEvaluation.ts'
-import { isNoWeaponId, type ResRuntime } from '@/domain/entities/runtime.ts'
-import { getSbstStepP } from '@/data/gameData/catalog/echoStats.ts'
-import { aggregateSubstats } from '@/engine/evaluation/substatMath.ts'
+} from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
+import { isNoWeaponId, type ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { getSbstStepP } from '@wuwacalc/core/data/gameData/catalog/echoStats.ts'
+import { aggregateSubstats } from '@wuwacalc/core/engine/evaluation/substatMath.ts'
 import type { StateGroup, StatSourceTerm, StatStateSummaryTarget } from '@/modules/simulation/model/stateSummary.ts'
 import type { StatTreeNode } from '@/modules/simulation/model/statsView.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback'
@@ -33,9 +33,9 @@ import {
   formatStatKeyValue,
 } from '@/modules/simulation/model/statsView.ts'
 import { getBuildEvaluationTone } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
-import { getResSeedBy, resResBaseSt } from '@/data/catalog/resonatorSeedService.ts'
-import { getWpnById } from '@/data/catalog/weaponCatalogService.ts'
-import { wpnAtkAt } from '@/engine/runtime/weaponState.ts'
+import { getResSeedBy, resResBaseSt } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
+import { wpnAtkAt } from '@wuwacalc/core/engine/runtime/weaponState.ts'
 import { Expandable } from '@/shared/ui/Expandable.tsx'
 import { Tooltip } from '@/shared/ui/Tooltip.tsx'
 
@@ -59,8 +59,8 @@ function near(a: number, b: number): boolean {
 }
 
 function signedStatValue(key: string, value: number): string {
-  if (value === 0) return '–'
-  return `${value > 0 ? '+' : '−'}${formatStatKeyValue(key, Math.abs(value))}`
+  if (value === 0) return 'ÔÇô'
+  return `${value > 0 ? '+' : 'ÔêÆ'}${formatStatKeyValue(key, Math.abs(value))}`
 }
 
 /* Echo totals, counts, and roll quality are properties of the equipped Echoes
@@ -565,7 +565,7 @@ function StatRow({
 
         <span className="pgd-v pst-num pst-base">{formatStatKeyValue(row.key, displayBase)}</span>
         <span className={`pgd-v pst-num pst-gain${flat ? ' is-nil' : ''}`}>
-          {flat ? '–' : signedStatValue(row.key, displayBonus)}
+          {flat ? 'ÔÇô' : signedStatValue(row.key, displayBonus)}
         </span>
         <span className="pgd-v pst-num pst-total">
           {formatStatKeyValue(row.key, row.total)}
@@ -575,7 +575,7 @@ function StatRow({
         </span>
         {evaluationReady.b100 ? (
           <span className={`pgd-v pst-num pst-b100${same100 ? ' is-same' : ''}`}>
-            {b100 ? formatStatKeyValue(row.key, b100.total) : '–'}
+            {b100 ? formatStatKeyValue(row.key, b100.total) : 'ÔÇô'}
             {b100 && !near(b100.total, displayBase) ? (
               <sup className="pst-add">{signedStatValue(row.key, b100.total - displayBase)}</sup>
             ) : null}
@@ -583,7 +583,7 @@ function StatRow({
         ) : null}
         {evaluationReady.b200 ? (
           <span className={`pgd-v pst-num pst-b200${same200 ? ' is-same' : ''}`}>
-            {b200 ? formatStatKeyValue(row.key, b200.total) : '–'}
+            {b200 ? formatStatKeyValue(row.key, b200.total) : 'ÔÇô'}
             {b200 && !near(b200.total, displayBase) ? (
               <sup className="pst-add">{signedStatValue(row.key, b200.total - displayBase)}</sup>
             ) : null}
@@ -614,7 +614,7 @@ function effectSourceLines(groups: StateGroup[]): SourceLine[] {
     id: `${group.id}:${scope.id}:${node.id}:${index}`,
     label: group.sourceName === node.ownerLabel
       ? node.ownerLabel
-      : `${group.sourceName} · ${node.ownerLabel}`,
+      : `${group.sourceName} ┬À ${node.ownerLabel}`,
     ...term,
   })))))
 }
@@ -743,8 +743,8 @@ function actualBaseFor(runtime: ResRuntime, statKey: string): number {
 }
 
 function StatSourceRow({ line, operator = '+' }: { line: SourceLine; operator?: string }) {
-  const signedOperator = operator === '+' && line.value < 0 ? '−' : operator
-  const displayValue = operator === '+' || signedOperator === '−' ? Math.abs(line.value) : line.value
+  const signedOperator = operator === '+' && line.value < 0 ? 'ÔêÆ' : operator
+  const displayValue = operator === '+' || signedOperator === 'ÔêÆ' ? Math.abs(line.value) : line.value
   return (
     <div className="pgd-ws-r">
       <span className="pgd-ws-op">{signedOperator}</span>
@@ -832,12 +832,12 @@ function StatWorksheet({
 
           {percentLines.length > 0 ? (
             <>
-              <div className="pgd-ws-band">Multiplier · 1 + bonuses</div>
+              <div className="pgd-ws-band">Multiplier ┬À 1 + bonuses</div>
               {percentLines.map((line) => <StatSourceRow key={line.id} line={line} />)}
               <div className="pgd-ws-r pst-factor">
-                <span className="pgd-ws-op">×</span>
+                <span className="pgd-ws-op">├ù</span>
                 <span className="pgd-ws-lb">Combined multiplier</span>
-                <span className="pgd-ws-vl">×{(1 + percentTotal / 100).toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}</span>
+                <span className="pgd-ws-vl">├ù{(1 + percentTotal / 100).toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}</span>
               </div>
             </>
           ) : null}
@@ -853,7 +853,7 @@ function StatWorksheet({
 
           {scopedSections.length > 0 ? (
             <>
-              <div className="pgd-ws-band">Scoped modifiers · not included in total</div>
+              <div className="pgd-ws-band">Scoped modifiers ┬À not included in total</div>
               {scopedSections.map(({ scope, lines: scopeLines }) => (
                 <Fragment key={scope.id}>
                   {scopeLines.map((line) => <StatSourceRow key={`${scope.id}:${line.id}`} line={line} />)}
@@ -967,7 +967,7 @@ function ResidueStatRow({
               entirely scoped, so the count would be saying it again. The name
               column is narrow and the pills would eat the label. */}
           {row.displayValue === null ? (
-            <i className="pst-only" title={`Only where a scope reaches it · ${row.scoped.length} scope${row.scoped.length > 1 ? 's' : ''}`}>
+            <i className="pst-only" title={`Only where a scope reaches it ┬À ${row.scoped.length} scope${row.scoped.length > 1 ? 's' : ''}`}>
               scoped only
             </i>
           ) : hasScopes ? (
@@ -1074,7 +1074,7 @@ function SonataPlan({ sets }: { sets: BuiltOnFrame['sets'] }) {
           {index > 0 ? <i className="pst-son-plus" aria-hidden="true">+</i> : null}
           <span
             className={set.pieces === 1 ? 'pst-son-pc is-lone' : 'pst-son-pc'}
-            title={`${set.name} · ${set.pieces}pc`}
+            title={`${set.name} ┬À ${set.pieces}pc`}
           >
             {set.icon ? <DisplayImage src={set.icon} alt="" loading="lazy" onError={withDefIconM} /> : <s />}
             <b>{set.pieces}</b>
@@ -1098,7 +1098,7 @@ function BuiltOnRow({ frame }: { frame: BuiltOnFrame }) {
         </span>
         <span className="pst-bo-line">
           {frame.main ? (
-            <span className="pst-bo-echo" title={`${frame.main.name} · ${frame.main.cost} cost`}>
+            <span className="pst-bo-echo" title={`${frame.main.name} ┬À ${frame.main.cost} cost`}>
               <figure>
                 {frame.main.icon
                   ? <DisplayImage src={frame.main.icon} alt="" loading="lazy" onError={withDefIconM} />

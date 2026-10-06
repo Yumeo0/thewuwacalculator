@@ -16,8 +16,8 @@ import { mainPortal } from '@/shared/lib/portalTarget'
 import { clrPrssAppSt, saveAppState } from '@/application/persistence/appStorage'
 import { rstrLtstSnap, pldSnapToDrv } from '@/application/backup/driveSync'
 import { selectPersisted } from '@/application/state/serialization'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
-import { projectScenarioWorkspaceProfiles } from '@/engine/runtime/scenarioRuntime'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { projectScenarioWorkspaceProfiles } from '@wuwacalc/core/engine/runtime/scenarioRuntime'
 import {
   applyBgColor,
   applyBgToDocument,
@@ -46,14 +46,14 @@ import {
   makeFontStack,
   SYSTEM_FONT_NAME,
   WUWA_FONT_NAME,
-} from '@/domain/entities/appearance'
+} from '@wuwacalc/core/domain/entities/appearance'
 import { useGglDrvAut } from '@/application/hooks/useGoogleDriveAuth'
 import { DATAXPRTCTNS, mkDataXprtFi } from '@/modules/calibration/model/dataManagement'
 import { runDataImport } from '@/modules/calibration/model/dataImportClient'
 import { useTstStr } from '@/shared/util/toastStore.ts'
-import { gameDataModeFromBeta, type GameDataMode } from '@/domain/entities/gameDataMode'
+import { gameDataModeFromBeta, type GameDataMode } from '@wuwacalc/core/domain/entities/gameDataMode'
 import { CllpPageHeyf } from '@/shared/ui/CollapsiblePageHero'
-import { HIST_MAX_OPTS, type HistoryMax } from '@/domain/entities/appState'
+import { HIST_MAX_OPTS, type HistoryMax } from '@wuwacalc/core/domain/entities/appState'
 import { groupUid } from '@/modules/simulation/api/playerIdentity'
 import { RoverMedallion } from '@/modules/calibration/pages/RoverMedallion'
 import {
@@ -64,7 +64,7 @@ import {
   type DarkThemeVar,
   type LightThemeVar,
   type ThemeVariant,
-} from '@/domain/entities/themes'
+} from '@wuwacalc/core/domain/entities/themes'
 import { mkPrefGrps, type PrefTglItem } from '@/modules/calibration/model/preferences'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 import { useMenuContributions } from '@/application/context-menu/AppContextMenu'

@@ -5,10 +5,10 @@
 */
 
 import { create } from 'zustand'
-import type { EchoInstance } from '@/domain/entities/runtime'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
 import type {
   OptPrgr, OptRawResult, OptStoredResult, OptStts, PrepOptPay,
-} from '@/engine/optimizer/types'
+} from '@wuwacalc/core/engine/optimizer/types'
 
 export interface OptimizerRunState {
   status: OptStts

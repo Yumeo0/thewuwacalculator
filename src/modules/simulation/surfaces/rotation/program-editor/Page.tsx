@@ -28,11 +28,11 @@ import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay.tsx'
 import {useAppStore} from '@/application/state'
 import {selEnemyProf, selWorkDrvd} from '@/application/state'
 import { useSavedRotationsLease } from '@/application/hooks/useSavedRotationsLease.ts'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 import { openTeamCnsl } from '@/modules/simulation/features/teams/lib/teamConsoleStore.ts'
 import { openWpnCnsl } from '@/modules/simulation/features/weapons/lib/weaponConsoleStore.ts'
-import type {RotationNode} from '@/domain/gameData/contracts.ts'
-import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
+import type {RotationNode} from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
 import {
   editableRotMembers,
   makeConditionChoices,
@@ -90,9 +90,9 @@ import { placeLeader } from '@/modules/simulation/surfaces/rotation/program-edit
 import type {
   RotationDamageBasis,
   RotationEditorPreferences,
-} from '@/domain/entities/rotationEditorPreferences.ts'
+} from '@wuwacalc/core/domain/entities/rotationEditorPreferences.ts'
 import type {SearchNames} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeSearch.ts'
-import {getEchoById} from '@/data/catalog/echoCatalogService.ts'
+import {getEchoById} from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import {StartMemberModal} from '@/modules/simulation/surfaces/rotation/program-editor/components/StartMemberModal.tsx'
 import {ConfigModal} from '@/modules/simulation/surfaces/rotation/program-editor/components/ConfigModal.tsx'
 import {
@@ -195,10 +195,10 @@ import {
   makeCondChange,
   makeCondValue,
 } from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
-import { attachedConditionChanges } from '@/domain/gameData/rotationAttached.ts'
-import { ACTIVE_RESONATOR_PATH } from '@/domain/gameData/rotationPaths.ts'
-import { rotationBodiesEqual } from '@/domain/gameData/loopPasses.ts'
-import {findRotNode} from '@/domain/gameData/rotationTree.ts'
+import { attachedConditionChanges } from '@wuwacalc/core/domain/gameData/rotationAttached.ts'
+import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
+import { rotationBodiesEqual } from '@wuwacalc/core/domain/gameData/loopPasses.ts'
+import {findRotNode} from '@wuwacalc/core/domain/gameData/rotationTree.ts'
 import {useAppModalValue} from '@/shared/ui/useAppModal.ts'
 import {useConfirm} from '@/shared/hooks/useConfirmation.ts'
 import {makeAppendSource, appendRotationCopies, type AppendSource,} from '@/modules/simulation/surfaces/rotation/program-editor/model/append.ts'
@@ -291,15 +291,15 @@ import { SavedRotationEditModal } from '@/modules/simulation/surfaces/rotation/p
 import {
   cloneRotationNodes,
   type SavedRotation,
-} from '@/domain/entities/inventoryStorage.ts'
-import { makeSourceKey } from '@/data/gameData/registry.ts'
+} from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
+import { makeSourceKey } from '@wuwacalc/core/data/gameData/registry.ts'
 import {
   isLiveRotEntId,
   makeLiveRotationEntry,
-} from '@/engine/runtime/liveRotationEntry.ts'
+} from '@wuwacalc/core/engine/runtime/liveRotationEntry.ts'
 import { editorNodesToRotation } from '@/modules/simulation/surfaces/rotation/program-editor/model/toRotationNodes.ts'
 import { splitEditorSections } from '@/modules/simulation/surfaces/rotation/program-editor/model/sections.ts'
-import { normLoopRuns } from '@/domain/gameData/rotationLoops.ts'
+import { normLoopRuns } from '@wuwacalc/core/domain/gameData/rotationLoops.ts'
 import {
   makeSavedRotClip,
   readRotClip,

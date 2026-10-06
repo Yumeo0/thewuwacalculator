@@ -4,7 +4,7 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import type { FeatureResult, RotationNode } from '@/domain/gameData/contracts.ts'
+import type { FeatureResult, RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import { getNodeTotals } from '@/modules/simulation/surfaces/rotation/shared/nodeTools.ts'
 
 function output(

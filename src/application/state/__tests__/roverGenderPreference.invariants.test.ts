@@ -4,13 +4,13 @@
 */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { contextScenarioMember, combatScenarioId, makeScenarioTeam, type CombatScenario } from '@/domain/entities/combatScenario'
-import { makeSavedBuild, makeSavedRotation, makeSavedScenario } from '@/domain/entities/inventoryStorage'
-import { ROVER_PAIRS, roverIdForGender, roverIsVisible } from '@/domain/entities/roverGender'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
-import { listResSds } from '@/data/catalog/resonatorSeedService'
-import { makeAppState, makeCustomBuff, makeResProfile, makeScenarioFromProfiles, makeScenarioMemberFromProfile } from '@/engine/runtime/defaults'
-import { parseCombatScenario, persistedSchema } from '@/engine/runtime/schema'
+import { contextScenarioMember, combatScenarioId, makeScenarioTeam, type CombatScenario } from '@wuwacalc/core/domain/entities/combatScenario'
+import { makeSavedBuild, makeSavedRotation, makeSavedScenario } from '@wuwacalc/core/domain/entities/inventoryStorage'
+import { ROVER_PAIRS, roverIdForGender, roverIsVisible } from '@wuwacalc/core/domain/entities/roverGender'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import { makeAppState, makeCustomBuff, makeResProfile, makeScenarioFromProfiles, makeScenarioMemberFromProfile } from '@wuwacalc/core/engine/runtime/defaults'
+import { parseCombatScenario, persistedSchema } from '@wuwacalc/core/engine/runtime/schema'
 import {
   convertScenarioRoverGender,
   convertWorkspaceRoverGender,
@@ -20,7 +20,7 @@ import { useAppStore } from '@/application/state/store'
 import { makeInitialTeammate } from '@/application/state/teammateInitialization'
 import { consumePersist, loadPrssAppS, saveAppState } from '@/application/persistence/storage'
 import { selectPersisted } from '@/application/state/serialization'
-import { makeMemberManualEffect, memberManualEffectId } from '@/engine/runtime/scenarioEnvironment'
+import { makeMemberManualEffect, memberManualEffectId } from '@wuwacalc/core/engine/runtime/scenarioEnvironment'
 
 const seeds = new Map(listResSds().map((seed) => [seed.id, seed]))
 function seed(id: string) {

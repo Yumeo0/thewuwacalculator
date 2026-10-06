@@ -22,7 +22,7 @@ See [lifecycle-owners.md](./lifecycle-owners.md) for the class boundaries around
 Primary entrypoints:
 
 - [src/main.tsx](../src/main.tsx)
-- [src/data/gameData/index.ts](../src/data/gameData/index.ts)
+- [packages/core/src/data/gameData/index.ts](../packages/core/src/data/gameData/index.ts)
 - [src/app/AppRoot.tsx](../src/app/AppRoot.tsx)
 - [src/app/providers/AppProviders.tsx](../src/app/providers/AppProviders.tsx)
 
@@ -37,6 +37,17 @@ Startup order:
 7. `AppRoot` renders the router; `AppLayout` owns route tracking, cookie bootstrap, global hosts, the header, and the routed outlet.
 
 The important constraint is that the route-appropriate core registry must exist before React mounts. Detailed resonator and weapon bundles may load later, but consumers must acquire the required scope before rendering data-dependent Simulation work.
+
+## Core Package
+
+The calculation core is a separate workspace package, `packages/core` (`@wuwacalc/core`), with an app-facing facade at `packages/core/src/index.ts`. The app keeps importing through its `@wuwacalc/core/*` alias, which points at the package source during development.
+
+Boundaries:
+
+- Host app code imports the core through `@wuwacalc/core/*`; core internals import each other through `@core/*`.
+- The core must not import app code, React, or Zustand, and the app must not use the `@core/*` alias. `npm run check:architecture` enforces both.
+- Game data I/O and workers are host-provided seams: hosts call `configureCore({ createWorker })` from `src/app/coreWorkers.ts`, and the fetch-backed `GameDataSource` from `src/main.tsx`.
+- `npm run build -w packages/core` emits `dist/` JavaScript and declarations; `npm run smoke -w packages/core` packs the tarball and imports it from a throwaway consumer.
 
 ## Top Level Layers
 
@@ -61,19 +72,13 @@ Application-wide state and use cases:
 
 This layer may coordinate domain, data, engine, and infrastructure code, but it does not render route-owned feature surfaces.
 
-### `src/data`
+### `packages/core/src/data`
 
-Checked in runtime data and authored content:
-
-- game data bootstrap
-- catalog loaders
-- set effect bootstrapping
-- guides and changelog content
-- scoring tables
+Checked in runtime game data, catalog loaders, set effect bootstrapping, and scoring tables, published as `@wuwacalc/core`. Authored app content (guides, changelog) stays app-side in `src/data/content`.
 
 This layer loads checked-in JSON for the domain and engine layers. It does not import the engine.
 
-### `src/domain`
+### `packages/core/src/domain`
 
 Durable concepts and contracts:
 
@@ -86,7 +91,7 @@ Durable concepts and contracts:
 
 This layer defines what the app means by profile, runtime, inventory entry, optimizer settings, enemy profile, and related concepts. It has no dependency on application state, catalogs, or engine execution.
 
-### `src/engine`
+### `packages/core/src/engine`
 
 Calculation heavy and rule heavy logic:
 
@@ -95,10 +100,9 @@ Calculation heavy and rule heavy logic:
 - pipeline simulation
 - rotation inspection
 - suggestions
-- echo parser
 - optimizer compiler, search, encoding, workers, CPU, GPU, and result materialization
 
-This layer is mostly framework agnostic. UI modules call into it through selectors, helpers, and store actions.
+This layer is framework agnostic. UI modules call into it through selectors, helpers, and store actions. Echo image parsing is app-side in `src/echoParser`.
 
 ### `src/infra`
 
@@ -189,9 +193,9 @@ See [app-shell-and-routing.md](./app-shell-and-routing.md) for detail.
 
 Primary files:
 
-- [src/data/gameData/index.ts](../src/data/gameData/index.ts)
-- [src/domain/gameData/contracts.ts](../src/domain/gameData/contracts.ts)
-- [src/data/gameData/registry.ts](../src/data/gameData/registry.ts)
+- [packages/core/src/data/gameData/index.ts](../packages/core/src/data/gameData/index.ts)
+- [packages/core/src/domain/gameData/contracts.ts](../packages/core/src/domain/gameData/contracts.ts)
+- [packages/core/src/data/gameData/registry.ts](../packages/core/src/data/gameData/registry.ts)
 
 The runtime data model has two main layers.
 
@@ -231,8 +235,8 @@ Primary files:
 - [src/application/state/uiSlice.ts](../src/application/state/uiSlice.ts)
 - [src/application/state/optimizerRunStore.ts](../src/application/state/optimizerRunStore.ts)
 - [src/application/state/inventoryUiStore.ts](../src/application/state/inventoryUiStore.ts)
-- [src/engine/runtime/runtimeAdapters.ts](../src/engine/runtime/runtimeAdapters.ts)
-- [src/engine/runtime/runtimeMaterialization.ts](../src/engine/runtime/runtimeMaterialization.ts)
+- [packages/core/src/engine/runtime/runtimeAdapters.ts](../packages/core/src/engine/runtime/runtimeAdapters.ts)
+- [packages/core/src/engine/runtime/runtimeMaterialization.ts](../packages/core/src/engine/runtime/runtimeMaterialization.ts)
 - [src/application/persistence/storage.ts](../src/application/persistence/storage.ts)
 
 The app distinguishes between:
@@ -261,11 +265,11 @@ See [state-and-persistence.md](./state-and-persistence.md) for detail.
 
 Primary files:
 
-- [src/engine/pipeline/index.ts](../src/engine/pipeline/index.ts)
-- [src/engine/pipeline/buildCombatContext.ts](../src/engine/pipeline/buildCombatContext.ts)
-- [src/engine/pipeline/simulateRotation.ts](../src/engine/pipeline/simulateRotation.ts)
-- [src/engine/suggestions/core.ts](../src/engine/suggestions/core.ts)
-- [src/engine/optimizer/engine.ts](../src/engine/optimizer/engine.ts)
+- [packages/core/src/engine/pipeline/index.ts](../packages/core/src/engine/pipeline/index.ts)
+- [packages/core/src/engine/pipeline/buildCombatContext.ts](../packages/core/src/engine/pipeline/buildCombatContext.ts)
+- [packages/core/src/engine/pipeline/simulateRotation.ts](../packages/core/src/engine/pipeline/simulateRotation.ts)
+- [packages/core/src/engine/suggestions/core.ts](../packages/core/src/engine/suggestions/core.ts)
+- [packages/core/src/engine/optimizer/engine.ts](../packages/core/src/engine/optimizer/engine.ts)
 
 The shared execution model is:
 

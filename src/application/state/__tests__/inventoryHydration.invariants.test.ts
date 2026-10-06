@@ -11,11 +11,11 @@ import { useTeamCnsl } from '@/modules/simulation/features/teams/lib/teamConsole
 import { mkNtlAppStt } from '@/application/state/storeHelpers'
 import { selectPersisted } from '@/application/state/serialization'
 import { isBuildSaved, isEchoSaved, selectSavedBuildSignatures, selectSavedEchoSignatures } from '@/application/state/savedGearStatus'
-import { makeAppState } from '@/engine/runtime/defaults'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
-import { makeSavedRotation, makeSavedBuild, makeSavedEcho } from '@/domain/entities/inventoryStorage'
-import { listEchoes } from '@/data/catalog/echoCatalogService'
-import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@/data/gameData/catalog/echoStats'
+import { makeAppState } from '@wuwacalc/core/engine/runtime/defaults'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { makeSavedRotation, makeSavedBuild, makeSavedEcho } from '@wuwacalc/core/domain/entities/inventoryStorage'
+import { listEchoes } from '@wuwacalc/core/data/catalog/echoCatalogService'
+import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@wuwacalc/core/data/gameData/catalog/echoStats'
 
 describe('inventory hydration writes', () => {
   beforeEach(() => {

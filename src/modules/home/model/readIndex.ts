@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import { useAppStore } from '@/application/state'
 import { READ_PAGES } from '@/application/navigation/appIndex'
 import { ltstCurChngE } from '@/data/content/changelogEntries'
-import { THEME_LABELS } from '@/domain/entities/themes'
+import { THEME_LABELS } from '@wuwacalc/core/domain/entities/themes'
 import { APP_ROUTES } from '@/shared/lib/appRoutes'
 
 export interface ReadStop {

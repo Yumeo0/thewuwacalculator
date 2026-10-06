@@ -3,8 +3,8 @@
   Description: Owns equip behavior and state transitions for the lib module.
 */
 
-import type { EchoInstance } from '@/domain/entities/runtime.ts'
-import { sameEchoUid, cloneEchoFor } from '@/domain/entities/inventoryStorage.ts'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { sameEchoUid, cloneEchoFor } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import { getEchoCostB } from '@/modules/simulation/features/echoes/lib/echoes.ts'
 
 export interface EchoLdtSlotF {

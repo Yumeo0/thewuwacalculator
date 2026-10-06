@@ -6,10 +6,10 @@
 */
 
 import { beforeEach, describe, expect, it } from 'vitest'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
-import { listResSds } from '@/data/catalog/resonatorSeedService'
-import { makeResProfile, makeScenarioMemberFromProfile } from '@/engine/runtime/defaults'
-import { insertScenarioTeamMember } from '@/engine/runtime/scenarioMembers'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import { makeResProfile, makeScenarioMemberFromProfile } from '@wuwacalc/core/engine/runtime/defaults'
+import { insertScenarioTeamMember } from '@wuwacalc/core/engine/runtime/scenarioMembers'
 import { useAppStore } from '@/application/state/store'
 import { consumePersist } from '@/application/persistence/storage'
 import { withSupports } from '@/modules/simulation/features/teams/lib/teamSlots'

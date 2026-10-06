@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Copy, Download } from 'lucide-react'
 import { AppModal } from '@/shared/ui/AppModal.tsx'
 import { ModalHeader } from '@/shared/ui/AppModalShell'
-import type { SavedRotation } from '@/domain/entities/inventoryStorage.ts'
+import type { SavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import { useTstStr } from '@/shared/util/toastStore.ts'
 import {
   makeRotationShare,

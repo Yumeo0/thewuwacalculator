@@ -8,15 +8,15 @@ import { ChevronRight } from 'lucide-react'
 import type {
   EvaluationFeature,
   BuildEvaluationReport,
-} from '@/engine/evaluation/buildEvaluation.ts'
-import { GRADE_LADDER } from '@/engine/evaluation/evaluation/grades.ts'
+} from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
+import { GRADE_LADDER } from '@wuwacalc/core/engine/evaluation/evaluation/grades.ts'
 import {
   formatBuildEvaluationScore,
   getBuildEvaluationTone,
 } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
 import { formatCompactNum } from '@/modules/simulation/model/statsView.ts'
-import { formatTruncCompact } from '@/shared/lib/number.ts'
-import { getPrimarySkill, getSkillType } from '@/domain/gameData/skillTypes'
+import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
+import { getPrimarySkill, getSkillType } from '@wuwacalc/core/domain/gameData/skillTypes'
 import { RES_NODE_KEYS, glyphVars, resNodeIcon } from '@/shared/lib/gameAssets'
 import type { ResNodeKey } from '@/shared/lib/gameAssets'
 import {

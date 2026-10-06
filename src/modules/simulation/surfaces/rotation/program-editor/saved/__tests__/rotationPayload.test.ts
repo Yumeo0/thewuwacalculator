@@ -4,11 +4,11 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import type { SavedRotation } from '@/domain/entities/inventoryStorage.ts'
+import type { SavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import { normalizeImportedRotationEntries } from '@/application/imports/rotationPayload.ts'
 import { makeRotationExportPayload } from '@/modules/simulation/surfaces/rotation/program-editor/saved/share.ts'
-import { makeResProfile, makeScenarioFromProfiles } from '@/engine/runtime/defaults.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
+import { makeResProfile, makeScenarioFromProfiles } from '@wuwacalc/core/engine/runtime/defaults.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
 
 function savedRotation(): SavedRotation {
   const seed = getResSeedBy('1108')

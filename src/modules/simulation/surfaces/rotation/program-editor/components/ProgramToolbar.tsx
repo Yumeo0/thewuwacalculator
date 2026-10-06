@@ -62,13 +62,13 @@ import {
 } from 'lucide-react'
 import { LuListTree } from 'react-icons/lu'
 import { PiBroom } from 'react-icons/pi'
-import type { UiState } from '@/domain/entities/appState.ts'
+import type { UiState } from '@wuwacalc/core/domain/entities/appState.ts'
 import {
   AnchoredAppPopup,
   AppPopupHeader,
   useAppPopupDismiss,
 } from '@/shared/ui/AppPopup.tsx'
-import type { RotationEditorPreferences } from '@/domain/entities/rotationEditorPreferences.ts'
+import type { RotationEditorPreferences } from '@wuwacalc/core/domain/entities/rotationEditorPreferences.ts'
 import { Select, type SelectOption } from '@/application/ui/Select'
 import { ColumnsMenu } from './ColumnsMenu.tsx'
 import { TeamMenu } from './TeamMenu.tsx'

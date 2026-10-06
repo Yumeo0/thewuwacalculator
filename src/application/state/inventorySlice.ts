@@ -5,19 +5,19 @@
 */
 
 import type { AppStore } from './store'
-import { roverIdForGender } from '@/domain/entities/roverGender'
+import { roverIdForGender } from '@wuwacalc/core/domain/entities/roverGender'
 import { convertScenarioRoverGender } from './roverGenderConversion'
 import type { StoreSliceContext } from './storeContracts'
-import type { EchoInstance } from '@/domain/entities/runtime'
-import { makeEchoUid } from '@/domain/entities/runtime'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
+import { makeEchoUid } from '@wuwacalc/core/domain/entities/runtime'
 import {
   equalEchoes, makeSavedEcho, getEchoSignature, dedupeEchoUids,
   equalBuildSnapshots, isEmptyBuild, makeSavedBuild, cloneEchoLoadout,
   makeSavedRotation, normalizeRotNote, normalizeDuration, makeSavedScenario,
-} from '@/domain/entities/inventoryStorage'
-import { getEchoById } from '@/data/catalog/echoCatalogService'
-import { resSdsById } from '@/data/catalog/resonatorSeedService'
-import { contextScenarioMember } from '@/domain/entities/combatScenario'
+} from '@wuwacalc/core/domain/entities/inventoryStorage'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'
+import { resSdsById } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import { contextScenarioMember } from '@wuwacalc/core/domain/entities/combatScenario'
 import { mkDefMkName, mkDefRotName } from './storeHelpers'
 
 export type InventoryActionNames = 'addInvEcho' | 'addInvEchoes' | 'rplInvEcho' | 'updInvEcho' | 'cleanInvEcho' | 'rmInvEcho' | 'clrInvEcho' | 'addInvBuild' | 'updInvBuild' | 'rmInvBuild' | 'clrInvBuild' | 'addInvRot' | 'updInvRot' | 'rmInvRot' | 'clrInvRot' | 'saveScenario' | 'updSavedScenario' | 'rmSavedScenario' | 'clrSavedScenarios' | 'loadSavedScenario'

@@ -6,10 +6,10 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { STATUS_DATA } from '@/data/content/appStatus'
-import { listResonatorSeeds, listEchoes } from '@/data/catalog/catalogService'
-import { getWeapons } from '@/data/gameData/weapons/weaponDataStore'
-import { SONATA_SETS } from '@/data/gameData/catalog/sonataSets'
-import { loadEnemySummary } from '@/data/catalog/enemyCatalogService'
+import { listResonatorSeeds, listEchoes } from '@wuwacalc/core/data/catalog/catalogService'
+import { getWeapons } from '@wuwacalc/core/data/gameData/weapons/weaponDataStore'
+import { SONATA_SETS } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
+import { loadEnemySummary } from '@wuwacalc/core/data/catalog/enemyCatalogService'
 
 export function useCoverage() {
   const [enemies, setEnemies] = useState<number | null>(null)

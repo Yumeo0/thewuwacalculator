@@ -5,11 +5,11 @@
 */
 
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
-import type { SourceState } from '@/domain/gameData/contracts.ts'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import { readRtPath } from '@/domain/gameData/runtimePath.ts'
-import { getSrcSttNct, getSrcNumMax } from '@/engine/gameData/controlOptions.ts'
-import { isStateVisible, sourceOptions } from '@/engine/services/sourceStateService.ts'
+import type { SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { readRtPath } from '@wuwacalc/core/domain/gameData/runtimePath.ts'
+import { getSrcSttNct, getSrcNumMax } from '@wuwacalc/core/engine/gameData/controlOptions.ts'
+import { isStateVisible, sourceOptions } from '@wuwacalc/core/engine/services/sourceStateService.ts'
 import {
   isSrcSttOn,
   setRtPath,

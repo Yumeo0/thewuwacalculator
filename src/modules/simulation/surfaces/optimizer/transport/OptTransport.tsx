@@ -8,18 +8,18 @@ import { useOptimizerProgress, type OptimizerProgressSource } from '../lib/progr
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useMemo, useState } from 'react'
 import { Settings2, Trash2 } from 'lucide-react'
-import type { OptSearchMode, OptSetChoice, OptSets, OptStatCstr } from '@/domain/entities/optimizer'
+import type { OptSearchMode, OptSetChoice, OptSets, OptStatCstr } from '@wuwacalc/core/domain/entities/optimizer'
 import type { SelectGroup, SelectOption } from '@/application/ui/Select'
-import type { SntSetConds } from '@/domain/entities/sonataSetConditionals'
-import type { WeaponPlanSet } from '@/domain/entities/suggestions'
-import { ECHO_SET_DEFS } from '@/data/gameData/echoSets/effects'
-import { getSntSetIco, getSntSetNam } from '@/data/gameData/catalog/sonataSets'
+import type { SntSetConds } from '@wuwacalc/core/domain/entities/sonataSetConditionals'
+import type { WeaponPlanSet } from '@wuwacalc/core/domain/entities/suggestions'
+import { ECHO_SET_DEFS } from '@wuwacalc/core/data/gameData/echoSets/effects'
+import { getSntSetIco, getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback'
 import { Choice, DropHead, DropHost, Glyph, OutRow, Slide, Toggle } from './Drop.tsx'
 import {
   optSetPieceCount,
   type OptSetPieceCount as PieceCount,
-} from '@/engine/optimizer/config/allowedSets.ts'
+} from '@wuwacalc/core/engine/optimizer/config/allowedSets.ts'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
 
 const BUCKETS: PieceCount[] = [5, 3, 1]

@@ -4,8 +4,8 @@
 */
 
 import { decShareText, encShareText } from '@/shared/lib/shareCodec.ts'
-import type { SavedBuild } from '@/domain/entities/inventoryStorage.ts'
-import { cloneBuildSnapshot } from '@/domain/entities/inventoryStorage.ts'
+import type { SavedBuild } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
+import { cloneBuildSnapshot } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 
 export const BUILD_CLIP_KIND = 'build-clipboard'
 export const BUILD_CLIP_VER = 1

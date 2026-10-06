@@ -6,7 +6,7 @@
 import '@/styles/surfaces/optimizer/transport.css'
 import type { ReactNode, Ref } from 'react'
 import { ATTR_COLORS } from '@/modules/simulation/model/display'
-import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime'
+import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
 import { getResonator } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { EvaluationBand } from '@/modules/simulation/surfaces/modulation/EvaluationBand.tsx'
 import { useWorkspaceEvaluationSummary } from '@/modules/simulation/model/evaluationSummaryContext'

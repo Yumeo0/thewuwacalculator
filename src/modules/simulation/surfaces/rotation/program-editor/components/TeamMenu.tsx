@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import {Box, ChevronDown, SlidersHorizontal} from 'lucide-react'
 import { useAppStore } from '@/application/state'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 import {
   AnchoredAppPopup,
   AppPopupFill,
@@ -21,7 +21,7 @@ import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import { DEF_ICON_SRC, withDefResMg } from '@/shared/lib/imageFallback.ts'
-import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
+import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
 import { RES_MENU } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { useSkllData } from '@/modules/simulation/features/resonator/SkillDataHost.tsx'
 import { openTeamCnsl } from '@/modules/simulation/features/teams/lib/teamConsoleStore.ts'

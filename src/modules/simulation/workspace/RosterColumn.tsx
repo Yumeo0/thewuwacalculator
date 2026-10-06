@@ -3,15 +3,15 @@
   Description: Hosts the persistent scenario roster and profile add, select, copy, paste, and removal actions.
 */
 
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
 import { useCallback, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Clipboard, Copy, Scissors, Trash2, UserRoundPlus } from 'lucide-react'
 import { isSimulationSurfaceRoute } from '@/shared/lib/appRoutes'
 import { useAppStore } from '@/application/state'
 import { selContextResonatorId } from '@/application/state'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
-import { contextScenarioMember } from '@/domain/entities/combatScenario.ts'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
+import { contextScenarioMember } from '@wuwacalc/core/domain/entities/combatScenario.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display'
 
 import { openTeamCnsl } from '@/modules/simulation/features/teams/lib/teamConsoleStore.ts'

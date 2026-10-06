@@ -5,7 +5,7 @@
 */
 
 import { describe, expect, it, vi } from 'vitest'
-import { makeAppState } from '@/engine/runtime/defaults'
+import { makeAppState } from '@wuwacalc/core/engine/runtime/defaults'
 import { runDataImportJob } from '../dataImport'
 import { runDataImport } from '../dataImportClient'
 

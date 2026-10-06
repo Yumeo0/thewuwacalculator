@@ -7,9 +7,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, KeyboardEvent, ReactNode } from 'react'
 import { useAppStore } from '@/application/state'
-import { ROVER_PAIRS, type RoverGender } from '@/domain/entities/roverGender'
-import { ATTR_COLORS, getAttributeIconSrc } from '@/domain/gameData/attributeDisplay'
-import type { AttributeKey } from '@/domain/entities/stats'
+import { ROVER_PAIRS, type RoverGender } from '@wuwacalc/core/domain/entities/roverGender'
+import { ATTR_COLORS, getAttributeIconSrc } from '@wuwacalc/core/domain/gameData/attributeDisplay'
+import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats'
 import {
   countRoverSaves,
   describeRoverSaves,

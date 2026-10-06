@@ -4,19 +4,19 @@
                structures for cards, stat summaries, and equip previews.
 */
 
-import { compactTheoryEchoes } from '@/engine/optimizer/results/theoryEchoes'
-import type { EchoInstance } from '@/domain/entities/runtime.ts'
-import { cloneEchoFor } from '@/domain/entities/inventoryStorage.ts'
+import { compactTheoryEchoes } from '@wuwacalc/core/engine/optimizer/results/theoryEchoes'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { cloneEchoFor } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import {
   evalThryRsltS,
   evalOptBagcz,
   matThryRsltCh,
   resOptRsltCh,
-} from '@/engine/optimizer/results/materialize.ts'
-import { getEchoSetDe } from '@/data/gameData/echoSets/effects.ts'
-import { getSntSetIco } from '@/data/gameData/catalog/sonataSets.ts'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
-import { getWpnById } from '@/data/catalog/weaponCatalogService.ts'
+} from '@wuwacalc/core/engine/optimizer/results/materialize.ts'
+import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
+import { getSntSetIco } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
+import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
 import type {
   OptBagResult,
   OptRawResult,
@@ -25,7 +25,7 @@ import type {
   TheoryResult,
   CompactTheoryResult,
   TheoryResultRow,
-} from '@/engine/optimizer/types.ts'
+} from '@wuwacalc/core/engine/optimizer/types.ts'
 import {
   normEchoLdt,
   smmrEchoLdt,

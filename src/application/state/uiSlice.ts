@@ -6,8 +6,8 @@
 
 import type { AppStore } from './store'
 import type { StoreSliceContext } from './storeContracts'
-import { HIST_MAX_OPTS, type HistoryMax } from '@/domain/entities/appState'
-import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE } from '@/domain/entities/preferences'
+import { HIST_MAX_OPTS, type HistoryMax } from '@wuwacalc/core/domain/entities/appState'
+import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE } from '@wuwacalc/core/domain/entities/preferences'
 import { trimHistEnts, type PrssHistStt } from './history'
 import { getSystTheme } from '@/shared/lib/systemTheme'
 import { useInventoryUiStore } from './inventoryUiStore'

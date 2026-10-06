@@ -4,10 +4,10 @@
                and a main Echo, validates constraints, and trims worker data.
 */
 
-import type { EchoInstance } from '@/domain/entities/runtime.ts'
-import { getEchoSetDe } from '@/data/gameData/echoSets/effects.ts'
-import { countEchoSets } from '@/engine/pipeline/buildCombatContext.ts'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
+import { countEchoSets } from '@wuwacalc/core/engine/pipeline/buildCombatContext.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import { mkDefEchoNst } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
 
 interface TeammateSetPreference {

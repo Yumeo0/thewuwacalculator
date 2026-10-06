@@ -5,12 +5,12 @@
 */
 
 import type { ReactNode } from 'react'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import type { ParsedBuildScreenshot } from '@/engine/echoParser/ocrParsing.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { ParsedBuildScreenshot } from '@/echoParser/ocrParsing.ts'
 import { ModalHeader } from '@/shared/ui/AppModalShell'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
-import { getWpnById } from '@/data/catalog/weaponCatalogService.ts'
-import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
+import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
 import { cntImprtVls, type ImportBands } from '@/modules/simulation/features/echoes/lib/importApply.ts'
 import type { CSSProperties } from 'react'
 

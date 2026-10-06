@@ -9,9 +9,9 @@ import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CSSProperties, RefObject } from 'react'
-import type { ResRuntime } from '@/domain/entities/runtime'
-import { readRtPath } from '@/domain/gameData/runtimePath'
-import { mkCntrPath } from '@/domain/gameData/stateKeys.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
+import { readRtPath } from '@wuwacalc/core/domain/gameData/runtimePath'
+import { mkCntrPath } from '@wuwacalc/core/domain/gameData/stateKeys.ts'
 import { Expandable } from '@/shared/ui/Expandable'
 import AppLdrVrly from '@/shared/ui/AppLoaderOverlay.tsx'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
@@ -27,7 +27,7 @@ import {
   mkForteTree,
 } from '@/modules/simulation/features/resonator/lib/forteTree.ts'
 import { getResonator, type ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
-import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
+import type { CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScenario.ts'
 import { SeatStack } from './SeatStack.tsx'
 import { TeamEditButton } from '@/modules/simulation/features/teams/TeamEditButton.tsx'
 import { ModulationStats } from './Stats.tsx'
@@ -41,7 +41,7 @@ import type {
   EvaluationBuildSnapshot,
   EvaluationOverviewStats,
   BuildEvaluationReport,
-} from '@/engine/evaluation/buildEvaluation.ts'
+} from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
 import {
   ASCENSION_STOPS,
   RES_LVL_MAX,
@@ -61,7 +61,7 @@ import {
 } from './lib/modulationBays.ts'
 import { useMemberAnalysis, type MemberAnalysisSource } from './lib/memberSim.ts'
 import { useAppStore, selEnemyProf } from '@/application/state'
-import { isNoEnemy } from '@/domain/entities/appState.ts'
+import { isNoEnemy } from '@wuwacalc/core/domain/entities/appState.ts'
 
 type CssVars = CSSProperties & Record<string, string | number>
 

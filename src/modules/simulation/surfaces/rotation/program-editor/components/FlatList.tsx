@@ -52,7 +52,7 @@ import {
   type TeamLookup,
 } from '@/modules/simulation/surfaces/rotation/program-editor/components/NodeList.tsx'
 import { RES_NODE_KEYS, glyphVars, resNodeIcon, type ResNodeKey } from '@/shared/lib/gameAssets.ts'
-import { getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
+import { getAttributeIconSrc } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
 import { formatEffectConditionName } from '@/modules/simulation/model/sourceStateDisplay.ts'
 
 /*

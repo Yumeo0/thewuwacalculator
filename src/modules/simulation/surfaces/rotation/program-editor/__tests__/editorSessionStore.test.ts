@@ -6,8 +6,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { emptyRotationEditHistory } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/history.ts'
-import { makeEnemy, makeResRuntime } from '@/engine/runtime/defaults.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
+import { makeEnemy, makeResRuntime } from '@wuwacalc/core/engine/runtime/defaults.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
 import { buildRun, displayedRunMs, withRunMetadata } from '../simulation/runProgram.ts'
 import {
   clearAllRotationEditorSessions,

@@ -7,7 +7,7 @@
 import { Fragment, useLayoutEffect, useMemo, useRef } from 'react'
 import { UsersRound } from 'lucide-react'
 import { useAppStore, selContextResonatorId } from '@/application/state'
-import { getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
+import { getAttributeIconSrc } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
 import type { CssVars } from '@/modules/simulation/workspace/ui.tsx'

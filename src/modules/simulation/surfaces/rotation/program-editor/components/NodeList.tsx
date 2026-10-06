@@ -18,15 +18,15 @@ import { Expandable } from '@/shared/ui/Expandable.tsx'
 import { withDefEchoMg, withDefResMg } from '@/shared/lib/imageFallback.ts'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
 import { Tooltip } from '@/shared/ui/Tooltip'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import {
   OffTuneCell,
   RegisterHead,
   bandCells,
   useScrollbarInset,
 } from '@/modules/simulation/surfaces/rotation/program-editor/components/RegisterCells.tsx'
-import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
-import type { AttributeKey, SkillAggType } from '@/domain/entities/stats.ts'
+import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
+import type { AttributeKey, SkillAggType } from '@wuwacalc/core/domain/entities/stats.ts'
 import type {
   EditorBlock,
   EditorCondition,

@@ -13,31 +13,31 @@ import {
   reviseCombatScenario,
   teamMemberId,
   type ScenarioTeamMember,
-} from '@/domain/entities/combatScenario.ts'
-import { scopedTargetOwnerKey } from '@/domain/gameData/targetRouting.ts'
-import { listResSds } from '@/data/catalog/resonatorSeedService.ts'
-import { getDefaultRotation } from '@/data/catalog/gameDataService.ts'
+} from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import { scopedTargetOwnerKey } from '@wuwacalc/core/domain/gameData/targetRouting.ts'
+import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { getDefaultRotation } from '@wuwacalc/core/data/catalog/gameDataService.ts'
 import {
   makeAppState,
   makeResProfile,
   makeScenarioFromProfiles,
   makeScenarioMemberFromProfile,
   makeTeamMember,
-} from '@/engine/runtime/defaults.ts'
-import { projectCombatScenario } from '@/engine/runtime/combatScenarioProjection.ts'
+} from '@wuwacalc/core/engine/runtime/defaults.ts'
+import { projectCombatScenario } from '@wuwacalc/core/engine/runtime/combatScenarioProjection.ts'
 import {
   projectScenarioMemberProfile,
   projectScenarioProfiles,
   projectScenarioRuntimes,
-} from '@/engine/runtime/scenarioRuntime.ts'
-import { parseCombatScenario } from '@/engine/runtime/schema.ts'
+} from '@wuwacalc/core/engine/runtime/scenarioRuntime.ts'
+import { parseCombatScenario } from '@wuwacalc/core/engine/runtime/schema.ts'
 import {
   prepareCombatScenario,
   simulateCombatScenarioTeam,
-} from '@/engine/pipeline/combatScenario.ts'
-import { evaluateObjective } from '@/engine/objectives/evaluationObjective.ts'
-import { applyRuntimeToSimulation, getActResId } from '@/engine/runtime/runtimeAdapters.ts'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
+} from '@wuwacalc/core/engine/pipeline/combatScenario.ts'
+import { evaluateObjective } from '@wuwacalc/core/engine/objectives/evaluationObjective.ts'
+import { applyRuntimeToSimulation, getActResId } from '@wuwacalc/core/engine/runtime/runtimeAdapters.ts'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 
 function makeMember(id: string): ScenarioTeamMember {
   const seed = listResSds().find((candidate) => candidate.id === id)

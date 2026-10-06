@@ -5,12 +5,12 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import type { RotationNode } from '@/domain/gameData/contracts.ts'
-import { makeScenarioTeam, type CombatScenario } from '@/domain/entities/combatScenario.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
-import { makeResProfile, makeScenarioFromProfiles } from '@/engine/runtime/defaults.ts'
-import { parseCombatScenario } from '@/engine/runtime/schema.ts'
-import { prepareCombatScenario, executeCombatScenarioProgram } from '@/engine/pipeline/combatScenario.ts'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { makeScenarioTeam, type CombatScenario } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { makeResProfile, makeScenarioFromProfiles } from '@wuwacalc/core/engine/runtime/defaults.ts'
+import { parseCombatScenario } from '@wuwacalc/core/engine/runtime/schema.ts'
+import { prepareCombatScenario, executeCombatScenarioProgram } from '@wuwacalc/core/engine/pipeline/combatScenario.ts'
 import { visibleRotMembers } from '@/modules/simulation/surfaces/rotation/shared/catalog.ts'
 import type { RotationMember, SkillMenuEntry } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
 import { applyFeatureSelection, makeFeatureNode, makePaletteNode } from '../model/nodeAuthoring.ts'

@@ -5,7 +5,7 @@
 */
 
 import { useSyncExternalStore } from 'react'
-import type { OptPrgr } from '@/engine/optimizer/types'
+import type { OptPrgr } from '@wuwacalc/core/engine/optimizer/types'
 
 export function createOptimizerProgress(initial: OptPrgr) {
   let current = initial

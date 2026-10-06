@@ -4,7 +4,7 @@
 */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { persistedSchema } from '@/engine/runtime/schema'
+import { persistedSchema } from '@wuwacalc/core/engine/runtime/schema'
 import { selectPersisted } from '@/application/state/serialization'
 import { useAppStore } from '@/application/state/store'
 import { APPSTOREUILY, consumePersist, loadPrssAppS, saveAppState } from '@/application/persistence/storage'

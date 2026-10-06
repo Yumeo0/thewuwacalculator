@@ -5,7 +5,7 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import type { RotationNode, SourceState } from '@/domain/gameData/contracts.ts'
+import type { RotationNode, SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import type {
   EditorSection,
   EditorStep,
@@ -41,12 +41,12 @@ import {
   makeResProfile,
   makeResRuntime,
   makeScenarioFromProfiles,
-} from '@/engine/runtime/defaults.ts'
-import type { ResSeed } from '@/domain/entities/runtime.ts'
-import { makeSavedRotation } from '@/domain/entities/inventoryStorage.ts'
+} from '@wuwacalc/core/engine/runtime/defaults.ts'
+import type { ResSeed } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { makeSavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
-import { listFeatsFor } from '@/data/catalog/gameDataService.ts'
-import { ACTIVE_RESONATOR_PATH } from '@/domain/gameData/rotationPaths.ts'
+import { listFeatsFor } from '@wuwacalc/core/data/catalog/gameDataService.ts'
+import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 import { presentRotMembers } from '@/modules/simulation/surfaces/rotation/shared/catalog.ts'
 
 function conditionChoice(changeTarget: 'enemy' | 'rotation'): CondChoice {

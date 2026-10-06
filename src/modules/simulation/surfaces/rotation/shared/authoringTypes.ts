@@ -4,10 +4,10 @@
                immutable node-tree operations.
 */
 
-import type { FeatDef, SourceState } from '@/domain/gameData/contracts.ts'
-import type { RotationInsertTarget } from '@/domain/gameData/rotationTree.ts'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import type { AttributeKey, SkillAggType, SkillDef } from '@/domain/entities/stats.ts'
+import type { FeatDef, SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import type { RotationInsertTarget } from '@wuwacalc/core/domain/gameData/rotationTree.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { AttributeKey, SkillAggType, SkillDef } from '@wuwacalc/core/domain/entities/stats.ts'
 import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
 
 export interface NodeTotals {

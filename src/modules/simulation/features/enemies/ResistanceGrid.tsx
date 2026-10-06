@@ -17,13 +17,13 @@
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { CSSProperties as CssProps } from 'react'
-import type { EnemyProfile } from '@/domain/entities/appState.ts'
-import type { EnemyElemId } from '@/domain/entities/enemy.ts'
-import { getEnemyReys, setEnemyResi } from '@/domain/services/enemyProfileService.ts'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState.ts'
+import type { EnemyElemId } from '@wuwacalc/core/domain/entities/enemy.ts'
+import { getEnemyReys, setEnemyResi } from '@wuwacalc/core/domain/services/enemyProfileService.ts'
 import { NumberInput } from '@/modules/simulation/features/controls/NumberInput.tsx'
 import { ATTR_ID_COLORS } from '@/modules/simulation/model/display.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
-import { formatTruncCompact } from '@/shared/lib/number.ts'
+import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
 
 /*
   mirrors resistMult() in src/engine/formulas/damage.ts. converts an effective

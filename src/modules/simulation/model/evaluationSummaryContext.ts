@@ -5,6 +5,6 @@
 */
 
 import { createContext, useContext } from 'react'
-import type { EvaluationSummary } from '@/engine/evaluation/buildEvaluationWorkerTypes'
+import type { EvaluationSummary } from '@wuwacalc/core/engine/evaluation/buildEvaluationWorkerTypes'
 export const EvaluationSummaryContext = createContext<EvaluationSummary | null>(null)
 export const useWorkspaceEvaluationSummary = () => useContext(EvaluationSummaryContext)

@@ -4,9 +4,9 @@
                impact is known before a gender preference is committed.
 */
 
-import type { SavedArtifactLibrary } from '@/domain/entities/inventoryStorage'
-import type { CombatScenario } from '@/domain/entities/combatScenario'
-import { ROVER_PAIRS } from '@/domain/entities/roverGender'
+import type { SavedArtifactLibrary } from '@wuwacalc/core/domain/entities/inventoryStorage'
+import type { CombatScenario } from '@wuwacalc/core/domain/entities/combatScenario'
+import { ROVER_PAIRS } from '@wuwacalc/core/domain/entities/roverGender'
 
 export type RoverForm = 'male' | 'female'
 

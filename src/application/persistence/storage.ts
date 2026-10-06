@@ -4,7 +4,7 @@
                domain writes, and recovery cleanup.
 */
 
-import { DEF_UI_PREFS } from '@/domain/entities/preferences'
+import { DEF_UI_PREFS } from '@wuwacalc/core/domain/entities/preferences'
 import { COMPRESSED_ROTATIONS_PREFIX, encodePersistedDomain, decodePersistedDomain } from './storageCodec'
 import { readCombatWorkspace, writeCombatWorkspace, scenarioRecords } from './scenarioRecords'
 import { persistenceCoordinator } from './persistenceCoordinator'
@@ -12,10 +12,10 @@ import { readMonolithicState, readLegacyState } from './legacyMigration'
 export { PersistenceCoordinator } from './persistenceCoordinator'
 export { ScenarioRecordRepository } from './scenarioRecords'
 import { SHOWCASE_INDEX, readShowcaseCards, writeShowcaseCards, clearShowcaseCards } from './showcaseCards'
-import type { HydratedAppState, PersistedState } from '@/domain/entities/appState'
-import type { PersistedUnknown } from '@/engine/runtime/defaults'
-import { copyScenarioRecords, summarizeScenario, type ScenarioWorkspace } from '@/domain/entities/scenarioLibrary'
-import { makeAppState, initAppState } from '@/engine/runtime/defaults'
+import type { HydratedAppState, PersistedState } from '@wuwacalc/core/domain/entities/appState'
+import type { PersistedUnknown } from '@wuwacalc/core/engine/runtime/defaults'
+import { copyScenarioRecords, summarizeScenario, type ScenarioWorkspace } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { makeAppState, initAppState } from '@wuwacalc/core/engine/runtime/defaults'
 import {
   APP_STATE_VER,
   persistedSchema,
@@ -29,7 +29,7 @@ import {
   prssUiPprnSl,
   prssUiLytSlc,
   prssUiSvdRoh,
-} from '@/engine/runtime/schema'
+} from '@wuwacalc/core/engine/runtime/schema'
 
 import {
   APP_STORAGE_KEY,

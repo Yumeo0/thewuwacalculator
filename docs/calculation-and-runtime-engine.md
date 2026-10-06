@@ -8,11 +8,11 @@ This document covers the shared execution engine that turns runtime state into d
 
 Primary files:
 
-- [src/engine/pipeline/index.ts](../src/engine/pipeline/index.ts)
-- [src/engine/pipeline/buildCombatContext.ts](../src/engine/pipeline/buildCombatContext.ts)
-- [src/engine/pipeline/simulateRotation.ts](../src/engine/pipeline/simulateRotation.ts)
-- [src/engine/pipeline/prepareRuntimeSkill.ts](../src/engine/pipeline/prepareRuntimeSkill.ts)
-- [src/engine/rotation/execute.ts](../src/engine/rotation/execute.ts)
+- [packages/core/src/engine/pipeline/index.ts](../packages/core/src/engine/pipeline/index.ts)
+- [packages/core/src/engine/pipeline/buildCombatContext.ts](../packages/core/src/engine/pipeline/buildCombatContext.ts)
+- [packages/core/src/engine/pipeline/simulateRotation.ts](../packages/core/src/engine/pipeline/simulateRotation.ts)
+- [packages/core/src/engine/pipeline/prepareRuntimeSkill.ts](../packages/core/src/engine/pipeline/prepareRuntimeSkill.ts)
+- [packages/core/src/engine/rotation/execute.ts](../packages/core/src/engine/rotation/execute.ts)
 
 The shared execution flow is:
 
@@ -30,8 +30,8 @@ The shared execution flow is:
 
 Primary files:
 
-- [src/domain/entities/combatGraph.ts](../src/domain/entities/combatGraph.ts)
-- [src/engine/runtime/combatGraph.ts](../src/engine/runtime/combatGraph.ts)
+- [packages/core/src/domain/entities/combatGraph.ts](../packages/core/src/domain/entities/combatGraph.ts)
+- [packages/core/src/engine/runtime/combatGraph.ts](../packages/core/src/engine/runtime/combatGraph.ts)
 
 The combat graph is the transient execution structure that ties active participants, runtime state, slot ownership, and targeting together. It is not itself durable persisted app state.
 
@@ -46,7 +46,7 @@ Important responsibilities:
 
 Primary file:
 
-- [src/engine/pipeline/buildCombatContext.ts](../src/engine/pipeline/buildCombatContext.ts)
+- [packages/core/src/engine/pipeline/buildCombatContext.ts](../packages/core/src/engine/pipeline/buildCombatContext.ts)
 
 The combat context contains the resolved inputs used by formulas and simulation. It combines:
 
@@ -62,9 +62,9 @@ If a result is wrong, inspect the combat context to check how saved choices were
 
 Primary directories:
 
-- [src/engine/formulas](../src/engine/formulas)
-- [src/engine/effects](../src/engine/effects)
-- [src/engine/resolvers](../src/engine/resolvers)
+- [packages/core/src/engine/formulas](../packages/core/src/engine/formulas)
+- [packages/core/src/engine/effects](../packages/core/src/engine/effects)
+- [packages/core/src/engine/resolvers](../packages/core/src/engine/resolvers)
 
 Core formula responsibilities include:
 
@@ -80,8 +80,8 @@ The effect layer determines which modifiers exist. The formula layer determines 
 
 Primary files:
 
-- [src/engine/pipeline/prepareRuntimeSkill.ts](../src/engine/pipeline/prepareRuntimeSkill.ts)
-- [src/engine/pipeline/resolveSkill.ts](../src/engine/pipeline/resolveSkill.ts)
+- [packages/core/src/engine/pipeline/prepareRuntimeSkill.ts](../packages/core/src/engine/pipeline/prepareRuntimeSkill.ts)
+- [packages/core/src/engine/pipeline/resolveSkill.ts](../packages/core/src/engine/pipeline/resolveSkill.ts)
 
 Skill preparation turns registry backed feature definitions and runtime state into resolved rows that the UI and rotation summaries can consume. This is where many declarative game data definitions become concrete result rows.
 
@@ -89,8 +89,8 @@ Skill preparation turns registry backed feature definitions and runtime state in
 
 Primary files:
 
-- [src/engine/rotation/execute.ts](../src/engine/rotation/execute.ts)
-- [src/engine/pipeline/simulateRotation.ts](../src/engine/pipeline/simulateRotation.ts)
+- [packages/core/src/engine/rotation/execute.ts](../packages/core/src/engine/rotation/execute.ts)
+- [packages/core/src/engine/pipeline/simulateRotation.ts](../packages/core/src/engine/pipeline/simulateRotation.ts)
 
 Rotation execution is another Simulation tool over the same combat context and skill resolution system.
 
@@ -107,8 +107,8 @@ The rotation inspector reuses the same graph and context setup as live simulatio
 
 Primary files:
 
-- [src/engine/gameData/negativeEffects.ts](../src/engine/gameData/negativeEffects.ts)
-- [src/engine/formulas/negativeEffects.ts](../src/engine/formulas/negativeEffects.ts)
+- [packages/core/src/engine/gameData/negativeEffects.ts](../packages/core/src/engine/gameData/negativeEffects.ts)
+- [packages/core/src/engine/formulas/negativeEffects.ts](../packages/core/src/engine/formulas/negativeEffects.ts)
 
 Negative effects, tune systems, healing, and shield paths are part of the shared engine, not bolt on UI logic. They need to stay aligned with the same runtime and combat context model as standard damage rows.
 

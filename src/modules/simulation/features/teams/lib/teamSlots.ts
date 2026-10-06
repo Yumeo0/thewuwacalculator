@@ -6,15 +6,15 @@
 */
 
 import { useCallback, useMemo } from 'react'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import type { CombatScenario, CombatScenarioId } from '@/domain/entities/combatScenario.ts'
-import { makeScenarioTeam, reviseCombatScenario } from '@/domain/entities/combatScenario.ts'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { CombatScenario, CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import { makeScenarioTeam, reviseCombatScenario } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 import { useAppStore } from '@/application/state'
 import { makeInitialTeammate } from '@/application/state/teammateInitialization'
-import { insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember } from '@/engine/runtime/scenarioMembers.ts'
+import { insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember } from '@wuwacalc/core/engine/runtime/scenarioMembers.ts'
 import { RES_MENU } from '@/modules/simulation/features/resonator/lib/resonator.ts'
-import { roverIsVisible } from '@/domain/entities/roverGender'
+import { roverIsVisible } from '@wuwacalc/core/domain/entities/roverGender'
 
 // slot 0 is the active resonator and is switched through the roster, never
 // assigned here; only the two support slots accept a member id.

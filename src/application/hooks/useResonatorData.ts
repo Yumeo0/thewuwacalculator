@@ -5,7 +5,7 @@
 */
 
 import { useEffect, useState } from 'react'
-import { ensureResonatorData, hasResonatorData, holdResonatorData } from '@/data/gameData'
+import { ensureResonatorData, hasResonatorData, holdResonatorData } from '@wuwacalc/core/data/gameData'
 import { useTstStr } from '@/shared/util/toastStore'
 
 export function useResonatorData(ids: readonly string[]): boolean {

@@ -4,14 +4,14 @@
                formula terms used by the combat pipeline.
 */
 
-import type { EnemyProfile } from '@/domain/entities/appState'
-import type { EffectScope, FormExpr, SourceState } from '@/domain/gameData/contracts'
-import type { ResRuntime } from '@/domain/entities/runtime'
-import type { SimResult } from '@/engine/pipeline/types'
-import { listFfctForO } from '@/data/catalog/gameDataService'
-import { mkSrcSttScp } from '@/engine/services/sourceStateService'
-import { evalCond, evalForm } from '@/engine/effects/evaluator'
-import { formatTruncCompact } from '@/shared/lib/number'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState'
+import type { EffectScope, FormExpr, SourceState } from '@wuwacalc/core/domain/gameData/contracts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
+import type { SimResult } from '@wuwacalc/core/engine/pipeline/types'
+import { listFfctForO } from '@wuwacalc/core/data/catalog/gameDataService'
+import { mkSrcSttScp } from '@wuwacalc/core/engine/services/sourceStateService'
+import { evalCond, evalForm } from '@wuwacalc/core/engine/effects/evaluator'
+import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number'
 
 export interface MathTerm {
   id: string

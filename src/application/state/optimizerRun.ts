@@ -5,10 +5,10 @@
 */
 
 import type { OptimizerRunState } from './optimizerRunStore'
-import type { OptBckn, OptPrgr, OptStartPay } from '@/engine/optimizer/types'
-import { runOptWithWr, rstOptWrkrPo, cnclActOptWr } from '@/engine/optimizer/workers/poolClient'
-import { ROT_GPU_JOB, CPU_THEORY_JOB, GPU_THEORY_JOB } from '@/engine/optimizer/config/constants'
-import { errorOpt, logOptimizer } from '@/engine/optimizer/config/log'
+import type { OptBckn, OptPrgr, OptStartPay } from '@wuwacalc/core/engine/optimizer/types'
+import { runOptWithWr, rstOptWrkrPo, cnclActOptWr } from '@wuwacalc/core/engine/optimizer/workers/poolClient'
+import { ROT_GPU_JOB, CPU_THEORY_JOB, GPU_THEORY_JOB } from '@wuwacalc/core/engine/optimizer/config/constants'
+import { errorOpt, logOptimizer } from '@wuwacalc/core/engine/optimizer/config/log'
 import {
   bgnOptRun, compOptPayIn, ensOptCompWr, nvldOptRun, isOptRunCur,
   matOptRsltsI, resOptBtchSi, stopOptCompW,

@@ -8,7 +8,7 @@
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { CSSProperties } from 'react'
 import { Plus } from 'lucide-react'
-import type { ResSeed } from '@/domain/entities/runtime.ts'
+import type { ResSeed } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display.ts'
 import { withDefResMg } from '@/shared/lib/imageFallback.ts'
 

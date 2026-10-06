@@ -3,8 +3,8 @@
   Description: Calculates Echo costs and provides canonical cost-based loadout ordering.
 */
 
-import type { EchoInstance } from '@/domain/entities/runtime.ts'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 
 // read a catalog cost from an echo id with a configurable fallback
 export function getEchoCostB(echoId: string, fallback = 0): number {

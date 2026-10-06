@@ -9,7 +9,7 @@ import { useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { ModalFrame } from '@/modules/simulation/surfaces/rotation/program-editor/components/AuthoringModals.tsx'
 import { withDefResMg } from '@/shared/lib/imageFallback.ts'
-import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
+import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
 import type { EditorMember } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import type { OpeningState } from '@/modules/simulation/surfaces/rotation/program-editor/model/nodeAuthoring.ts'
 

@@ -5,7 +5,7 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import type { RuntimeValue, SourceState } from '@/domain/gameData/contracts.ts'
+import type { RuntimeValue, SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import type {
   EditorCondition,
   EditorNode,
@@ -17,7 +17,7 @@ import {
   type CondSeedContext,
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/priorState.ts'
 import type { CondChoice } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
-import { ACTIVE_RESONATOR_PATH } from '@/domain/gameData/rotationPaths.ts'
+import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 
 const STACKS: SourceState = {
   id: 'stacks',

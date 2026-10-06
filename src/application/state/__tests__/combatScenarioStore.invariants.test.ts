@@ -4,13 +4,13 @@
 */
 
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { RotationNode } from '@/domain/gameData/contracts'
-import { contextScenarioMember } from '@/domain/entities/combatScenario'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary'
-import { listResRttn } from '@/data/catalog/gameDataService'
-import { listResSds } from '@/data/catalog/resonatorSeedService'
-import { makeResProfile, makeScenarioFromProfiles, makeScenarioMemberFromProfile } from '@/engine/runtime/defaults'
-import { resolveEnvironmentManualBuffs } from '@/engine/runtime/scenarioEnvironment'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts'
+import { contextScenarioMember } from '@wuwacalc/core/domain/entities/combatScenario'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { listResRttn } from '@wuwacalc/core/data/catalog/gameDataService'
+import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import { makeResProfile, makeScenarioFromProfiles, makeScenarioMemberFromProfile } from '@wuwacalc/core/engine/runtime/defaults'
+import { resolveEnvironmentManualBuffs } from '@wuwacalc/core/engine/runtime/scenarioEnvironment'
 import { useAppStore } from '@/application/state/store'
 import { consumePersist } from '@/application/persistence/storage'
 

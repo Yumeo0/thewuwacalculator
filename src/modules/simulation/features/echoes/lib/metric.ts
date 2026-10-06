@@ -4,8 +4,8 @@
                scores to shared tier metadata and CSS classes.
 */
 
-import type { EchoInstance } from '@/domain/entities/runtime'
-import { getEchoById } from '@/data/catalog/echoCatalogService'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'
 
 type MetricTier = {
   min: number

@@ -11,7 +11,7 @@ import type { CSSProperties as CssProps, PointerEvent as ReactPointerEvent } fro
 import { Lock, SlidersHorizontal, Users, X } from 'lucide-react'
 import { useMobileUi } from '@/shared/responsive/mobileUi'
 import { MobilePages } from '@/shared/ui/mobile/MobilePages'
-import { ensureResonatorData } from '@/data/gameData'
+import { ensureResonatorData } from '@wuwacalc/core/data/gameData'
 import { useTstStr } from '@/shared/util/toastStore'
 import { AppModal } from '@/shared/ui/AppModal'
 import { ModalHeader } from '@/shared/ui/AppModalShell'

@@ -5,15 +5,15 @@
 */
 
 import { beforeEach, describe, expect, it } from 'vitest'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 import { useAppStore } from '@/application/state/store.ts'
 import { consumePersist } from '@/application/persistence/storage.ts'
-import { listResSds } from '@/data/catalog/resonatorSeedService.ts'
-import { makeResProfile, makeScenarioMemberFromProfile } from '@/engine/runtime/defaults.ts'
-import { insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember } from '@/engine/runtime/scenarioMembers.ts'
-import { applyRuntimeToSimulation, materializeScenarioRuntime } from '@/engine/runtime/runtimeAdapters.ts'
-import { makeEmptyManualBuffs } from '@/engine/runtime/scenarioEnvironment.ts'
-import { parseScenarioEnvironment } from '@/engine/runtime/schema.ts'
+import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { makeResProfile, makeScenarioMemberFromProfile } from '@wuwacalc/core/engine/runtime/defaults.ts'
+import { insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember } from '@wuwacalc/core/engine/runtime/scenarioMembers.ts'
+import { applyRuntimeToSimulation, materializeScenarioRuntime } from '@wuwacalc/core/engine/runtime/runtimeAdapters.ts'
+import { makeEmptyManualBuffs } from '@wuwacalc/core/engine/runtime/scenarioEnvironment.ts'
+import { parseScenarioEnvironment } from '@wuwacalc/core/engine/runtime/schema.ts'
 import { createConfigurationTransaction } from '@/shared/ui/useConfigurationSession.ts'
 
 describe('configuration commit boundaries', () => {

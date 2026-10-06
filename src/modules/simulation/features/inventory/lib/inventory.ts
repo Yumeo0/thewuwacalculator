@@ -4,7 +4,7 @@
                generic sorting so inventory features stay mostly presentational.
 */
 
-import type { EchoInstance } from '@/domain/entities/runtime.ts'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime.ts'
 import {
   slotFit,
   type EchoLdtSlotF,

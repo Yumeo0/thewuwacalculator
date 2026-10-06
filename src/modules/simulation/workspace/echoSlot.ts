@@ -3,10 +3,10 @@
   Description: Projects equipped Echoes into the shared workspace slot contract.
 */
 
-import type { EchoInstance } from '@/domain/entities/runtime'
-import type { EvaluationEchoSlot } from '@/engine/evaluation/buildEvaluation.ts'
-import { getEchoById } from '@/data/catalog/echoCatalogService'
-import { getSntSetNam } from '@/data/gameData/catalog/sonataSets'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
+import type { EvaluationEchoSlot } from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'
+import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
 
 function roundEchoStat(value: number): number {
   return Math.round(value * 1000) / 1000

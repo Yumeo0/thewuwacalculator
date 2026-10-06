@@ -20,10 +20,10 @@ Differences appear in how they explore and rank candidates, not in the core mean
 
 Primary files:
 
-- [src/engine/suggestions/core.ts](../src/engine/suggestions/core.ts)
-- [src/engine/suggestions/mainStat-suggestion](../src/engine/suggestions/mainStat-suggestion)
-- [src/engine/suggestions/setPlan-suggestion](../src/engine/suggestions/setPlan-suggestion)
-- [src/engine/suggestions/worker.ts](../src/engine/suggestions/worker.ts)
+- [packages/core/src/engine/suggestions/core.ts](../packages/core/src/engine/suggestions/core.ts)
+- [packages/core/src/engine/suggestions/mainStat-suggestion](../packages/core/src/engine/suggestions/mainStat-suggestion)
+- [packages/core/src/engine/suggestions/setPlan-suggestion](../packages/core/src/engine/suggestions/setPlan-suggestion)
+- [packages/core/src/engine/suggestions/worker.ts](../packages/core/src/engine/suggestions/worker.ts)
 - [src/modules/simulation/surfaces/suggestions/climb](../src/modules/simulation/surfaces/suggestions/climb)
 
 Top level suggestion families:
@@ -53,11 +53,11 @@ The shared worker runs the durable main-stat, set-plan, and weapon families. Any
 
 Primary files:
 
-- [src/engine/optimizer/engine.ts](../src/engine/optimizer/engine.ts)
-- [src/engine/optimizer/compiler](../src/engine/optimizer/compiler)
-- [src/engine/optimizer/search](../src/engine/optimizer/search)
-- [src/engine/optimizer/results](../src/engine/optimizer/results)
-- [src/engine/optimizer/workers](../src/engine/optimizer/workers)
+- [packages/core/src/engine/optimizer/engine.ts](../packages/core/src/engine/optimizer/engine.ts)
+- [packages/core/src/engine/optimizer/compiler](../packages/core/src/engine/optimizer/compiler)
+- [packages/core/src/engine/optimizer/search](../packages/core/src/engine/optimizer/search)
+- [packages/core/src/engine/optimizer/results](../packages/core/src/engine/optimizer/results)
+- [packages/core/src/engine/optimizer/workers](../packages/core/src/engine/optimizer/workers)
 
 The optimizer pipeline is:
 
@@ -84,9 +84,9 @@ Search errors can originate here because CPU and GPU execution both depend on th
 
 Primary directories:
 
-- [src/engine/optimizer/cpu](../src/engine/optimizer/cpu)
-- [src/engine/optimizer/gpu](../src/engine/optimizer/gpu)
-- [src/engine/optimizer/shaders](../src/engine/optimizer/shaders)
+- [packages/core/src/engine/optimizer/cpu](../packages/core/src/engine/optimizer/cpu)
+- [packages/core/src/engine/optimizer/gpu](../packages/core/src/engine/optimizer/gpu)
+- [packages/core/src/engine/optimizer/shaders](../packages/core/src/engine/optimizer/shaders)
 
 CPU paths provide the baseline packed search execution.
 
@@ -102,12 +102,12 @@ Worker orchestration decides when those paths are available and how progress is 
 
 Primary files:
 
-- [src/engine/optimizer/workers/pool.ts](../src/engine/optimizer/workers/pool.ts)
-- [src/engine/optimizer/workers/poolScheduler.ts](../src/engine/optimizer/workers/poolScheduler.ts)
-- [src/engine/optimizer/workers/progressTracker.ts](../src/engine/optimizer/workers/progressTracker.ts)
-- [src/engine/optimizer/workers/jobPreparation.ts](../src/engine/optimizer/workers/jobPreparation.ts)
-- [src/engine/optimizer/workers/compile.worker.ts](../src/engine/optimizer/workers/compile.worker.ts)
-- [src/engine/optimizer/workers/task.worker.ts](../src/engine/optimizer/workers/task.worker.ts)
+- [packages/core/src/engine/optimizer/workers/pool.ts](../packages/core/src/engine/optimizer/workers/pool.ts)
+- [packages/core/src/engine/optimizer/workers/poolScheduler.ts](../packages/core/src/engine/optimizer/workers/poolScheduler.ts)
+- [packages/core/src/engine/optimizer/workers/progressTracker.ts](../packages/core/src/engine/optimizer/workers/progressTracker.ts)
+- [packages/core/src/engine/optimizer/workers/jobPreparation.ts](../packages/core/src/engine/optimizer/workers/jobPreparation.ts)
+- [packages/core/src/engine/optimizer/workers/compile.worker.ts](../packages/core/src/engine/optimizer/workers/compile.worker.ts)
+- [packages/core/src/engine/optimizer/workers/task.worker.ts](../packages/core/src/engine/optimizer/workers/task.worker.ts)
 
 The worker layer exists to keep compilation, batching, and heavy search work off the main thread. Store side runtime helpers coordinate lifecycle, cancellation, and result materialization.
 
@@ -115,8 +115,8 @@ The worker layer exists to keep compilation, batching, and heavy search work off
 
 Primary files:
 
-- [src/engine/optimizer/results/materialize.ts](../src/engine/optimizer/results/materialize.ts)
-- [src/engine/optimizer/results/collector.ts](../src/engine/optimizer/results/collector.ts)
+- [packages/core/src/engine/optimizer/results/materialize.ts](../packages/core/src/engine/optimizer/results/materialize.ts)
+- [packages/core/src/engine/optimizer/results/collector.ts](../packages/core/src/engine/optimizer/results/collector.ts)
 
 Search execution returns compact refs rather than immediately returning full UI objects. Materialization turns those refs back into user facing result rows and preview loadouts.
 

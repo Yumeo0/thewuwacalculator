@@ -4,7 +4,7 @@
                bytes without depending on the settings-page UI.
 */
 
-import type { PersistedState } from '@/domain/entities/appState'
+import type { PersistedState } from '@wuwacalc/core/domain/entities/appState'
 import type { LegAppSttMpr } from '@/application/imports/legacy/shared'
 import { importLegacyApp } from '@/application/imports/legacy/index'
 import { decAppFileBy } from '@/application/persistence/fileCodec'

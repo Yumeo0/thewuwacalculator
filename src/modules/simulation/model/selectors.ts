@@ -5,20 +5,20 @@
                falling back to a standalone resonator simulation otherwise.
 */
 
-import { runCmbtGrphS, runResSmlt } from '@/engine/pipeline'
-import type { ResSeed, ResRuntime } from '@/domain/entities/runtime'
-import type { EnemyProfile } from '@/domain/entities/appState'
-import type { CombatGraph } from '@/domain/entities/combatGraph'
+import { runCmbtGrphS, runResSmlt } from '@wuwacalc/core/engine/pipeline'
+import type { ResSeed, ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState'
+import type { CombatGraph } from '@wuwacalc/core/domain/entities/combatGraph'
 import {
   mkPrepWork,
   runPrepWorkS,
   type PrepWork,
-} from '@/engine/pipeline/preparedWorkspace'
+} from '@wuwacalc/core/engine/pipeline/preparedWorkspace'
 import type {
   RunDetail,
-} from '@/engine/rotation/execute'
-import type { RotationNode } from '@/domain/gameData/contracts'
-import type { SimResult } from '@/engine/pipeline/types'
+} from '@wuwacalc/core/engine/rotation/execute'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts'
+import type { SimResult } from '@wuwacalc/core/engine/pipeline/types'
 
 interface LiveSimulationOptions {
   sequence?: RotationNode[]

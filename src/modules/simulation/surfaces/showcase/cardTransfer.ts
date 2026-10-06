@@ -7,8 +7,8 @@
                from the file so the right slice is applied.
 */
 
-import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE } from '@/domain/entities/preferences'
-import type { ShowcaseCardStyle, ShowcaseCardHidden } from '@/domain/entities/preferences'
+import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE } from '@wuwacalc/core/domain/entities/preferences'
+import type { ShowcaseCardStyle, ShowcaseCardHidden } from '@wuwacalc/core/domain/entities/preferences'
 
 const APP_TAG = 'thewuwacalculator'
 

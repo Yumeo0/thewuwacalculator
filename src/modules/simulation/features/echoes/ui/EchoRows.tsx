@@ -7,9 +7,9 @@
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { CSSProperties as CssProps, HTMLAttributes as HtmlAttrs, MouseEventHandler as MsVntHnd, ReactNode } from 'react'
-import type { EchoInstance } from '@/domain/entities/runtime'
-import { getEchoById } from '@/data/catalog/echoCatalogService'
-import { getSntSetClr, getSntSetIco, getSntSetNam } from '@/data/gameData/catalog/sonataSets'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'
+import { getSntSetClr, getSntSetIco, getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
 import { EchoStatGlyph } from '@/modules/simulation/features/echoes/lib/statGlyph.tsx'
 import {
   cmptBldCritGr,
@@ -25,7 +25,7 @@ import {
 } from '@/modules/simulation/features/echoes/ui/EchoCard.tsx'
 import { formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback.ts'
-import { formatTruncCompact } from '@/shared/lib/number.ts'
+import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
 import '@/styles/features/echoes/rows.css'
 
 // leaves the spare ones empty rather than letting a short echo reflow

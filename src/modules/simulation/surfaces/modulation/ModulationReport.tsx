@@ -5,9 +5,9 @@
 */
 
 import { useEffect, useRef, useState } from 'react'
-import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime'
-import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
-import type { EvaluationBuildSnapshot, EvaluationEchoSlot, BuildEvaluationReport } from '@/engine/evaluation/buildEvaluation.ts'
+import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
+import type { CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import type { EvaluationBuildSnapshot, EvaluationEchoSlot, BuildEvaluationReport } from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
 import type { ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { SeatStack } from '@/modules/simulation/surfaces/modulation/SeatStack.tsx'
 import { TeamEditButton } from '@/modules/simulation/features/teams/TeamEditButton.tsx'

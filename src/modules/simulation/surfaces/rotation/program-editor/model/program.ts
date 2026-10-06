@@ -4,7 +4,7 @@
                simulation-backed projections stored on those nodes.
 */
 
-import type { AttributeKey, SkillAggType } from '@/domain/entities/stats.ts'
+import type { AttributeKey, SkillAggType } from '@wuwacalc/core/domain/entities/stats.ts'
 import type {
   DamageFeature,
   RotationNoteNode,
@@ -12,7 +12,7 @@ import type {
   RtChng,
   RuntimeValue,
   SourceState,
-} from '@/domain/gameData/contracts.ts'
+} from '@wuwacalc/core/domain/gameData/contracts.ts'
 import type { CondAction } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
 
 /** Resonator id used as the stable member identity. */

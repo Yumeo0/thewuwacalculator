@@ -4,7 +4,7 @@
                hydration or schema construction.
 */
 
-import { APP_STATE_VER } from '@/domain/entities/appStateVersion'
+import { APP_STATE_VER } from '@wuwacalc/core/domain/entities/appStateVersion'
 
 export const APP_STORAGE_KEY = `wwcalc.app.v${APP_STATE_VER}`
 export const APPSTOREUIPP = `${APP_STORAGE_KEY}.ui.appearance`

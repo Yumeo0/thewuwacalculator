@@ -12,8 +12,8 @@ import type {
   DataSrcType,
   RtChng,
   SourceState,
-} from '@/domain/gameData/contracts.ts'
-import { listStatesFor } from '@/data/catalog/gameDataService.ts'
+} from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { listStatesFor } from '@wuwacalc/core/data/catalog/gameDataService.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display.ts'
 import type {
   RotSqncCtnEn,
@@ -26,15 +26,15 @@ import {
   getStateText,
 } from '@/modules/simulation/model/sourceStateDisplay.ts'
 import { fmtRtChng } from '@/modules/simulation/model/formatGameData.ts'
-import { truncTo } from '@/shared/lib/number.ts'
+import { truncTo } from '@wuwacalc/core/shared/lib/number.ts'
 import {seedRsntById} from "@/modules/simulation/features/resonator/lib/seedData.ts";
 import {withDefResMg} from "@/shared/lib/imageFallback.ts";
-import { unscopedTargetOwnerKey } from '@/domain/gameData/targetRouting.ts'
+import { unscopedTargetOwnerKey } from '@wuwacalc/core/domain/gameData/targetRouting.ts'
 import { formatStateValue } from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
 import {
   ACTIVE_RESONATOR_PATH,
   SELECTED_TARGET_PATH_PREFIX,
-} from '@/domain/gameData/rotationPaths.ts'
+} from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 
 export interface RotSqncCondC {
   resonatorId: string

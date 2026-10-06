@@ -3,9 +3,9 @@
   Description: Owns the settings data-import worker lifecycle and file transfers.
 */
 
-import { getGameDataMode } from '@/data/gameData'
-import type { PersistedState } from '@/domain/entities/appState'
-import { WorkerChannel } from '@/shared/lib/WorkerChannel'
+import { getGameDataMode } from '@wuwacalc/core/data/gameData'
+import type { PersistedState } from '@wuwacalc/core/domain/entities/appState'
+import { WorkerChannel } from '@wuwacalc/core/shared/lib/WorkerChannel'
 import type { DataImportJob, DataImportResult, DataImportSource } from './dataImport'
 import type { DataImportWorkerRequest, DataImportWorkerResponse } from './dataImport.worker'
 

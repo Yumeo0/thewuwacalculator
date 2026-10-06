@@ -3,7 +3,7 @@
   Description: Builds searchable palette specifications from live feature, condition, and owner metadata.
 */
 
-import type { SkillAggType } from '@/domain/entities/stats.ts'
+import type { SkillAggType } from '@wuwacalc/core/domain/entities/stats.ts'
 
 export type PaletteSpec =
   | {

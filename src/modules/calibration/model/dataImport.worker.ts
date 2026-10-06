@@ -6,9 +6,9 @@
                outside the browser's interaction thread.
 */
 
-import { initGameData } from '@/data/gameData'
+import { initGameData } from '@wuwacalc/core/data/gameData'
 import { runDataImportJob, type DataImportJob, type DataImportResult } from './dataImport'
-import type { GameDataMode } from '@/domain/entities/gameDataMode'
+import type { GameDataMode } from '@wuwacalc/core/domain/entities/gameDataMode'
 
 export interface DataImportWorkerRequest {
   id: number

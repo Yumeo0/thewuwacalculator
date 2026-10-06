@@ -3,7 +3,7 @@
   Description: Projects authored condition changes into runtime write summaries and cleanup evidence.
 */
 
-import type { RtChng } from '@/domain/gameData/contracts.ts'
+import type { RtChng } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import type { CondChoice } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
 import {
   formatStateValue,

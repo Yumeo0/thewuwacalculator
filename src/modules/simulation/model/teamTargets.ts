@@ -4,7 +4,7 @@
                views and teammate configuration flows.
 */
 
-import type { ResRuntime } from '@/domain/entities/runtime'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
 
 // project the active routing choices to each active team member id
 export function mkSelTrgtByR(

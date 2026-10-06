@@ -4,9 +4,9 @@
                application graph or its state initialization.
 */
 
-import type { UiState, ThemeMode } from '@/domain/entities/appState'
-import { BG_PRESETS, DEFAULT_BODY_FONT, DEF_BG_KEY } from '@/domain/entities/appearance'
-import { BG_THEMES, DARK_THEMES, LIGHT_THEMES } from '@/domain/entities/themes'
+import type { UiState, ThemeMode } from '@wuwacalc/core/domain/entities/appState'
+import { BG_PRESETS, DEFAULT_BODY_FONT, DEF_BG_KEY } from '@wuwacalc/core/domain/entities/appearance'
+import { BG_THEMES, DARK_THEMES, LIGHT_THEMES } from '@wuwacalc/core/domain/entities/themes'
 import { getSystTheme } from '@/shared/lib/systemTheme'
 import { applyDocumentTheme } from '@/application/theme/documentTheme'
 import { applyBodyFon, resolveBodyFont } from '@/application/theme/typography'

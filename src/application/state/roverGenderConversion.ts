@@ -3,16 +3,16 @@
   Description: Converts paired Rover identities in complete scenarios and saved builds.
 */
 
-import type { CombatScenario, CombatScenarioId, DormantScenarioMember, ScenarioTeamMember, TeamMemberId } from '@/domain/entities/combatScenario'
-import { contextScenarioMember, makeScenarioTeam } from '@/domain/entities/combatScenario'
-import type { SavedArtifactLibrary } from '@/domain/entities/inventoryStorage'
-import type { SimulationState } from '@/domain/entities/appState'
-import type { RotationNode, RtChng } from '@/domain/gameData/contracts'
-import type { RoverGender } from '@/domain/entities/roverGender'
-import { ROVER_PAIRS, roverIdForGender } from '@/domain/entities/roverGender'
-import type { ScenarioWorkspace } from '@/domain/entities/scenarioLibrary'
-import { summarizeScenario } from '@/domain/entities/scenarioLibrary'
-import { makeMemberManualEffect, memberManualEffectId } from '@/engine/runtime/scenarioEnvironment'
+import type { CombatScenario, CombatScenarioId, DormantScenarioMember, ScenarioTeamMember, TeamMemberId } from '@wuwacalc/core/domain/entities/combatScenario'
+import { contextScenarioMember, makeScenarioTeam } from '@wuwacalc/core/domain/entities/combatScenario'
+import type { SavedArtifactLibrary } from '@wuwacalc/core/domain/entities/inventoryStorage'
+import type { SimulationState } from '@wuwacalc/core/domain/entities/appState'
+import type { RotationNode, RtChng } from '@wuwacalc/core/domain/gameData/contracts'
+import type { RoverGender } from '@wuwacalc/core/domain/entities/roverGender'
+import { ROVER_PAIRS, roverIdForGender } from '@wuwacalc/core/domain/entities/roverGender'
+import type { ScenarioWorkspace } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { summarizeScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { makeMemberManualEffect, memberManualEffectId } from '@wuwacalc/core/engine/runtime/scenarioEnvironment'
 
 /** Literal UTF-8 size of the serialized data, including its ordinary metadata. */
 export function serializedByteSize(value: unknown): number {

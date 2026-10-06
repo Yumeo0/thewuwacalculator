@@ -4,9 +4,9 @@
                and materializes scored weapon candidates.
 */
 
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import { clrSrcCtrls } from '@/engine/runtime/sourceStateInit.ts'
-import type { CompactSetPlanSuggest, SetPlanDisplayEntry, WeaponEntry } from '@/engine/suggestions/types.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { clrSrcCtrls } from '@wuwacalc/core/engine/runtime/sourceStateInit.ts'
+import type { CompactSetPlanSuggest, SetPlanDisplayEntry, WeaponEntry } from '@wuwacalc/core/engine/suggestions/types.ts'
 import { setPlnsQl, type SetPlanSmmrE } from './suggestions.ts'
 
 export function getSetPlanDisplay(plan: CompactSetPlanSuggest): SetPlanDisplayEntry[] {

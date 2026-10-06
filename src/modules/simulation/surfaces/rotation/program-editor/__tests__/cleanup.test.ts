@@ -15,8 +15,8 @@ import type {
   EditorStep,
   NodeGate,
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
-import type { DataSrcRef } from '@/domain/gameData/contracts.ts'
-import type { RtChng } from '@/domain/gameData/contracts.ts'
+import type { DataSrcRef } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import type { RtChng } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import {
   applyRotationCleanup,
   cleanupCounts,
@@ -24,7 +24,7 @@ import {
   planRotationCleanup,
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/cleanup.ts'
 import { resolveEditorPassBody } from '@/modules/simulation/surfaces/rotation/program-editor/model/passCheckout.ts'
-import { ACTIVE_RESONATOR_PATH } from '@/domain/gameData/rotationPaths.ts'
+import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 
 function step(id: string, gate?: NodeGate): EditorStep {
   return {

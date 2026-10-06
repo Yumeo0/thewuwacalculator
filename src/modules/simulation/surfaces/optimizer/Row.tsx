@@ -10,9 +10,9 @@ import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 import type { MenuEntry } from '@/shared/ui/CtxMenu'
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback.ts'
-import { formatTruncCompact } from '@/shared/lib/number.ts'
+import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
 import { SonataTokens } from '@/modules/simulation/workspace/ui.tsx'
-import { getEchoSetDe } from '@/data/gameData/echoSets/effects.ts'
+import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
 
 export interface OptDsplStts {
   atk: number

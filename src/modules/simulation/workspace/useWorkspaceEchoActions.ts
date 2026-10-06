@@ -5,8 +5,8 @@
 */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { EchoInstance } from '@/domain/entities/runtime'
-import { sameEchoUid, saveEchoSlots } from '@/domain/entities/inventoryStorage.ts'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
+import { sameEchoUid, saveEchoSlots } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import { useAppStore } from '@/application/state'
 import type { EvaluationEchoActions } from '@/modules/simulation/workspace/ui.tsx'
 import { qpEchoAtSlot } from '@/modules/simulation/features/echoes/lib/equip.ts'

@@ -5,8 +5,8 @@
 */
 
 import { decShareText, encShareText } from '@/shared/lib/shareCodec.ts'
-import type { ManualBuffs, MnlMod } from '@/domain/entities/manualBuffs.ts'
-import { mnlBffsSchm } from '@/engine/runtime/manualBuffsSchema.ts'
+import type { ManualBuffs, MnlMod } from '@wuwacalc/core/domain/entities/manualBuffs.ts'
+import { mnlBffsSchm } from '@wuwacalc/core/engine/runtime/manualBuffsSchema.ts'
 import {
   makeModId,
   cleanBuffs,

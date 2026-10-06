@@ -5,9 +5,9 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import { makeEvaluationKey } from '@/engine/evaluation/buildEvaluationKey.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
-import { makeResRuntime } from '@/engine/runtime/defaults.ts'
+import { makeEvaluationKey } from '@wuwacalc/core/engine/evaluation/buildEvaluationKey.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { makeResRuntime } from '@wuwacalc/core/engine/runtime/defaults.ts'
 import { applyEvaluationAsm, applyEvaluationMapAsm } from '@/modules/simulation/model/evaluationAssumptions.ts'
 
 describe('evaluation assumptions', () => {

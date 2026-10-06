@@ -3,7 +3,7 @@
   Description: Partitions the flat authored program into preamble and main sections without changing execution order.
 */
 
-import type { RotationNode } from '@/domain/gameData/contracts.ts'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
 
 interface RotationItemSection {
   id: string

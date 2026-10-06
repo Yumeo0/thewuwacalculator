@@ -8,12 +8,12 @@ import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useMemo } from 'react'
 import type { ChangeEvent, CSSProperties as CssProps } from 'react'
 import { Search } from 'lucide-react'
-import type { EnemyCatEnt, EnemyClassId, EnemyElemId } from '@/domain/entities/enemy.ts'
+import type { EnemyCatEnt, EnemyClassId, EnemyElemId } from '@wuwacalc/core/domain/entities/enemy.ts'
 import {
   ENEMY_CLASS_TXT,
   ENEMY_ELEM_ATTR,
   ENEMY_ELEM_TXT,
-} from '@/domain/entities/enemy.ts'
+} from '@wuwacalc/core/domain/entities/enemy.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display.ts'
 import { PickerModal } from '@/modules/simulation/ui/PickerModal.tsx'

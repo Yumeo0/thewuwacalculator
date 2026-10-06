@@ -9,7 +9,7 @@ import type {
   RuntimeValue,
   RtChng,
   SourceState,
-} from '@/domain/gameData/contracts.ts'
+} from '@wuwacalc/core/domain/gameData/contracts.ts'
 import type {
   ConditionWriteAction,
   EditorBlock,
@@ -31,15 +31,15 @@ import {
   normLoopRuns,
   type RotLoopEnd,
   type RotLoopStart,
-} from '@/domain/gameData/rotationLoops.ts'
+} from '@wuwacalc/core/domain/gameData/rotationLoops.ts'
 import { makeBlockNode } from '@/modules/simulation/surfaces/rotation/shared/nodeTools.ts'
-import { ACTIVE_RESONATOR_PATH } from '@/domain/gameData/rotationPaths.ts'
+import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 import { getStateText } from '@/modules/simulation/model/sourceStateDisplay.ts'
 import { parseRegValue } from '@/modules/simulation/surfaces/rotation/program-editor/model/registerValues.ts'
 import {
   normalizeFeatureAttachments,
   stripFeatureAttachments,
-} from '@/domain/gameData/rotationAttached.ts'
+} from '@wuwacalc/core/domain/gameData/rotationAttached.ts'
 import {
   checkinAllLoopPasses,
   checkinLoopBlock,

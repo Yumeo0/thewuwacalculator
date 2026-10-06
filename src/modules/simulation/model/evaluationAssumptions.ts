@@ -3,13 +3,13 @@
   Description: Defines normalized enemy, progression, and runtime assumptions used for build evaluation.
 */
 
-import type { EnemyProfile } from '@/domain/entities/appState'
-import type { ResRuntime, SkillLevels } from '@/domain/entities/runtime'
-import { getResDtlsBy } from '@/data/gameData/resonators/resonatorDataStore'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
-import { MAX_RES_LVL, MAX_SKILL_LEVEL, MAX_WPN_LVL } from '@/engine/runtime/defaults'
-import { wpnAtkAt } from '@/engine/runtime/weaponState'
-import { mkMaxTrcNode } from '@/engine/runtime/traceNodes'
+import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState'
+import type { ResRuntime, SkillLevels } from '@wuwacalc/core/domain/entities/runtime'
+import { getResDtlsBy } from '@wuwacalc/core/data/gameData/resonators/resonatorDataStore'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import { MAX_RES_LVL, MAX_SKILL_LEVEL, MAX_WPN_LVL } from '@wuwacalc/core/engine/runtime/defaults'
+import { wpnAtkAt } from '@wuwacalc/core/engine/runtime/weaponState'
+import { mkMaxTrcNode } from '@wuwacalc/core/engine/runtime/traceNodes'
 
 export const EVALUATION_ENEMY: EnemyProfile = {
   id: 'custom:evaluation',

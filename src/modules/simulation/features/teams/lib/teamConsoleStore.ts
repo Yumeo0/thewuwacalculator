@@ -6,7 +6,7 @@
 
 import { create } from 'zustand'
 import type { ChannelId } from '@/modules/simulation/features/teams/stage/MemberStage.tsx'
-import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
+import type { CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScenario.ts'
 
 interface ConsoleTarget {
   resonatorId: string

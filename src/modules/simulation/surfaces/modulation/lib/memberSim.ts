@@ -5,10 +5,10 @@
 */
 
 import { useCallback } from 'react'
-import type { CombatScenario } from '@/domain/entities/combatScenario.ts'
-import type { ResRuntime } from '@/domain/entities/runtime'
-import type { SimResult } from '@/engine/pipeline/types'
-import type { PrepWork } from '@/engine/pipeline/preparedWorkspace'
+import type { CombatScenario } from '@wuwacalc/core/domain/entities/combatScenario.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
+import type { SimResult } from '@wuwacalc/core/engine/pipeline/types'
+import type { PrepWork } from '@wuwacalc/core/engine/pipeline/preparedWorkspace'
 import { makeStateSummary, type StateGroup, type StatStateSummaryTarget } from '@/modules/simulation/model/stateSummary.ts'
 
 export interface MemberAnalysis {

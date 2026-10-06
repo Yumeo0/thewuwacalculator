@@ -5,18 +5,18 @@
                state.
 */
 
-import type { ResRuntime } from '@/domain/entities/runtime'
-import { getRotFormulaPath, ROT_FORMULA_STAT_DEFS } from '@/domain/gameData/rotationFormulaStats'
-import { UNISON_BOON_TEAM_PATH, unisonBoonMaxForRuntimes, unisonBoonState } from '@/domain/gameData/unisonBoon'
-import { makeSourceCat } from '@/engine/services/runtimeSourceService'
-import { resolveSkill } from '@/engine/pipeline/resolveSkill'
-import { getNegFfctCm, getNegFfctEn } from '@/engine/gameData/negativeEffects'
-import { getSkillType } from '@/domain/gameData/skillTypes'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
+import { getRotFormulaPath, ROT_FORMULA_STAT_DEFS } from '@wuwacalc/core/domain/gameData/rotationFormulaStats'
+import { UNISON_BOON_TEAM_PATH, unisonBoonMaxForRuntimes, unisonBoonState } from '@wuwacalc/core/domain/gameData/unisonBoon'
+import { makeSourceCat } from '@wuwacalc/core/engine/services/runtimeSourceService'
+import { resolveSkill } from '@wuwacalc/core/engine/pipeline/resolveSkill'
+import { getNegFfctCm, getNegFfctEn } from '@wuwacalc/core/engine/gameData/negativeEffects'
+import { getSkillType } from '@wuwacalc/core/domain/gameData/skillTypes'
 import {
   getStateTeamTag,
   getTeamTgtPt,
 } from '@/modules/simulation/features/controls/lib/runtimeStateUtils'
-import { scopedTargetOwnerKey } from '@/domain/gameData/targetRouting.ts'
+import { scopedTargetOwnerKey } from '@wuwacalc/core/domain/gameData/targetRouting.ts'
 import { getStateText } from '@/modules/simulation/model/sourceStateDisplay'
 import {
   enemyChoices,
@@ -35,7 +35,7 @@ import type {
 import {
   ACTIVE_RESONATOR_PATH,
   SELECTED_TARGET_PATH_PREFIX,
-} from '@/domain/gameData/rotationPaths.ts'
+} from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 
 export function currentTeamIds(runtime: ResRuntime): string[] {
   return Array.from(

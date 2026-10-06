@@ -6,7 +6,7 @@
 
 /// <reference lib="webworker" />
 
-import { initGameData } from '@/data/gameData'
+import { initGameData } from '@wuwacalc/core/data/gameData'
 import { runRandomEchoGeneration } from './compute'
 import type {
   RandomEchoWorkerRequest,

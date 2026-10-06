@@ -7,7 +7,7 @@
 import { readAppFile, xprtAppFile } from '@/application/persistence/fileCodec.ts'
 import { type ChangeEvent, type CSSProperties as CssProps, type ReactNode, useMemo, useRef } from 'react'
 import { Bookmark, Copy, Plus, Trash2 } from 'lucide-react'
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import type {
   MnlBaseStatK,
   MnlMod,
@@ -17,12 +17,12 @@ import type {
   MnlSkllSclrK,
   MnlTopStatKe,
   QuickBuffs,
-} from '@/domain/entities/manualBuffs.ts'
-import type { AttributeKey, NegEffectKey, SkillTypeKey } from '@/domain/entities/stats.ts'
-import { mkDefMnlMod } from '@/engine/runtime/defaults.ts'
-import { mnlBffsSchm } from '@/engine/runtime/manualBuffsSchema.ts'
-import { getResonatorById as getResById } from '@/data/catalog/catalogService.ts'
-import { resolveSkill } from '@/engine/pipeline/resolveSkill.ts'
+} from '@wuwacalc/core/domain/entities/manualBuffs.ts'
+import type { AttributeKey, NegEffectKey, SkillTypeKey } from '@wuwacalc/core/domain/entities/stats.ts'
+import { mkDefMnlMod } from '@wuwacalc/core/engine/runtime/defaults.ts'
+import { mnlBffsSchm } from '@wuwacalc/core/engine/runtime/manualBuffsSchema.ts'
+import { getResonatorById as getResById } from '@wuwacalc/core/data/catalog/catalogService.ts'
+import { resolveSkill } from '@wuwacalc/core/engine/pipeline/resolveSkill.ts'
 import { getEchoStatI } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
 import { NumberInput } from '@/modules/simulation/features/controls/NumberInput.tsx'
 import { Select } from '@/application/ui/Select'

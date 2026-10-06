@@ -3,7 +3,7 @@
   Description: Owns document theme classes for bootstrap, shell updates, and previews.
 */
 
-import { ALL_THEMES } from '@/domain/entities/themes'
+import { ALL_THEMES } from '@wuwacalc/core/domain/entities/themes'
 
 const DOCUMENT_THEME_CLASSES = [
   ...ALL_THEMES,

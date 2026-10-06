@@ -4,14 +4,14 @@
 */
 
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { RotationNode } from '@/domain/gameData/contracts.ts'
-import { isRotationSequence } from '@/domain/gameData/rotationSequence.ts'
-import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
-import { savedRotationItems } from '@/domain/entities/inventoryStorage.ts'
-import { makeAppState } from '@/engine/runtime/defaults.ts'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { isRotationSequence } from '@wuwacalc/core/domain/gameData/rotationSequence.ts'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
+import { savedRotationItems } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
+import { makeAppState } from '@wuwacalc/core/engine/runtime/defaults.ts'
 import {
   migrateAdvancedScenarioRotations,
-} from '@/engine/runtime/advancedRotationMigration.ts'
+} from '@wuwacalc/core/engine/runtime/advancedRotationMigration.ts'
 import { useAppStore } from '@/application/state/store.ts'
 import { consumePersist } from '@/application/persistence/storage.ts'
 

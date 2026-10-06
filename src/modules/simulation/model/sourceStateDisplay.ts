@@ -3,10 +3,10 @@
   Description: Projects source-state ownership, values, labels, and descriptions for Simulation controls.
 */
 
-import { getEchoSetDe } from '@/data/gameData/echoSets/effects'
-import type { DataSrcRef, EffectDef, SourceState } from '@/domain/gameData/contracts'
-import { getEchoById } from '@/data/catalog/echoCatalogService'
-import { getWpnById } from '@/data/catalog/weaponCatalogService'
+import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects'
+import type { DataSrcRef, EffectDef, SourceState } from '@wuwacalc/core/domain/gameData/contracts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'
+import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService'
 
 export interface SrcSttDspl {
   sourceName?: string

@@ -5,9 +5,9 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import type { SetPlanSuggest, WeaponEntry } from '@/engine/suggestions/types.ts'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
-import { mkMaxResRt } from '@/engine/runtime/defaults.ts'
+import type { SetPlanSuggest, WeaponEntry } from '@wuwacalc/core/engine/suggestions/types.ts'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { mkMaxResRt } from '@wuwacalc/core/engine/runtime/defaults.ts'
 import { groupWeaponSuggestions, materializeWeaponSuggestion, sameSetPlanCandidate } from '../results.ts'
 
 describe('suggestion candidate identity', () => {

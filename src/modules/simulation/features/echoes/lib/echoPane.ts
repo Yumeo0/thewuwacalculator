@@ -4,10 +4,10 @@
                default echo instancing, and set/cost summaries.
 */
 
-import type { EchoInstance } from '@/domain/entities/runtime.ts'
-import { makeEchoUid } from '@/domain/entities/runtime.ts'
-import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
-import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@/data/gameData/catalog/echoStats.ts'
+import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { makeEchoUid } from '@wuwacalc/core/domain/entities/runtime.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
+import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@wuwacalc/core/data/gameData/catalog/echoStats.ts'
 import { formatStatKeyLabel, formatStatKeyValue, STAT_ICON_MAP } from '@/modules/simulation/model/statsView.ts'
 import { echoStatIconSrc } from '@/modules/simulation/features/echoes/lib/statGlyph.tsx'
 

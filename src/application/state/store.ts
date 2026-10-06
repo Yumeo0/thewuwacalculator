@@ -4,7 +4,7 @@
                history, hydration, and scenario data leases.
 */
 
-import { ensureResonatorData, hasResonatorData, retainResonatorData } from '@/data/gameData'
+import { ensureResonatorData, hasResonatorData, retainResonatorData } from '@wuwacalc/core/data/gameData'
 import { collectResonatorIds, readStoredScenarioIds } from '@/application/persistence/resonatorScope'
 import { useTstStr } from '@/shared/util/toastStore'
 import {create} from 'zustand'
@@ -23,16 +23,16 @@ import type {
     ThemeMode,
     ThemePref,
     UiState,
-} from '@/domain/entities/appState'
-import type {BgThemeVar, BlurMode, DarkThemeVar, LightThemeVar,} from '@/domain/entities/themes'
+} from '@wuwacalc/core/domain/entities/appState'
+import type {BgThemeVar, BlurMode, DarkThemeVar, LightThemeVar,} from '@wuwacalc/core/domain/entities/themes'
 import type {
     EchoInstance,
     ResonatorId,
     ResRuntime,
     ResSeed,
     TeamMemRtVie,
-} from '@/domain/entities/runtime'
-import type { RotationNode } from '@/domain/gameData/contracts'
+} from '@wuwacalc/core/domain/entities/runtime'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts'
 import {
     type CombatScenario,
     type CombatScenarioId,
@@ -40,33 +40,33 @@ import {
     type EnvironmentTargetModifiers,
     type ScenarioTeamMember,
     type TeamMemberId,
-} from '@/domain/entities/combatScenario'
+} from '@wuwacalc/core/domain/entities/combatScenario'
 import {
     selectedCombatScenario,
-} from '@/domain/entities/scenarioLibrary'
-import type { ScenarioWorkspace } from '@/domain/entities/scenarioLibrary'
-import type { CombatState } from '@/domain/entities/runtime'
+} from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import type { ScenarioWorkspace } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import type { CombatState } from '@wuwacalc/core/domain/entities/runtime'
 import type {
     SavedBuild,
     SavedEcho,
     SavedRotation,
     SavedScenario,
-} from '@/domain/entities/inventoryStorage'
-import type { ShowcaseCardStyle, ShowcaseCardHidden, ShowcaseLayout, UploadPersistMode } from '@/domain/entities/preferences'
-import type { RoverGender } from '@/domain/entities/roverGender'
-import type {OptSets} from '@/domain/entities/optimizer'
-import type {OptInventorySelection, ResProf} from '@/domain/entities/profile'
-import type {SntSetConds} from '@/domain/entities/sonataSetConditionals'
-import type {SuggestState, SuggsViewMod, WeaponPlanSet} from '@/domain/entities/suggestions'
+} from '@wuwacalc/core/domain/entities/inventoryStorage'
+import type { ShowcaseCardStyle, ShowcaseCardHidden, ShowcaseLayout, UploadPersistMode } from '@wuwacalc/core/domain/entities/preferences'
+import type { RoverGender } from '@wuwacalc/core/domain/entities/roverGender'
+import type {OptSets} from '@wuwacalc/core/domain/entities/optimizer'
+import type {OptInventorySelection, ResProf} from '@wuwacalc/core/domain/entities/profile'
+import type {SntSetConds} from '@wuwacalc/core/domain/entities/sonataSetConditionals'
+import type {SuggestState, SuggsViewMod, WeaponPlanSet} from '@wuwacalc/core/domain/entities/suggestions'
 import type {
     OptPrgr,
     OptStartPay,
-} from '@/engine/optimizer/types'
+} from '@wuwacalc/core/engine/optimizer/types'
 import {
     makeAppState,
     DEF_RES_ID,
     initAppState,
-} from '@/engine/runtime/defaults'
+} from '@wuwacalc/core/engine/runtime/defaults'
 import {
     applyHistoryEntry,
     makeHistoryEntry,
@@ -96,7 +96,7 @@ import {selectPersisted} from '@/application/state/serialization'
 import {
     migrateAdvancedScenarioRotations,
     type AdvancedRotationMigration,
-} from '@/engine/runtime/advancedRotationMigration.ts'
+} from '@wuwacalc/core/engine/runtime/advancedRotationMigration.ts'
 
 
 function applyPrssSna(

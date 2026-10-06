@@ -3,12 +3,12 @@
   Description: Extracts the Sonata plan, cost, and main Echo provenance for generated evaluation builds.
 */
 
-import { getSntSetIco, getSntSetNam } from '@/data/gameData/catalog/sonataSets.ts'
-import { getEchoById } from '@/data/catalog/echoCatalogService'
+import { getSntSetIco, getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'
 import type {
   EvaluationBuildSnapshot,
   EvaluationEchoSlot,
-} from '@/engine/evaluation/buildEvaluation.ts'
+} from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
 
 export const ECHO_COST_MAX = 12
 

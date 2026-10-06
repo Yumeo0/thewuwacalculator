@@ -7,7 +7,9 @@
 import { StrictMode, Suspense, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@/appearanceEntry'
-import { initCoreGameData, initGameData } from '@/data/gameData/index'
+import { configureCore } from '@wuwacalc/core/data/coreEnvironment'
+import { initCoreGameData, initGameData } from '@wuwacalc/core/data/gameData/index'
+import { installCoreWorkers } from '@/app/coreWorkers'
 import { readBootstrapResonatorIds } from '@/application/persistence/resonatorScope'
 import { readPersistedGameDataMode } from '@/application/persistence/gameDataMode'
 import { StartupErrorNotice } from '@/modules/system/pages/StartupErrorNotice'
@@ -30,6 +32,8 @@ function showStartupError(error: unknown) {
 }
 
 async function startApp() {
+  configureCore({ shouldRetainGameData: () => isSimulationRoute(window.location.pathname) })
+  installCoreWorkers()
   root.render(
     <BootLoading />,
   )

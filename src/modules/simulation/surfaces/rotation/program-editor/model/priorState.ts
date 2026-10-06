@@ -5,10 +5,10 @@
                than on the authored default.
 */
 
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import type { RuntimeValue } from '@/domain/gameData/contracts.ts'
-import { ACTIVE_RESONATOR_PATH } from '@/domain/gameData/rotationPaths.ts'
-import { srcSttKey, srcSttMax } from '@/engine/runtime/sourceStateInit.ts'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { RuntimeValue } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
+import { srcSttKey, srcSttMax } from '@wuwacalc/core/engine/runtime/sourceStateInit.ts'
 import {
   cycleCondValue,
   seedCondValue,
