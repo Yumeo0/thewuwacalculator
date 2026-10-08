@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from 'vitest'
 import type { CombatGraph } from '@/domain/entities/combatGraph.ts'
+import type { RotationNode } from '@/domain/gameData/contracts.ts'
 import type { SlotId } from '@/domain/entities/combatGraph.ts'
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
 import { listResRttn, listSkillsFor } from '@/data/catalog/gameDataService.ts'
@@ -86,6 +87,81 @@ function legacyContext(graph: CombatGraph, targetSlotId: SlotId, enemy: ReturnTy
 }
 
 describe('numeric team effect kernel', () => {
+  it('writes Unison Boon as a capped team rotation condition in both executors', () => {
+    const hsin = getResSeedBy('1311')
+    const suoming = getResSeedBy('1312')
+    if (!hsin || !suoming) throw new Error('Missing Unison Boon team data')
+    const hsinRuntime = makeResRuntime(hsin)
+    const suomingRuntime = makeResRuntime(suoming)
+    hsinRuntime.base.level = 90
+    hsinRuntime.base.sequence = 6
+    hsinRuntime.build.team = [hsin.id, suoming.id, null]
+    suomingRuntime.build.team = [hsin.id, suoming.id, null]
+    hsinRuntime.state.controls['resonator:1311:mode:value'] = 'unison'
+    const graph = makeCombatGraph({
+      actRt: hsinRuntime, activeSeed: hsin,
+      partRts: { [suoming.id]: suomingRuntime },
+    })
+    const context = makeCombatEnv({ graph, targetSlotId: 'active', enemy: makeEnemy() })
+    const environment = prepareRunEnv(context, hsin)
+    const feature: RotationNode = {
+      id: 'suoming-hit', type: 'feature', resonatorId: suoming.id, featureId: 'damage:1312001',
+    }
+    const score = (stacks: number) => {
+      const items: RotationNode[] = stacks < 0 ? [feature] : [
+        { id: 'boon', type: 'condition', changes: [{ type: 'set', path: 'teamEffects.unisonBoon', value: stacks }] },
+        feature,
+      ]
+      const program = prepareRotationProgram(items)
+      const detailed = executeRotationProgram(environment, program, { detail: 'summary' })
+      const packed = executeRotationScore(environment, program)
+      expect(detailed.entries[0]?.avg).toBeCloseTo(packed.total.avg)
+      return packed.total.avg
+    }
+    expect(score(4)).toBeGreaterThan(score(-1))
+    expect(score(9)).toBeCloseTo(score(4))
+  })
+
+  it('applies one shared Unison Boon count only to Unison Response members', () => {
+    const ids = ['1311', '1312', '1302'] as const
+    const seeds = ids.map((id) => getResSeedBy(id))
+    if (seeds.some((seed) => !seed)) throw new Error('Missing Unison Boon team data')
+    const [hsin, suoming, other] = seeds as [NonNullable<typeof seeds[number]>, NonNullable<typeof seeds[number]>, NonNullable<typeof seeds[number]>]
+    const enemy = makeEnemy()
+    const resolve = (stacks: number, perStack = 3, mode = 'unison') => {
+      const runtimes = [hsin, suoming, other].map((seed) => {
+        const runtime = makeResRuntime(seed)
+        runtime.build.team = [...ids]
+        runtime.state.teamEffects = { unisonBoon: stacks, unisonBoonMax: 4, unisonBoonPerStack: perStack }
+        return runtime
+      })
+      runtimes[0]!.state.controls['resonator:1311:mode:value'] = mode
+      const graph = makeCombatGraph({
+        actRt: runtimes[0]!, activeSeed: hsin,
+        partRts: { [suoming.id]: runtimes[1]!, [other.id]: runtimes[2]! },
+      })
+      return (['active', 'team1', 'team2'] as const).map((slotId) => {
+        const numeric = makeCombatEnv({ graph, targetSlotId: slotId, enemy })
+        const legacy = legacyContext(graph, slotId, enemy)
+        expect(numeric.finalStats.finalDmg).toBeCloseTo(legacy.finalStats.finalDmg)
+        return numeric.finalStats.finalDmg
+      })
+    }
+
+    const base = resolve(0)
+    const boon = resolve(3)
+    expect(boon[0]! - base[0]!).toBeCloseTo(9)
+    expect(boon[1]! - base[1]!).toBeCloseTo(9)
+    expect(boon[2]).toBeCloseTo(base[2]!)
+    const s6 = resolve(3, 4.5)
+    expect(s6[0]! - base[0]!).toBeCloseTo(13.5)
+    expect(s6[1]! - base[1]!).toBeCloseTo(13.5)
+    const flare = resolve(3, 3, 'electro_flare')
+    const flareBase = resolve(0, 3, 'electro_flare')
+    expect(flare[0]).toBeCloseTo(flareBase[0]!)
+    expect(flare[1]! - flareBase[1]!).toBeCloseTo(9)
+  })
+
   it('resolves Syntony Field and High Syntony Field without stacking their shared buildup rate', () => {
     const seed = getResSeedBy('1209')
     if (!seed) throw new Error('Missing Mornye test data')

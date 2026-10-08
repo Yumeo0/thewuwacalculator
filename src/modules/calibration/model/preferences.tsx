@@ -56,11 +56,9 @@ interface MkPrefGrpsAr {
   setPdtTst: (checked: boolean) => void
   setGameBetaData: (checked: boolean) => void
   setRcmmMenyu: (checked: boolean) => void
-  setEvaluationStates: (checked: boolean) => void
   setMaxResInit: (checked: boolean) => void
   setHaveHist: (checked: boolean) => void
   setHistMax: (value: HistoryMax) => void
-  setCmpcInv: (checked: boolean) => void
   setSeeQppd: (checked: boolean) => void
   setCmprXprts: (checked: boolean) => void
 }
@@ -131,11 +129,9 @@ export function mkPrefGrps({
   setPdtTst: setPdtTst,
   setGameBetaData,
   setRcmmMenyu: setRcmmMenuT,
-  setEvaluationStates,
   setMaxResInit,
   setHaveHist: setHaveHstr,
   setHistMax: setHstrMax,
-  setCmpcInv: setCmpcInv,
   setSeeQppd: setSeeQppd,
   setCmprXprts: setCmprXprts,
 }: MkPrefGrpsAr): PrefGrp[] {
@@ -210,13 +206,6 @@ export function mkPrefGrps({
       items: [
         {
           kind: 'toggle',
-          label: 'Compact Inventory Items',
-          description: 'Use smaller inventory tiles to fit more items on screen.',
-          checked: ui.compactInv,
-          onChange: setCmpcInv,
-        },
-        {
-          kind: 'toggle',
           label: 'Show equipped by',
           description: 'Display the resonators using each echo in your inventory.',
           checked: ui.seeEquipped,
@@ -228,13 +217,6 @@ export function mkPrefGrps({
           description: 'Have recommended menu items show first in menus.',
           checked: ui.preferences.recommendedMenuItems,
           onChange: setRcmmMenuT,
-        },
-        {
-          kind: 'toggle',
-          label: 'Show All Evaluation States',
-          description: 'Show enabled state sources even when they do not add a numeric value.',
-          checked: ui.preferences.showEvaluationStates,
-          onChange: setEvaluationStates,
         },
         {
           kind: 'toggle',

@@ -55,9 +55,11 @@ import { gameDataModeFromBeta, type GameDataMode } from '@/domain/entities/gameD
 import { CllpPageHeyf } from '@/shared/ui/CollapsiblePageHero'
 import { HIST_MAX_OPTS, type HistoryMax } from '@/domain/entities/appState'
 import { groupUid } from '@/modules/simulation/api/playerIdentity'
+import { RoverMedallion } from '@/modules/calibration/pages/RoverMedallion'
 import {
   THEME_BY_MODE,
   THEME_INK,
+  THEME_LABELS,
   type BgThemeVar,
   type DarkThemeVar,
   type LightThemeVar,
@@ -290,7 +292,6 @@ function summarizeModeCleanup(
   })
 }
 
-
 type SectionId = 'look' | 'behavior' | 'data' | 'backup'
 
 const SECTIONS: { id: SectionId; name: string }[] = [
@@ -346,22 +347,6 @@ function ThemeInkCard({ variant, named = true }: { variant: ThemeVariant; named?
       {named ? <span className="cal-ink__name">{THEME_LABELS[variant]}</span> : null}
     </span>
   )
-}
-
-const THEME_LABELS: Record<ThemeVariant, string> = {
-  light: 'Light',
-  'pastel-pink': 'Pastel Pink',
-  'pastel-blue': 'Pastel Blue',
-  'vibrant-citrus': 'Vibrant Citrus',
-  'glassy-rainbow': 'Glassy Rainbow',
-  'sunlit-haze': 'Sunlit Haze',
-  dark: 'Dark',
-  'dark-alt': 'Dark Alt',
-  'cosmic-rainbow': 'Cosmic Rainbow',
-  'scarlet-nebula': 'Scarlet Nebula',
-  'emerald-forest': 'Emerald Forest',
-  'graphite-pop': 'Graphite Pop',
-  'frosted-aurora': 'Frosted Aurora',
 }
 
 function Switch({
@@ -524,9 +509,7 @@ function CalibrationContent() {
   const setUpdTst = useAppStore((state) => state.setUpdToast)
   const setGameBetaData = useAppStore((state) => state.setGameBetaData)
   const setRcmmMenuT = useAppStore((state) => state.setRecMenus)
-  const setEvaluationStates = useAppStore((state) => state.setEvaluationStates)
   const setMaxResInit = useAppStore((state) => state.setMaxResInit)
-  const setCmpcInv = useAppStore((state) => state.setCmpInv)
   const setSeeQppd = useAppStore((state) => state.setSeeEqp)
   const setHaveHist = useAppStore((state) => state.setHistOn)
   const setHistMax = useAppStore((state) => state.setHistMax)
@@ -656,11 +639,9 @@ function CalibrationContent() {
     setPdtTst: setUpdTst,
     setGameBetaData: onGameDataModeTgl,
     setRcmmMenyu: setRcmmMenuT,
-    setEvaluationStates,
     setMaxResInit,
     setHaveHist,
     setHistMax,
-    setCmpcInv,
     setSeeQppd,
     setCmprXprts: useAppStore.getState().setCmprXprts,
   })
@@ -1545,6 +1526,14 @@ function CalibrationContent() {
                   <span>the only thing in here that is you rather than bytes</span>
                 </div>
                 <PlayerPlate />
+              </div>
+
+              <div className="cal-block">
+                <div className="cal-blockh">
+                  <h3>Rover</h3>
+                  <span>select whoever...</span>
+                </div>
+                <RoverMedallion />
               </div>
 
               {weights && weights.total > 0 ? (

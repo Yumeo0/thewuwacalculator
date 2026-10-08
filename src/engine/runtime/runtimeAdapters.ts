@@ -44,7 +44,7 @@ import {
   cloneTrcNode,
   cloneWpnMkSt,
 } from '@/engine/runtime/runtimeCloning'
-import { projectScenarioUiRuntimes } from '@/engine/runtime/scenarioRuntime'
+import { projectScenarioTeamEffects, projectScenarioUiRuntimes } from '@/engine/runtime/scenarioRuntime'
 import {
   removeMemberEnvironmentState,
   replaceMemberManualEffect,
@@ -306,6 +306,7 @@ export function mkTeamMemRtV(
       controls: { ...member.local.controls },
       manualBuffs: resolveEnvironmentManualBuffs(scenario.environment, member),
       combat: { ...scenario.environment.combatState },
+      teamEffects: { ...projectScenarioTeamEffects(scenario) },
     },
   }
 }
@@ -410,6 +411,7 @@ function applyMemberRuntimeDelta(
     || runtime.teamRuntimes !== previousRuntime.teamRuntimes
     || runtime.rotation !== previousRuntime.rotation
     || runtime.state.combat !== previousRuntime.state.combat
+    || runtime.state.teamEffects !== previousRuntime.state.teamEffects
     || runtime.state.manualBuffs !== previousRuntime.state.manualBuffs) {
     return null
   }
@@ -522,6 +524,7 @@ export function applyRuntimeToSimulation(
     environment: {
       ...environment,
       combatState: { ...runtime.state.combat },
+      teamEffects: { unisonBoon: runtime.state.teamEffects?.unisonBoon ?? scenario.environment.teamEffects.unisonBoon },
       routing: { bySourceMemberId },
     },
     program: primary ? {

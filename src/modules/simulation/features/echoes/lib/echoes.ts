@@ -25,11 +25,3 @@ export function cmptTtlEchoC(echoes: Array<EchoInstance | null>): number {
     echo ? total + getEchoCostB(echo.id) : total
   ), 0)
 }
-
-// keep heavier-cost echoes first for summary and preview displays
-export function sortByCost(echoes: Array<EchoInstance | null>): EchoInstance[] {
-  return echoes
-    .filter((echo): echo is EchoInstance => echo != null)
-    .slice()
-    .sort((left, right) => getQppdEchoC(right) - getQppdEchoC(left))
-}

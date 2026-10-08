@@ -61,7 +61,7 @@ export function BuildWorkspacePresentation({ railProps, dockProps, boardRef, pag
   page: ComponentProps<typeof BuildWorkspaceBoard>['page']; isDarkTheme: boolean;
   stageContextItems: ComponentProps<typeof ContextTrigger>['items']; onCaptureChange: (action: 'download' | 'clipboard' | null) => void; children: ReactNode
 }) {
-  const { isShowcase, railResId, railModel, surfacePhase } = railProps
+  const { isShowcase, railResId, railModel } = railProps
   const showToast = useTstStr((state) => state.show)
   const [captureAction, setCaptureAction] = useState<'download' | 'clipboard' | null>(null)
   useEffect(() => { onCaptureChange(captureAction) }, [captureAction, onCaptureChange])
@@ -418,13 +418,13 @@ export function BuildWorkspacePresentation({ railProps, dockProps, boardRef, pag
     {
       id: 'showcase:copy-image', label: 'Copy card image',
       icon: <Clipboard size="1em" />,
-      disabled: captureAction !== null || surfacePhase !== 'idle',
+      disabled: captureAction !== null,
       onSelect: () => { void captureBuildCard('clipboard') },
     },
     {
       id: 'showcase:download-image', label: 'Download card image',
       icon: <TbCameraDown size="1em" />,
-      disabled: captureAction !== null || surfacePhase !== 'idle',
+      disabled: captureAction !== null,
       onSelect: () => { void captureBuildCard('download') },
     },
     {
@@ -440,7 +440,7 @@ export function BuildWorkspacePresentation({ railProps, dockProps, boardRef, pag
       icon: <RotateCcw size="1em" />, danger: true,
       onSelect: resetCardStyle,
     },
-  ] : stageContextItems ?? [], [captureAction, captureBuildCard, isShowcase, resetCardStyle, stageContextItems, surfacePhase])
+  ] : stageContextItems ?? [], [captureAction, captureBuildCard, isShowcase, resetCardStyle, stageContextItems])
   const maskVars = useMemo<CssVars>(() => ({
     ...(cardStyle.maskTop != null ? { '--mask-top': `${cardStyle.maskTop}%` } : {}),
     ...(cardStyle.maskRight != null ? { '--mask-right': `${cardStyle.maskRight}%` } : {}),
@@ -611,7 +611,7 @@ return <ContextTrigger asChild ariaLabel="Build Lab stage actions" items={boardC
                     onReset={resetCardStyle}
                     onCapture={captureBuildCard}
                     captureAction={captureAction}
-                    capturing={captureAction != null || surfacePhase !== 'idle'}
+                    capturing={captureAction != null}
                     onExport={handleExportTarget}
                     onImportFile={handleImportFile}
                     docked={cssExpanded}
@@ -621,7 +621,6 @@ return <ContextTrigger asChild ariaLabel="Build Lab stage actions" items={boardC
                       setCssExpanded((on) => !on)
                       setTuneDrawerOpen(false)
                     }}
-                    surfacePhase={surfacePhase}
                   />
                   </Suspense>
                 )}

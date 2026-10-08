@@ -11,7 +11,7 @@ import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 import { useMemo, useState } from 'react'
 import type { CSSProperties as CssProps, ReactNode } from 'react'
 import { ChevronDown, Crosshair, Zap } from 'lucide-react'
-import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { useMobileUi } from '@/shared/responsive/mobileUi'
 import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import type { EnemyProfile } from '@/domain/entities/appState.ts'
 import type { EnemyClassId, EnemyElemId } from '@/domain/entities/enemy.ts'
@@ -53,6 +53,7 @@ import { NumberInput } from '@/modules/simulation/features/controls/NumberInput.
 import { isSourceVisible, setSourceState } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
 import { ATTR_ID_COLORS } from '@/modules/simulation/model/display.ts'
 import { AppModal } from '@/shared/ui/AppModal.tsx'
+import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { ModalHeader } from '@/shared/ui/AppModalShell.tsx'
 import { Expandable } from '@/shared/ui/Expandable.tsx'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
@@ -230,7 +231,7 @@ export function EnemyConsole({
 }: EnemyConsoleProps) {
   const { catalog, loading, error } = useEnemyCat()
   const mobile = useMobileUi()
-  const [picking, setPicking] = useState(false)
+  const picker = useAppModal()
   const [search, setSearch] = useState('')
   const [byElem, setByElem] = useState<EnemyElemId | null>(null)
   const [byClass, setByClass] = useState<EnemyClassId | null>(null)
@@ -346,7 +347,7 @@ export function EnemyConsole({
     const next = getEnemyCatE(catalog, enemyId)
     if (!next) return
     onEnemyChange(selCatEnemyP(enemyProfile, next))
-    setPicking(false)
+    picker.hide()
   }
 
   const icon = selEnemy?.icon ?? getEnemyIcon(enemyProfile.id) ?? '/assets/game/default.webp'
@@ -452,12 +453,12 @@ export function EnemyConsole({
           title={targetName}
           leading={(
             <ContextTrigger asChild ariaLabel="Target actions" items={[{
-              id: 'enemy:change-target', label: 'Change target', onSelect: () => setPicking(true),
+              id: 'enemy:change-target', label: 'Change target', onSelect: () => picker.show(),
             }]}>
             <button
               type="button" className="enc-face"
               aria-label="Change target"
-              onClick={() => setPicking(true)}
+              onClick={() => picker.show()}
             >
               <DisplayImage src={icon} alt="" onError={withDefIconM} />
             </button>
@@ -734,8 +735,9 @@ export function EnemyConsole({
       )}
 
       <EnemyPicker
-        visible={picking}
-        open={picking}
+        visible={picker.visible}
+        open={picker.open}
+        closing={picker.closing}
         portalTarget={mainPortal()}
         enemies={shown}
         selEnemyId={selEnemy?.id ?? null}
@@ -748,7 +750,7 @@ export function EnemyConsole({
         onElemChng={setByElem}
         onClssChng={setByClass}
         onSelect={onPick}
-        onClose={() => setPicking(false)}
+        onClose={() => picker.hide()}
       />
     </AppModal>
   )

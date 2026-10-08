@@ -7,7 +7,6 @@
 import {
   NONE_ENEMY_ID,
   type HydratedAppState,
-  type LeftPaneView,
   type PersistedState,
   type LegacyProfileMap,
   type ThemeMode,
@@ -885,6 +884,7 @@ export function makeResRuntime(seed: ResSeed): ResRuntime {
       controls: {},
       manualBuffs: makeCustomBuff(),
       combat: makeCombatState(),
+      teamEffects: { unisonBoon: 0, unisonBoonMax: 2, unisonBoonPerStack: 3 },
     },
     rotation: mkDefRot(seed),
     teamRuntimes: [null, null],
@@ -1280,6 +1280,9 @@ function normalizeScenario(
       combatState: {
         ...fallback.environment.combatState,
         ...(scenario.environment?.combatState ?? {}),
+      },
+      teamEffects: {
+        unisonBoon: scenario.environment?.teamEffects?.unisonBoon ?? 0,
       },
       manualEffects: scenario.environment?.manualEffects?.flatMap(
         (effect): EnvironmentManualEffect[] => {
@@ -1751,7 +1754,6 @@ export function initAppState(
       bodyFontName: rawUi.bodyFontName ?? DEFAULT_BODY_FONT,
       bodyFontUrl: rawUi.bodyFontUrl ?? getPresetFontUrl(rawUi.bodyFontName ?? DEFAULT_BODY_FONT),
       optimizerCpuHintSeen: rawUi.optimizerCpuHintSeen ?? false,
-      optimizerUseSprite: rawUi.optimizerUseSprite ?? true,
       compressedExports: rawUi.compressedExports ?? true,
       rotationEditorPreferences: {
         ...makeDefaultRotationEditorPreferences(),
@@ -1792,7 +1794,6 @@ export function initAppState(
 
 export function makeAppState(
     theme: ThemeMode = 'dark',
-    leftPaneView: LeftPaneView = 'resonators',
 ): HydratedAppState {
   const seed = getFallbackSeed()
   const scenario = makeScenarioFromProfiles(
@@ -1822,7 +1823,6 @@ export function makeAppState(
       blurMode: false,
       entranceAnimations: true,
       preferences: DEF_UI_PREFS,
-      leftPaneView,
       suggsViewMode: 'mainStats',
       showSubHits: false,
       compactInv: false,
@@ -1832,7 +1832,6 @@ export function makeAppState(
       historyMax: 10,
       itemFreq: mkDefPckrFre(),
       optimizerCpuHintSeen: false,
-      optimizerUseSprite: true,
       compressedExports: true,
       rotationEditorPreferences: makeDefaultRotationEditorPreferences(),
       savedRotationPreferences: defaultSavedPrefs(),

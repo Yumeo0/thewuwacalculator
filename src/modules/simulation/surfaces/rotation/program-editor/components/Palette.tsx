@@ -14,7 +14,8 @@ import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
 import { useAppStore } from '@/application/state'
 import type { ResRuntime } from '@/domain/entities/runtime.ts'
 import { selEnemyProf, selWorkDrvd } from '@/application/state'
-import { isSkllVsbl, resolveSkill } from '@/engine/pipeline/resolveSkill.ts'
+import { resolveSkill } from '@/engine/pipeline/resolveSkill.ts'
+import { isRotationSkillVisible } from '@/modules/simulation/surfaces/rotation/shared/visibility.ts'
 import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
 import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
 import { withDefEchoMg, withDefIconM, withDefResMg } from '@/shared/lib/imageFallback.ts'
@@ -102,6 +103,9 @@ function collectFeatures(
   runtimesById: Record<string, ResRuntime>,
 ): PaletteFeature[] {
   const resolved = new Map<string, SkillDef>()
+  const visibleSkillIds = new Set(member.skills
+    .filter((skill) => isRotationSkillVisible(member.runtime, skill, runtimesById))
+    .map((skill) => skill.id))
   for (const skill of member.skills) {
     resolved.set(skill.id, resolveSkill(member.runtime, skill, undefined, runtimesById))
   }
@@ -129,7 +133,7 @@ function collectFeatures(
     }
 
     const skill = resolved.get(feature.skillId)
-    if (!skill || !isSkllVsbl(member.runtime, skill, undefined, runtimesById)) {
+    if (!skill || !visibleSkillIds.has(feature.skillId)) {
       continue
     }
 
@@ -171,7 +175,7 @@ function collectFeatures(
     }
 
     const skill = resolved.get(skillId)
-    if (!skill || !isSkllVsbl(member.runtime, skill, undefined, runtimesById)) {
+    if (!skill || !visibleSkillIds.has(skillId)) {
       continue
     }
 

@@ -1,7 +1,8 @@
 /*
   Author: Runor Ewhro
   Description: wires eslint to the project parser and react rules while keeping
-               generated output and build artifacts outside the lint surface.
+               generated output, build artifacts, and local-only archives
+               outside the lint surface.
 */
 
 import js from '@eslint/js'
@@ -12,7 +13,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'src/data/generated/**', 'src/data/resonators/generated.ts']),
+  globalIgnores(['dist', 'legacy/**', 'wip/**', 'src/data/generated/**', 'src/data/resonators/generated.ts']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

@@ -34,6 +34,7 @@ The storage layer writes explicit domains:
 
 - `ui.appearance`
 - `ui.layout`
+- `ui.showcaseCards`
 - `ui.savedRotationPreferences`
 - `combat.workspace`
 - `simulation.optimizerSettings`
@@ -60,11 +61,10 @@ Runtime adapters convert saved scenario members, team assignments, controls, and
 
 Current UI preference names describe their consumer:
 
-- `showEvaluationStates`
 - `animatedRailPortraits`
 - `showcaseCards`
 
-The version 28 migration accepts the prior `showBenchStates`, `benchAnim2d`, and `benchmarkCards` keys, then writes only the current names. The old root `calculator` key is likewise read only as an import/migration boundary and normalized to `simulation` plus the canonical `combat` and `library` roots.
+The version 28 migration accepts the prior `benchAnim2d` and `benchmarkCards` keys, then writes only the current names. The retired `showBenchStates` and `showEvaluationStates` preferences are discarded during loading. The old root `calculator` key is likewise read only as an import/migration boundary and normalized to `simulation` plus the canonical `combat` and `library` roots.
 
 ## Transient State
 
@@ -72,7 +72,7 @@ Optimizer progress and results live in `optimizerRunStore`; inventory panel stat
 
 ## Writeback And Recovery
 
-App providers debounce dirty-domain writes and flush on page hide and `beforeunload`. Every loaded slice is validated and normalized through Zod. A failed domain write is reported independently and does not prevent later dirty domains from being saved. Legacy-version keys and recovery records are retained only to support safe migration and cleanup.
+App providers debounce dirty-domain writes and flush on page hide and `beforeunload`. Loaded domains pass through their owning schema or specialized reader before they are applied; most structured slices use Zod, while Showcase cards and scenario records have dedicated persistence boundaries. A failed domain write is reported independently and does not prevent later dirty domains from being saved. Legacy-version keys and recovery records are retained only to support safe migration and cleanup.
 
 ## Related Docs
 

@@ -53,7 +53,7 @@ function term(formula: FormExpr, scope: EffectScope): string {
 }
 
 /** Serializes the evaluated operands without changing formula order. */
-export function formulaMath(formula: FormExpr, scope: EffectScope): string {
+function formulaMath(formula: FormExpr, scope: EffectScope): string {
   if (formula.type === 'mul') {
     return formula.values.map((entry) => term(entry, scope)).join(' x ')
   }

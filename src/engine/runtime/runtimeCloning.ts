@@ -158,6 +158,7 @@ export function cloneRtSttVl(state: ResSttStt): ResSttStt {
     controls: { ...state.controls },
     manualBuffs: cloneBuffs(state.manualBuffs),
     combat: cloneCmbtStt(state.combat),
+    ...(state.teamEffects ? { teamEffects: { ...state.teamEffects } } : {}),
   }
 }
 

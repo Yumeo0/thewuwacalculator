@@ -89,6 +89,7 @@ interface SkillStateSummaryTarget {
 
 export interface StatStateSummaryTarget {
   key: string
+  scope?: { kind: 'top' } | { kind: 'attribute' | 'skillType'; key: string }
 }
 
 export interface StatSourceTerm {
@@ -658,6 +659,22 @@ function opTargetsStat(
     operation: EffectOperation,
     target: StatStateSummaryTarget,
 ): boolean {
+  if (target.scope) {
+    if (target.scope.kind === 'top') {
+      return operation.type === 'add_top_stat' && operation.stat === target.key
+    }
+    if (target.scope.kind === 'attribute') {
+      const scopeKey = target.scope.key
+      return operation.type === 'add_attribute_mod'
+        && operation.mod === target.key
+        && (Array.isArray(operation.attribute) ? operation.attribute : [operation.attribute]).some((attribute) => attribute === scopeKey)
+    }
+    const scopeKey = target.scope.key
+    return operation.type === 'add_skilltype_mod'
+      && operation.mod === target.key
+      && (Array.isArray(operation.skillType) ? operation.skillType : [operation.skillType]).some((skillType) => skillType === scopeKey)
+  }
+
   if (operation.type === 'add_base_stat' || operation.type === 'set_final_stat') {
     return operation.stat === target.key
   }
@@ -712,7 +729,9 @@ function statTermsFor(
     if (operation.type === 'add_attribute_mod') {
       const attributes = Array.isArray(operation.attribute) ? operation.attribute : [operation.attribute]
       return attributes
-          .filter((attribute) => attribute === 'all' || attribute === target.key)
+          .filter((attribute) => target.scope?.kind === 'attribute'
+            ? attribute === target.scope.key
+            : attribute === 'all' || attribute === target.key)
           .map(() => ({
             kind: 'add' as const,
             key: target.key,
@@ -723,7 +742,9 @@ function statTermsFor(
     if (operation.type === 'add_skilltype_mod') {
       const skillTypes = Array.isArray(operation.skillType) ? operation.skillType : [operation.skillType]
       return skillTypes
-          .filter((skillType) => skillType === 'all' || skillType === target.key)
+          .filter((skillType) => target.scope?.kind === 'skillType'
+            ? skillType === target.scope.key
+            : skillType === 'all' || skillType === target.key)
           .map(() => ({
             kind: 'add' as const,
             key: target.key,
@@ -794,7 +815,8 @@ function fmtOpLbls(
 
     // attribute mod ops may affect one or several attributes
     if (operation.type === 'add_attribute_mod') {
-      const attributes = Array.isArray(operation.attribute) ? operation.attribute : [operation.attribute]
+      const attributes = (Array.isArray(operation.attribute) ? operation.attribute : [operation.attribute])
+        .filter((attribute) => statTarget?.scope?.kind !== 'attribute' || attribute === statTarget.scope.key)
       const value = fmtSgndVl(evalForm(operation.value, scope), '%')
 
       return attributes.map((attr) =>
@@ -808,7 +830,8 @@ function fmtOpLbls(
 
     // skill-type mod ops may affect one or several skill types
     if (operation.type === 'add_skilltype_mod') {
-      const skillTypes = Array.isArray(operation.skillType) ? operation.skillType : [operation.skillType]
+      const skillTypes = (Array.isArray(operation.skillType) ? operation.skillType : [operation.skillType])
+        .filter((skillType) => statTarget?.scope?.kind !== 'skillType' || skillType === statTarget.scope.key)
       const value = fmtSgndVl(evalForm(operation.value, scope), '%')
 
       return skillTypes.map((st) =>
@@ -1105,7 +1128,6 @@ export function makeStateSummary(
       cntxByResId?: Record<string, CombatContext>
       enemyProfile?: ReturnType<typeof makeEnemy>
       activeRuntime?: ResRuntime | null
-      showAllStates?: boolean
       skillTarget?: SkillStateSummaryTarget | null
       statTarget?: StatStateSummaryTarget | null
     } = {},
@@ -1173,6 +1195,9 @@ export function makeStateSummary(
           { ...context, source: { type: 'echoSet' as const, id: setId } },
         ]),
     )
+    const teamEffectContext = sourceId === targetRt.id
+      ? { ...context, source: { type: 'teamEffect' as const, id: 'unisonBoon' } }
+      : null
 
     // collect all owners that can contribute visible states/effects
     const owners = [
@@ -1180,6 +1205,7 @@ export function makeStateSummary(
       ...(!isNoWeaponId(weaponId) ? listOwnersFor('weapon', weaponId) : []),
       ...(mainEchoSrc ? listOwnersFor(mainEchoSrc.type, mainEchoSrc.id) : []),
       ...setIds.flatMap((setId) => listOwnersFor('echoSet', setId)),
+      ...(teamEffectContext ? listOwnersFor('teamEffect', 'unisonBoon') : []),
     ]
 
     const nodes = owners.flatMap((owner) => {
@@ -1188,9 +1214,11 @@ export function makeStateSummary(
               ? wpnCtx
               : owner.source.type === 'echo' && echoContext
                   ? echoContext
-                  : owner.source.type === 'echoSet'
-                      ? echoSetCntx.get(owner.source.id) ?? context
-                      : context
+              : owner.source.type === 'echoSet'
+                  ? echoSetCntx.get(owner.source.id) ?? context
+                  : owner.source.type === 'teamEffect' && teamEffectContext
+                    ? teamEffectContext
+                  : context
 
       if (!ownIsVsbl(owner, ownerContext)) {
         return []
@@ -1221,7 +1249,7 @@ export function makeStateSummary(
         return []
       }
 
-      if (!options.showAllStates && states.length > 0 && effectLabels.length === 0) {
+      if (states.length > 0 && effectLabels.length === 0) {
         return []
       }
 

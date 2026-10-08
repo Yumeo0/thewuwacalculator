@@ -1,44 +1,27 @@
 /*
   Author: Runor Ewhro
   Description: Connects evaluation report state to the Modulation band,
-               loadout, stat overview, rotation, and detail sections.
+               loadout, stats, and report drawer.
 */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ComponentProps, Dispatch, RefObject, SetStateAction } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime'
 import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
 import type { EvaluationBuildSnapshot, EvaluationEchoSlot, BuildEvaluationReport } from '@/engine/evaluation/buildEvaluation.ts'
-import type { StatTreeNode } from '@/modules/simulation/model/statsView.ts'
-import { ActiveStateSources } from '@/modules/simulation/features/controls/ActiveStateSources.tsx'
-import { withDefIconM } from '@/shared/lib/imageFallback.ts'
 import type { ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
-import { getBuildEvaluationTone } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
-import { AppModal } from '@/shared/ui/AppModal.tsx'
-import { ModalCloseButton } from '@/shared/ui/ModalCloseButton.tsx'
-import { useAppModal } from '@/shared/ui/useAppModal.ts'
-import { CtnSqnc } from '@/modules/simulation/surfaces/modulation/ActionSequence.tsx'
 import { SeatStack } from '@/modules/simulation/surfaces/modulation/SeatStack.tsx'
-import { mkSqnc } from '@/modules/simulation/surfaces/modulation/lib/rotationSequence.ts'
-import { makeConditionChoices, visibleRotMembers } from '@/modules/simulation/surfaces/rotation/shared/catalog.ts'
+import { TeamEditButton } from '@/modules/simulation/features/teams/TeamEditButton.tsx'
 import {
-  BUILD_LABEL,
-  DETAIL_BUILD_LABEL,
-  DETAIL_BUILD_ORDER,
   EchoCard,
   type EvaluationEchoActions,
   type EvaluationEchoSelection,
-  type DetailBuildKey,
 } from '@/modules/simulation/workspace/ui.tsx'
 import { EvaluationBand } from './EvaluationBand.tsx'
 import { LoadoutHead } from '@/modules/simulation/workspace/LoadoutHead.tsx'
 import { ModulationView, findScroller, memberAccent, type ModulationPanel } from './Modulation.tsx'
 import type { MemberAnalysisSource } from './lib/memberSim.ts'
-import { AlternativesTable, BuildDossier, StatRelevance } from './EvaluationReport.tsx'
 
 export function ModulationReport({
-  phase,
-  modulation,
   modulationRuntime,
   modulationActRt,
   modulationAnalysisSource,
@@ -47,7 +30,6 @@ export function ModulationReport({
   modulationMemberId,
   onModulationMember,
   onModulationUpdate,
-  loading,
   report,
   detailReport,
   detailReportReady,
@@ -61,20 +43,13 @@ export function ModulationReport({
   score,
   grade,
   tone,
-  detailBuildKey,
-  setDetailBuildKey,
-  mainStackRef,
-  stateGroups,
   reportRuntime,
-  reportRuntimesById,
-  enemyId,
   echoSelection,
   echoActions,
   echoScores,
   loadoutSlots,
   sourceEchoes,
   onEchoOpen,
-  overviewStatsTree,
   echoRuntime,
   echoScenarioId,
   echoResonatorName,
@@ -82,8 +57,6 @@ export function ModulationReport({
   canSaveEcho,
   onEchoLoadout,
 }: {
-  phase: 'idle' | 'out' | 'in'
-  modulation: boolean
   modulationRuntime: ResRuntime | null
   modulationActRt: ResRuntime | null
   modulationAnalysisSource: MemberAnalysisSource | null
@@ -92,7 +65,6 @@ export function ModulationReport({
   modulationMemberId: string | null
   onModulationMember: (resonatorId: string) => void
   onModulationUpdate: (updater: (runtime: ResRuntime) => ResRuntime) => void
-  loading: boolean
   report: BuildEvaluationReport | null
   detailReport: BuildEvaluationReport | null
   detailReportReady: boolean
@@ -106,20 +78,13 @@ export function ModulationReport({
   score: number | null
   grade: string | null
   tone: string
-  detailBuildKey: DetailBuildKey
-  setDetailBuildKey: Dispatch<SetStateAction<DetailBuildKey>>
-  mainStackRef: RefObject<HTMLDivElement | null>
-  stateGroups: ComponentProps<typeof ActiveStateSources>['groups']
   reportRuntime: ResRuntime | null
-  reportRuntimesById: Record<string, ResRuntime>
-  enemyId: string
   echoSelection?: EvaluationEchoSelection
   echoActions?: EvaluationEchoActions
   echoScores?: Array<number | null> | null
   loadoutSlots: Array<EvaluationEchoSlot | null>
   sourceEchoes: Array<EchoInstance | null>
   onEchoOpen?: (slotIndex: number) => void
-  overviewStatsTree: StatTreeNode[]
   /** Runtime used by loadout mutations; null prevents writes to a stale report. */
   echoRuntime: ResRuntime | null
   echoScenarioId: CombatScenarioId
@@ -128,14 +93,13 @@ export function ModulationReport({
   canSaveEcho: (echo: EchoInstance) => boolean
   onEchoLoadout: (echoes: Array<EchoInstance | null>) => void
 }) {
-  const rotationModal = useAppModal()
   const [modulationPanel, setModulationPanel] = useState<ModulationPanel>('stats')
   const loadoutHead = useRef<HTMLElement | null>(null)
   const [seatOut, setSeatOut] = useState(false)
 
   useEffect(() => {
     const node = loadoutHead.current
-    if (!modulation || !node) return
+    if (!node) return
 
     const scroller = findScroller(node)
     if (!scroller) return
@@ -152,41 +116,14 @@ export function ModulationReport({
       scroller.removeEventListener('scroll', read)
       window.removeEventListener('resize', read)
     }
-  }, [modulation, modulationPanel])
-  const rotation = report?.rotation ?? null
-  const condChoices = useMemo(
-    () => reportRuntime
-      ? makeConditionChoices(visibleRotMembers(reportRuntime, reportRuntimesById), reportRuntime, enemyId)
-      : [],
-    [enemyId, reportRuntime, reportRuntimesById],
-  )
-  const sequence = useMemo(
-    () => rotation
-      ? mkSqnc({
-          items: rotation.items,
-          resonatorId: rotation.resonatorId,
-          condChoices,
-        })
-      : null,
-    [condChoices, rotation],
-  )
-  const rotationAction = rotation ? (
-    <button
-      type="button" className="wk-rotation-sequence-link"
-      onClick={() => rotationModal.show()}
-    >
-      Details
-    </button>
-  ) : null
+  }, [modulationPanel])
   const echoSurfaceProps = echoSelection?.surfaceProps ?? {}
-  const selectedDetailBuildKey = detailBuildKey
-  const selectedDetailBuild = report?.evaluation.builds[selectedDetailBuildKey] ?? activeBuild
   const evaluationMatchesModulationMember = modulationRuntime?.id === reportRuntime?.id
 
   const viewedMember = modulationRoster.find((mate) => mate.id === modulationMemberId) ?? null
   const echoLoadout = (
     <section className="wk-section wk-span wk-ink"
-      style={modulation ? memberAccent(viewedMember) : undefined}
+      style={memberAccent(viewedMember)}
     >
       <LoadoutHead
         headRef={loadoutHead}
@@ -197,8 +134,11 @@ export function ModulationReport({
         editable={echoEditable}
         canSaveEcho={canSaveEcho}
         onEchoes={onEchoLoadout}
-        aside={modulation && modulationRoster.length > 0 ? (
-          <SeatStack roster={modulationRoster} memberId={modulationMemberId} onMember={onModulationMember} />
+        aside={modulationRoster.length > 0 ? (
+          <>
+            <SeatStack roster={modulationRoster} memberId={modulationMemberId} onMember={onModulationMember} />
+            {echoEditable ? <TeamEditButton scenarioId={echoScenarioId} /> : null}
+          </>
         ) : null}
       />
       <div className="wk-echoes" {...echoSurfaceProps}>
@@ -219,153 +159,37 @@ export function ModulationReport({
   )
 
   return (
-    <>
-      <div className="wk-main" data-phase={phase}>
+    <div className="wk-main">
       <EvaluationBand report={report} score={score} grade={grade} tone={tone} />
 
       {echoLoadout}
 
-      {modulation ? (
-        modulationRuntime && modulationActRt && modulationAnalysisSource ? (
-          <ModulationView
-            runtime={modulationRuntime}
-            actRt={modulationActRt}
-            analysisSource={modulationAnalysisSource}
-            isDark={modulationDark}
-            onRtPdt={onModulationUpdate}
-            view={modulationPanel}
-            onView={setModulationPanel}
-            roster={modulationRoster}
-            memberId={modulationMemberId}
-            onMember={onModulationMember}
-            seatOut={seatOut}
-            activeBuild={evaluationMatchesModulationMember ? activeBuild : null}
-            referenceBuild={evaluationMatchesModulationMember ? referenceBuild : null}
-            maximumBuild={evaluationMatchesModulationMember ? maximumBuild : null}
-            report={report}
-            detailReport={detailReport}
-            detailReportReady={detailReportReady}
-            detailReportLoading={detailReportLoading}
-            reportOpen={reportOpen}
-            onReportOpen={onReportOpen}
-            onReportClose={onReportClose}
-          />
-        ) : null
-      ) : !report || !activeBuild ? (
-        loading ? null : (
-          <section className="wk-section wk-span">
-            <header className="wk-section-head">
-              <h3 className="wk-section-title">Evaluation Report</h3>
-              <span className="wk-section-meta">Unavailable</span>
-            </header>
-            <p className="wk-empty">No evaluation report is available for the current resonator.</p>
-          </section>
-        )
-      ) : (
-        <>
-          <div className="wk-main-body" data-side="on">
-            <div ref={mainStackRef} className="wk-main-stack">
-              <section className="wk-section">
-                <header className="wk-section-head">
-                  <h3 className="wk-section-title">Build Stats</h3>
-                  <span className="wk-section-meta">
-                    Combat stats &amp; Sonata · current / 100% / 200%
-                  </span>
-                </header>
-                <StatRelevance
-                  active={activeBuild.overviewStats}
-                  reference={referenceBuild?.overviewStats ?? activeBuild.overviewStats}
-                  maximum={maximumBuild?.overviewStats ?? activeBuild.overviewStats}
-                  invariantStats={report.evaluation.invariantStats}
-                  activeSets={activeBuild.sets}
-                  referenceSets={referenceBuild?.sets ?? activeBuild.sets}
-                  maximumSets={maximumBuild?.sets ?? activeBuild.sets}
-                  activeEchoes={activeBuild.echoes}
-                  referenceEchoes={referenceBuild?.echoes ?? activeBuild.echoes}
-                  maximumEchoes={maximumBuild?.echoes ?? activeBuild.echoes}
-                  currentTone={tone}
-                  referenceTone={getBuildEvaluationTone(100).color}
-                  maximumTone={getBuildEvaluationTone(200).color}
-                  showEvaluationTargets
-                  overviewStatsTree={overviewStatsTree}
-                />
-              </section>
-
-              {selectedDetailBuild ? (
-              <section className="wk-section">
-                <header className="wk-section-head">
-                  <h3 className="wk-section-title">Build Details</h3>
-                  <div className="wk-section-meta wk-build-toggle" role="group" aria-label="Build detail view">
-                    {DETAIL_BUILD_ORDER.map((key) => (
-                      <button
-                        key={key}
-                        type="button"
-                        className={`wk-build-toggle__btn${detailBuildKey === key ? ' is-active' : ''}`}
-                        aria-pressed={detailBuildKey === key}
-                        onClick={() => setDetailBuildKey(key)}
-                      >
-                        {DETAIL_BUILD_LABEL[key]}
-                      </button>
-                    ))}
-                  </div>
-                </header>
-                <BuildDossier
-                  label={BUILD_LABEL[selectedDetailBuildKey]}
-                  build={selectedDetailBuild}
-                  rotationAction={rotationAction}
-                  showEchoStats
-                  showRotationFeatures
-                />
-              </section>
-              ) : null}
-
-              <section className="wk-section">
-                <header className="wk-section-head">
-                  <h3 className="wk-section-title">Upgrade Paths</h3>
-                  <span className="wk-section-meta">{report.alternatives.length} main stat &amp; Sonata paths</span>
-                </header>
-                {report.alternatives.length > 0 ? (
-                  <AlternativesTable alternatives={report.alternatives} />
-                ) : (
-                  <p className="wk-empty">No valid main stat or Sonata upgrades are available.</p>
-                )}
-              </section>
-            </div>
-
-            <ActiveStateSources
-              groups={stateGroups}
-              activeResId={reportRuntime?.id ?? null}
-              memberCount={reportRuntime?.build.team.filter(Boolean).length ?? 0} className="wk-state-sources"
-              onImageError={withDefIconM}
-            />
-          </div>
-        </>
-      )}
-      </div>
-
-      <AppModal
-        state={rotationModal.dialogProps}
-        variant="rotation-action-list"
-        ariaLabel="Evaluation rotation action sequence"
-        onClose={rotationModal.hide}
-      >
-        <div className="ralm__body">
-          <div className="ralm__head">
-            <h2 className="cfm__title">{rotation?.name ?? 'Evaluation Rotation'}</h2>
-            <ModalCloseButton onClick={() => rotationModal.hide()} />
-          </div>
-          <div className="ralm__list">
-            {sequence ? (
-              <CtnSqnc
-                actions={sequence.actions}
-                condChoices={condChoices}
-                entries={sequence.entries}
-                spans={sequence.spans}
-              />
-            ) : null}
-          </div>
-        </div>
-      </AppModal>
-    </>
+      {modulationRuntime && modulationActRt && modulationAnalysisSource ? (
+        <ModulationView
+          runtime={modulationRuntime}
+          actRt={modulationActRt}
+          analysisSource={modulationAnalysisSource}
+          isDark={modulationDark}
+          onRtPdt={onModulationUpdate}
+          view={modulationPanel}
+          onView={setModulationPanel}
+          roster={modulationRoster}
+          memberId={modulationMemberId}
+          onMember={onModulationMember}
+          seatOut={seatOut}
+          teamScenarioId={echoEditable ? echoScenarioId : null}
+          activeBuild={evaluationMatchesModulationMember ? activeBuild : null}
+          referenceBuild={evaluationMatchesModulationMember ? referenceBuild : null}
+          maximumBuild={evaluationMatchesModulationMember ? maximumBuild : null}
+          report={report}
+          detailReport={detailReport}
+          detailReportReady={detailReportReady}
+          detailReportLoading={detailReportLoading}
+          reportOpen={reportOpen}
+          onReportOpen={onReportOpen}
+          onReportClose={onReportClose}
+        />
+      ) : null}
+    </div>
   )
 }

@@ -26,7 +26,7 @@ type ResResolvedControlOption = {
   label: string
 }
 
-export function normResCntrOpt(
+function normResCntrOpt(
   option: ResControlOptionValue | ResControlOption,
 ): ResResolvedControlOption {
   if (typeof option === 'object') {
@@ -76,7 +76,7 @@ export function mkResCntrScp(runtime: ResRuntime) {
   }
 }
 
-export function resResCntrPt(
+function resResCntrPt(
   runtime: ResRuntime,
   control: ResStateControl,
 ): Array<ResControlOptionValue | ResControlOption> {
@@ -122,7 +122,7 @@ export function getResCntrNc(
   return control.defaultValue ?? control.min ?? 0
 }
 
-export function getResNumMax(
+function getResNumMax(
   runtime: ResRuntime,
   control: Pick<ResStateControl, 'max' | 'maxWhen'>,
 ): number | undefined {

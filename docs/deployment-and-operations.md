@@ -44,12 +44,14 @@ Production uses:
 
 - static assets from `dist`
 - Cloudflare asset serving with SPA fallback
-- a Cloudflare Worker for the OAuth `/api/*` endpoints
+- a Cloudflare Worker for OAuth and share `/api/*` endpoints
 
-The Worker handles only these API routes:
+The Worker handles these API routes:
 
 - `/api/exchange-code`
 - `/api/refresh-token`
+- `/api/shares`
+- `/api/shares/*`
 
 Everything else falls back to static asset serving.
 
@@ -61,11 +63,15 @@ Important variables visible in the repo:
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_REDIRECT_URI`
+- `SHARES` KV namespace binding
 
 These matter in two different places:
 
 - `VITE_*` values for browser side configuration
 - server side values for OAuth exchange and refresh handling
+- `SHARES` for production share payload persistence
+
+The `beta` Wrangler environment intentionally has no OAuth variables or `SHARES` binding, so it is a frontend-only preview. Production must keep the public client and redirect variables, the `GOOGLE_CLIENT_SECRET` secret, and the KV binding configured.
 
 ## Google Drive Sync
 
@@ -79,7 +85,7 @@ Drive sync behavior depends on:
 - browser side auth setup
 - token exchange and refresh endpoints
 - persistence snapshot serialization
-- restore and backup actions in settings
+- restore and backup actions in Calibration
 
 Drive sync backs up and restores the same data saved locally by the app.
 
@@ -87,8 +93,11 @@ Drive sync backs up and restores the same data saved locally by the app.
 
 Primary roots:
 
+- [src/application/persistence](../src/application/persistence)
 - [src/infra/persistence](../src/infra/persistence)
 - [src/engine/runtime/schema.ts](../src/engine/runtime/schema.ts)
+
+`src/application/persistence` owns app-state domains, migration, scenario records, codecs, and coordinated writes. `src/infra/persistence` owns platform-specific browser storage such as IndexedDB-backed image blobs and beta-notice acknowledgement.
 
 Operational persistence concerns include:
 
@@ -100,14 +109,20 @@ Operational persistence concerns include:
 
 If deployment or browser behavior changes persistence assumptions, this layer is high risk and should be checked carefully.
 
-## Checked In Maintenance Scripts
+## Maintenance Tools And Local Scripts
 
-Primary roots:
+Tracked build utilities:
 
-- [scripts/ingest](../scripts/ingest)
-- [scripts/assets](../scripts/assets)
+- [tools/data](../tools/data)
+- [tools/seo](../tools/seo)
 
-Important checked in workflows:
+The root `scripts/` folder is ignored and contains local-only ingest, asset,
+and data-authoring workflows. `package.json` keeps commands for these local
+scripts, but a clean clone cannot run them unless the scripts are supplied
+locally. Dev and production builds use tracked `tools/` and checked-in runtime
+data; they do not require `/scripts`.
+
+Important local workflows:
 
 - fetch resonator data
 - build resonator runtime outputs
@@ -117,7 +132,8 @@ Important checked in workflows:
 - apply resonator authored overrides
 - sync resonator images
 
-These scripts generate or update files that the production app loads, even when the scripts do not run in the browser.
+These workflows generate or update files that the production app loads, even
+though the workflows themselves are not shipped or tracked.
 
 ## Operational Boundaries
 

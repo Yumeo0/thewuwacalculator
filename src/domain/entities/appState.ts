@@ -102,16 +102,6 @@ export const ATTR_ENEMY_RES: Record<AttributeKey, EnemyResistN> = {
   havoc: 6,
 }
 
-// available left pane tabs in the legacy workspace UI
-export type LeftPaneView =
-    | 'resonators'
-    | 'buffs'
-    | 'echoes'
-    | 'enemy'
-    | 'weapon'
-    | 'teams'
-    | 'suggestions'
-
 export interface EnemyProfile {
   id: string
   level: number
@@ -150,7 +140,6 @@ export interface UiState {
   blurMode: BlurMode
   entranceAnimations: boolean
   preferences: UiPrefs
-  leftPaneView: LeftPaneView
   suggsViewMode: SuggsViewMod
   showSubHits: boolean
   compactInv: boolean
@@ -159,7 +148,6 @@ export interface UiState {
   historyMax: HistoryMax
   itemFreq: PckrFreqStt
   optimizerCpuHintSeen: boolean
-  optimizerUseSprite: boolean
   compressedExports: boolean
   groupInv: boolean
   rotationEditorPreferences: RotationEditorPreferences

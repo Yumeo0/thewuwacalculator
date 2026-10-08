@@ -27,7 +27,7 @@ import { meetsStateReqs } from '@/engine/services/sourceStateService.ts'
 
 export { getSrcNumMax as srcSttNumMax } from '@/engine/gameData/controlOptions'
 
-export type RtCtlMap = Record<string, boolean | number | string>
+type RtCtlMap = Record<string, boolean | number | string>
 
 const RT_CNTR_PRFX = 'runtime.state.controls.'
 const MAX_WPN_LVL = 90
@@ -157,7 +157,7 @@ function apSrcStts(
   }
 }
 
-export function apWpnStts(
+function apWpnStts(
   controls: RtCtlMap,
   runtime: ResRuntime,
   weaponId: string | null | undefined,
@@ -238,25 +238,6 @@ export function maxWpnRt(
     prevWpnId: options.prevWpnId,
     maxed: true,
   })
-}
-
-export function wpnSttsMaxed(runtime: ResRuntime): boolean {
-  const weaponId = runtime.build.weapon.id
-  if (!weaponId || isNoWeaponId(weaponId)) {
-    return true
-  }
-
-  const controls: RtCtlMap = { ...runtime.state.controls }
-  const expected = {
-    ...runtime,
-    state: {
-      ...runtime.state,
-      controls,
-    },
-  }
-  apWpnStts(controls, expected, weaponId, { maxed: true })
-
-  return Object.entries(controls).every(([key, value]) => runtime.state.controls[key] === value)
 }
 
 function echoSrcSig(echoes: ResRuntime['build']['echoes']): string {

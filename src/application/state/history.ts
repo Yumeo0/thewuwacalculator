@@ -5,7 +5,7 @@
                changed runtime or persisted domains.
 */
 
-import type { HistoryMax, LeftPaneView, PersistedState } from '@/domain/entities/appState'
+import type { HistoryMax, PersistedState } from '@/domain/entities/appState'
 import type { ResRuntime, TeamMemRtVie } from '@/domain/entities/runtime'
 import type { PersistKey } from '@/application/persistence/storage'
 import { decompressFromUTF16 } from 'lz-string'
@@ -330,25 +330,4 @@ export function mkTeamMemRtU(
   }
 
   return 'Updated Teammate Setup'
-}
-
-export function mkLeftPaneVi(view: LeftPaneView): string {
-  switch (view) {
-    case 'resonators':
-      return 'Opened Resonators Pane'
-    case 'weapon':
-      return 'Opened Weapon Pane'
-    case 'echoes':
-      return 'Opened Echoes Pane'
-    case 'suggestions':
-      return 'Opened Suggestions Pane'
-    case 'teams':
-      return 'Opened Team Buffs Pane'
-    case 'enemy':
-      return 'Opened Enemy Pane'
-    case 'buffs':
-      return 'Opened Custom Bonuses Pane'
-    default:
-      return 'Changed Left Pane View'
-  }
 }

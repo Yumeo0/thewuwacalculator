@@ -12,6 +12,11 @@
   overflow: hidden;
 }
 
+.reduce-animation .wk-board[data-view='showcase'] .sc-stats,
+.reduce-animation .wk-board[data-view='showcase'] .sc-echo {
+  animation: none;
+}
+
 .wk-board[data-view='showcase'] .wk-rail-body {
   overflow: hidden;
   color: var(--ss-names-color, var(--showcase-image-name-ink, inherit));
@@ -232,7 +237,8 @@
 }
 
 .sc-row-label {
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  min-width: 0;
   font: 600 0.76rem/1 var(--workspace-rail-font);
   white-space: nowrap;
   overflow: hidden;
@@ -770,7 +776,7 @@
   color: var(--ss-labels-color, color-mix(in srgb, var(--text) 56%, transparent));
 }
 
-.wk-rail[data-capturing='true'] :is(.sc-row-label, .sc-echo-main-k, .sc-echo-sub-k) {
+.wk-rail[data-capturing='true'] :is(.sc-echo-main-k, .sc-echo-sub-k) {
   flex: 0 0 auto;
   min-width: max-content;
   overflow: visible;

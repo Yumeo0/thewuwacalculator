@@ -18,6 +18,8 @@ import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
 import { getResonator } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { mkForteMode } from '@/modules/simulation/features/resonator/lib/forteTree.ts'
 import { getSrcSttNct } from '@/engine/gameData/controlOptions'
+import { unisonBoonStateForRuntime } from '@/domain/gameData/unisonBoon'
+import { readRtPath } from '@/domain/gameData/runtimePath'
 import { sourceOptions } from '@/engine/services/sourceStateService'
 import { resPssvPrms } from '@/modules/simulation/features/weapons/lib/weapon'
 
@@ -62,7 +64,7 @@ export interface ModulationBay {
   rows: BayRow[]
 }
 
-/* three sections, in the order they are drawn */
+/* Stable source-group order used by every modulation consumer. */
 const BAY_ORDER = ['resonator', 'weapon', 'echoes'] as const
 type BayId = (typeof BAY_ORDER)[number]
 
@@ -116,6 +118,9 @@ function seqTier(ownerKey: string): number | null {
 }
 
 function rowGlyph(owner: SrcOwnDef, srcRt: ResRuntime, weaponIcon: string | null): BayGlyph {
+  if (owner.source.type === 'teamEffect') {
+    return { mask: resNodeIcon(srcRt.id, 'forteCircuit') }
+  }
   if (owner.source.type === 'weapon') {
     return { img: weaponIcon ?? undefined }
   }
@@ -175,7 +180,7 @@ function gateOf(state: SourceState): { label: string; met: (rt: ResRuntime) => b
 }
 
 function readValue(runtime: ResRuntime, state: SourceState): boolean | number | string {
-  const raw = runtime.state.controls[state.controlKey]
+  const raw = readRtPath(runtime, state.path)
   if (raw !== undefined) {
     return raw as boolean | number | string
   }
@@ -193,7 +198,7 @@ function stackMax(srcRt: ResRuntime, tgtRt: ResRuntime, state: SourceState, actR
   return Number.isFinite(natural) && natural > 0 ? natural : 1
 }
 
-function modulationOwners(srcRt: ResRuntime): SrcOwnDef[] {
+function modulationOwners(srcRt: ResRuntime, teamState: SourceState | null): SrcOwnDef[] {
   const weaponId = srcRt.build.weapon.id
   const mainEcho = getMainEchoS(srcRt)
   const setIds = new Set(
@@ -203,6 +208,7 @@ function modulationOwners(srcRt: ResRuntime): SrcOwnDef[] {
   )
 
   return [
+    ...(teamState ? listOwnersFor('teamEffect', 'unisonBoon') : []),
     ...[...listOwnersFor('resonator', srcRt.id)].sort(
       (a, b) => resOwnerRank(a) - resOwnerRank(b),
     ),
@@ -235,12 +241,16 @@ export function countModulationEffects(
   srcRt: ResRuntime,
   actRt: ResRuntime,
 ): { on: number; all: number } {
+  const teamState = unisonBoonStateForRuntime(srcRt)
   const treeModeControlKey = forteModeControlKey(srcRt)
   let on = 0
   let all = 0
 
-  for (const owner of modulationOwners(srcRt)) {
-    for (const state of listSttsForO(owner.ownerKey)) {
+  for (const owner of modulationOwners(srcRt, teamState)) {
+    for (const authoredState of listSttsForO(owner.ownerKey)) {
+      const state = owner.source.type === 'teamEffect'
+        ? teamState : authoredState
+      if (!state) continue
       if (treeModeControlKey && state.controlKey === treeModeControlKey) continue
       const { drawn, visible } = stateVisibility(srcRt, actRt, state)
       if (!drawn) continue
@@ -259,7 +269,7 @@ export function countModulationEffects(
 }
 
 /*
-  the shown resonator's own switches, in bays.
+  the shown resonator's switches and shared eligible team states, in bays.
 
   teammates are deliberately absent: their states belong to the member console,
   which already owns them, and this surface is about the resonator on the rail.
@@ -279,7 +289,8 @@ export function makeModulationBays(
     ),
   )
 
-  const owners = modulationOwners(srcRt)
+  const teamState = unisonBoonStateForRuntime(srcRt)
+  const owners = modulationOwners(srcRt, teamState)
 
   /*
     a resonator whose modes the tree can draw gets its sigil at the crown, so
@@ -297,7 +308,10 @@ export function makeModulationBays(
     const entry = byBay.get(bay) ?? { owners: [], rows: [] }
     entry.owners.push(owner)
 
-    for (const state of listSttsForO(owner.ownerKey)) {
+    for (const authoredState of listSttsForO(owner.ownerKey)) {
+      const state = owner.source.type === 'teamEffect'
+        ? teamState : authoredState
+      if (!state) continue
       if (treeModeControlKey && state.controlKey === treeModeControlKey) {
         continue
       }

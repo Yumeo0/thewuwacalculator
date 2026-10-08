@@ -297,3 +297,7 @@
   font: 400 0.8rem/1.5 var(--body-font);
   color: color-mix(in srgb, var(--text) 62%, var(--c-transparent));
 }
+
+.lho-line .pgs-seat-edit {
+  margin-left: -0.4rem;
+}

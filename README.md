@@ -2,7 +2,7 @@
 
 Fan made tools for planning, simulating, and optimizing builds in *Wuthering Waves*.
 
-This repository contains the production app. Its navigation is `Home > Read / Simulation`. Simulation includes Modulation, Rotation, Showcase and Optimizer. Read includes guides, reference docs, the changelog and information pages. The repository also contains runtime data and the Cloudflare Worker used for deployment.
+This repository contains the production app. Its navigation is `Home > Read / Simulation`. Simulation includes Modulation, Rotation, Showcase, Optimizer, and Suggestions. Read includes guides, reference docs, the changelog, and information pages. The repository also contains runtime data and the Cloudflare Worker used for deployment.
 
 ## Quick Start
 
@@ -47,25 +47,25 @@ Browser side configuration uses `VITE_*` values. Server side OAuth exchange and 
 - `src/data`
   Checked in content plus game data bootstrap and catalog loaders.
 - `src/domain`
-  Durable types, runtime adapters, selectors, schemas, and service lookups.
+  Durable entities, game-data contracts, pure value types, and domain services.
 - `src/engine`
   Formulas, effects, simulation, suggestions, parser logic, and optimizer execution.
 - `src/infra`
-  Persistence, Google Drive sync, OAuth server handlers, cookies, and analytics.
+  Browser-platform storage, Google Drive sync, OAuth and share server handlers, cookies, and analytics.
 - `src/modules/home`
   The Home page.
 - `src/modules/read`
   Docs, guides, changelog, and information pages.
 - `src/modules/simulation`
-  Modulation, Rotation, Showcase, Optimizer, shared workspace features, and temporary legacy development pages.
+  Modulation, Rotation, Showcase, Optimizer, Suggestions, and their shared workspace features.
 - `src/modules/calibration` and `src/modules/system`
   Appearance, app preferences, data management, and system fallback pages.
 - `src/shared`
   Shared UI primitives, shell components, and low level helpers.
 - `public/data`
-  Checked in runtime JSON fetched at startup.
+  Checked-in, mode-scoped runtime JSON used by core startup and lazy Simulation data loading.
 - `scripts`
-  Checked in maintenance workflows for runtime data and assets.
+  Git-ignored local maintenance workflows for runtime data and assets. Their commands require the author's private working-copy scripts.
 - `docs`
   Documentation for maintainers.
 
@@ -85,19 +85,21 @@ Key subsystem references:
 - [optimizer and suggestions](./docs/optimizer-and-suggestions.md)
 - [feature surfaces](./docs/feature-surfaces.md)
 - [deployment and operations](./docs/deployment-and-operations.md)
+- [resource lifecycle owners](./docs/lifecycle-owners.md)
 
 ## Deployment
 
-The app deploys as a Cloudflare Worker with static assets from `dist` and worker handled OAuth endpoints under `/api/*`.
+The app deploys as a Cloudflare Worker with static assets from `dist`. The Worker handles Google OAuth exchange and refresh endpoints plus share creation and retrieval under `/api/shares`; production shares use the `SHARES` KV binding.
 
 Basic deploy flow:
 
 ```bash
 npm install
-wrangler secret put GOOGLE_CLIENT_ID
-wrangler secret put GOOGLE_CLIENT_SECRET
+npx wrangler secret put GOOGLE_CLIENT_SECRET
 npm run deploy:cloudflare
 ```
+
+The public Google client ID and redirect URI are configured as Worker variables. `GOOGLE_CLIENT_SECRET` must remain a secret, and the production `SHARES` KV namespace must be bound before share links can work.
 
 Deployment configuration is in [wrangler.jsonc](./wrangler.jsonc). Cross origin isolation headers are defined in [public/_headers](./public/_headers).
 

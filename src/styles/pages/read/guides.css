@@ -1386,7 +1386,6 @@
   color: var(--muted);
 }
 
-
 .gd-plate {
   --plate-shade: color-mix(in srgb, var(--bg) 64%, transparent);
   display: grid;
@@ -1504,7 +1503,6 @@
 .gd-plate__step[data-on] .gd-spark__n {
   color: var(--bg);
 }
-
 
 .gd-plate__pin[data-bare] {
   width: 1.1rem;

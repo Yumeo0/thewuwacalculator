@@ -6,8 +6,8 @@ This repository contains the production React and TypeScript app for *Wuthering 
 
 The app processes data in this order:
 
-1. checked in game data is loaded before React mounts
-2. that data becomes catalogs plus a richer executable registry
+1. route-appropriate core or scoped game data is loaded before React mounts
+2. that data becomes catalogs plus a richer executable registry, with detailed bundles loaded as their consumers need them
 3. the composed app store holds canonical state and runtime projections; focused stores own transient optimizer and inventory UI state
 4. runtime adapters convert the selected resonator, team, enemy, and controls into inputs for the engine
 5. the engine resolves effects, final stats, formulas, and rotations
@@ -28,14 +28,15 @@ Primary entrypoints:
 
 Startup order:
 
-1. `initializeGameData()` fetches checked in runtime JSON from `public/data`.
-2. Catalog initializers load resonators, weapons, echoes, sets, and details into memory.
-3. Source packages are combined into the shared game data registry.
-4. React mounts only after the registry is ready.
-5. `AppProviders` installs persistence flushing, theme sync, wallpaper sync, font sync, Google OAuth, tooltips, context menus, and floating selection actions.
-6. `AppRoot` renders the router; `AppLayout` owns route tracking, cookie bootstrap, global hosts, the header, and the routed outlet.
+1. Bootstrap reads the persisted `live` or `beta` data mode and the resonators needed by the saved combat workspace.
+2. Simulation entry routes call `initGameData()` for that scope; Home and Read routes call `initCoreGameData()` for the smaller core catalog set.
+3. Catalog initializers load the requested resonator, weapon, Echo, Sonata, enemy, and manifest data from `public/data/<mode>`.
+4. Source packages are combined into the shared registry. `GameDataSession` retains scoped bundles and loads additional resonator or weapon bundles when a consumer requests them.
+5. React mounts only after the selected startup scope is ready.
+6. `AppProviders` installs persistence flushing, theme sync, wallpaper sync, font sync, tooltips, context menus, and floating selection actions. Google OAuth is scoped to Calibration.
+7. `AppRoot` renders the router; `AppLayout` owns route tracking, cookie bootstrap, global hosts, the header, and the routed outlet.
 
-The important constraint is that game data is not treated as optional late loaded feature content. Large parts of the app assume the registry already exists.
+The important constraint is that the route-appropriate core registry must exist before React mounts. Detailed resonator and weapon bundles may load later, but consumers must acquire the required scope before rendering data-dependent Simulation work.
 
 ## Top Level Layers
 
@@ -109,7 +110,7 @@ External integration and environment specific code:
 - analytics
 - cookies
 
-This layer should not own simulation rules. It owns persistence and platform behavior.
+This layer should not own simulation rules. It owns platform-specific storage and external integration behavior.
 
 ### `src/modules`
 
@@ -118,7 +119,7 @@ Route-facing feature surfaces:
 - `home`
 - `read`
 - `simulation`
-- `settings`
+- `calibration`
 - `system`
 
 This is where domain state and engine outputs become interactive UI.
@@ -135,7 +136,22 @@ Reusable UI primitives and low level helpers:
 
 `shared` provides reusable code and cannot import application or feature modules.
 
-The import direction is enforced by `npm run check:architecture`. App-to-module and cross-module imports must use an explicit `api/` or route `pages/` entry.
+### Responsive policy and mobile presentation
+
+`src/shared/responsive/policy.json` is the source of truth for app-wide layout
+widths, the phone capability query, and route IDs with a dedicated mobile shell.
+The responsive policy module exposes those settings to TypeScript; Vite
+substitutes the same configured widths into CSS placeholders at build time.
+Component-specific media queries remain next to the components they shape.
+
+`src/shared/responsive/mobileUi.ts` owns mode resolution and temporary UI-mode
+overrides. Shared mobile presentation primitives live in
+`src/shared/ui/mobile`; feature-specific mobile components stay with their
+owning module under a `mobile/` directory. Global mobile styling is isolated
+under `src/styles/mobile`. Feature state, domain rules, and persistence stay in
+their normal shared owners; mobile components only present those contracts.
+
+The import direction and source boundary are enforced by `npm run check:architecture`. App source cannot import files outside `src/`; app-to-module and cross-module imports must use an explicit `api/` or route `pages/` entry. The git-ignored root archives are therefore outside the app import graph.
 
 ### `src/styles`
 
@@ -145,10 +161,10 @@ Stylesheets
 - `ui/`: app-wide primitives (modal language, popups, menus, select, toast, loader, pickers)
 - `features/`: simulation pieces shared by several surfaces (echoes, inventory, teams, resonator, buffs, enemies, controls, weapons)
 - `surfaces/`: one folder per Simulation surface (bench, showcase, optimizer, rotation, suggestions)
-- `mobile/`: the decoupled phone UI
+- `mobile/`: global phone-only presentation; module-specific phone components live with their feature
 - `pages/`: Home, Read, Calibration and system pages
 
-`styles/index.css` imports the global layers in cascade order, and `src/index.css` only imports it. A few large surface sheets (the rotation editor, optimizer transport, suggestions climb, echo card and rows) are imported by their components so they load with their chunk.
+`styles/index.css` imports the global layers in cascade order, and `src/index.css` only imports it. Mobile-only styles are grouped under `styles/mobile`; a few large surface sheets (the rotation editor, optimizer transport, suggestions climb, echo card and rows) are imported by their components so they load with their chunk.
 
 Class names are short block codes (`amdl`, `pkr`, `wk`, `fcm`, `rte`) with BEM elements and modifiers (`fcm__item`, `wk-echo--empty`).
 
@@ -165,7 +181,7 @@ Navigation groups pages under `Home > Read / Simulation`, while URLs remain flat
 
 Pages mount under `AppLayout`. `ChromeHeader` owns header interaction only; `AppLayout` owns global shell behavior and `GlobalHosts` owns application-wide portals and notices.
 
-Modulation, Showcase, and Optimizer share one persistent parameterized route and mounted workspace. Rotation has its own editor surface under the same Simulation provider. Temporary direct legacy pages live below `src/modules/simulation/surfaces/legacy` and are omitted from navigation and SEO.
+Modulation, Showcase, Optimizer, and Suggestions share one persistent parameterized route and mounted workspace. Rotation has its own editor surface under the same Simulation provider.
 
 See [app-shell-and-routing.md](./app-shell-and-routing.md) for detail.
 
@@ -289,10 +305,17 @@ The worker has a deliberately small responsibility surface:
 - serve static assets through Cloudflare assets
 - intercept `/api/exchange-code`
 - intercept `/api/refresh-token`
+- create and retrieve shared payloads under `/api/shares` and `/api/shares/*`
 
-Everything else falls through to the SPA asset handler.
+OAuth uses Worker variables plus the `GOOGLE_CLIENT_SECRET` secret. Share persistence uses the production `SHARES` KV binding. Everything else falls through to the SPA asset handler.
 
-Checked in scripts under `scripts/` matter because they build or refresh central runtime artifacts such as resonator sources, weapon data, echo modules, and asset naming. Some upstream producer inputs are not in git, but the output shape they feed into the checked in runtime files is still part of the production contract.
+The root `scripts/` directory is git-ignored and contains local-only data maintenance workflows and private inputs. Its npm commands are available in a developer checkout that has those scripts, but the scripts themselves are not part of a clean clone. Tracked utilities under `tools/` prepare runtime assets during dev and build. The checked-in files under `public/data` are what the browser loads; their output shapes remain part of the production contract.
+
+The root `wip/` directory is also ignored. It holds experiments that are not
+part of the runtime or maintained test surface. The rotation tape prototype,
+unused team rotation catalog loader, and their generated rotation and kit
+catalogs are archived there. The supported Rotation route, editor, engine,
+defaults, and runtime game data remain tracked under `src/` and `public/data`.
 
 See [deployment-and-operations.md](./deployment-and-operations.md) for detail.
 

@@ -16,7 +16,6 @@ import {
 import { dialogPortal, mainPortal } from '@/shared/lib/portalTarget'
 import {
   createMenuContributionRegistry,
-  isLegacyMenuRoute,
   normalizeMenuEntries,
   type MenuContribution,
 } from './menuContributions'
@@ -58,7 +57,7 @@ export function AppCtxMenuPr({ children }: { children: ReactNode }) {
   const active = controller.data
 
   useEffect(() => {
-    if (!enabled || isLegacyMenuRoute(window.location.pathname)) controller.close()
+    if (!enabled) controller.close()
   }, [controller, enabled])
 
   useEffect(() => {
@@ -71,12 +70,11 @@ export function AppCtxMenuPr({ children }: { children: ReactNode }) {
 
   const value = useMemo<AppContextMenuApi>(() => ({
     enabled,
-    canOpen: () => enabled && !isLegacyMenuRoute(window.location.pathname),
+    canOpen: () => enabled,
     close: controller.close,
     register: registry.register,
     open: (event, options) => {
       if (!enabled) return false
-      if (isLegacyMenuRoute(window.location.pathname)) return false
 
       const local = options.items ?? []
       const contributed = options.location

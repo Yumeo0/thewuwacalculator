@@ -6,7 +6,7 @@
 
 import { APP_ROUTES, resolveLegacyRoute, surfaceAt } from '@/shared/lib/appRoutes'
 import { createRouteChunk } from '@/shared/navigation/routeChunk'
-import { prefersMobileUi } from '@/shared/navigation/mobileUi'
+import { prefersMobileUi } from '@/shared/responsive/mobileUi'
 import { configureNavigationPreloader } from '@/shared/navigation/navigationPreload'
 import {SIMULATION_SURFACE_CHUNKS} from "@/modules/simulation/api/chunks.ts";
 

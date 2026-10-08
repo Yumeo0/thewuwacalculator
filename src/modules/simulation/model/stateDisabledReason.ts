@@ -7,7 +7,6 @@ import type { CondExpr, EvalScpRoot, SourceState } from '@/domain/gameData/contr
 import { prsCntrKey } from '@/domain/gameData/stateKeys'
 import { getOwnForKey, getSttForCnt } from '@/data/catalog/gameDataService'
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
-import type { ResStateControl } from '@/domain/entities/resonator.ts'
 
 // friendly labels for common combat stack paths that would otherwise look too raw
 const STACK_LABELS: Partial<Record<string, string>> = {
@@ -193,45 +192,4 @@ export function getSrcSttDsb(state: SourceState): string | null {
   }
 
   return fmtCondRsn(state.enabledWhen)
-}
-
-// build a disabled reason for normal resonator controls
-// priority order:
-// 1. explicit disabledReason
-// 2. derived enabledWhen explanation
-// 3. legacy disabledWhen dependency explanation
-export function getResCntrDs(
-    control: ResStateControl,
-    cntrByKey: Record<string, ResStateControl>,
-): string | null {
-  if (control.disabledReason) {
-    return control.disabledReason
-  }
-
-  if (control.enabledWhen) {
-    const reason = fmtCondRsn(control.enabledWhen)
-    if (reason) {
-      return reason
-    }
-  }
-
-  if (!control.disabledWhen) {
-    return null
-  }
-
-  // try to resolve the dependency desc from local controls first,
-  // then from global state/control metadata
-  const dpndLbl = normLbl(
-      cntrByKey[control.disabledWhen.key]?.label ?? getCntrLbl(control.disabledWhen.key) ?? control.disabledWhen.key,
-  )
-
-  if (control.disabledWhen.equals === false) {
-    return `Requires ${dpndLbl}.`
-  }
-
-  if (control.disabledWhen.equals === true) {
-    return `Unavailable while ${dpndLbl} is enabled.`
-  }
-
-  return `Requires ${dpndLbl} to be ${String(control.disabledWhen.equals)}.`
 }

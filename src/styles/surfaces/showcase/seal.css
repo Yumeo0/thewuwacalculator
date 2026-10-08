@@ -463,7 +463,6 @@
 }
 
 .wk-rail[data-layout='seal'] .seal-ledger .sc-row-label {
-  overflow: visible;
   font-size: calc(0.78rem * var(--ss-labels-scale, 1));
 }
 

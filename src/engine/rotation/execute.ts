@@ -64,6 +64,7 @@ import {
   negEffectsFor,
 } from '@/engine/gameData/negativeEffects'
 import { getTuneStrainMaxForTeam } from '@/engine/gameData/tuneStrain'
+import { UNISON_BOON_RUNTIME_PATH, UNISON_BOON_TEAM_PATH, unisonBoonMaxForRuntimes } from '@/domain/gameData/unisonBoon'
 import { getEnemyMaxOffTune } from '@/engine/formulas/tuneRupture'
 import { getSrcNumMax } from '@/engine/gameData/controlOptions'
 import { readRtPath, writeBjctPat, writeRtPath } from '@/domain/gameData/runtimePath'
@@ -1959,6 +1960,45 @@ function writeRotVrly(
     }
   }
 
+  if (nrmlPath === UNISON_BOON_TEAM_PATH) {
+    const runtimePath = UNISON_BOON_RUNTIME_PATH
+    const primaryRuntime = getPrmrRt(state)
+    if (primaryRuntime && Object.is(readRtPath(primaryRuntime, runtimePath), value)) return state
+    const nextRtPthsBy = { ...state.overlay.rtPthsByRejq }
+    const changedIds: string[] = []
+    for (const participant of Object.values(getBaseGraph(state).participants)) {
+      const id = participant.resonatorId
+      nextRtPthsBy[id] = { ...(nextRtPthsBy[id] ?? {}), [runtimePath]: value }
+      writeNumericRuntime(state.numericTeam, id, runtimePath, value)
+      changedIds.push(id)
+    }
+    if (state.mutableOverlay) {
+      for (const id of changedIds) {
+        writeMutableNested(state.overlay.rtPthsByRejq, id, runtimePath, value)
+        state.dirtyGraphIds.add(id)
+      }
+      state.overlay.version += 1
+      state.overlay.runtimeVersion += 1
+      state.overlay.combatVersion += 1
+      state.rslvRtCch = {}
+      state.mtrlGrphVrsn = -1
+      return state
+    }
+    return {
+      ...state,
+      overlay: {
+        ...state.overlay,
+        version: state.overlay.version + 1,
+        runtimeVersion: state.overlay.runtimeVersion + 1,
+        combatVersion: state.overlay.combatVersion + 1,
+        rtPthsByRejq: nextRtPthsBy,
+      },
+      rslvRtCch: {},
+      mtrlGrphVrsn: -1,
+      dirtyGraphIds: new Set([...state.dirtyGraphIds, ...changedIds]),
+    }
+  }
+
   if (isEnemySttsP(path)) {
     if (Object.is(readObjectPath(getActEnemy(state), getEnemyPath(path)), value)) return state
     const enemyPath = getEnemyPath(path)
@@ -2210,7 +2250,14 @@ function clampAuthoredStateValue(
     return value
   }
 
-  const bounds = isEnemySttsP(path) || isEnemyCmbtP(path)
+  const bounds = path === UNISON_BOON_TEAM_PATH
+    ? {
+        min: 0,
+        max: unisonBoonMaxForRuntimes(Object.values(getBaseGraph(state).participants).map(
+          (participant) => getPartRt(state, participant.resonatorId)?.runtime ?? participant.runtime,
+        )),
+      }
+    : isEnemySttsP(path) || isEnemyCmbtP(path)
     ? enemyChangeBounds(state, path, resonatorId)
     : boundsForStateDefinition(
         state,
@@ -2306,6 +2353,17 @@ function applyRtWrite(
       path,
       Number.isFinite(nextValue) ? nextValue : 0,
     )
+  }
+
+  if (path === UNISON_BOON_TEAM_PATH) {
+    const primaryRuntime = getPrmrRt(state)
+    const current = Number(primaryRuntime
+      ? readRtPath(primaryRuntime, UNISON_BOON_RUNTIME_PATH)
+      : 0)
+    const nextValue = type === 'add'
+      ? (Number.isFinite(current) ? current : 0) + Number(value ?? 0)
+      : type === 'toggle' ? value ?? true : value as string | number | boolean
+    return writeRotVrly(state, tgtResId, path, clampAuthoredStateValue(state, path, tgtResId, nextValue))
   }
 
   if (isEnemySttsP(path) || isEnemyCmbtP(path)) {
@@ -2537,6 +2595,13 @@ function readRtChngVl(
     const prmrRt = getPrmrRt(state)
     return prmrRt
       ? readRtPath(prmrRt, `runtime.state.${getEnemyPath(change.path)}`) as string | number | boolean | undefined
+      : undefined
+  }
+
+  if (change.path === UNISON_BOON_TEAM_PATH) {
+    const primaryRuntime = getPrmrRt(state)
+    return primaryRuntime
+      ? readRtPath(primaryRuntime, UNISON_BOON_RUNTIME_PATH) as string | number | boolean | undefined
       : undefined
   }
 

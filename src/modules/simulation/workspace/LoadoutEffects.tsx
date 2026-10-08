@@ -30,19 +30,25 @@ interface SetReadout {
   tiers: Array<{ pieces: number; desc: string }>
 }
 
+/** One set's name, icon and every tier it defines, lowest threshold first. */
+export function readSetTiers(id: number): Omit<SetReadout, 'count'> | null {
+  const def = getEchoSetDe(id)
+  if (!def) return null
+  const tiers = TIER_PIECES.flatMap(([tier, pieces]) => {
+    const desc = def.desc[tier]
+    return desc ? [{ pieces, desc }] : []
+  })
+  return tiers.length ? { id: def.id, name: def.name, icon: getSntSetIco(def.id), tiers } : null
+}
+
 // Retain later thresholds once a set activates so callers can distinguish met
 // and unmet tiers within the same set.
 function readSets(echoes: Array<EchoInstance | null>): SetReadout[] {
   return Object.entries(cmptSetCnts(echoes))
     .flatMap(([key, count]) => {
-      const def = getEchoSetDe(Number(key))
-      if (!def) return []
-      const tiers = TIER_PIECES.flatMap(([tier, pieces]) => {
-        const desc = def.desc[tier]
-        return desc ? [{ pieces, desc }] : []
-      })
-      if (!tiers.length || count < tiers[0].pieces) return []
-      return [{ id: def.id, name: def.name, icon: getSntSetIco(def.id), count, tiers }]
+      const set = readSetTiers(Number(key))
+      if (!set || count < set.tiers[0].pieces) return []
+      return [{ ...set, count }]
     })
     .sort((a, b) => b.count - a.count)
 }

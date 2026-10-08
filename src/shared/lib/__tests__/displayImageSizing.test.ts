@@ -20,7 +20,8 @@ class FakeImage {
   element() { return this as unknown as HTMLImageElement }
 }
 
-let resize: () => void
+let onResize: (entries: Array<{ target: unknown }>) => void
+const resize = (...images: FakeImage[]) => onResize(images.map((target) => ({ target })))
 let resizeObserver: { observe: ReturnType<typeof vi.fn>; unobserve: ReturnType<typeof vi.fn>; disconnect: ReturnType<typeof vi.fn> }
 let windowEvents: EventTarget & { devicePixelRatio: number }
 let documentEvents: EventTarget
@@ -37,15 +38,16 @@ beforeEach(() => {
     cancelAnimationFrame: clearTimeout,
     matchMedia: () => { const query = new EventTarget(); densityQueries.push(query); return query },
   })
-  documentEvents = new EventTarget()
+  // Transitions bubble from an ancestor of every test image.
+  documentEvents = Object.assign(new EventTarget(), { contains: () => true })
   vi.stubGlobal('window', windowEvents)
   vi.stubGlobal('document', documentEvents)
   vi.stubGlobal('ResizeObserver', class {
     observe = vi.fn()
     unobserve = vi.fn()
     disconnect = vi.fn()
-    constructor(callback: () => void) {
-      resize = callback
+    constructor(callback: (entries: Array<{ target: unknown }>) => void) {
+      onResize = callback
       resizeObserver = { observe: this.observe, unobserve: this.unobserve, disconnect: this.disconnect }
     }
   })
@@ -62,17 +64,20 @@ describe('measured display images', () => {
     const { observeDisplayImage } = await import('../displayImageSizing')
     const image = new FakeImage()
     cleanups.push(observeDisplayImage(image.element(), source))
+    expect(image.reads).toBe(0)
+    resize(image)
+    vi.runAllTimers()
     expect(image.writes).toHaveLength(1)
     expect(image.src).toMatch(/-64.webp$/)
     image.width = 70
-    resize()
+    resize(image)
     vi.runAllTimers()
     expect(image.src).toMatch(/-128.webp$/)
     image.width = 34
-    resize()
+    resize(image)
     vi.runAllTimers()
     expect(image.src).toMatch(/-64.webp$/)
-    resize()
+    resize(image)
     vi.runAllTimers()
     expect(image.writes).toHaveLength(3)
   })
@@ -82,6 +87,8 @@ describe('measured display images', () => {
     const image = new FakeImage()
     image.width = 34
     cleanups.push(observeDisplayImage(image.element(), source))
+    resize(image)
+    vi.runAllTimers()
     windowEvents.devicePixelRatio = 3
     densityQueries[0].dispatchEvent(new Event('change'))
     vi.runAllTimers()
@@ -101,23 +108,40 @@ describe('measured display images', () => {
     expect(image.reads).toBe(reads)
   })
 
+  it('measures only the images that resized', async () => {
+    const { observeDisplayImage } = await import('../displayImageSizing')
+    const first = new FakeImage()
+    const second = new FakeImage()
+    cleanups.push(observeDisplayImage(first.element(), source), observeDisplayImage(second.element(), source))
+    resize(first, second)
+    vi.runAllTimers()
+    const reads = second.reads
+    first.width = 70
+    resize(first)
+    vi.runAllTimers()
+    expect(first.src).toMatch(/-128.webp$/)
+    expect(second.reads).toBe(reads)
+  })
+
   it('waits for hidden images to have a size and preserves fallback URLs', async () => {
     const { observeDisplayImage } = await import('../displayImageSizing')
     const image = new FakeImage()
     image.width = 0
     cleanups.push(observeDisplayImage(image.element(), source))
+    resize(image)
+    vi.runAllTimers()
     expect(image.writes).toEqual([])
     image.width = 26
-    resize()
+    resize(image)
     vi.runAllTimers()
     expect(image.src).toMatch(/-64.webp$/)
     image.src = source
     image.width = 100
-    resize()
+    resize(image)
     vi.runAllTimers()
     expect(image.src).toBe(source)
     image.src = '/assets/game/default.webp'
-    resize()
+    resize(image)
     vi.runAllTimers()
     expect(image.src).toBe('/assets/game/default.webp')
   })
@@ -128,7 +152,9 @@ describe('measured display images', () => {
     const second = new FakeImage()
     const stopFirst = observeDisplayImage(first.element(), source)
     const stopSecond = observeDisplayImage(second.element(), source)
-    resize()
+    resize(first, second)
+    vi.runAllTimers()
+    resize(first, second)
     stopFirst()
     expect(resizeObserver.disconnect).not.toHaveBeenCalled()
     stopSecond()

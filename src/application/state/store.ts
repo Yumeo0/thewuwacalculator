@@ -18,7 +18,6 @@ import type {
     EnemyProfile,
     SimulationState,
     HistoryMax,
-    LeftPaneView,
     PckrFreqUpd,
     PersistedState,
     ThemeMode,
@@ -54,6 +53,7 @@ import type {
     SavedScenario,
 } from '@/domain/entities/inventoryStorage'
 import type { ShowcaseCardStyle, ShowcaseCardHidden, ShowcaseLayout, UploadPersistMode } from '@/domain/entities/preferences'
+import type { RoverGender } from '@/domain/entities/roverGender'
 import type {OptSets} from '@/domain/entities/optimizer'
 import type {OptInventorySelection, ResProf} from '@/domain/entities/profile'
 import type {SntSetConds} from '@/domain/entities/sonataSetConditionals'
@@ -151,8 +151,8 @@ export interface AppStore extends Omit<PersistedState, 'simulation' | 'combat'> 
   setCtxMenu: (enabled: boolean) => void
   setUpdToast: (enabled: boolean) => void
   setGameBetaData: (enabled: boolean) => void
+  setRoverGender: (gender: RoverGender) => void
   setRecMenus: (enabled: boolean) => void
-  setEvaluationStates: (enabled: boolean) => void
   setMaxResInit: (enabled: boolean) => void
   setAnimatedRailPortraits: (enabled: boolean) => void
   commitAppearanceConfig: (updater: (ui: UiState) => UiState) => void
@@ -167,8 +167,6 @@ export interface AppStore extends Omit<PersistedState, 'simulation' | 'combat'> 
   setEchoImportBands: (bands: UiState['preferences']['echoImportBands']) => void
   setRotationImportPick: (pick: UiState['preferences']['rotationImportPick']) => void
   setSugView: (view: SuggsViewMod) => void
-  setLeftView: (view: LeftPaneView) => void
-  openLeftView: (view: LeftPaneView) => void
   setSubHits: (enabled: boolean) => void
   setCmpInv: (enabled: boolean) => void
   setGrpInv: (enabled: boolean) => void
@@ -176,7 +174,6 @@ export interface AppStore extends Omit<PersistedState, 'simulation' | 'combat'> 
   setHistOn: (enabled: boolean) => void
   setHistMax: (max: HistoryMax) => void
   setOptHint: (seen: boolean) => void
-  setOptSprite: (useSprite: boolean) => void
   setCmprXprts: (compressed: boolean) => void
   setRotEditorPrefs: (patch: Partial<UiState['rotationEditorPreferences']>) => void
   setRotPrefs: (

@@ -25,6 +25,7 @@ import {
   orderRecs,
 } from '@/modules/simulation/features/resonator/lib/recommendations.ts'
 import { ATTR_COLORS, rarityVars } from '@/modules/simulation/model/display.ts'
+import { roverIsVisible } from '@/domain/entities/roverGender'
 
 const ALL_ROLE_ID = '__all_roles__'
 
@@ -105,7 +106,7 @@ function ResPickerContent({
       title={title}
       summary={view.summary}
       filters={view.filters}
-      railFoot={`${view.shown} of ${resonators.length} ${countLabel.toLowerCase()}`}
+      railFoot={`${view.shown} of ${view.total} ${countLabel.toLowerCase()}`}
       items={view.items}
       emptyState={emptyState}
       closeLabel={closeLabel}
@@ -141,15 +142,21 @@ export function useResPickerView({
   useEffect(() => cancelSelection, [cancelSelection])
   useEffect(() => { if (closing) cancelSelection() }, [closing, cancelSelection])
   const rcmmMenuTms = useAppStore((state) => state.ui.preferences.recommendedMenuItems)
+  const roverGender = useAppStore((state) => state.ui.preferences.roverGender)
   const frqnResBkt = useAppStore((state) => state.ui.itemFreq.resonator)
   const lastUsedResI = useResQStr((state) => state.queueIds)
 
   const { selWpnFltr, setSelWpnFlt, selTtrbFltr, setSelTtrbFl, selRoleFltr, setSelRoleFl, rarityFilter, setSelRrtyFl } = filterState
 
+  const visibleResonators = useMemo(
+    () => resonators.filter((entry) => roverIsVisible(entry.id, roverGender)),
+    [resonators, roverGender],
+  )
+
   const roleOptions = useMemo<RoleOption[]>(() => {
     const roleMap = new Map<string, RoleOption>()
 
-    for (const entry of resonators) {
+    for (const entry of visibleResonators) {
       for (const tag of entry.tags ?? []) {
         if (!roleMap.has(tag.id)) {
           roleMap.set(tag.id, {
@@ -162,7 +169,7 @@ export function useResPickerView({
     }
 
     return Array.from(roleMap.values()).sort((a, b) => a.label.localeCompare(b.label))
-  }, [resonators])
+  }, [visibleResonators])
 
   const frqnResIds = frqnResBkt.order
   const frqnResCnts = useMemo(
@@ -173,7 +180,7 @@ export function useResPickerView({
   )
 
   const fltrRsnt = useMemo(() => {
-    return resonators.filter((entry) => {
+    return visibleResonators.filter((entry) => {
       const mtchWpn =
         selWpnFltr === null || WPNTYPETOKEY[entry.weaponType] === selWpnFltr
       const mtchTtrb =
@@ -184,7 +191,7 @@ export function useResPickerView({
 
       return mtchWpn && mtchTtrb && mtchRole && mtchRrty
     })
-  }, [resonators, selRoleFltr, selTtrbFltr, rarityFilter, selWpnFltr])
+  }, [visibleResonators, selRoleFltr, selTtrbFltr, rarityFilter, selWpnFltr])
 
   const actFltrCnt =
     Number(selWpnFltr !== null) +
@@ -424,5 +431,5 @@ export function useResPickerView({
   }
   const items = rdrdRsnt.map(toItem)
 
-  return { summary, filters, items, toItem, shown: fltrRsnt.length, activeFilters: actFltrCnt }
+  return { summary, filters, items, toItem, shown: fltrRsnt.length, total: visibleResonators.length, activeFilters: actFltrCnt }
 }

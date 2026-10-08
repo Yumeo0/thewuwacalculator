@@ -257,6 +257,21 @@
   grid-template-columns: var(--pst-sub-cols);
 }
 
+.pst .pst-scope-link {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pst .pst-scope-link:focus-visible {
+  outline: 1px solid var(--item-border, var(--border));
+  outline-offset: 2px;
+}
+
 @media (max-width: 74rem) {
   .pst {
     --pst-cols: 1.4rem minmax(0, 1fr) 3.9rem 4.6rem 1.3rem;

@@ -56,6 +56,7 @@ export function makeCombatEnvironment(
 ): CombatEnvironment {
   return {
     combatState: { ...combatState },
+    teamEffects: { unisonBoon: 0 },
     manualEffects: manualEffects.map((effect) => ({
       ...effect,
       selector: structuredClone(effect.selector),

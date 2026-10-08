@@ -1,6 +1,6 @@
 /*
   Author: Runor Ewhro
-  Description: Defines Home, Read, Simulation, and temporary legacy routes.
+  Description: Defines Home, Read, Simulation, and the redirects for retired routes.
 */
 
 import { Suspense } from 'react'
@@ -24,6 +24,7 @@ import {
 } from '@/app/nav/routeChunks'
 import {
   APP_ROUTES,
+  LEGACY_CALCULATOR_ALIAS,
   LEGACY_HOME_ROUTE,
   LEGACY_NESTED_SIMULATION_ROUTES,
   LEGACY_PROGRESSION_ALIAS,
@@ -35,7 +36,7 @@ import {
   whatsNewHref,
 } from '@/shared/lib/appRoutes'
 import type { SimulationSurfaceHandle } from '@/modules/simulation/api/route'
-import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { useMobileUi } from '@/shared/responsive/mobileUi'
 
 const SimulationPage = simulationChunk.Mount
 const CalibrationPage = calibrationChunk.Mount
@@ -105,6 +106,7 @@ export const rootRoutes: RouteObject[] = [
           simulationRoute,
           { path: LEGACY_HOME_ROUTE, element: <PreserveLocationRedirect to={APP_ROUTES.home} /> },
           { path: LEGACY_PROGRESSION_ALIAS, element: <PreserveLocationRedirect to={SIMULATION_ROUTES.modulation} /> },
+          { path: LEGACY_CALCULATOR_ALIAS, element: <PreserveLocationRedirect to={SIMULATION_ROUTES.modulation} /> },
           {
             path: LEGACY_NESTED_SIMULATION_ROUTES.optimizer,
             element: <PreserveLocationRedirect to={SIMULATION_ROUTES.optimizer} />,

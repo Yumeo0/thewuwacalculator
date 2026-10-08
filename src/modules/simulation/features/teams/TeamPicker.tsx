@@ -9,7 +9,7 @@ import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useId, useMemo, useRef, useState } from 'react'
 import type { CSSProperties as CssProps, PointerEvent as ReactPointerEvent } from 'react'
 import { Lock, SlidersHorizontal, Users, X } from 'lucide-react'
-import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { useMobileUi } from '@/shared/responsive/mobileUi'
 import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import { ensureResonatorData } from '@/data/gameData'
 import { useTstStr } from '@/shared/util/toastStore'
@@ -92,7 +92,11 @@ function MissingSeat({ id, seat, onRemove }: { id: string; seat: number; onRemov
 
 export function TeamPicker(props: TeamPickerProps) {
   const teamKey = `${props.leadId}|${props.team[1] ?? ''}|${props.team[2] ?? ''}`
-  return props.visible && props.portalTarget ? <TeamPickerContent key={teamKey} {...props} /> : null
+  // Committing a team changes the key as the picker closes. Hold the old key
+  // until it reopens so the exit plays on the mounted picker, not a fresh one.
+  const [shownKey, setShownKey] = useState(teamKey)
+  if (!props.closing && shownKey !== teamKey) setShownKey(teamKey)
+  return props.visible && props.portalTarget ? <TeamPickerContent key={shownKey} {...props} /> : null
 }
 
 function TeamPickerContent({
@@ -392,7 +396,7 @@ function TeamPickerContent({
   const mRail = (
           <nav className="amdl__rail pkr-rail" aria-label="Filters" onClickCapture={reflow} onChangeCapture={reflow}>
             {view.filters}
-            <div className="amdl__rail-foot">{view.shown} of {RES_MENU.length - 1} roster</div>
+            <div className="amdl__rail-foot">{view.shown} of {view.total} roster</div>
           </nav>
   )
 

@@ -24,6 +24,7 @@ import { OptimizerEchoPreview } from '@/modules/simulation/surfaces/optimizer/tr
 import { useSuggRuns } from '@/modules/simulation/surfaces/suggestions/lib/useSuggRuns.ts'
 import { smmrCurSetPl } from '@/modules/simulation/surfaces/suggestions/lib/suggestions.ts'
 import { Climb } from '@/modules/simulation/surfaces/suggestions/climb/Climb.tsx'
+import { ResultLeaf } from '@/modules/simulation/surfaces/suggestions/climb/ResultLeaf.tsx'
 import {
   climbRows,
   isClimbKind,
@@ -179,6 +180,9 @@ export function SuggestionsLab() {
           held={held}
           onHeld={setHeld}
           onApply={applyRow}
+          leaf={heldRow ? (
+            <ResultLeaf kind={kind} row={heldRow} weapon={runtime.build.weapon} echoes={echoes} preview={preview} />
+          ) : null}
           running={
             kind === 'mainStats' ? search.rnnnMainStat
               : kind === 'setPlans' ? search.rnnnSetPlns

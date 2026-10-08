@@ -239,6 +239,21 @@ export function listGraphEffectRows(
     return contexts.map(mkFfctCtxEnt)
   })
 
+  // One authored team source is evaluated once for this recipient. Its
+  // source runtime is the recipient because the team state is projected there.
+  entries.push(mkFfctCtxEnt({
+    team,
+    source: { type: 'teamEffect', id: 'unisonBoon' },
+    target: { type: 'resonator', id: tgtPart.resonatorId },
+    sourceRuntime: tgtPart.runtime,
+    targetRuntime: tgtPart.runtime,
+    activeRuntime: actPart.runtime,
+    targetRuntimeId: tgtPart.resonatorId,
+    activeResonatorId: actPart.resonatorId,
+    teamMemberIds: teamMemIds,
+    echoSetCounts: {},
+  }))
+
   const nextCchdBySl = cachedBySlot ?? {}
   nextCchdBySl[targetSlotId] = entries
   grphFfctCtxC.set(graph, nextCchdBySl)
@@ -264,7 +279,7 @@ function mkLegFfctCtx(
   )
   const team = makeTeamComp(sourceIds)
 
-  return sourceIds.flatMap((sourceId) => {
+  const entries = sourceIds.flatMap((sourceId) => {
     const srcRt = resSrcRt(sourceId, tgtRt, teamRuntime, runtimesById)
     if (!srcRt) {
       return []
@@ -310,6 +325,19 @@ function mkLegFfctCtx(
 
     return contexts.map(mkFfctCtxEnt)
   })
+  entries.push(mkFfctCtxEnt({
+    team,
+    source: { type: 'teamEffect', id: 'unisonBoon' },
+    target: { type: 'resonator', id: tgtRt.id },
+    sourceRuntime: tgtRt,
+    targetRuntime: tgtRt,
+    activeRuntime: actRt,
+    targetRuntimeId: tgtRt.id,
+    activeResonatorId: actResId,
+    teamMemberIds: sourceIds,
+    echoSetCounts: {},
+  }))
+  return entries
 }
 
 // build all effect contexts relevant to a target runtime

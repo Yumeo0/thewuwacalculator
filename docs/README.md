@@ -15,7 +15,7 @@ Use these docs in this order:
 - [architecture.md](./architecture.md)
   High level system map. Start here.
 - [app-shell-and-routing.md](./app-shell-and-routing.md)
-  App bootstrap, Home / Read / Simulation routes, shell ownership, persistent workspace routing, and hidden legacy pages.
+  App bootstrap, Home / Read / Simulation routes, shell ownership, persistent workspace routing, and retired-route redirects.
 - [state-and-persistence.md](./state-and-persistence.md)
   Store structure, runtime materialization, persistence slices, and hydration behavior.
 - [game-data-and-content-pipeline.md](./game-data-and-content-pipeline.md)
@@ -25,9 +25,11 @@ Use these docs in this order:
 - [optimizer-and-suggestions.md](./optimizer-and-suggestions.md)
   Suggestions, workers, optimizer preparation and search, CPU and GPU execution, and result construction.
 - [feature-surfaces.md](./feature-surfaces.md)
-  The pages and features owned by Home, Read, Simulation, Settings, and System modules.
+  The pages and features owned by Home, Read, Simulation, Calibration, and System modules.
 - [deployment-and-operations.md](./deployment-and-operations.md)
-  Local development, Cloudflare deployment, OAuth, sync, and checked in maintenance workflows.
+  Local development, Cloudflare deployment, OAuth, shares, sync, tracked build tools, and local maintenance workflows.
+- [lifecycle-owners.md](./lifecycle-owners.md)
+  Resource owners for workers, caches, persistence coordination, editor retention, and GPU sessions.
 
 ## Coverage Rules
 
@@ -35,14 +37,14 @@ These docs aim to cover:
 
 - shipped runtime behavior
 - checked in deployment and operational flows
-- checked in scripts that build central runtime artifacts
+- tracked tools that prepare runtime artifacts during dev or build
 - the format of generated outputs that the app uses
 
 These docs do not aim to deeply document:
 
 - ignored private source files not present in git
 - temporary personal scratch files
-- one off local developer experiments unless they materially affect shipped behavior
+- ignored local scripts and experiments unless they materially affect shipped behavior
 
 ## Update Expectations
 

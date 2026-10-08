@@ -16,21 +16,21 @@
     "build analysis tool"
   ],
   "socialImage": "/og-image.png",
-  "socialImageAlt": "The Wuwa Calculator preview card",
+  "socialImageAlt": "The Wuwa Calculator Modulation page preview",
   "themeColor": "#101820",
   "routes": [
     {
       "path": "/",
       "title": "Wuthering Waves Calculator",
-      "description": "Plan builds, simulate rotations, tune resonators, create showcase cards, and optimize Echoes for Wuthering Waves.",
+      "description": "Plan builds, simulate rotations, compare upgrades, create showcase cards, and optimize Echoes for Wuthering Waves.",
       "priority": "1.0",
-      "socialImage": "/assets/app/social/simulation.png",
+      "socialImage": "/assets/app/social/home.jpg",
       "socialImageAlt": "The Wuwa Calculator home page preview"
     },
     {
       "path": "/modulation",
       "title": "Wuthering Waves Modulation",
-      "description": "Set resonator levels, weapons, Echoes, effects, and teammates, then view calculated stats, damage, and build scores.",
+      "description": "Set resonator levels, weapons, Echoes, effects, and teammates, then read calculated stats, damage, and a build score against baseline, reference, and maximum builds.",
       "priority": "1.0",
       "socialImage": "/assets/app/social/modulation.png",
       "socialImageAlt": "The Wuwa Calculator Modulation page preview"
@@ -38,39 +38,47 @@
     {
       "path": "/optimizer",
       "title": "Wuthering Waves Build Optimizer",
-      "description": "Search saved or theoretical Echo builds for a skill or rotation, compare results, and set search filters and stat limits.",
+      "description": "Search saved or theoretical Echo builds for a skill or rotation, preview each result on your build, and set search filters and stat limits.",
       "priority": "0.9",
       "socialImage": "/assets/app/social/optimizer.png",
-      "socialImageAlt": "The Wuwa Calculator optimizer page preview"
+      "socialImageAlt": "The Wuwa Calculator Optimizer page preview"
     },
     {
       "path": "/showcase",
       "title": "Wuthering Waves Build Showcase",
-      "description": "Create and export customizable presentation cards for Wuthering Waves resonator builds.",
+      "description": "Create and export customizable Seal and Classic presentation cards for Wuthering Waves resonator builds.",
       "priority": "0.8",
-      "socialImage": "/assets/app/social/modulation.png",
+      "socialImage": "/assets/app/social/showcase.png",
       "socialImageAlt": "The Wuwa Calculator Showcase page preview"
     },
     {
       "path": "/rotation",
       "title": "Wuthering Waves Rotation Editor",
-      "description": "Build, simulate, save, and share Wuthering Waves rotations with ordered skills, conditions, loops, and team actions.",
+      "description": "Build, simulate, save, share, and compare Wuthering Waves team rotations with ordered skills, conditions, loops, a timeline, and per-member totals.",
       "priority": "0.8",
-      "socialImage": "/assets/app/social/simulation.png",
-      "socialImageAlt": "The Wuwa Calculator rotation editor page preview"
+      "socialImage": "/assets/app/social/rotation.png",
+      "socialImageAlt": "The Wuwa Calculator Rotation page preview"
+    },
+    {
+      "path": "/suggestions",
+      "title": "Wuthering Waves Build Suggestions",
+      "description": "Rank main stats, Sonata sets, and weapons by how much damage each change adds to a Wuthering Waves build, and preview any option on your build.",
+      "priority": "0.8",
+      "socialImage": "/assets/app/social/suggestions.png",
+      "socialImageAlt": "The Wuwa Calculator Suggestions page preview"
     },
     {
       "path": "/calibration",
       "title": "Calibration",
-      "description": "Set how The Wuwa Calculator looks and behaves: themes, wallpaper, body font, app preferences, exports, Drive backup, and local data.",
+      "description": "Set how The Wuwa Calculator looks and behaves: themes, wallpaper, body font, Rover form, app preferences, exports, Drive backup, and local data.",
       "priority": "0.3",
-      "socialImage": "/assets/app/social/settings.png",
-      "socialImageAlt": "The Wuwa Calculator calibration page preview"
+      "socialImage": "/assets/app/social/calibration.png",
+      "socialImageAlt": "The Wuwa Calculator Calibration page preview"
     },
     {
       "path": "/guides",
       "title": "Wuthering Waves Calculator Guides",
-      "description": "Learn how to use Simulation tools, manage builds, run the Optimizer, edit rotations, and change app settings.",
+      "description": "Illustrated guides for every page of the app: Modulation, Rotation, Showcase, Optimizer, Suggestions, Inventory, and Calibration.",
       "priority": "0.8",
       "socialImage": "/assets/app/social/guides.png",
       "socialImageAlt": "The Wuwa Calculator guides page preview"

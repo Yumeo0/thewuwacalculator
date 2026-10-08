@@ -20,7 +20,7 @@ import {
   mrgDscrKywr,
   skllLblMap,
 } from '@/modules/simulation/features/resonator/lib/panel.ts'
-import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { useMobileUi } from '@/shared/responsive/mobileUi'
 import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import { BookOpen, List } from 'lucide-react'
 

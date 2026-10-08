@@ -1,7 +1,8 @@
 /*
   Author: Runor Ewhro
   Description: Coordinates paired arrival data, artwork fallback, one-time
-               activation, pointer-derived motion, and shared active selection.
+               activation, pointer-derived motion, shared active selection,
+               and opening held arrivals on Modulation.
 */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -137,6 +138,11 @@ export function ArrivalPlate({ arrivals, reading, onLit, still }: ArrivalPlatePr
     node.style.setProperty('--hm-py', '0')
   }
 
+  const open = useCallback((who: ArrivedResonator) => {
+    swapResonator(who.id)
+    navigate(SIMULATION_ROUTES.modulation)
+  }, [navigate, swapResonator])
+
   const contributions = useMemo<MenuContribution<ArrivalContext>[]>(() => [{
     id: 'home-arrival-highlight',
     group: '1_primary',
@@ -145,7 +151,7 @@ export function ArrivalPlate({ arrivals, reading, onLit, still }: ArrivalPlatePr
         id: `home-arrival-build:${who.id}`,
         label: `Build ${who.name}`,
         icon: <TbMathFunction size="1em" />,
-        onSelect: () => { swapResonator(who.id); navigate(SIMULATION_ROUTES.modulation) },
+        onSelect: () => open(who),
       }] : []),
       {
         id: `home-arrival-highlight:${who.id}`,
@@ -170,7 +176,7 @@ export function ArrivalPlate({ arrivals, reading, onLit, still }: ArrivalPlatePr
         )
       },
     }],
-  }], [light, navigate, showToast, swapResonator])
+  }], [light, open, showToast])
   useMenuContributions('home.arrival', contributions)
 
   if (pair.length < 2) return null
@@ -198,11 +204,15 @@ export function ArrivalPlate({ arrivals, reading, onLit, still }: ArrivalPlatePr
             type="button" className="hm-half"
             data-side={side}
             style={{ '--el': who.colour } as CSSProperties}
-            aria-label={`${who.name}, ${who.attributeName} ${who.weaponName}, ${who.held ? 'in the app' : 'not in yet'}`}
+            aria-label={`${who.held ? `Build ${who.name}` : who.name}, ${who.attributeName} ${who.weaponName}, ${who.held ? 'in the app' : 'not in yet'}`}
             onPointerEnter={() => light(side, who.id)}
             onFocus={() => light(side, who.id)}
             onBlur={rest}
-            onClick={() => (lit === side ? rest() : light(side, who.id))}
+            onClick={() => {
+              if (who.held) open(who)
+              else if (lit === side) rest()
+              else light(side, who.id)
+            }}
           >
             <Half who={who} animated={reading && !still} />
           </button>

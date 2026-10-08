@@ -20,6 +20,7 @@ import { getDefaultRotation } from '@/data/catalog/gameDataService.ts'
 import { migrateAdvancedScenarioRotations } from '@/engine/runtime/advancedRotationMigration.ts'
 import { useAppStore } from '@/application/state/store'
 import {
+  APP_STORAGE_KEY,
   APPSTORECMBT,
   APPSTORECMBTINDEX,
   APPSTOREINVC,
@@ -60,6 +61,22 @@ describe('persisted state compatibility', () => {
 
     expect(JSON.parse(localStorage.getItem(APPSTOREUILY)!).ui.compressedExports).toBe(enabled)
     expect(loadPrssAppS({ includeInventory: false })?.ui.compressedExports).toBe(enabled)
+  })
+
+  it('loads saves that still carry ui keys retired with the legacy pages', () => {
+    const state = makeAppState()
+    state.ui.compressedExports = false
+    saveAppState(state, { domains: ['ui.layout'] })
+    const stored = JSON.parse(localStorage.getItem(APPSTOREUILY)!)
+    stored.ui.leftPaneView = 'echoes'
+    stored.ui.optimizerUseSprite = false
+    localStorage.setItem(APPSTOREUILY, JSON.stringify(stored))
+
+    const loaded = loadPrssAppS({ includeInventory: false })
+    expect(loaded).not.toBeNull()
+    expect(loaded?.ui.compressedExports).toBe(false)
+    expect(loaded?.ui).not.toHaveProperty('leftPaneView')
+    expect(loaded?.ui).not.toHaveProperty('optimizerUseSprite')
   })
 
   it('writes only the changed Showcase card and keeps it out of layout serialization', () => {
@@ -256,6 +273,88 @@ describe('persisted state compatibility', () => {
     expect(migrated.simulation.optimizerSettings.resultsLimit).toBe(321)
   })
 
+  it.each([
+    ['layout domain', APPSTOREUILY],
+    ['combat index', APPSTORECMBTINDEX],
+  ])('retains and cleanly retries a v22 monolith when the %s write fails', (_label, failingKey) => {
+    const current = makeAppState()
+    const scenario = selectedCombatScenario(current.combat)
+    const profiles = projectScenarioWorkspaceProfiles(current.combat)
+    const legacyKey = 'wwcalc.app.v22'
+    const legacy = JSON.stringify({
+      version: 22,
+      ui: current.ui,
+      calculator: {
+        runtimeRevision: 7,
+        profiles,
+        session: {
+          activeResonatorId: contextScenarioMember(scenario).resonatorId,
+          enemyProfile: scenario.target,
+        },
+        inventoryEchoes: [],
+        inventoryBuilds: [],
+        inventoryRotations: [],
+        optimizerContext: {
+          resonatorId: contextScenarioMember(scenario).resonatorId,
+          settings: current.simulation.optimizerSettings,
+        },
+        weaponSuggests: current.simulation.weaponSuggests,
+        suggestionsByResonatorId: current.simulation.suggestionsByResonatorId,
+      },
+    })
+    localStorage.setItem(legacyKey, legacy)
+    const originalSetItem = localStorage.setItem.bind(localStorage)
+    let failWrite = true
+    vi.spyOn(localStorage, 'setItem').mockImplementation((key, value) => {
+      if (failWrite && key === failingKey) {
+        throw new DOMException('Quota exceeded', 'QuotaExceededError')
+      }
+      originalSetItem(key, value)
+    })
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    const firstLoad = loadPrssAppS()
+    expect(firstLoad).not.toBeNull()
+    expect(Object.keys(projectScenarioWorkspaceProfiles(firstLoad!.combat)).sort())
+      .toEqual(Object.keys(profiles).sort())
+    expect(localStorage.getItem(legacyKey)).toBe(legacy)
+    expect(Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index))
+      .filter((key) => key === APP_STORAGE_KEY || key?.startsWith(`${APP_STORAGE_KEY}.`)))
+      .toEqual([])
+
+    failWrite = false
+    const retried = loadPrssAppS()
+    expect(retried).not.toBeNull()
+    expect(Object.keys(projectScenarioWorkspaceProfiles(retried!.combat)).sort())
+      .toEqual(Object.keys(profiles).sort())
+    expect(localStorage.getItem(legacyKey)).toBeNull()
+    expect(localStorage.getItem(APPSTORECMBTINDEX)).toContain('recordsById')
+  })
+
+  it('retains and retries a current-version monolith when granular migration fails', () => {
+    const state = makeAppState()
+    const monolith = JSON.stringify(state)
+    localStorage.setItem(APP_STORAGE_KEY, monolith)
+    const originalSetItem = localStorage.setItem.bind(localStorage)
+    let failWrite = true
+    vi.spyOn(localStorage, 'setItem').mockImplementation((key, value) => {
+      if (failWrite && key === APPSTORECMBTINDEX) {
+        throw new DOMException('Quota exceeded', 'QuotaExceededError')
+      }
+      originalSetItem(key, value)
+    })
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    expect(loadPrssAppS()?.combat).toEqual(state.combat)
+    expect(localStorage.getItem(APP_STORAGE_KEY)).toBe(monolith)
+    expect(localStorage.getItem(APPSTORECMBTINDEX)).toBeNull()
+
+    failWrite = false
+    expect(loadPrssAppS()?.combat).toEqual(state.combat)
+    expect(localStorage.getItem(APP_STORAGE_KEY)).toBeNull()
+    expect(localStorage.getItem(APPSTORECMBTINDEX)).toContain('recordsById')
+  })
+
   it('migrates split v26 optimizer settings without retaining the runtime copy', () => {
     const state = makeAppState()
     const scenario = selectedCombatScenario(state.combat)
@@ -297,7 +396,6 @@ describe('persisted state compatibility', () => {
   it('renames calculator-root and benchmark-era preferences at the v28 boundary', () => {
     const current = makeAppState()
     const legacyPreferenceKeys = new Set([
-      'showEvaluationStates',
       'animatedRailPortraits',
       'showcaseCards',
     ])
@@ -332,7 +430,6 @@ describe('persisted state compatibility', () => {
     expect(migrated.version).toBe(28)
     expect(migrated.simulation).toEqual(current.simulation)
     expect(migrated).not.toHaveProperty('calculator')
-    expect(migrated.ui.preferences.showEvaluationStates).toBe(true)
     expect(migrated.ui.preferences.animatedRailPortraits).toBe(false)
     expect(migrated.ui.preferences.showcaseCards.test.style.customCss)
       .toBe('.workspace-card { color: var(--workspace-accent); }')
@@ -649,6 +746,43 @@ describe('persisted state compatibility', () => {
     expect(migrated?.library.rotations).toEqual([rotation])
     expect(migrated?.simulation).not.toHaveProperty('inventoryRotations')
     expect(localStorage.getItem('wwcalc.app.v25.inventory.rotations')).toBeNull()
+  })
+
+  it('retains and retries every split v25 source when a replacement domain fails', () => {
+    const state = makeAppState()
+    const scenario = selectedCombatScenario(state.combat)
+    const rotation = makeSavedRotation({ name: 'Retry split rotation', scenario }, 457)
+    const combatKey = 'wwcalc.app.v25.combat.workspace'
+    const rotationsKey = 'wwcalc.app.v25.inventory.rotations'
+    const combatRaw = JSON.stringify({ version: 25, combat: state.combat })
+    const rotationsRaw = JSON.stringify({
+      version: 25,
+      simulation: { inventoryRotations: [rotation] },
+    })
+    localStorage.setItem(combatKey, combatRaw)
+    localStorage.setItem(rotationsKey, rotationsRaw)
+    const originalSetItem = localStorage.setItem.bind(localStorage)
+    let failWrite = true
+    vi.spyOn(localStorage, 'setItem').mockImplementation((key, value) => {
+      if (failWrite && key === APPSTOREINVR) {
+        throw new DOMException('Quota exceeded', 'QuotaExceededError')
+      }
+      originalSetItem(key, value)
+    })
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    expect(loadPrssAppS()?.library.rotations).toEqual([rotation])
+    expect(localStorage.getItem(combatKey)).toBe(combatRaw)
+    expect(localStorage.getItem(rotationsKey)).toBe(rotationsRaw)
+    expect(localStorage.getItem(APPSTORECMBTINDEX)).toBeNull()
+    expect(localStorage.getItem(APPSTOREINVR)).toBeNull()
+
+    failWrite = false
+    expect(loadPrssAppS()?.library.rotations).toEqual([rotation])
+    expect(localStorage.getItem(combatKey)).toBeNull()
+    expect(localStorage.getItem(rotationsKey)).toBeNull()
+    expect(localStorage.getItem(APPSTORECMBTINDEX)).toContain('recordsById')
+    expect(localStorage.getItem(APPSTOREINVR)?.startsWith('wwcalc-lz1:')).toBe(true)
   })
 
   it('can defer every artifact category without changing working scenarios', () => {

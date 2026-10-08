@@ -1,15 +1,15 @@
 /*
   Author: Runor Ewhro
   Description: Protects the Home, Read, and Simulation hierarchy together with
-               the temporary compatibility and development routes.
+               the redirects for retired routes.
 */
 
 import { describe, expect, it } from 'vitest'
 import {
   APP_NAVIGATION,
   APP_ROUTES,
+  LEGACY_CALCULATOR_ALIAS,
   LEGACY_PROGRESSION_ALIAS,
-  LEGACY_SIMULATION_ROUTES,
   SIMULATION_ROUTES,
   isLegacySimulationRoute,
   isPersistentWorkspaceRoute,
@@ -28,8 +28,9 @@ describe('simulation route contract', () => {
     expect(isSimulationSurfaceRoute('/optimizer', 'optimizer')).toBe(true)
   })
 
-  it('keeps hidden development routes out of canonical surface matching', () => {
-    expect(Object.values(LEGACY_SIMULATION_ROUTES).every(isLegacySimulationRoute)).toBe(true)
+  it('keeps retired routes out of canonical surface matching', () => {
+    expect(isLegacySimulationRoute(LEGACY_CALCULATOR_ALIAS)).toBe(true)
+    expect(isLegacySimulationRoute('/legacy-optimizer')).toBe(false)
     expect(isSimulationSurfaceRoute('/benchmark', 'modulation')).toBe(false)
     expect(isSimulationSurfaceRoute('/calculator', 'modulation')).toBe(false)
   })
@@ -40,7 +41,8 @@ describe('simulation route contract', () => {
     expect(resolveLegacyRoute('/calculator/optimizer')).toBe('/optimizer')
     expect(resolveLegacyRoute('/calculator/benchmark/report')).toBe('/modulation/report')
     expect(resolveLegacyRoute('/calculator/rotation')).toBe('/rotation')
-    expect(resolveLegacyRoute('/calculator')).toBeNull()
+    expect(resolveLegacyRoute(LEGACY_CALCULATOR_ALIAS)).toBe('/modulation')
+    expect(resolveLegacyRoute('/legacy-optimizer')).toBeNull()
   })
 
   it('keeps the shared workspace mounted across its three canonical tools', () => {
@@ -50,7 +52,7 @@ describe('simulation route contract', () => {
       SIMULATION_ROUTES.showcase,
     ].every(isPersistentWorkspaceRoute)).toBe(true)
     expect(isPersistentWorkspaceRoute(SIMULATION_ROUTES.rotation)).toBe(false)
-    expect(isPersistentWorkspaceRoute(LEGACY_SIMULATION_ROUTES.calculator)).toBe(false)
+    expect(isPersistentWorkspaceRoute(LEGACY_CALCULATOR_ALIAS)).toBe(false)
   })
 })
 
@@ -67,7 +69,7 @@ describe('application navigation contract', () => {
   it('resolves a surface with the router\'s own matching, trailing slash included', () => {
     expect(surfaceAt(SIMULATION_ROUTES.modulation)).toBe('modulation')
     expect(surfaceAt(`${SIMULATION_ROUTES.modulation}/`)).toBe('modulation')
-    expect(surfaceAt(LEGACY_SIMULATION_ROUTES.optimizer)).toBe('legacy-optimizer')
+    expect(surfaceAt('/legacy-optimizer')).toBeNull()
     expect(surfaceAt(`${SIMULATION_ROUTES.modulation}/report`)).toBeNull()
     expect(surfaceAt(APP_ROUTES.guides)).toBeNull()
     expect(isPersistentWorkspaceRoute(`${SIMULATION_ROUTES.optimizer}/`)).toBe(true)

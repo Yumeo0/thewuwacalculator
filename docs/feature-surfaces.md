@@ -19,7 +19,7 @@ Shared ownership is divided by purpose:
 - `shell`: the route boundary, Simulation-wide providers, imports, and context menus
 - `workspace`: the persistent roster, rail, loadout, and shared board
 - `features`: reusable resonator, weapon, Echo, team, enemy, buff, inventory, and result capabilities
-- `surfaces`: route-selectable Modulation, Rotation, Showcase, Optimizer, Suggestions, and legacy tools
+- `surfaces`: route-selectable Modulation, Rotation, Showcase, Optimizer, and Suggestions
 - `model` and `ui`: Simulation-owned presentation logic and primitives
 - `api`: explicit contracts used by app routing or another feature module
 
@@ -47,6 +47,12 @@ Primary root: [src/modules/simulation/surfaces/optimizer](../src/modules/simulat
 
 Optimizer searches inventory and theoretical Echo combinations against a selected skill or rotation target. Preview changes stay detached until an explicit equip action.
 
+### Suggestions
+
+Primary root: [src/modules/simulation/surfaces/suggestions](../src/modules/simulation/surfaces/suggestions)
+
+Suggestions ranks main-stat layouts, Sonata set plans, and weapons against a selected skill or rotation target. It shares the mounted build workspace and keeps candidate changes detached until the user applies them.
+
 ### Shared Workspace And Inventory
 
 Primary roots:
@@ -55,7 +61,7 @@ Primary roots:
 - [src/modules/simulation/features/inventory](../src/modules/simulation/features/inventory)
 - [src/modules/simulation/features/echoes](../src/modules/simulation/features/echoes)
 
-Modulation, Showcase, and Optimizer share the same mounted roster and rail. The rail remains editable on each workspace tool. Inventory is a cross-tool library rather than a standalone route.
+Modulation, Showcase, Optimizer, and Suggestions share the same mounted roster and rail. The rail remains editable on each workspace tool. Inventory is a cross-tool library rather than a standalone route.
 
 ## Read
 
@@ -63,7 +69,7 @@ Primary root: [src/modules/read](../src/modules/read)
 
 Read owns the Guides, Docs, Changelog, Privacy, and Terms pages. Home has a What's New section organized by release. Authored content is in `src/data/content`.
 
-## Settings And System
+## Calibration And System
 
 - [src/modules/calibration](../src/modules/calibration) owns the Calibration page: appearance, application preferences, exports and data management.
 - [src/modules/system](../src/modules/system) owns fallback system pages such as Not Found.

@@ -1,10 +1,7 @@
-
-
 html.mui .app-modal-overlay {
   --mpg-zoom: 1.3;
   padding: 0;
 }
-
 
 html.mui .app-modal-overlay :is(
   .cfm,
@@ -23,7 +20,6 @@ html.mui .app-modal-overlay :is(
   max-height: calc((100dvh - 80px) / var(--mpg-zoom)) !important;
   border-radius: 11px;
 }
-
 
 html.mui .app-modal-overlay .app-modal-panel:not(
   .cfm,
@@ -75,7 +71,6 @@ html.mui .tst-stack {
 html.mui .tst-stack .tst {
   width: 100%;
 }
-
 
 html.mui .app-modal-overlay .app-modal-panel.irc-band {
   zoom: var(--mpg-zoom);

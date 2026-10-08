@@ -13,7 +13,7 @@ import { loadEnemySummary } from '@/data/catalog/enemyCatalogService'
 import { AppModal } from '@/shared/ui/AppModal'
 import { ModalHeader } from '@/shared/ui/AppModalShell'
 import { Tooltip } from '@/shared/ui/Tooltip'
-import { getLinkedWhatsNew, ltstCurChngE } from '@/data/content/changelogEntries'
+import { getLatestWhatsNew } from '@/data/content/changelogEntries'
 import { STATE_LABELS, STATUS_DATA } from '@/data/content/appStatus'
 import { whatsNewHref } from '@/shared/lib/appRoutes'
 
@@ -29,7 +29,7 @@ interface AppSttsMdlPr {
 
 export function AppSttsMdl({ visible, open, closing = false, onClose }: AppSttsMdlPr) {
   const navigate = useNavX()
-  const linkedWhatsNew = getLinkedWhatsNew(ltstCurChngE)
+  const linkedWhatsNew = getLatestWhatsNew()
   const latestRoute = linkedWhatsNew ? whatsNewHref() : '/changelog'
   const latestLabel = linkedWhatsNew ? "See What's New" : 'See Changelog'
   // the enemy catalog is fetched, so its count arrives after the rest

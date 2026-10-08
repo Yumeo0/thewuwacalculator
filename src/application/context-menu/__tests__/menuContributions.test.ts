@@ -5,7 +5,7 @@
 */
 
 import { describe, expect, it } from 'vitest'
-import { createMenuContributionRegistry, isLegacyMenuRoute } from '../menuContributions'
+import { createMenuContributionRegistry } from '../menuContributions'
 
 describe('context-menu contributions', () => {
   it('composes current target actions in group order without duplicate entries', () => {
@@ -39,13 +39,5 @@ describe('context-menu contributions', () => {
     expect(registry.resolve('rotation.node', { editable: true })).toHaveLength(1)
     unregister()
     expect(registry.resolve('rotation.node', { editable: true })).toEqual([])
-  })
-
-  it('identifies only the mounted legacy surfaces', () => {
-    expect(isLegacyMenuRoute('/calculator')).toBe(true)
-    expect(isLegacyMenuRoute('/calculator/')).toBe(true)
-    expect(isLegacyMenuRoute('/legacy-optimizer')).toBe(true)
-    expect(isLegacyMenuRoute('/modulation')).toBe(false)
-    expect(isLegacyMenuRoute('/calculator/optimizer')).toBe(false)
   })
 })

@@ -1019,7 +1019,7 @@
 
 .reduce-animation .inv-pinged { animation: none; }
 
-@media (max-width: 64rem) {
+@media (max-width: __APP_WIDE_RAIL_MIN_PX__px) {
   .inv-body--readout { grid-template-columns: minmax(0, 1fr); }
   .inv-rdt { position: static; }
 }

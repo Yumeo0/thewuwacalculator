@@ -139,10 +139,10 @@ function makeLayout(state: PersistedState) {
     version: state.version,
     ui: {
       preferences: { ...state.ui.preferences, showcaseCards: {} },
-      leftPaneView: state.ui.leftPaneView,
       suggsViewMode: state.ui.suggsViewMode,
       showSubHits: state.ui.showSubHits,
       compactInv: state.ui.compactInv,
+      groupInv: state.ui.groupInv,
       seeEquipped: state.ui.seeEquipped,
       haveHistory: state.ui.haveHistory,
       historyMax: state.ui.historyMax,
@@ -630,7 +630,7 @@ export function loadPrssInvS(scope: 'gear' | 'saved' | 'all' = 'all'): Persisted
 export function saveAppState(
   state: PersistedState,
   options: { domains?: PersistKey[] } = {},
-): void {
+): boolean {
   // Ordinary store writes already pass canonical state. Normalizing the whole
   // application here used to clone/rebuild every scenario and inventory domain
   // even when one small domain was dirty. Keep full normalization for the
@@ -642,16 +642,18 @@ export function saveAppState(
       persistedState = normalizeAppState(state as unknown as PersistedUnknown)
     } catch (error) {
       console.warn('[storage] failed to normalize app state for persistence', error)
-      return
+      return false
     }
   }
 
+  let succeeded = true
   const domains = new Set(options.domains ?? ALL_DOMAIN_KEYS)
   // Always migrate cards before a layout write can remove their legacy copy.
   if (domains.has('ui.layout') || domains.has('ui.showcaseCards')) {
     try { writeShowcaseCards(persistedState.ui.preferences.showcaseCards) }
     catch (error) {
       console.warn('[storage] failed to persist Showcase cards', error)
+      succeeded = false
       domains.delete('ui.layout')
     }
     domains.delete('ui.showcaseCards')
@@ -662,6 +664,7 @@ export function saveAppState(
         writeCombatWorkspace(persistedState.combat)
       } catch (error) {
         console.warn('[storage] failed to persist combat workspace', error)
+        succeeded = false
       }
       continue
     }
@@ -670,6 +673,7 @@ export function saveAppState(
     const result = spec.schema.safeParse(slice)
     if (!result.success) {
       console.error(`[storage] refusing to save invalid ${spec.label}`, result.error)
+      succeeded = false
       continue
     }
 
@@ -677,6 +681,7 @@ export function saveAppState(
       localStorage.setItem(spec.storageKey, encodePersistedDomain(key, result.data))
     } catch (error) {
       console.warn(`[storage] failed to persist ${spec.label}`, error)
+      succeeded = false
     }
   }
 
@@ -685,6 +690,7 @@ export function saveAppState(
   } catch (error) {
     console.warn('[storage] failed to remove retired session state', error)
   }
+  return succeeded
 }
 
 export function markPrssDmns(keys: PersistKey[]): void {

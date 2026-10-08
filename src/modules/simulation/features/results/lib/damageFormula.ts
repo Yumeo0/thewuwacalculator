@@ -1136,15 +1136,3 @@ export function formBrkd(
       return drctBrkd(entry, finalStats, enemy, level)
   }
 }
-
-export function skillFormula(
-  entry: FeatureResult,
-  finalStats: FinalStats,
-  enemy: EnemyProfile,
-  level: number,
-  combatState: CombatState,
-): string {
-  return fmtBreakdown(
-    formBrkd(entry, finalStats, enemy, level, combatState),
-  )
-}

@@ -4,6 +4,7 @@
                routing, and loadouts with optional externally controlled channels.
 */
 
+import { flushSync } from 'react-dom'
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { isEchoSaved, isBuildSaved, selectSavedEchoSignatures, selectSavedBuildSignatures } from '@/application/state/savedGearStatus'
 
@@ -101,7 +102,7 @@ import {
   tglTrcNd,
 } from '@/modules/simulation/features/resonator/lib/buildEdits.ts'
 import { withDefIconM, withDefResMg, withDefWpnMg } from '@/shared/lib/imageFallback.ts'
-import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { useMobileUi } from '@/shared/responsive/mobileUi'
 import { MobileConsoleBar } from '@/modules/simulation/features/teams/mobile/MobileConsoleBar.tsx'
 import type { ConsolePage } from '@/modules/simulation/features/teams/mobile/MobileConsoleBar.tsx'
 
@@ -1284,8 +1285,10 @@ function ResonatorView({
 
   const onTeamSet = useCallback((supports: readonly (string | null)[]) => {
     if (!canManageSeat) return
+    // The store write renders synchronously, so commit the closing phase first
+    // or the new team remounts an open picker.
+    flushSync(() => seatPicker.hide())
     setTeam(supports)
-    seatPicker.hide()
     if (supports.includes(member.id)) return
     // The staged console is seat-based; keep it attached to the member that now
     // occupies the edited slot.

@@ -9,11 +9,11 @@ import type { CombatScenario } from '@/domain/entities/combatScenario.ts'
 import type { ResRuntime } from '@/domain/entities/runtime'
 import type { SimResult } from '@/engine/pipeline/types'
 import type { PrepWork } from '@/engine/pipeline/preparedWorkspace'
-import { makeStateSummary, type StateGroup } from '@/modules/simulation/model/stateSummary.ts'
+import { makeStateSummary, type StateGroup, type StatStateSummaryTarget } from '@/modules/simulation/model/stateSummary.ts'
 
 export interface MemberAnalysis {
   simulation: SimResult | null
-  stateGroupsForStat: (statKey: string) => StateGroup[]
+  stateGroupsForStat: (statKey: string, scope?: StatStateSummaryTarget['scope']) => StateGroup[]
 }
 
 export interface MemberAnalysisSource {
@@ -33,7 +33,7 @@ export function useMemberAnalysis(
   const analyzedRuntime = memberId ? source?.runtimesById[memberId] ?? runtime : null
   const combatGraph = source?.workspace?.combatGraph ?? null
   const simulation = source?.simulation ?? null
-  const stateGroupsForStat = useCallback((statKey: string) => makeStateSummary(
+  const stateGroupsForStat = useCallback((statKey: string, scope?: StatStateSummaryTarget['scope']) => makeStateSummary(
     analyzedRuntime,
     source?.runtimesById ?? {},
     combatGraph,
@@ -42,8 +42,7 @@ export function useMemberAnalysis(
       cntxByResId: source?.workspace?.cntxByResId,
       enemyProfile: source?.scenario.target,
       activeRuntime: source?.subjectRuntime,
-      showAllStates: false,
-      statTarget: { key: statKey },
+      statTarget: { key: statKey, scope },
     },
   ), [analyzedRuntime, combatGraph, source])
 

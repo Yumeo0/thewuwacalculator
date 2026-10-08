@@ -1,4 +1,0 @@
-.frosted-aurora .optimizer-character-settings,
-.frosted-aurora .optimizer-search-results {
-  background: color-mix(in srgb, var(--bg-main-color, rgba(255, 255, 255, 0.24)) 55%, rgba(255, 255, 255, 0.09)) !important;
-}

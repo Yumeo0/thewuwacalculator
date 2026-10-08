@@ -6,10 +6,11 @@
 
 import path from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 import { loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import svgr from 'vite-plugin-svgr'
+import responsivePolicy from './src/shared/responsive/policy.json'
 import {
   onExchangeCode,
   onRefreshToken,
@@ -103,8 +104,34 @@ function googleAuthDevPlugin(env: GglAuthEnv): Plugin {
   }
 }
 
+function responsivePolicyPlugin(): Plugin {
+  const substitutions: Record<string, string> = {
+    __APP_LAYOUT_MIN_WIDTH_PX__: String(responsivePolicy.layoutMinWidthPx),
+    __APP_DENSE_LAYOUT_MAX_PX__: String(responsivePolicy.breakpointsPx.denseLayoutMax),
+    __APP_STACK_LAYOUT_MAX_PX__: String(responsivePolicy.breakpointsPx.stackLayoutMax),
+    __APP_WIDE_RAIL_MIN_PX__: String(responsivePolicy.breakpointsPx.wideRailMin),
+  }
+
+  return {
+    name: 'responsive-policy',
+    enforce: 'pre',
+    transform(source, id) {
+      if (!id.split('?')[0]?.endsWith('.css')) return null
+
+      let transformed = source
+      for (const [placeholder, value] of Object.entries(substitutions)) {
+        transformed = transformed.replaceAll(placeholder, value)
+      }
+      if (transformed.includes('__APP_')) {
+        throw new Error(`Unknown responsive policy placeholder in ${id}`)
+      }
+      return transformed === source ? null : { code: transformed, map: null }
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), svgr(), googleAuthDevPlugin(buildGoogleAuthEnv(mode))],
+  plugins: [responsivePolicyPlugin(), react(), svgr(), googleAuthDevPlugin(buildGoogleAuthEnv(mode))],
   // brotli-wasm resolves its .wasm asset through import.meta.url, which dep
   // pre-bundling would break; excluding it lets vite serve the module as-is.
   optimizeDeps: {
@@ -112,6 +139,8 @@ export default defineConfig(({ mode }) => ({
   },
   test: {
     setupFiles: ['vitest.setup.ts'],
+    // local-only archives are not part of the maintained test surface
+    exclude: [...configDefaults.exclude, 'legacy/**', 'scripts/**', 'wip/**'],
   },
   worker: {
     format: 'es',

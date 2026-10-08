@@ -27,7 +27,9 @@ import {
   mkForteTree,
 } from '@/modules/simulation/features/resonator/lib/forteTree.ts'
 import { getResonator, type ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
+import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
 import { SeatStack } from './SeatStack.tsx'
+import { TeamEditButton } from '@/modules/simulation/features/teams/TeamEditButton.tsx'
 import { ModulationStats } from './Stats.tsx'
 import {
   makeStatsTree,
@@ -334,6 +336,8 @@ interface StatesProps {
   onMember: (resonatorId: string) => void
   /** Whether the loadout-hosted member selector is outside the visible board. */
   seatOut: boolean
+  /** Scenario whose team the seat's edit control changes; null hides it. */
+  teamScenarioId: CombatScenarioId | null
   /** Optional evaluation snapshots that enrich otherwise live analysis. */
   activeBuild: EvaluationBuildSnapshot | null
   referenceBuild: EvaluationBuildSnapshot | null
@@ -354,11 +358,13 @@ function PanelSeat({
   memberId,
   onMember,
   out,
+  teamScenarioId,
 }: {
   roster: ResView[]
   memberId: string | null
   onMember: (resonatorId: string) => void
   out: boolean
+  teamScenarioId: CombatScenarioId | null
 }) {
   const seated = roster.find((mate) => mate.id === memberId) ?? roster[0] ?? null
   if (!seated) return null
@@ -368,6 +374,7 @@ function PanelSeat({
       <span className="pgs-seat-rail" aria-hidden="true" />
       <SeatStack roster={roster} memberId={memberId} onMember={onMember} hidden={!out} />
       <b className="pgs-seat-name">{seated.name}</b>
+      {teamScenarioId ? <TeamEditButton scenarioId={teamScenarioId} hidden={!out} /> : null}
     </div>
   )
 }
@@ -415,6 +422,7 @@ export function ModulationView({
   memberId,
   onMember,
   seatOut,
+  teamScenarioId,
   activeBuild,
   referenceBuild,
   maximumBuild,
@@ -528,7 +536,7 @@ export function ModulationView({
     <div className="pgs wk-ink rte-scope" ref={panel} style={memberAccent(forte.member)}>
       <div className="pgs-head">
         <h4 className="pgs-title">{VIEW_TITLES[view]}</h4>
-        <PanelSeat roster={roster} memberId={memberId} onMember={onMember} out={seatOut} />
+        <PanelSeat roster={roster} memberId={memberId} onMember={onMember} out={seatOut} teamScenarioId={teamScenarioId} />
         <span className="pgs-spacer" />
 
         {report ? (

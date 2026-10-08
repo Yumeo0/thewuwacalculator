@@ -35,7 +35,7 @@ import { Select, type SelectOption } from '@/application/ui/Select'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback'
 import { Crown, Hammer, Minus, Plus, RotateCcw, Rows3, TriangleAlert, X } from 'lucide-react'
-import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { useMobileUi } from '@/shared/responsive/mobileUi'
 import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 
 const MAX_COST = 12

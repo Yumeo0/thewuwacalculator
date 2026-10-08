@@ -104,6 +104,11 @@ for (const file of listFiles(SRC)) {
 
     const target = resolveSourceImport(file, specifier)
     if (!target) continue
+    const sourceRelativeTarget = path.relative(SRC, target)
+    if (sourceRelativeTarget === '..' || sourceRelativeTarget.startsWith(`..${path.sep}`) || path.isAbsolute(sourceRelativeTarget)) {
+      errors.push(`${sourceRelative(file)} -> ${specifier}: app source cannot import files outside src/`)
+      continue
+    }
     const targetLayer = layerOf(target)
     if (!targetLayer) continue
 

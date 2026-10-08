@@ -7,6 +7,7 @@
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect as useLytFfct, useMemo, useRef, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useSimulationSurface } from '@/modules/simulation/api/route'
+import { RosterHeld } from '@/modules/simulation/api/rosterHeld'
 import { ChromeHeader } from '@/app/shell/ChromeHeader'
 import { AppTools } from '@/app/shell/AppTools'
 import { ChromeToolsProv } from '@/application/ui/toolsPort'
@@ -17,8 +18,7 @@ import type { SimulationPageId } from '@/application/navigation/appIndex'
 import type { ChromeIndexCtx } from '@/application/navigation/chromeIndex'
 import { useTstStr } from '@/shared/util/toastStore.ts'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
-import { useAppCtxMen, useMenuContributions } from '@/application/context-menu/AppContextMenu'
-import { isLegacyMenuRoute } from '@/application/context-menu/menuContributions'
+import { useMenuContributions } from '@/application/context-menu/AppContextMenu'
 import { SIMULATION_SURFACES, isSimulationRoute, isSimulationSurfaceRoute } from '@/shared/lib/appRoutes'
 import { CURRENT_CHANGE_NOTICE, CURRENT_CHANGE_NOTICE_KEY } from '@/data/content/currentChangelogNotice'
 import { RtMenuProv } from '@/app/shell/context-menu/RouteMenuProvider'
@@ -28,9 +28,8 @@ import { useCkBoot } from '@/app/hooks/useCookieBootstrap'
 import { usePageTrck } from '@/app/hooks/usePageTracking'
 import { useSeoMeta } from '@/app/hooks/useSeoMeta'
 import { useShellTheme } from '@/app/shell/useShellTheme'
-import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay'
 import { GlobalHosts } from '@/app/shell/GlobalHosts'
-import { hasMobileRoute, useMobileUi } from '@/shared/navigation/mobileUi'
+import { hasMobileRoute, useMobileUi } from '@/shared/responsive/mobileUi'
 
 const CHNGTSTSTORE = 'seen-changelog-version'
 const RosterColumn = lazy(async () => ({ default: (await import('@/modules/simulation/api/roster')).RosterColumn }))
@@ -54,8 +53,6 @@ export function AppLayout() {
 function AppLayoutContent() {
   const location = useLocation()
   const rtChrmMenu = useRtChrmMen()
-  const contextMenu = useAppCtxMen()
-  const wasLegacyMenuRoute = useRef(false)
 
   const { updateToast, shellClassName } = useShellTheme()
 
@@ -136,12 +133,6 @@ function AppLayoutContent() {
   useMenuContributions('app.background', backgroundContributions)
 
   useEffect(() => {
-    const legacy = isLegacyMenuRoute(location.pathname)
-    if (legacy && !wasLegacyMenuRoute.current) contextMenu.close()
-    wasLegacyMenuRoute.current = legacy
-  }, [contextMenu, location.pathname])
-
-  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || isDtblVntTgt(event.target)) {
         return
@@ -217,7 +208,7 @@ function AppLayoutContent() {
               />
 
               {/* Keep the roster outside Outlet so route changes do not remount it. */}
-              {rosterUp ? <Suspense fallback={<div className="blm blm--loading"><AppLoaderOverlay mode="inline" text="Loading roster..." /></div>}><RosterColumn /></Suspense> : null}
+              {rosterUp ? <Suspense fallback={<RosterHeld />}><RosterColumn /></Suspense> : null}
 
               <main className="main-content" ref={aperture}>
                 <Outlet context={{ setStamp } satisfies ChromeIndexCtx} />

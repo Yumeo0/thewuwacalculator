@@ -10,6 +10,7 @@ import type { ManualBuffs } from './manualBuffs'
 import type { OptInventorySelection } from './profile'
 import type { SntSetConds } from './sonataSetConditionals'
 import type { AttributeKey } from './stats'
+import { resolveUnisonBoon } from '@/domain/gameData/unisonBoon'
 import type {
   CombatState,
   EchoInstance,
@@ -98,6 +99,8 @@ export interface EnvironmentTargetModifiers {
 export interface CombatEnvironment {
   /** Shared encounter state, including negative effects applied to the target. */
   combatState: CombatState
+  /** One team-owned stack register; its max and value per stack are derived. */
+  teamEffects: { unisonBoon: number }
   manualEffects: readonly EnvironmentManualEffect[]
   targetModifiers: EnvironmentTargetModifiers
   routing: ScenarioTargetRouting
@@ -184,9 +187,16 @@ export function reviseCombatScenario(
   scenario: CombatScenario,
   changes: Omit<Partial<CombatScenario>, 'id' | 'revision'>,
 ): CombatScenario {
+  const team = changes.team ?? scenario.team
+  const environment = changes.environment ?? scenario.environment
+  const storedStacks = environment.teamEffects.unisonBoon
+  const stacks = resolveUnisonBoon(team.members, storedStacks).stacks
   return {
     ...scenario,
     ...changes,
+    ...(stacks !== storedStacks ? {
+      environment: { ...environment, teamEffects: { ...environment.teamEffects, unisonBoon: stacks } },
+    } : {}),
     id: scenario.id,
     revision: scenario.revision + 1,
   }

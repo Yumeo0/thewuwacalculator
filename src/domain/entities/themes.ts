@@ -64,6 +64,23 @@ export const THEME_PREVIEW: Record<ThemeVariant, string> = {
   'frosted-aurora':
       'linear-gradient(135deg, rgba(240, 255, 255, 0.55) 0%, rgba(170, 220, 255, 0.45) 100%)',
 }
+
+export const THEME_LABELS: Record<ThemeVariant, string> = {
+  light: 'Light',
+  'pastel-pink': 'Pastel Pink',
+  'pastel-blue': 'Pastel Blue',
+  'vibrant-citrus': 'Vibrant Citrus',
+  'glassy-rainbow': 'Glassy Rainbow',
+  'sunlit-haze': 'Sunlit Haze',
+  dark: 'Dark',
+  'dark-alt': 'Dark Alt',
+  'cosmic-rainbow': 'Cosmic Rainbow',
+  'scarlet-nebula': 'Scarlet Nebula',
+  'emerald-forest': 'Emerald Forest',
+  'graphite-pop': 'Graphite Pop',
+  'frosted-aurora': 'Frosted Aurora',
+}
+
 /** The four tokens a theme card needs to paint itself as a small portrait of
  *  the app wearing that theme. Kept here beside THEME_PREVIEW rather than read
  *  off a live element, because the variant classes carry decoration that has no

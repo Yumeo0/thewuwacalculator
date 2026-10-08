@@ -21,8 +21,6 @@ export interface MnlModClpbPa {
   modifiers: MnlMod[]
 }
 
-let cchdMnlModCl: MnlModClpbPa | null = null
-
 const EMPTY_QUICK: ManualBuffs['quick'] = {
   atk: { flat: 0, percent: 0 },
   hp: { flat: 0, percent: 0 },
@@ -112,7 +110,6 @@ export async function writeMnlModC(
     payload: MnlModClpbPa,
 ): Promise<boolean> {
   const nrmlPay = makeModClip(payload.modifiers)
-  cchdMnlModCl = nrmlPay
 
   if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
     return true
@@ -123,26 +120,5 @@ export async function writeMnlModC(
     return true
   } catch {
     return false
-  }
-}
-
-export async function readMnlModCl(): Promise<MnlModClpbPa | null> {
-  if (typeof navigator === 'undefined' || !navigator.clipboard?.readText) {
-    return cchdMnlModCl
-      ? makeModClip(cchdMnlModCl.modifiers)
-      : null
-  }
-
-  try {
-    const text = await navigator.clipboard.readText()
-    const parsed = prsMnlModClp(text)
-    cchdMnlModCl = parsed
-      ? makeModClip(parsed.modifiers)
-      : null
-    return parsed
-  } catch {
-    return cchdMnlModCl
-      ? makeModClip(cchdMnlModCl.modifiers)
-      : null
   }
 }

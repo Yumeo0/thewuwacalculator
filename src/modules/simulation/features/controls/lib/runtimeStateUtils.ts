@@ -141,7 +141,7 @@ function negFfctSrcRf(
   return negFfctSrcs.some((source) => condRfrnCntr(source.enabledWhen, state.controlKey))
 }
 
-export function getSttFfctTg(
+function getSttFfctTg(
   state: SourceState,
 ): Array<NonNullable<EffectDef['targetScope']> | 'self'> {
   const scopes = new Set<NonNullable<EffectDef['targetScope']> | 'self'>()
@@ -194,42 +194,6 @@ export function cllcSrcSttDp(
   return included
 }
 
-export function fltrSrcSttsW(
-  states: SourceState[],
-  shldNcldStt: (state: SourceState) => boolean,
-  shldViewStt: (state: SourceState) => boolean,
-): SourceState[] {
-  const ncldCntrKeys = cllcSrcSttDp(states, shldNcldStt)
-
-  return states.filter((state) =>
-    ncldCntrKeys.has(state.controlKey)
-    && shldViewStt(state),
-  )
-}
-
-export function sttHasTeamFc(
-  state: SourceState,
-  options: { ncldTeamWide: boolean },
-): boolean {
-  const hasTeamFcngF = getSttFfctTg(state).some((targetScope) => {
-    if (
-      targetScope === 'active'
-      || targetScope === 'activeOther'
-      || targetScope === 'otherTeammates'
-    ) {
-      return true
-    }
-
-    return options.ncldTeamWide && targetScope === 'teamWide'
-  })
-
-  if (hasTeamFcngF) {
-    return true
-  }
-
-  return negFfctSrcRf(state)
-}
-
 export function getStateTeamTag(state: SourceState): 'active' | 'activeOther' | null {
   const effects = getSttFfctTg(state)
 
@@ -270,13 +234,6 @@ export function getTeamTgtPt(
       }
     })
     .filter((option): option is { value: string; label: string } => option != null)
-}
-
-export function getCntrNctvV(
-  control: ResStateControl,
-  runtime?: ResRuntime,
-): boolean | number | string {
-  return getResCntrNc(control, runtime)
 }
 
 export function applyCscdRst(

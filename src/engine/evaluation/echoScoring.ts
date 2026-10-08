@@ -614,32 +614,3 @@ export function getMkScrPrcn(charId: string, echoes: Array<EchoInstance | null>)
 
   return maxMkScr > 0 ? (totalScore / maxMkScr) * 100 : 0
 }
-
-// aggregate all echo stat contributions into one totals object
-export function ggrgEchoStts(echoes: Array<EchoInstance | null>): Record<string, number> {
-  const totals: Record<string, number> = {}
-
-  for (const echo of echoes) {
-    if (!echo) {
-      continue
-    }
-
-    // add primary main stat contribution
-    const primaryKey = echo.mainStats.primary.key
-    totals[primaryKey] = (totals[primaryKey] ?? 0) + echo.mainStats.primary.value
-
-    // add secondary main stat contribution
-    const secondaryKey = echo.mainStats.secondary.key
-    totals[secondaryKey] = (totals[secondaryKey] ?? 0) + echo.mainStats.secondary.value
-
-    // add all substat contributions
-    for (const [key, value] of Object.entries(echo.substats)) {
-      totals[key] = (totals[key] ?? 0) + value
-    }
-  }
-
-  // remove zero-value entries from the final result
-  return Object.fromEntries(
-      Object.entries(totals).filter(([, value]) => value !== 0),
-  )
-}

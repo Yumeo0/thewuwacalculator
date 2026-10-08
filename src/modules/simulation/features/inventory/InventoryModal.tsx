@@ -8,7 +8,7 @@ import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { CSSProperties as CssProps, HTMLAttributes as HtmlAttrs, KeyboardEvent as KeyboardEvent, MouseEvent as RctMsVnt, ReactNode } from 'react'
 import {ArrowBigDownDash as ArrowDownIcon, Check, ChevronLeft, ChevronRight, Clipboard, Copy, Maximize2, Minimize2, Pencil, Plus, Rows3, Scissors, Search, SlidersHorizontal, Gem, Trash2, X} from 'lucide-react'
-import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { useMobileUi } from '@/shared/responsive/mobileUi'
 import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import type { SavedEcho, SavedBuild } from '@/domain/entities/inventoryStorage'
 import type { EchoInstance, WeaponState } from '@/domain/entities/runtime'
@@ -46,6 +46,7 @@ import {
 import { ConfirmHost } from '@/shared/ui/ConfirmationModal'
 import { useConfirm } from '@/shared/hooks/useConfirmation.ts'
 import { useMediaQuery } from '@/shared/hooks/useMediaQuery.ts'
+import { RESPONSIVE_MEDIA } from '@/shared/responsive/policy'
 import { useCtxBuilder } from '@/modules/simulation/shell/context-menu/useContextMenuBuilder.ts'
 import { useTstStr } from '@/shared/util/toastStore.ts'
 import {
@@ -695,36 +696,15 @@ export function InvMdl({
   onRmvInvBld: onRmvInvBld,
   onClrInvBlds: onClrInvBlds,
 }: InvMdlPrps) {
-  const prssCmpcInv = useAppStore((state) => state.ui.compactInv)
+  const persistedCompact = useAppStore((state) => state.ui.compactInv)
   const setPrssCmpcI = useAppStore((state) => state.setCmpInv)
-  const persistedGrouped = useAppStore((state) => state.ui.groupInv)
+  const grouped = useAppStore((state) => state.ui.groupInv)
   const setGrouped = useAppStore((state) => state.setGrpInv)
 
   const mobile = useMobileUi()
-  const [compact, setCmpcInv] = useState(prssCmpcInv)
+  const [compact, setCompact] = useState(persistedCompact)
   const [gridSwtc, setGridSwtc] = useState(false)
   const cmpcTglTmrRe = useRef<number | null>(null)
-  const compactRef = useRef(compact)
-  const [grouped, setGroupedDraft] = useState(persistedGrouped)
-  const groupedRef = useRef(grouped)
-  useEffect(() => {
-    compactRef.current = compact
-  }, [compact])
-  useEffect(() => {
-    groupedRef.current = grouped
-  }, [grouped])
-  useEffect(() => () => {
-    // defer persistence until unmount so rapid compact/full toggles do not spam the app store while the animation is
-    // still in progress.
-    const latest = useAppStore.getState().ui.compactInv
-    if (compactRef.current !== latest) {
-      setPrssCmpcI(compactRef.current)
-    }
-    const latestGrouped = useAppStore.getState().ui.groupInv
-    if (groupedRef.current !== latestGrouped) {
-      setGrouped(groupedRef.current)
-    }
-  }, [setGrouped, setPrssCmpcI])
 
   const titleId = useId()
   const menu = useCtxBuilder()
@@ -749,7 +729,7 @@ export function InvMdl({
   const [activeTab, setActiveTab] = useState<InventoryTab>('echoes')
   const [echoPage, setEchoPage] = useState(0)
   const [buildPage, setBuildPage] = useState(0)
-  const railVisible = useMediaQuery('(min-width: 64rem)')
+  const railVisible = useMediaQuery(RESPONSIVE_MEDIA.wideRail)
   const [previewId, setPreviewId] = useState<string | null>(null)
   const [echoSearch, setEchoSrch] = useState(initEchoSrch)
   const [buildSearch, setBldSrch] = useState('')
@@ -789,15 +769,16 @@ export function InvMdl({
     setFcsdTileI(null)
     clrCmpcTglTm()
     setGridSwtc(true)
+    setPrssCmpcI(!compact)
     cmpcTglTmrRe.current = window.setTimeout(() => {
-      setCmpcInv((current) => !current)
+      setCompact(!compact)
       setEchoPage(0)
       cmpcTglTmrRe.current = null
       window.requestAnimationFrame(() => {
         setGridSwtc(false)
       })
     }, 110)
-  }, [clrCmpcTglTm, gridSwtc])
+  }, [clrCmpcTglTm, compact, gridSwtc, setPrssCmpcI])
 
   const filteredBag = useMemo(() => {
     // search includes ids and uids so imported echoes remain findable even when duplicate names or generated ids are
@@ -1372,7 +1353,7 @@ export function InvMdl({
         aria-label={activeTab === 'echoes' ? 'Group by sonata' : 'Group by resonator'}
         aria-pressed={grouped}
         onClick={() => {
-          setGroupedDraft(!grouped)
+          setGrouped(!grouped)
           setEchoPage(0)
           setBuildPage(0)
         }}

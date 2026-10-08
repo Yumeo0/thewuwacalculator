@@ -413,26 +413,6 @@ export function getNegFfctEn(
   return byKey.get(key) ?? null
 }
 
-export function getNegFfctFf(
-    runtime: ResRuntime,
-    key: NegEffectKey,
-    runtimesById?: Readonly<Record<string, ResRuntime>>,
-): number {
-  const entry = getNegFfctEn(runtime, key, runtimesById)
-  if (!entry) {
-    return 0
-  }
-
-  if (entry.stackMode === 'fixedMax') {
-    return entry.max
-  }
-
-  return Math.min(
-    Math.max(0, Math.floor(runtime.state.combat[key] ?? 0)),
-    entry.max,
-  )
-}
-
 export function normNegFfctC(
     runtime: ResRuntime,
     runtimesById?: Readonly<Record<string, ResRuntime>>,

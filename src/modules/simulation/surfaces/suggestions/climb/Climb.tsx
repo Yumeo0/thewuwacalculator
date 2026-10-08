@@ -5,8 +5,10 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
+import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties as CssProps, KeyboardEvent as ReactKeyEvt } from 'react'
+import { AnchoredAppPopup, useAppPopup, useAppPopupDismiss } from '@/shared/ui/AppPopup.tsx'
+import type { CSSProperties as CssProps, KeyboardEvent as ReactKeyEvt, ReactNode } from 'react'
 import type { WeaponPlanSet } from '@/domain/entities/suggestions.ts'
 import type { SntSetConds } from '@/domain/entities/sonataSetConditionals.ts'
 import { formatCompactNum, formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
@@ -139,6 +141,167 @@ function Out({ row, index }: { row: ClimbRow, index: number }) {
   )
 }
 
+/* A plan can offer one set group twice; each piece takes a different set from it. */
+function platePieces(trays: ClimbTray[]) {
+  const used = new Set<string>()
+  return trays.map((tray) => {
+    const options = tray.names.map((name, index) => ({ name, icon: tray.coins[index] ?? null }))
+    const pick = options.find((option) => !used.has(option.name))
+      ?? options[0]
+      ?? { name: tray.name ?? '', icon: tray.coins[0] ?? null }
+    used.add(pick.name)
+    return { tray, pick, alts: options.filter((option) => option !== pick) }
+  })
+}
+
+const Spark = () => <i className="clb__spark" aria-hidden />
+
+function Plate({ row, leaf, onApply }: { row: ClimbRow, leaf: ReactNode, onApply: (row: ClimbRow) => void }) {
+  const weapon = row.weapon
+  const detail = useAppPopup()
+  const barRef = useRef<HTMLDivElement>(null)
+  const idRef = useRef<HTMLDivElement>(null)
+  const openRef = useRef<HTMLButtonElement>(null)
+  const detailRef = useRef<HTMLDivElement>(null)
+  useAppPopupDismiss({
+    open: detail.visible,
+    onDismiss: detail.hide,
+    hostRef: barRef,
+    popupRef: detailRef,
+    returnFocusRef: openRef,
+  })
+  let art: ReactNode
+  let name: string
+  let band: ReactNode
+
+  if (weapon) {
+    const alt = row.variants[1] ?? null
+    art = (
+      <DisplayImage src={weapon.icon} alt="" className="clb__bar-wpn" decoding="async" onError={withDefIconM} />
+    )
+    name = weapon.name
+    band = (
+      <>
+        <span className="clb__bar-stars" title={`${weapon.rarity}★`}>
+          {Array.from({ length: weapon.rarity }, (_, index) => <Spark key={index} />)}
+        </span>
+        <span>R{weapon.rank}</span>
+        <span title={`ATK ${Math.round(weapon.baseAtk)}`}>
+          <i className="clb__bar-glyph" style={maskStyle(statIconSrc('atk'))} />
+          {Math.round(weapon.baseAtk)}
+        </span>
+        <span title={formatStatKeyLabel(weapon.statKey)}>
+          <i className="clb__bar-glyph" style={maskStyle(statIconSrc(weapon.statKey))} />
+          {formatStatKeyValue(weapon.statKey, weapon.statValue)}
+        </span>
+        {alt ? (
+          <span className="clb__bar-alt">
+            {alt.mode === 'max' ? 'stacked' : 'resting'} {formatCompactNum(alt.damage)}
+            <span className={`clb__d ${tone(alt.delta)}`}>{pct(alt.delta)}</span>
+          </span>
+        ) : null}
+      </>
+    )
+  } else if (row.setPlan) {
+    const pieces = platePieces(row.trays)
+    art = (
+      <span className="clb__bar-sets">
+        {pieces.map((piece, index) => (
+          <DisplayImage key={index} src={piece.pick.icon ?? undefined} alt="" decoding="async" onError={withDefIconM} />
+        ))}
+      </span>
+    )
+    name = pieces.map((piece) => piece.pick.name).join(' + ')
+    band = pieces.map(({ tray, pick, alts }, index) => (
+      <span
+        key={`${tray.key}:${index}`}
+        title={`${tray.lead}pc ${pick.name}${alts.length ? ` (or ${alts.map((entry) => entry.name).join(', ')})` : ''}`}
+      >
+        <DisplayImage src={pick.icon ?? undefined} alt="" className="clb__bar-coin" decoding="async" onError={withDefIconM} />
+        {tray.lead}pc
+        {alts.length ? (
+          <span className="clb__bar-alts">
+            <em>or</em>
+            {alts.map((entry, at) => (
+              <DisplayImage key={at} src={entry.icon ?? undefined} alt="" decoding="async" onError={withDefIconM} />
+            ))}
+          </span>
+        ) : null}
+      </span>
+    ))
+  } else {
+    const changed = row.trays.filter((tray) => !tray.held)
+    const lead = changed[0] ?? row.trays[0]
+    art = <span className="clb__bar-glyph clb__bar-glyph--art" style={maskStyle(lead?.primary?.icon ?? null)} />
+    name = changed.length > 0 ? changed.map((tray) => tray.names[0]).join(', ') : 'Current'
+    band = row.trays.map((tray, index) => (
+      <span key={`${tray.key}:${index}`} className={`clb__bar-slot${tray.held ? '' : ' is-new'}`} title={tray.title}>
+        <small>{tray.lead}c</small>
+        <i className="clb__bar-glyph" style={maskStyle(tray.primary?.icon ?? null)} />
+        {tray.primary?.value}
+      </span>
+    ))
+  }
+
+  const kind = weapon ? 'weapon' : row.setPlan ? 'sets' : 'stats'
+
+  return (
+    <div
+      ref={barRef}
+      className={`clb__bar${detail.visible ? ' is-open' : ''}`}
+      data-kind={kind}
+      style={{ '--clb-result-ink': row.color ?? 'var(--clb-ink)' } as CssProps}
+    >
+      <button
+        ref={openRef}
+        type="button"
+        className="clb__bar-open"
+        aria-label={`Compare ${name} with what is equipped`}
+        aria-haspopup="dialog"
+        aria-expanded={detail.visible}
+        onClick={detail.toggle}
+      />
+      <div key={row.key} className="clb__bar-art">{art}</div>
+      <div ref={idRef} className="clb__bar-id">
+        <div className="clb__bar-name">
+          <b title={name}>{name}</b>
+          <small>No. {row.rank}</small>
+        </div>
+        <div className="clb__bar-band">{band}</div>
+      </div>
+      <div className="clb__bar-fig">
+        <span className="clb__bar-n"><Spark /><b>{formatCompactNum(row.damage)}</b></span>
+        <span className={`clb__bar-tag ${isBase(row) ? 'zero' : tone(row.delta)}`}>{isBase(row) ? 'base' : pct(row.delta)}</span>
+      </div>
+      <button
+        type="button"
+        className="clb__bar-go"
+        disabled={row.equipped}
+        onClick={() => onApply(row)}
+      >
+        <Spark />
+        {row.equipped ? (weapon ? 'Equipped' : 'Current') : (weapon ? 'Equip' : 'Apply')}
+      </button>
+
+      <AnchoredAppPopup
+        visible={detail.visible}
+        open={detail.open}
+        closing={detail.closing}
+        anchorRef={idRef}
+        popupRef={detailRef}
+        preferredPlacement="up"
+        maxHeight={620}
+        offset={10}
+        className="lho-fx clb-leaf"
+        role="dialog"
+        aria-label={`${name} compared with what is equipped`}
+      >
+        {leaf}
+      </AnchoredAppPopup>
+    </div>
+  )
+}
+
 export function Climb({
   kind,
   onKind,
@@ -148,6 +311,7 @@ export function Climb({
   held,
   onHeld,
   onApply,
+  leaf,
   running,
   targetValue,
   targetGroups,
@@ -164,6 +328,8 @@ export function Climb({
   held: number
   onHeld: (index: number) => void
   onApply: (row: ClimbRow) => void
+  /** Materialized comparison for the currently held result. */
+  leaf: ReactNode
   running: boolean
   targetValue: string
   targetGroups: SelectGroup<string>[]
@@ -371,98 +537,77 @@ export function Climb({
           </div>
         </div>
 
-        {rows.length === 0 ? (
-          <p className="clb__empty">
-            {running
-              ? 'Searching...'
-              : 'Pick a target above to see what this build could reach. Make sure echoes are equipped.'}
-          </p>
-        ) : (
-          <div className="clb__ledger" data-running={running ? '' : undefined}>
-            <div className="clb__cols" aria-hidden>
-              <span>#</span>
-              <span>{kind === 'weapons' ? 'Weapon' : 'Build'}</span>
-              <span>Damage</span>
-            </div>
+        <div className={`clb__results app-loader-host${running ? ' running' : ''}`}>
+          {running ? <AppLoaderOverlay text="Searching suggestions..." /> : null}
 
-            <div ref={sheetRef} className="clb__sheet" role="group" aria-label="Results" onKeyDown={onKeyDown}>
-              <svg
-                key={kind}
-                className={`clb__ropes${lit != null ? ' is-lit' : ''}`}
-                width={ropes.width}
-                height={ropes.height}
-                viewBox={`0 0 ${ropes.width || 1} ${ropes.height || 1}`}
-                aria-hidden
-              >
-                {ropes.list.map((rope, order) => (
-                  <path
-                    key={rope.index}
-                    d={rope.d}
-                    pathLength={1}
-                    strokeWidth={rope.width}
-                    className={`clb__rope ${rope.gain ? 'up' : 'dn'}${rope.index === held ? ' is-on' : ''}${rope.index === lit ? ' is-hi' : ''}`}
-                    style={{ animationDelay: `${order * 26}ms` }}
-                  />
-                ))}
-              </svg>
+          {rows.length === 0 ? (
+            running ? null : (
+              <p className="clb__empty">
+                Pick a target above to see what this build could reach. Make sure echoes are equipped.
+              </p>
+            )
+          ) : (
+            <div className="clb__ledger">
+              <div className="clb__cols" aria-hidden>
+                <span>#</span>
+                <span>{kind === 'weapons' ? 'Weapon' : 'Build'}</span>
+                <span>Damage</span>
+              </div>
 
-              {rows.map((row, index) => index === originIndex ? (
-                <button
-                  key={row.key}
-                  type="button"
-                  className={`clb__origin${originIndex === held ? ' is-on' : ''}`}
-                  {...rowProps(originIndex)}
+              <div ref={sheetRef} className="clb__sheet" role="group" aria-label="Results" onKeyDown={onKeyDown}>
+                <svg
+                  key={kind}
+                  className={`clb__ropes${lit != null ? ' is-lit' : ''}`}
+                  width={ropes.width}
+                  height={ropes.height}
+                  viewBox={`0 0 ${ropes.width || 1} ${ropes.height || 1}`}
+                  aria-hidden
                 >
-                  {originBody}
-                </button>
-              ) : renderRow(index))}
+                  {ropes.list.map((rope, order) => (
+                    <path
+                      key={rope.index}
+                      d={rope.d}
+                      pathLength={1}
+                      strokeWidth={rope.width}
+                      className={`clb__rope ${rope.gain ? 'up' : 'dn'}`}
+                      style={{ animationDelay: `${order * 26}ms` }}
+                    />
+                  ))}
+                </svg>
+                <svg
+                  className="clb__ropes clb__ropes--top"
+                  width={ropes.width}
+                  height={ropes.height}
+                  viewBox={`0 0 ${ropes.width || 1} ${ropes.height || 1}`}
+                  aria-hidden
+                >
+                  {ropes.list.filter((rope) => rope.index === held || rope.index === lit).map((rope) => (
+                    <path
+                      key={rope.index}
+                      d={rope.d}
+                      strokeWidth={rope.width}
+                      className={`clb__rope ${rope.gain ? 'up' : 'dn'}${rope.index === held ? ' is-on' : ' is-hi'}`}
+                    />
+                  ))}
+                </svg>
+
+                {rows.map((row, index) => index === originIndex ? (
+                  <button
+                    key={row.key}
+                    type="button"
+                    className={`clb__origin${originIndex === held ? ' is-on' : ''}`}
+                    {...rowProps(originIndex)}
+                  >
+                    {originBody}
+                  </button>
+                ) : renderRow(index))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {rows.length > 0 && heldRow ? (
-        <div className="clb__bar"
-          style={{ '--clb-result-ink': heldRow.color ?? 'var(--clb-ink)' } as CssProps}
-        >
-          <div className="clb__f clb__bar-rk"><span>{heldRow.rank}</span></div>
-
-          {heldRow.weapon ? (
-            <div className="clb__f clb__bar-wpn">
-              <span className="clb__wicon">
-                <DisplayImage src={heldRow.weapon.icon} alt="" decoding="async" onError={withDefIconM} />
-              </span>
-              <b>{heldRow.weapon.name}</b>
-              <em>{heldRow.weapon.rarity}★ · R{heldRow.weapon.rank}</em>
-            </div>
-          ) : null}
-
-          <div className="clb__f clb__bar-led">
-            <div className="spx-trays spx-trays--named">
-              {heldRow.trays.map((tray, index) => (
-                <Tray key={`${tray.key}:${index}`} tray={tray} ink="var(--resonator-accent)" />
-              ))}
-            </div>
-          </div>
-
-          <div className="clb__f clb__bar-out">
-            <b>{formatCompactNum(heldRow.damage)}</b>
-            <em className={`clb__d ${tone(heldRow.delta)}`}>
-              {isBase(heldRow) ? 'base' : pct(heldRow.delta)}
-            </em>
-          </div>
-
-          <button
-            type="button"
-            className={`clb__apply${heldRow.now ? ' is-on' : ''}`}
-            onClick={() => onApply(heldRow)}
-          >
-            {heldRow.weapon
-              ? 'Equip'
-              : 'Apply'}
-          </button>
-        </div>
-      ) : null}
+      {rows.length > 0 && heldRow ? <Plate row={heldRow} leaf={leaf} onApply={onApply} /> : null}
     </div>
   )
 }

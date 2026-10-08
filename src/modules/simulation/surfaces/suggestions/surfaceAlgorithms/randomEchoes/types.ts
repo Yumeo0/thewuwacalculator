@@ -8,12 +8,7 @@ import type { RandGnrtSets } from '@/domain/entities/suggestions'
 import type { EchoInstance } from '@/domain/entities/runtime'
 import type { GameDataMode } from '@/domain/entities/gameDataMode'
 import type { OptStatWeight } from '@/engine/optimizer/search/filtering'
-import type { SuggestContext, SuggestInput } from '@/engine/suggestions/types'
-
-export interface RandomEchoInput extends SuggestInput {
-  settings: RandGnrtSets
-  resultsLimit?: number
-}
+import type { SuggestContext} from '@/engine/suggestions/types'
 
 export interface RandomEchoPrep {
   context: SuggestContext

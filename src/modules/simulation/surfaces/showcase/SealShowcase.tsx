@@ -35,11 +35,11 @@ import {
   ShowcaseEchoMains,
   ShowcaseEchoSubs,
   ShowcaseStatRow,
-  buildTotalsByKey,
   loadoutCv,
   makeRelStats,
   type RelStats,
 } from './Showcase.tsx'
+import { buildTotalsByKey, showcaseSecondaryRows } from './lib/showcaseStats.ts'
 import Thewuwacalculator from '@/assets/thewuwacalculator.svg?react'
 
 export function rarityVars(rarity: number | null | undefined): CssVars | undefined {
@@ -129,7 +129,7 @@ export const SealShowcase = memo(function SealShowcase({
   const cv = loadoutCv(slots, blank)
   const buildByKey = buildTotalsByKey(build.buildStatsView)
   const rows = build.combatStatsView
-    ? [...build.combatStatsView.mainStats, ...build.combatStatsView.secondaryStats]
+    ? [...build.combatStatsView.mainStats, ...showcaseSecondaryRows(build.combatStatsView, build.buildStatsView)]
     : []
   const level = model.runtime?.base.level ?? 1
   const sequence = model.runtime?.base.sequence ?? 0

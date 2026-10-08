@@ -69,6 +69,7 @@ export interface ChngSctn {
 const CHNG_ASSETS = '/assets/app/changelog'
 const S_2026_07_06 = `${CHNG_ASSETS}/2026-07-06`
 const S_2026_07_21 = `${CHNG_ASSETS}/2026-07-21`
+const S_2026_10_05 = `${CHNG_ASSETS}/2026-10-05`
 
 export const curChngEnts: ChngRcrd[] = [
   {
@@ -888,7 +889,7 @@ export const curChngEnts: ChngRcrd[] = [
         `},
       {
         type: 'paragraph',
-        content: `Updated <strong>Suoming</strong>'s <strong>Unison Boom</strong> stack limit.`,
+        content: `Updated <strong>Suoming</strong>'s <strong>Unison Boon</strong> stack limit.`,
       }
     ],
   },
@@ -904,6 +905,271 @@ export const curChngEnts: ChngRcrd[] = [
       }
     ],
     shortDesc: `3.7 patch update`,
+  },
+  {
+    date: '07/10/2026',
+    entries: [
+      {
+        type: 'paragraph',
+        content: `
+          <strong>Calculator &amp; Build Pages</strong><br/>
+          - <strong>The calculator page is gone.</strong> No more sidebar, no more toolbar full of panes.<br/>
+          - The app is now five pages that all share the same build: <strong>Modulation</strong>, <strong>Rotation</strong>, <strong>Showcase</strong>, <strong>Optimizer</strong> and <strong>Suggestions</strong>.<br/>
+          - The Benchmark board became the main page you build on, and the old calculator panes were folded into it.<br/>
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          <strong>Navigation &amp; Home</strong><br/>
+          - Getting around is one header row now, with Docs, Guides, Changelog and Calibration tucked into a <strong>Read</strong> menu.<br/>
+          - The's a new  <strong>Home</strong> (it used to just drop you into the calculator), with a note from me, the newest arrivals and some other stuff.<br/>
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          <strong>Rotation</strong><br/>
+          - <strong>Rotation</strong> moved out of its pane and onto its own page.<br/>
+          - Personal and team rotations are one thing now: you set a team and do whatever, add opening steps before the main loop, and after a run you get a cleaner view plus a Builds section showing every member's echoes and weapon.<br/>
+          - Saved rotations line up on one field and can be compared side by side instead of sitting in a list.<br/>
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          <strong>Showcase</strong><br/>
+          - <strong>Showcase</strong> is its own page too, and has a second card layout, <strong>Seal</strong>.<br/>
+          - The Classic card was redone alongside it.<br/>
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          <strong>Optimizer &amp; Suggestions</strong><br/>
+          - The <strong>Optimizer</strong> UI was rebuilt from the ground up: the old settings console is replaced by the same board as the other build pages, and picking a result previews it right on your build.<br/>
+          - <strong>Suggestions</strong> got its own page as well, with ranked results that also preview on your build.<br/>
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          <strong>Calibration &amp; Guides</strong><br/>
+          - Settings is now <strong>Calibration</strong>, redesigned, with a new <strong>Rover</strong> setting so you can stick to the male Rover, the female Rover, or keep both.<br/>
+          - The <strong>Guides</strong> were rewritten around real screenshots of the app.<br/>
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          <strong>Note</strong><br/>
+          These are all the noteworthy changes, there are a lot more but they're all just UI redesigns.
+        `,
+      },
+    ],
+    whatsNew: {
+      id: '2026-10-05-rebuild',
+      signal: '05.10',
+      tag: 'UPDATE',
+      title: 'New... EVERYTHING!? („°0°„)',
+      summary:
+        'The calculator page is gone: five pages share one build now. Plus a real Home, Rotation and Showcase on their own pages, a rebuilt Optimizer, and Calibration in place of Settings.',
+      lede:
+        "Yeah.. this one's a lot. The old calculator page with its sidebar and pile of panes is gone, and pretty much everything around it got redone too. Here's what actually changed.",
+      hero: {
+        kind: 'image',
+        src: `${S_2026_10_05}/modulation-page.webp`,
+        ar: 2158 / 1120,
+        alt: 'Modulation page: the header with five pages, the roster, Phoebe\'s build card, a 131% SSS+ score band, the Echo loadout and Build Stats',
+        caption: 'Look familiar? The Benchmark board is where you build now.',
+      },
+      sections: [
+        {
+          id: 'pages',
+          kicker: 'The rebuild',
+          title: 'Better cohesion',
+          body: [
+            'The calculator page used to be its own little world, with Benchmark and Optimizer bolted on the side. Now there are five pages and they all share the same build, so switching from Modulation to Showcase to Rotation never loses your place.',
+            'The Benchmark board you already know became the main page, and everything the old calculator panes did lives on it now.',
+          ],
+          layout: 'stage',
+        },
+        {
+          id: 'navigation',
+          kicker: 'Getting around',
+          title: 'Easier navigation',
+          body: [
+            'The sidebar and the toolbar of pane icons are gone. One header row holds the five pages, and Docs, Guides, Changelog and Calibration live in the Read menu beside them.',
+            'There\'s also a real Home now (you\'re on it!) instead of being dropped straight into the calculator, and the old About page moved in here too.',
+          ],
+          media: [
+            {
+              kind: 'image',
+              src: `${S_2026_10_05}/header-read.webp`,
+              ar: 2400 / 460,
+              alt: 'The header with the five pages on the left and the Read menu open on the right',
+              caption: 'Everything that isn\'t a build page sits under Read.',
+            },
+          ],
+          layout: 'stage',
+        },
+        {
+          id: 'rotation',
+          kicker: 'Rotation',
+          title: 'Rotations got a whole page',
+          body: [
+            'No more Personal and Team tabs: there\'s one rotation for the team, and the roster capsule picks who\'s in it. You can set up opening steps before the main loop, and every run ends with a Timeline and a Builds section showing what each member had on.',
+            'Saved rotations sit together on one field now, and you can line a few up and compare them.',
+          ],
+          media: [
+            {
+              kind: 'image',
+              src: `${S_2026_10_05}/rot-capsule.webp`,
+              ar: 576 / 392,
+              alt: 'The rotation roster capsule for Phoebe with her two teammates',
+              caption: 'The team, picked from the roster.',
+            },
+            {
+              kind: 'image',
+              src: `${S_2026_10_05}/rot-builds.webp`,
+              ar: 656 / 980,
+              alt: 'The Builds section of a rotation\'s totals: each member\'s echoes, set and weapon',
+              caption: 'Everyone\'s build, right next to the result.',
+            },
+            {
+              kind: 'image',
+              src: `${S_2026_10_05}/rot-saved-field.webp`,
+              ar: 1568 / 545,
+              alt: 'Saved rotations laid out together on one field',
+              caption: 'Saved rotations, all on one line.',
+            },
+          ],
+          layout: 'stage',
+        },
+        {
+          id: 'showcase',
+          kicker: 'Showcase',
+          title: 'Meet Seal',
+          body: [
+            'Showcase moved to its own page and got a second card layout, Seal. The Classic card got redone while I was at it.',
+          ],
+          media: [
+            {
+              kind: 'image',
+              src: `${S_2026_10_05}/sc-seal.webp`,
+              ar: 1288 / 935,
+              alt: 'The Seal showcase card for Phoebe',
+              caption: 'Seal.',
+            },
+            {
+              kind: 'image',
+              src: `${S_2026_10_05}/sc-classic.webp`,
+              ar: 1288 / 935,
+              alt: 'The redone Classic showcase card for Phoebe',
+              caption: 'And the new Classic.',
+            },
+          ],
+          layout: 'splitReverse',
+        },
+        {
+          id: 'optimizer',
+          kicker: 'Optimizer',
+          title: 'Bye bye, settings console',
+          body: [
+            'The Optimizer was rebuilt from scratch. It sits on the same board as the other pages now, and picking a result shows it on your build before you keep anything.',
+            'Suggestions got the same treatment on its own page, with ranked results that preview the same way.',
+          ],
+          media: [
+            {
+              kind: 'image',
+              src: `${S_2026_10_05}/opt-preview.webp`,
+              ar: 1204 / 983,
+              alt: 'The Optimizer board: a result previewed on the Echo loadout above the ranked results',
+              caption: 'A result, tried on before you keep it.',
+            },
+            {
+              kind: 'image',
+              src: `${S_2026_10_05}/sug-main-stats.webp`,
+              ar: 1473 / 812,
+              alt: 'Suggestions: main stat options ranked by damage',
+              caption: 'Suggestions, ranked.',
+            },
+          ],
+          layout: 'stage',
+        },
+        {
+          id: 'popups',
+          kicker: 'Pop-ups',
+          title: 'Same look everywhere',
+          body: [
+            'Nearly every pop-up wears the same look now instead of each having its own. The echo editor was redesigned around the rolls an echo can actually have, and Sonata set conditions, weapon search and the team picker got new layouts too.',
+          ],
+          media: [
+            {
+              kind: 'image',
+              src: `${S_2026_10_05}/sim-echo-editor.webp`,
+              ar: 1508 / 788,
+              alt: 'The new echo editor with a column of possible rolls for each substat',
+              caption: 'The new echo editor.',
+            },
+            {
+              kind: 'image',
+              src: `${S_2026_10_05}/sug-set-config.webp`,
+              ar: 1277 / 952,
+              alt: 'Sonata set conditions: sets listed with their pieces and the conditions under each',
+              caption: 'Sonata set conditions.',
+            },
+          ],
+          layout: 'stage',
+        },
+        {
+          id: 'calibration',
+          kicker: 'Calibration',
+          title: 'Settings, but prettier',
+          body: [
+            'Settings is now Calibration and got a full redesign. It also has something new: a Rover setting, for anyone who only ever plays one of them.',
+          ],
+          media: [
+            {
+              kind: 'image',
+              src: `${S_2026_10_05}/app-rover.webp`,
+              ar: 1568 / 744,
+              alt: 'The Rover setting on Calibration, with a switch to the male Rover waiting to be confirmed',
+              caption: 'Pick your Rover (or keep both).',
+            },
+            {
+              kind: 'image',
+              src: `${S_2026_10_05}/app-look-theme.webp`,
+              ar: 1562 / 784,
+              alt: 'Calibration\'s theme slots for Light, Dark and Background mode',
+              caption: 'The new look for themes.',
+            },
+          ],
+          layout: 'split',
+        },
+        {
+          id: 'guides',
+          kicker: 'Guides',
+          title: 'Guides with pictures!',
+          body: [
+            'The guides used to be walls of text. Now they\'re built on real screenshots of the app, with every step pointing at the thing it\'s talking about.',
+          ],
+          media: [
+            {
+              kind: 'image',
+              src: `${S_2026_10_05}/guides.webp`,
+              ar: 2402 / 944,
+              alt: 'A guide page: a screenshot of the score band with numbered marks and the matching steps below',
+              caption: 'Much better than before, trust me.',
+            },
+          ],
+          layout: 'split',
+          href: '/guides',
+          linkText: 'SEE SEE!!',
+        },
+      ],
+    },
+    shortDesc: `New... EVERYTHING!? („°0°„)`,
   },
 ]
 

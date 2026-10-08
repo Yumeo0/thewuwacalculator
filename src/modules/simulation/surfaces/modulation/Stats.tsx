@@ -18,7 +18,7 @@ import type {
 import { isNoWeaponId, type ResRuntime } from '@/domain/entities/runtime.ts'
 import { getSbstStepP } from '@/data/gameData/catalog/echoStats.ts'
 import { aggregateSubstats } from '@/engine/evaluation/substatMath.ts'
-import type { StateGroup, StatSourceTerm } from '@/modules/simulation/model/stateSummary.ts'
+import type { StateGroup, StatSourceTerm, StatStateSummaryTarget } from '@/modules/simulation/model/stateSummary.ts'
 import type { StatTreeNode } from '@/modules/simulation/model/statsView.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback'
 import { makeStatResidue, type ResidueRow, type ScopedAddend } from './lib/statResidue.ts'
@@ -357,12 +357,19 @@ function StatTip({
 
 const EMPTY_SCOPES: ScopedAddend[] = []
 
-function ScopeDrawer({ addends, open }: { addends: ScopedAddend[]; open: boolean }) {
+function ScopeDrawer({ addends, open, parentLabel, onPick }: {
+  addends: ScopedAddend[]
+  open: boolean
+  parentLabel: string
+  onPick: () => void
+}) {
   return (
     <Expandable as="div" className="pgd-sub" contentOnly open={open} innerClass="pgd-sub-pad">
       {addends.map((addend, index) => (
-        <div className="pgd-sub-row"
+        <button type="button" className="pgd-sub-row pst-scope-link"
           key={addend.id}
+          aria-label={`Show ${addend.scopeLabel} sources in ${parentLabel} breakdown`}
+          onClick={onPick}
           style={{ '--j': index, '--el': addend.color ?? 'var(--text)' } as CssVars}
         >
           <span className="pgd-sub-lb">{addend.scopeLabel}</span>
@@ -370,7 +377,7 @@ function ScopeDrawer({ addends, open }: { addends: ScopedAddend[]; open: boolean
           <span className="pst-sub-gain" />
           <span className="pgd-sub-v pst-sub-v">{addend.displayValue}</span>
           <span />
-        </div>
+        </button>
       ))}
     </Expandable>
   )
@@ -382,6 +389,60 @@ function ScopeCount({ addends }: { addends: ScopedAddend[] }) {
     <i className="pgd-hits pst-scopes">
       {addends.length} scope{addends.length > 1 ? 's' : ''}
     </i>
+  )
+}
+
+function soleScopeForZeroParent(
+  scopes: readonly ScopedAddend[],
+  parentValues: ReadonlyArray<number | undefined>,
+): ScopedAddend | null {
+  return scopes.length === 1 && parentValues.every((value) => value === undefined || value === 0)
+    ? scopes[0]
+    : null
+}
+
+function directScopeLabel(scope: ScopedAddend, parentLabel: string): string {
+  return `${scope.scopeLabel} ${parentLabel}`
+}
+
+function DirectScopeRow({ parentKey, parentLabel, scope, evaluationReady, picked, onPick }: {
+  parentKey: string
+  parentLabel: string
+  scope: ScopedAddend
+  evaluationReady: { b100: boolean; b200: boolean }
+  picked: boolean
+  onPick: () => void
+}) {
+  const label = directScopeLabel(scope, parentLabel)
+  return (
+    <ContextTrigger asChild ariaLabel={`${label} modifier actions`} items={[{
+      id: `modulation:scope:${scope.id}:resolve`,
+      label: 'Show sources',
+      icon: <ScanSearch size="1em" />,
+      onSelect: onPick,
+    }]}>
+      <div className={`pgd-row pst-row pst-res-row${picked ? ' is-at' : ''}`}
+        data-row={parentKey}
+        style={{ '--el': scope.color ?? 'var(--text)' } as CssVars}
+      >
+        <button type="button" className="pgd-pick" aria-pressed={picked}
+          aria-label={`Resolve ${label}`} tabIndex={-1} onClick={onPick}>
+          <s />
+        </button>
+        <button type="button" className="pgd-face pst-face" onClick={onPick}>
+          <span className="pst-st">
+            <StatMark label={parentLabel} statKey={parentKey} />
+            <span className="pst-name-txt">{label}</span>
+          </span>
+          <span className="pgd-v pst-num pst-base">&ndash;</span>
+          <span className="pgd-v pst-num pst-gain is-nil">&ndash;</span>
+          <span className="pgd-v pst-num pst-total">{scope.displayValue}</span>
+          {evaluationReady.b100 ? <span className="pgd-v pst-num pst-b100 pst-unstated" title="The evaluation anchors do not state this scope">&middot;</span> : null}
+          {evaluationReady.b200 ? <span className="pgd-v pst-num pst-b200 pst-unstated" title="The evaluation anchors do not state this scope">&middot;</span> : null}
+          <span className="pgd-car is-off" aria-hidden="true" />
+        </button>
+      </div>
+    </ContextTrigger>
   )
 }
 
@@ -418,6 +479,14 @@ function StatRow({
   const same100 = b100 ? near(b100.total, row.total) : true
   const same200 = b200 ? near(b200.total, row.total) : true
   const hasScopes = scoped.length > 0
+  const directScope = soleScopeForZeroParent(scoped, [
+    row.base, row.bonus, row.total, displayBase,
+    b100?.base, b100?.bonus, b100?.total,
+    b200?.base, b200?.bonus, b200?.total,
+  ])
+
+  if (directScope) return <DirectScopeRow parentKey={row.key} parentLabel={row.label}
+    scope={directScope} evaluationReady={evaluationReady} picked={picked} onPick={onPick} />
 
   const classes = [
     'pgd-row pst-row',
@@ -464,7 +533,10 @@ function StatRow({
       <button
         type="button" className="pgd-face pst-face"
         aria-expanded={hasScopes ? open : undefined}
-        onClick={hasScopes ? onOpen : onPick}
+        onClick={() => {
+          onPick()
+          if (hasScopes) onOpen()
+        }}
       >
         <span className="pst-st">
           <StatMark label={row.label} statKey={row.key} />
@@ -521,7 +593,7 @@ function StatRow({
       </button>
     </div>
     </ContextTrigger>
-    {hasScopes ? <ScopeDrawer addends={scoped} open={open} /> : null}
+    {hasScopes ? <ScopeDrawer addends={scoped} open={open} parentLabel={row.label} onPick={onPick} /> : null}
     </>
   )
 }
@@ -602,6 +674,24 @@ function manualSourceLines(runtime: ResRuntime, statKey: string): SourceLine[] {
   return lines
 }
 
+function manualResidueLines(runtime: ResRuntime, statKey: string, scope: NonNullable<StatStateSummaryTarget['scope']>): SourceLine[] {
+  return runtime.state.manualBuffs.modifiers.flatMap((modifier) => {
+    if (!modifier.enabled || !Number.isFinite(modifier.value) || modifier.value === 0) return []
+    const matches = scope.kind === 'top'
+      ? modifier.scope === 'topStat' && modifier.stat === statKey
+      : scope.kind === 'attribute'
+        ? modifier.scope === 'attribute' && modifier.attribute === scope.key && modifier.mod === statKey
+        : modifier.scope === 'skillType' && modifier.skillType === scope.key && modifier.mod === statKey
+    return matches ? [{
+      id: modifier.id,
+      label: modifier.label?.trim() || 'Manual modifier',
+      kind: 'add' as const,
+      key: statKey,
+      value: modifier.value,
+    }] : []
+  })
+}
+
 function staticSourceLines(runtime: ResRuntime, statKey: string): SourceLine[] {
   const seed = getResSeedBy(runtime.id)
   if (!seed) return []
@@ -677,14 +767,18 @@ function StatWorksheet({
   stateGroups,
   runtime,
   footer,
+  sourceLines,
+  scopedSections = [],
 }: {
   row: EvaluationOverviewStatRow
   statRows: EvaluationStatContribution[]
   stateGroups: StateGroup[]
   runtime: ResRuntime
   footer?: ReactNode
+  sourceLines?: SourceLine[]
+  scopedSections?: Array<{ scope: ScopedAddend; lines: SourceLine[] }>
 }) {
-  const lines = [
+  const lines = sourceLines ?? [
     ...staticSourceLines(runtime, row.key),
     ...effectSourceLines(stateGroups),
     ...echoContributionLines(statRows, row.key),
@@ -757,6 +851,22 @@ function StatWorksheet({
 
           {setLines.map((line) => <StatSourceRow key={line.id} line={line} operator="=" />)}
 
+          {scopedSections.length > 0 ? (
+            <>
+              <div className="pgd-ws-band">Scoped modifiers · not included in total</div>
+              {scopedSections.map(({ scope, lines: scopeLines }) => (
+                <Fragment key={scope.id}>
+                  {scopeLines.map((line) => <StatSourceRow key={`${scope.id}:${line.id}`} line={line} />)}
+                  <div className="pgd-ws-r pgd-ws-total">
+                    <span className="pgd-ws-op" />
+                    <span className="pgd-ws-lb">{scope.scopeLabel}</span>
+                    <span className="pgd-ws-vl">{scope.displayValue}</span>
+                  </div>
+                </Fragment>
+              ))}
+            </>
+          ) : null}
+
           <div className="pgd-ws-rule" />
           <div className="pgd-ws-r pgd-ws-total">
             <span className="pgd-ws-op" />
@@ -782,38 +892,74 @@ function StatWorksheet({
 function ResidueStatRow({
   row,
   evaluationReady,
+  picked,
+  onPick,
   open,
   onOpen,
 }: {
   row: ResidueRow
   evaluationReady: { current: boolean; b100: boolean; b200: boolean }
+  picked: boolean
+  onPick: () => void
   open: boolean
   onOpen: () => void
 }) {
   const hasScopes = row.scoped.length > 0
+  const directScope = soleScopeForZeroParent(row.scoped, [row.value])
+  if (directScope) return <DirectScopeRow parentKey={`residue:${row.key}`}
+    parentLabel={row.label} scope={directScope} evaluationReady={evaluationReady}
+    picked={picked} onPick={onPick} />
   const dormant = row.value === 0 && !hasScopes
   const reading = row.displayValue ?? '\u2013'
   const classes = [
     'pgd-row pst-row pst-res-row',
     dormant ? 'is-flat' : '',
-    hasScopes ? '' : 'is-inert',
+    picked ? 'is-at' : '',
   ].filter(Boolean).join(' ')
 
   return (
     <>
+    <ContextTrigger
+      asChild
+      ariaLabel={`${row.label} modifier actions`}
+      items={[
+        {
+          id: `modulation:residue:${row.key}:resolve`,
+          label: 'Show sources',
+          icon: <ScanSearch size="1em" />,
+          onSelect: onPick,
+        },
+        ...(hasScopes ? [{
+          id: `modulation:residue:${row.key}:scopes`,
+          label: open ? 'Hide scopes' : 'Show scopes',
+          icon: open ? <ListChevronsDownUp size="1em" /> : <ListChevronsUpDown size="1em" />,
+          onSelect: onOpen,
+        }] : []),
+      ]}
+    >
     <div
       className={classes}
       data-row={`residue:${row.key}`}
       data-open={hasScopes && open ? 'true' : 'false'}
       style={{ '--el': 'var(--text)' } as CssVars}
     >
-      <span className="pgd-pick" aria-hidden="true" />
+      <button
+        type="button" className="pgd-pick"
+        aria-pressed={picked}
+        aria-label={`Resolve ${row.label}`}
+        tabIndex={-1}
+        onClick={onPick}
+      >
+        <s />
+      </button>
 
       <button
         type="button" className="pgd-face pst-face"
         aria-expanded={hasScopes ? open : undefined}
-        disabled={!hasScopes}
-        onClick={onOpen}
+        onClick={() => {
+          onPick()
+          if (hasScopes) onOpen()
+        }}
       >
         <span className="pst-st">
           <span className="pst-name-txt">{row.label}</span>
@@ -845,7 +991,8 @@ function ResidueStatRow({
         <span className={hasScopes ? 'pgd-car' : 'pgd-car is-off'} aria-hidden="true" />
       </button>
     </div>
-    {hasScopes ? <ScopeDrawer addends={row.scoped} open={open} /> : null}
+    </ContextTrigger>
+    {hasScopes ? <ScopeDrawer addends={row.scoped} open={open} parentLabel={row.label} onPick={onPick} /> : null}
     </>
   )
 }
@@ -857,6 +1004,8 @@ function ResidueGroup({
   onShut,
   opened,
   onOpen,
+  picked,
+  onPick,
   evaluationReady,
 }: {
   rows: ResidueRow[]
@@ -865,6 +1014,8 @@ function ResidueGroup({
   onShut: () => void
   opened: Record<string, boolean>
   onOpen: (key: string) => void
+  picked: string | null
+  onPick: (key: string) => void
   evaluationReady: { current: boolean; b100: boolean; b200: boolean }
 }) {
   const live = rows.filter((row) => row.value !== 0 || row.scoped.length > 0).length
@@ -902,6 +1053,8 @@ function ResidueGroup({
             key={row.key}
             row={row}
             evaluationReady={evaluationReady}
+            picked={picked === `residue:${row.key}`}
+            onPick={() => onPick(`residue:${row.key}`)}
             open={Boolean(opened[`residue:${row.key}`])}
             onOpen={() => onOpen(`residue:${row.key}`)}
           />
@@ -1095,7 +1248,7 @@ export function ModulationStats({
   evaluationActive: EvaluationBuildSnapshot | null
   referenceBuild: EvaluationBuildSnapshot | null
   maximumBuild: EvaluationBuildSnapshot | null
-  stateGroupsForStat: (statKey: string) => StateGroup[]
+  stateGroupsForStat: (statKey: string, scope?: StatStateSummaryTarget['scope']) => StateGroup[]
   runtime: ResRuntime
   statsTree: StatTreeNode[]
 }) {
@@ -1160,21 +1313,47 @@ export function ModulationStats({
   const actualBaseByKey = useMemo(() => new Map(
     allRows.map((row) => [row.key, actualBaseFor(runtime, row.key)]),
   ), [allRows, runtime])
+  const pickedResidue = useMemo(() => picked?.startsWith('residue:')
+    ? residue.rows.find((row) => `residue:${row.key}` === picked) ?? null
+    : null, [picked, residue.rows])
   /* the card opens on whatever earns the most, so the view says something
      before it is asked anything */
   const pickedRow = useMemo(() => {
+    if (pickedResidue) return null
     if (picked) return allRows.find((row) => row.key === picked) ?? null
     const best = [...triRows.cur].sort((a, b) => b.damage - a.damage)[0]
     const byDamage = best
       ? allRows.find((row) => row.key === best.key || `${row.key}Percent` === best.key)
       : null
     return byDamage ?? allRows[0] ?? null
-  }, [picked, allRows, triRows.cur])
-  const at = pickedRow?.key ?? null
+  }, [picked, pickedResidue, allRows, triRows.cur])
+  const at = pickedResidue ? `residue:${pickedResidue.key}` : pickedRow?.key ?? null
   const pickedStateGroups = useMemo(
     () => pickedRow ? stateGroupsForStat(pickedRow.key) : [],
     [pickedRow, stateGroupsForStat],
   )
+  const residueSourceLines = useMemo(() => pickedResidue ? [
+    ...manualResidueLines(runtime, pickedResidue.key, { kind: 'top' }),
+    ...effectSourceLines(stateGroupsForStat(pickedResidue.key, { kind: 'top' })),
+  ] : [], [pickedResidue, runtime, stateGroupsForStat])
+  const pickedScopes = useMemo(() => pickedResidue?.scoped
+    ?? (pickedRow ? residue.scopedByStat.get(pickedRow.key) ?? EMPTY_SCOPES : EMPTY_SCOPES),
+  [pickedResidue, pickedRow, residue.scopedByStat])
+  const pickedDirectScope = pickedResidue
+    ? soleScopeForZeroParent(pickedScopes, [pickedResidue.value])
+    : pickedRow ? soleScopeForZeroParent(pickedScopes, [
+      pickedRow.base, pickedRow.bonus, pickedRow.total,
+      actualBaseByKey.get(pickedRow.key),
+      by100.get(pickedRow.key)?.base, by100.get(pickedRow.key)?.bonus, by100.get(pickedRow.key)?.total,
+      by200.get(pickedRow.key)?.base, by200.get(pickedRow.key)?.bonus, by200.get(pickedRow.key)?.total,
+    ]) : null
+  const scopedSourceSections = useMemo(() => pickedScopes.map((scope) => ({
+    scope,
+    lines: [
+      ...manualResidueLines(runtime, pickedResidue?.key ?? pickedRow?.key ?? '', { kind: scope.scopeKind, key: scope.scopeKey }),
+      ...effectSourceLines(stateGroupsForStat(pickedResidue?.key ?? pickedRow?.key ?? '', { kind: scope.scopeKind, key: scope.scopeKey })),
+    ],
+  })), [pickedScopes, pickedResidue, pickedRow, runtime, stateGroupsForStat])
 
   const bay = useRef<HTMLDivElement>(null)
   const list = useRef<HTMLDivElement>(null)
@@ -1228,17 +1407,52 @@ export function ModulationStats({
             onShut={() => setShut((prev) => ({ ...prev, residue: prev.residue === false }))}
             opened={opened}
             onOpen={toggleOpen}
+            picked={at}
+            onPick={setPicked}
             evaluationReady={evaluationReady}
           />
         ) : null}
       </div>
 
-      {pickedRow ? (
+      {pickedDirectScope ? (
+        <StatWorksheet
+          row={{
+            key: pickedResidue?.key ?? pickedRow?.key ?? '',
+            label: directScopeLabel(pickedDirectScope, pickedResidue?.label ?? pickedRow?.label ?? ''),
+            base: 0,
+            bonus: pickedDirectScope.value,
+            total: pickedDirectScope.value,
+            color: pickedDirectScope.color,
+          }}
+          statRows={[]}
+          stateGroups={[]}
+          runtime={runtime}
+          sourceLines={scopedSourceSections[0]?.lines ?? []}
+          footer={<BuiltOn frames={builtOn} />}
+        />
+      ) : pickedRow ? (
         <StatWorksheet
           row={pickedRow}
           statRows={triRows.cur}
           stateGroups={pickedStateGroups}
           runtime={runtime}
+          scopedSections={scopedSourceSections}
+          footer={<BuiltOn frames={builtOn} />}
+        />
+      ) : pickedResidue ? (
+        <StatWorksheet
+          row={{
+            key: pickedResidue.key,
+            label: pickedResidue.label,
+            base: 0,
+            bonus: pickedResidue.value,
+            total: pickedResidue.value,
+          }}
+          statRows={[]}
+          stateGroups={[]}
+          runtime={runtime}
+          sourceLines={residueSourceLines}
+          scopedSections={scopedSourceSections}
           footer={<BuiltOn frames={builtOn} />}
         />
       ) : null}

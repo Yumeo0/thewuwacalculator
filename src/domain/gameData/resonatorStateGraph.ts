@@ -132,88 +132,8 @@ export function getResStateControls(details: ResDtls | null | undefined, stateKe
     : cached.all
 }
 
-export function getResPanelControls(details: ResDtls | null | undefined, panel: ResDtls['statePanels'][number]): ResStateControl[] {
-  return getResStateControls(details, panel.stateKeys ?? panel.controls?.map((control) => control.key) ?? [])
-}
-
-function getAttachedKeys(details: ResDtls): Set<string> {
-  const keys = new Set<string>()
-
-  for (const group of getResModeGroups(details)) {
-    keys.add(group.controlKey)
-  }
-
-  for (const panel of details.statePanels ?? []) {
-    for (const key of panel.stateKeys ?? panel.controls?.map((control) => control.key) ?? []) {
-      keys.add(key)
-    }
-  }
-
-  for (const inherent of details.inherentSkills ?? []) {
-    for (const key of inherent.stateKeys ?? (inherent.control ? [inherent.control.key] : [])) {
-      keys.add(key)
-    }
-  }
-
-  for (const outro of details.outroSkills ?? []) {
-    for (const key of outro.stateKeys ?? outro.controls?.map((control) => control.key) ?? []) {
-      keys.add(key)
-    }
-
-    for (const section of outro.sections ?? []) {
-      for (const key of section.stateKeys ?? section.controls?.map((control) => control.key) ?? []) {
-        keys.add(key)
-      }
-    }
-  }
-
-  for (const combatState of details.combatStates ?? []) {
-    for (const key of combatState.stateKeys ?? combatState.controls?.map((control) => control.key) ?? []) {
-      keys.add(key)
-    }
-  }
-
-  for (const chain of details.resonanceChains ?? []) {
-    for (const key of chain.stateKeys ?? chain.controls?.map((control) => control.key) ?? []) {
-      keys.add(key)
-    }
-  }
-
-  return keys
-}
-
-export function getLooseResCtrls(details: ResDtls | null | undefined): ResStateControl[] {
-  if (!details) {
-    return EMPTY_CONTROLS
-  }
-
-  const attachedKeys = getAttachedKeys(details)
-
-  return getResStateControls(details)
-    .filter((control) =>
-      !attachedKeys.has(control.key)
-      && control.displayScope !== 'team',
-    )
-}
-
-export function getResInherentControls(details: ResDtls | null | undefined, inherent: ResDtls['inherentSkills'][number]): ResStateControl[] {
-  return getResStateControls(details, inherent.stateKeys ?? (inherent.control ? [inherent.control.key] : []))
-}
-
-export function getResOutroControls(details: ResDtls | null | undefined, outro: ResDtls['outroSkills'][number]): ResStateControl[] {
-  return getResStateControls(details, outro.stateKeys ?? outro.controls?.map((control) => control.key) ?? [])
-}
-
-export function getResOutroSectionControls(details: ResDtls | null | undefined, section: NonNullable<ResDtls['outroSkills'][number]['sections']>[number]): ResStateControl[] {
-  return getResStateControls(details, section.stateKeys ?? section.controls?.map((control) => control.key) ?? [])
-}
-
 export function getResCombatControls(details: ResDtls | null | undefined, combatState: ResDtls['combatStates'][number]): ResStateControl[] {
   return getResStateControls(details, combatState.stateKeys ?? combatState.controls?.map((control) => control.key) ?? [])
-}
-
-export function getResChainControls(details: ResDtls | null | undefined, chain: ResDtls['resonanceChains'][number]): ResStateControl[] {
-  return getResStateControls(details, chain.stateKeys ?? chain.controls?.map((control) => control.key) ?? [])
 }
 
 export function getResStateNodes(details: ResDtls | null | undefined): ResStateNode[] {

@@ -78,28 +78,6 @@
   outline-offset: 2px;
 }
 
-.esb {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.1rem 0.38rem;
-  font-size: 0.64rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--item-border, var(--border)) 50%, transparent);
-  background: color-mix(in srgb, var(--text) 3%, transparent);
-  color: var(--muted);
-}
-
-.est-desc {
-  font-size: 0.76rem;
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1.38;
-  opacity: 0.88;
-}
-
 .echo-totals-body {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -138,7 +116,6 @@
   }
 }
 
-.esb,
 .ecv {
   --metric-bg: color-mix(in srgb, var(--text) 3%, transparent);
   --metric-border: color-mix(in srgb, var(--item-border, var(--border)) 50%, transparent);

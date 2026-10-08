@@ -31,19 +31,6 @@ import {
   type LegMprtRprt,
 } from './shared'
 
-const LEGACY_LEFT: Record<string, UiState['leftPaneView']> = {
-  characters: 'resonators',
-  resonators: 'resonators',
-  buffs: 'buffs',
-  echoes: 'echoes',
-  enemy: 'enemy',
-  enemies: 'enemy',
-  weapon: 'weapon',
-  teams: 'teams',
-  rotations: 'resonators',
-  suggestions: 'suggestions',
-}
-
 const ATTR_KEYS: AttributeKey[] = [
   'aero',
   'glacio',
@@ -68,7 +55,6 @@ function resLegUi(
   // legacy controls used older key names, so each value is coerced and then
   // folded into the initialized ui object instead of trusted as a full shape.
   const nextTheme = coerceString(controls['user-theme'])
-  const nextLeftPane = coerceString(controls.leftPaneView)
   const sortKey = coerceString(controls.sortKey)
   const sortOrder = coerceString(controls.sortOrder)
 
@@ -86,7 +72,6 @@ function resLegUi(
     bodyFontName: coerceString(controls.userBodyFontName) ?? baseUi.bodyFontName,
     bodyFontUrl: coerceString(controls.userBodyFontURL) ?? baseUi.bodyFontUrl,
     blurMode: coerceString(controls['user-blur-mode']) === 'off' ? false : baseUi.blurMode,
-    leftPaneView: (nextLeftPane && LEGACY_LEFT[nextLeftPane]) || baseUi.leftPaneView,
     showSubHits: crcBln(controls.showSubHits) ?? baseUi.showSubHits,
     savedRotationPreferences: {
       ...baseUi.savedRotationPreferences,

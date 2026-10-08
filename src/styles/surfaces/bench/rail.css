@@ -137,7 +137,7 @@
   top: 14%;
   height: 72%;
   width: 26%;
-  border-radius: 0.14rem;
+  border-radius: 0.3rem;
   background: var(--text);
   transition:
     clip-path 380ms var(--workspace-ease, cubic-bezier(0.22, 1, 0.36, 1)),
@@ -150,13 +150,13 @@
 .wk-cue-bar--b { right: 20%; clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); }
 
 .wk-cue-glyph.is-paused .wk-cue-bar--a {
-  left: 26%;
-  border-radius: 0.14rem 0 0 0.14rem;
+  left: 26.65%;
+  border-radius: 0;
   clip-path: polygon(0% 0%, 100% 25%, 100% 75%, 0% 100%);
 }
 
 .wk-cue-glyph.is-paused .wk-cue-bar--b {
-  right: 22%;
+  right: 21.7%;
   border-radius: 0;
   clip-path: polygon(0% 25%, 100% 50%, 100% 50%, 0% 75%);
 }

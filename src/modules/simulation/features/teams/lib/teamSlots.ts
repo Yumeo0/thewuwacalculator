@@ -14,6 +14,7 @@ import { useAppStore } from '@/application/state'
 import { makeInitialTeammate } from '@/application/state/teammateInitialization'
 import { insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember } from '@/engine/runtime/scenarioMembers.ts'
 import { RES_MENU } from '@/modules/simulation/features/resonator/lib/resonator.ts'
+import { roverIsVisible } from '@/domain/entities/roverGender'
 
 // slot 0 is the active resonator and is switched through the roster, never
 // assigned here; only the two support slots accept a member id.
@@ -186,5 +187,6 @@ export function eligibleForSlot(team: ResRuntime['build']['team'], slotIndex: nu
     ),
   )
 
-  return RES_MENU.filter((entry) => !blockedIds.has(entry.id))
+  const roverGender = useAppStore.getState().ui.preferences.roverGender
+  return RES_MENU.filter((entry) => !blockedIds.has(entry.id) && roverIsVisible(entry.id, roverGender))
 }

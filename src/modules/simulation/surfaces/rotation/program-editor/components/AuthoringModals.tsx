@@ -40,7 +40,7 @@ import {
   type CondKind,
   type CondTarget,
 } from '@/modules/simulation/surfaces/rotation/program-editor/components/ConditionBrowser.tsx'
-import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { useMobileUi } from '@/shared/responsive/mobileUi'
 import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import { ListChecks, Users } from 'lucide-react'
 

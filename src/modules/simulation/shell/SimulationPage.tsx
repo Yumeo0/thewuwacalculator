@@ -1,7 +1,7 @@
 /*
   Author: Runor Ewhro
-  Description: Mounts canonical Simulation tools and temporary legacy surfaces,
-               and owns initialization shared by every simulation route.
+  Description: Mounts the Simulation surfaces and owns initialization shared by
+               every simulation route.
 */
 
 import { Suspense, useEffect, useRef, useState } from 'react'
@@ -18,8 +18,6 @@ import { SimulationProvider } from '@/modules/simulation/shell/context/Simulatio
 import AppLdrVrly from '@/shared/ui/AppLoaderOverlay'
 import {
   buildWorkspacePane,
-  legacyCalculatorPane,
-  legacyOptimizerPane,
   rotationPane,
 } from '@/modules/simulation/shell/surfaceChunks'
 import { ImportSurfaceProvider } from '@/modules/simulation/shell/imports/ImportSurface.tsx'
@@ -37,8 +35,6 @@ import { layoutViewportWidth } from '@/shared/lib/layoutViewport'
 // the panes are the same warmable chunks the rail fetches on intent, so a
 // surface reached from the rail mounts without a loader in the way
 const LazyWorkspace = buildWorkspacePane.Mount
-const LazyLegacyCalculator = legacyCalculatorPane.Mount
-const LazyLegacyOptimizer = legacyOptimizerPane.Mount
 const LazyRotation = rotationPane.Mount
 
 const LOADING_TEXT: Record<SimulationSurface, string> = {
@@ -47,8 +43,6 @@ const LOADING_TEXT: Record<SimulationSurface, string> = {
   showcase: 'Loading showcase...',
   suggestions: 'Loading suggestions...',
   rotation: 'Loading rotation editor...',
-  'legacy-calculator': 'Loading legacy calculator...',
-  'legacy-optimizer': 'Loading legacy optimizer...',
 }
 
 export function SimulationPage() {
@@ -168,8 +162,6 @@ function ReadySimulationPage() {
           )}>
             {isWorkspaceSurface(surface) ? <LazyWorkspace page={surface} /> : null}
             {pane === 'rotation' ? <LazyRotation /> : null}
-            {pane === 'legacy-optimizer' ? <LazyLegacyOptimizer /> : null}
-            {pane === 'legacy-calculator' ? <LazyLegacyCalculator isCllpMode={isCllpMode} /> : null}
           </Suspense>
         ) : null}
 

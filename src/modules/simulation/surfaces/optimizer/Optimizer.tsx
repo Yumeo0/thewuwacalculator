@@ -16,9 +16,7 @@ import { OptimizerLab } from './transport/OptimizerLab.tsx'
 import { OptStage } from './transport/OptStage.tsx'
 import { OptTransport } from './transport/OptTransport.tsx'
 import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime'
-import { isNoWeaponId } from '@/domain/entities/runtime'
 import { cloneOptSets } from '@/engine/runtime/defaults'
-import { maxWpnRt } from '@/engine/runtime/sourceStateInit'
 import { AppModal } from '@/shared/ui/AppModal.tsx'
 import { useAppModal, useAppModalValue } from '@/shared/ui/useAppModal.ts'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
@@ -28,7 +26,6 @@ import {getGameDataMode} from '@/data/gameData'
 import {getEchoById, listEchoes} from '@/data/catalog/echoCatalogService'
 import {weaponEquipState} from '@/engine/optimizer/context/weaponOverlays.ts'
 import {getWpnById} from '@/data/catalog/weaponCatalogService'
-import { listWpnsByTy } from '@/data/catalog/weaponCatalogService'
 import { makeRuntimeMap, mkPartRtLkp } from '@/engine/runtime/runtimeAdapters'
 import {useAppStore} from '@/application/state'
 import { useOptimizerRunStore } from '@/application/state/optimizerRunStore'
@@ -50,7 +47,6 @@ import { optSetIdSet } from '@/engine/optimizer/config/allowedSets.ts'
 import type {CompactTheoryResult, OptBagResult, OptResultStats, TheoryResult, TheoryResultRow} from '@/engine/optimizer/types'
 import type { OptBaselineInput, OptCompOutMs } from '@/engine/optimizer/compiler/compileWorker.types.ts'
 import {seedRsntById} from '@/modules/simulation/features/resonator/lib/seedData.ts'
-import {Expandable} from '@/shared/ui/Expandable'
 import AppLdrVrly from '@/shared/ui/AppLoaderOverlay'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
 
@@ -72,7 +68,6 @@ import {HEADER_TITLES} from '@/modules/simulation/surfaces/optimizer/lib/mockDat
 import { OPT_SKILL_TABS, getSkillTabLabel } from '@/modules/simulation/model/skillTabs'
 import { skillDisplayColor } from '@/modules/simulation/surfaces/rotation/shared/skillDisplay.ts'
 import {modalContent} from '@/modules/simulation/surfaces/optimizer/Modals.tsx'
-import { OptPrvwEchoT } from '@/modules/simulation/surfaces/optimizer/lib/parts.tsx'
 import { ResultToolbar } from '@/modules/simulation/surfaces/optimizer/ResultToolbar.tsx'
 
 import {
@@ -90,36 +85,22 @@ import {
   ResultFacetTable,
   type Predicate,
 } from '@/modules/simulation/surfaces/optimizer/lib/results.ts'
-import { RES_MENU } from '@/modules/simulation/features/resonator/lib/resonator.ts'
-import { useTeamSlots } from '@/modules/simulation/features/teams/lib/teamSlots.ts'
-import { getWeapon, weaponStatsAt } from '@/modules/simulation/features/weapons/lib/weapon.ts'
 import {
   type EchoPlan,
-  addSetPref as addEchoSetPr,
   derEchoPlan,
-  rmSetPref as rmEchoSetPre,
   resEchoPlan,
   selMainEcho,
-  setSetCount as setEchoSetCn,
 } from '@/modules/simulation/surfaces/optimizer/lib/teammateEchoPlan.ts'
 import {
-  applyWpnSttD,
-  clrWpnSttCnt,
   mkMptyPrgr,
   mkMptyEchoPl,
   mapMainStatF,
   makeOpSlot,
   normEchoLdt,
   type OpEchoTarget,
-  type OpSlot,
   type PrvwTgt,
   smmrEchoLdt,
 } from '@/modules/simulation/surfaces/optimizer/lib/helpers.ts'
-import { useTstStr } from '@/shared/util/toastStore.ts'
-import { useEchoSrfcM } from '@/modules/simulation/features/echoes/lib/useEchoSurfaceMenu.tsx'
-import { qpEchoAtSlot } from '@/modules/simulation/features/echoes/lib/equip.ts'
-import { Copy } from 'lucide-react'
-import { useSel } from '@/modules/simulation/lib/sel.tsx'
 import { useMenuContributions } from '@/application/context-menu/AppContextMenu'
 import type { MenuContribution } from '@/application/context-menu/menuContributions'
 
@@ -155,9 +136,6 @@ const optimizerSurfaceMenu: MenuContribution<OptimizerSurfaceMenuContext>[] = [
   },
 ]
 
-// The legacy route retains the retired layout; canonical routes use the shared workspace.
-export type OptimizerVariant = 'embedded' | 'legacy'
-
 // Bound transition waits even when no completion event arrives.
 const BAND_SETTLE_CAP_MS = 700
 
@@ -189,9 +167,8 @@ function settleBand(band: HTMLElement | null): Promise<unknown> {
   })
 }
 
-export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant }) {
+export function Optimizer() {
   useMenuContributions('optimizer.surface', optimizerSurfaceMenu)
-  const showToast = useTstStr((state) => state.show)
   const navigate = useNavX()
   const activeTarget = useAppStore(selActTgtSlc)
   const enemyProfile = useAppStore(selEnemyProf)
@@ -238,12 +215,10 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
   ))
   const invEchoEnts = useAppStore((state) => state.library.echoes)
   const optCpuHintSe = useAppStore((state) => state.ui.optimizerCpuHintSeen)
-  const maxResOnInit = useAppStore((state) => state.ui.preferences.maxResOnInit)
   const setOptCpuHin = useAppStore((state) => state.setOptHint)
   const updResRt = useAppStore((state) => state.updResRt)
   const updOptSets = useAppStore((state) => state.updOptSets)
   const updResSetCon = useAppStore((state) => state.updResConds)
-  const selectOptimizerResonator = useAppStore((state) => state.selectContextResonator)
   const bumpPickerFreq = useAppStore((state) => state.bumpPickFr)
   const startOpt = useAppStore((state) => state.startOpt)
   const weaponSuggests = useAppStore((state) => state.simulation.weaponSuggests)
@@ -253,13 +228,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
   const updateScenarioRuntime = useCallback((updater: (runtime: ResRuntime) => ResRuntime) => {
     updResRt(optResId, updater)
   }, [optResId, updResRt])
-  const updateMemberRuntime = useCallback((
-    resonatorId: string,
-    updater: (runtime: ResRuntime) => ResRuntime,
-  ) => {
-    updResRt(resonatorId, updater)
-  }, [updResRt])
-  const { setMember: setTeamMember } = useTeamSlots()
   const optInvSelection = optimizerMember.local.optimizerInventory
   const updResOptInv = useAppStore((state) => state.updResOptInv)
   const optSetConds = optimizerMember.local.setConditionals
@@ -271,14 +239,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
   const optMode = optSets.searchMode
   const isThryMode = optMode === 'theory'
 
-  // not resonator-scoped, so it survives both resonator switches and reloads.
-  const isSprite = useAppStore((state) => state.ui.optimizerUseSprite)
-  const setIsSprite = useAppStore((state) => state.setOptSprite)
-  const [isWide, setIsWide] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth >= 1200 : true,
-  )
   const [pageIndex, setPageIndex] = useState(0)
-  const [selNdx, setActiveIndex] = useState(0)
   const [viewCriteria, setViewCriteria] = useState<ResultViewCriteria>(DEFAULT_VIEW_CRITERIA)
   // whether the filter/sort controls are expanded; opening them arms the facet
   // pass so the dropdowns can list the echoes/sets/plans present.
@@ -312,8 +273,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
   const wpnCondMdl = useAppModal()
   const optInvMdl = useAppModal()
   const mainEchoPckr = useAppModalValue<OpEchoTarget>()
-  const resPckr = useAppModalValue<OpSlot>()
-  const weaponPicker = useAppModalValue<OpSlot>()
 
   const mdlPrtlTgt = mainPortal()
   const mainEchoSession = useConfigurationSession({
@@ -321,15 +280,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     active: mainEchoPckr.visible,
     commit: updOptSets,
   })
-
-  useLytFfct(() => {
-    function handleResize() {
-      setIsWide(window.innerWidth >= 1200)
-    }
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
 
   const echoPlans = useMemo(
     () => (
@@ -417,12 +367,9 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
   const effectRuntime = mateEchoPlan.runtime
   const effectRuntimesById = mateEchoPlan.runtimesById
   const rslvEchoPlns = mateEchoPlan.plans
-  const nvldMateMain = mateEchoPlan.invalidMainEchoes
-
   const clearRun = useCallback(() => {
     clrOptRslts()
     setPageIndex(0)
-    setActiveIndex(0)
     setPrvwTrgt({ kind: 'base' })
     setProgress(mkMptyPrgr())
   }, [clrOptRslts, setProgress])
@@ -458,13 +405,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
   const clsRlsMdl = () => {
     rulesModal.hide()
   }
-
-  const imageSrc =
-    activeSeed
-      ? isSprite
-        ? `/assets/game/resonators/sprites/${optResId}.webp`
-        : `/assets/game/resonators/profiles/${optResId}.webp`
-      : '/assets/game/default.webp'
 
   const trgtSkll = useMemo(
     () => (effectRuntime ? listOptTrgt(effectRuntime) : []),
@@ -948,8 +888,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
 
   // reverse lookup (original index -> display position) so the selected/preview
   // row can be located within the current view.
-  const origAt = (displayPos: number): number =>
-    viewIndices ? (viewIndices[displayPos] ?? -1) : displayPos
   const dispPosOf = (origIndex: number): number =>
     viewIndices ? viewIndices.indexOf(origIndex) : origIndex
 
@@ -1008,7 +946,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
   const jumpToFind = useCallback((pos: number) => {
     setFindPos(pos)
     setPageIndex(Math.floor(pos / rsltsPerPage))
-    setActiveIndex(pos % rsltsPerPage)
     const orig = viewIndices ? viewIndices[pos] : pos
     if (orig != null && orig >= 0) {
       setPrvwTrgt({ kind: 'result', index: orig })
@@ -1050,8 +987,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     }
     jumpToFind(findMatches.find((pos) => pos > findPos) ?? findMatches[0])
   }, [findPreds, findMatches, findPos, jumpToFind])
-  // display position of the selected row within the view.
-  const glblSelNdx = pageStart + selNdx
   const rslvPrvwTgt = useMemo<PrvwTgt>(() => {
     if (prvwTrgt.kind === 'result' && !optResults[prvwTrgt.index]) {
       return { kind: 'base' }
@@ -1059,10 +994,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
 
     return prvwTrgt
   }, [optResults, prvwTrgt])
-  // actRsltNdx is always an original index into optResults (for preview/equip).
-  const actRsltNdx = rslvPrvwTgt.kind === 'result'
-    ? rslvPrvwTgt.index
-    : origAt(glblSelNdx)
   const selPrvwDispPos = rslvPrvwTgt.kind === 'result'
     ? dispPosOf(rslvPrvwTgt.index)
     : -1
@@ -1087,14 +1018,12 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
   useEffect(() => {
     if (pageIndex > totalPages - 1) {
       setPageIndex(Math.max(0, totalPages - 1))
-      setActiveIndex(0)
     }
   }, [pageIndex, totalPages])
 
   const applyViewCriteria = useCallback((next: ResultViewCriteria) => {
     setViewCriteria(next)
     setPageIndex(0)
-    setActiveIndex(0)
   }, [])
 
   const echoes = useMemo(() => {
@@ -1114,51 +1043,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     effectRuntime?.build.echoes,
     rslvPrvwTgt,
   ])
-  const echoSrfcMenu = useEchoSrfcM({
-    clpbSrcResId: optResId,
-    clipSourceName: displayName,
-    currentEchoes: effectRuntime?.build.echoes ?? [],
-    onQpEchoAtjg: (echo, slotIndex) => {
-      updateScenarioRuntime((curRt) => ({
-        ...curRt,
-        build: {
-          ...curRt.build,
-          echoes: qpEchoAtSlot(curRt.build.echoes, echo, slotIndex),
-        },
-      }))
-    },
-  })
-  const prvwSelTms = useMemo(
-    () => echoes
-      .map((echo, index) => echo ? { id: `optimizer:${rslvPrvwTgt.kind}:${index}`, val: echo } : null)
-      .filter((item): item is { id: string; val: EchoInstance } => Boolean(item)),
-    [echoes, rslvPrvwTgt.kind],
-  )
-  const prvwSelCtns = useMemo(() => [{
-    id: 'optimizer-preview:copy',
-    key: 'copy' as const,
-    needsSel: true,
-    icon: <Copy size="1em" />,
-    label: ({ count }: { count: number }) => `Copy (${count})`,
-    title: 'Copy selected echoes (Ctrl/Cmd+C)',
-    run: async ({ vals }: { vals: EchoInstance[] }) => {
-      const wrote = await echoSrfcMenu.copyEchoesToClipboard(vals)
-      if (wrote) {
-        showToast({
-          content: `Copied ${vals.length} echo${vals.length === 1 ? '' : 'es'}.`,
-          variant: 'success',
-          duration: 2200,
-        })
-      }
-    },
-  }], [echoSrfcMenu, showToast])
-  const prvwSel = useSel({
-    surfaceId: `optimizer:${rslvPrvwTgt.kind}`,
-    ariaLabel: 'Optimizer echo selection actions',
-    noun: { one: 'echo', many: 'echoes' },
-    items: prvwSelTms,
-    acts: prvwSelCtns,
-  })
 
   const showBasePrvw = useCallback(() => {
     setPrvwTrgt({ kind: 'base' })
@@ -1228,7 +1112,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
   }
 
   const showRsltPrvw = useCallback((index: number) => {
-    setActiveIndex(index)
     const orig = viewIndices ? viewIndices[pageStart + index] ?? -1 : pageStart + index
     if (orig >= 0) setPrvwTrgt({ kind: 'result', index: orig })
   }, [pageStart, viewIndices])
@@ -1303,7 +1186,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     const parsed = Number.parseInt(jumpDraft, 10)
     if (Number.isFinite(parsed) && parsed >= 1 && parsed <= totalPages) {
       setPageIndex(parsed - 1)
-      setActiveIndex(0)
     }
     closeJump()
   }, [jumpDraft, totalPages, closeJump])
@@ -1332,234 +1214,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       icon: echo.icon,
     }
   }, [optSets.lockedMainEchoId])
-
-  const resPickerSlot = resPckr.value
-  const selWpnPckrSl = weaponPicker.value
-
-  const lgblOptTeamR = useMemo(() => {
-    if (!optRt || resPickerSlot === null || resPickerSlot === 'active') {
-      return RES_MENU
-    }
-
-    const occupiedIds = new Set(
-      optRt.build.team.filter(
-        (memberId, memberIndex): memberId is string =>
-          Boolean(memberId) && memberIndex !== resPickerSlot + 1,
-      ),
-    )
-
-    return RES_MENU.filter((entry) => !occupiedIds.has(entry.id))
-  }, [optRt, resPickerSlot])
-
-  const selWpnPckrRt = useMemo(
-    () => (
-      optRt && selWpnPckrSl !== null
-        ? makeOpSlot(optRt, selWpnPckrSl, optRuntimesById)
-        : null
-    ),
-    [optRt, optRuntimesById, selWpnPckrSl],
-  )
-
-  const selWpnPckrWp = useMemo(() => {
-    if (!selWpnPckrRt) {
-      return []
-    }
-
-    const seed = seedRsntById[selWpnPckrRt.id] ?? null
-    if (!seed) {
-      return []
-    }
-
-    return listWpnsByTy(seed.weaponType)
-  }, [selWpnPckrRt])
-
-  const selWpnPckrRecs = useMemo(() => {
-    if (!selWpnPckrRt) {
-      return []
-    }
-
-    return seedRsntById[selWpnPckrRt.id]?.recommendedWeaponIds ?? []
-  }, [selWpnPckrRt])
-
-  const selWpnPckroe = useMemo(() => {
-    const seed = selWpnPckrRt
-      ? seedRsntById[selWpnPckrRt.id] ?? null
-      : null
-
-    switch (seed?.weaponType) {
-      case 1:
-        return 'broadblade'
-      case 2:
-        return 'sword'
-      case 3:
-        return 'pistols'
-      case 4:
-        return 'gauntlets'
-      case 5:
-        return 'rectifier'
-      default:
-        return null
-    }
-  }, [selWpnPckrRt])
-
-  const applyOptWpnS = useCallback((slot: OpSlot, weaponId: string) => {
-    const selWpn = getWeapon(weaponId)
-    if (!selWpn) return
-
-    const memberId = slot === 'active' ? optResId : optRt?.build.team[slot + 1]
-    if (!memberId) return
-
-    const update = slot === 'active'
-      ? updateScenarioRuntime
-      : (updater: (runtime: ResRuntime) => ResRuntime) => updateMemberRuntime(memberId, updater)
-
-    update((prev) => {
-      const nextLevel = maxResOnInit ? 90 : prev.build.weapon.level
-      const stats = weaponStatsAt(selWpn, nextLevel)
-      const runtimeWithWeapon: ResRuntime = {
-        ...prev,
-        build: {
-          ...prev.build,
-          weapon: {
-            ...prev.build.weapon,
-            id: selWpn.id,
-            level: nextLevel,
-            baseAtk: stats.atk,
-            rank: 1,
-          },
-        },
-      }
-      const initializedRuntime = maxResOnInit
-        ? maxWpnRt(runtimeWithWeapon, { targetRank: 1 })
-        : runtimeWithWeapon
-      const nextControls = { ...initializedRuntime.state.controls }
-      clrWpnSttCnt(nextControls, prev.build.weapon.id)
-      applyWpnSttD(nextControls, selWpn.id, '', initializedRuntime, maxResOnInit)
-      return {
-        ...initializedRuntime,
-        state: {
-          ...initializedRuntime.state,
-          controls: nextControls,
-        },
-      }
-    })
-
-    if (selWpnPckroe) {
-      bumpPickerFreq({
-        bucket: 'weapon',
-        weaponType: selWpnPckroe,
-        ids: [selWpn.id],
-      })
-    }
-  }, [
-    bumpPickerFreq,
-    maxResOnInit,
-    optResId,
-    optRt,
-    selWpnPckroe,
-    updateMemberRuntime,
-    updateScenarioRuntime,
-  ])
-
-  const applyOptMate = useCallback((slotIndex: 0 | 1, resonatorId: string) => {
-    setTeamMember(slotIndex + 1, resonatorId)
-
-    setEchoPlans((prev) => {
-      const next = [...prev] as [EchoPlan | null, EchoPlan | null]
-      next[slotIndex] = null
-      return next
-    })
-  }, [setEchoPlans, setTeamMember])
-
-  const addSetPref = useCallback((slotIndex: 0 | 1, setId: number) => {
-    setEchoPlans((prev) => {
-      const memRt = optRt ? makeOpSlot(optRt, slotIndex, optRuntimesById) : null
-      if (!memRt) {
-        return prev
-      }
-
-      const next = [...prev] as [EchoPlan | null, EchoPlan | null]
-      next[slotIndex] = addEchoSetPr(
-        prev[slotIndex] ?? derEchoPlan(memRt.build.echoes),
-        setId,
-      )
-      return next
-    })
-  }, [optRt, optRuntimesById, setEchoPlans])
-
-  const rmSetPref = useCallback((slotIndex: 0 | 1, setId: number) => {
-    setEchoPlans((prev) => {
-      const memRt = optRt ? makeOpSlot(optRt, slotIndex, optRuntimesById) : null
-      if (!memRt) {
-        return prev
-      }
-
-      const next = [...prev] as [EchoPlan | null, EchoPlan | null]
-      next[slotIndex] = rmEchoSetPre(
-        prev[slotIndex] ?? derEchoPlan(memRt.build.echoes),
-        setId,
-      )
-      return next
-    })
-  }, [optRt, optRuntimesById, setEchoPlans])
-
-  const setSetCount = useCallback((slotIndex: 0 | 1, setId: number, count: number) => {
-    setEchoPlans((prev) => {
-      const memRt = optRt ? makeOpSlot(optRt, slotIndex, optRuntimesById) : null
-      if (!memRt) {
-        return prev
-      }
-
-      const next = [...prev] as [EchoPlan | null, EchoPlan | null]
-      next[slotIndex] = setEchoSetCn(
-        prev[slotIndex] ?? derEchoPlan(memRt.build.echoes),
-        setId,
-        count,
-      )
-      return next
-    })
-  }, [optRt, optRuntimesById, setEchoPlans])
-
-  const rmMate = useCallback((slotIndex: 0 | 1) => {
-    setTeamMember(slotIndex + 1, null)
-    setEchoPlans((prev) => {
-      const next = [...prev] as [EchoPlan | null, EchoPlan | null]
-      next[slotIndex] = null
-      return next
-    })
-  }, [setEchoPlans, setTeamMember])
-
-  const rmMateMainEc = useCallback((slotIndex: 0 | 1) => {
-    setEchoPlans((prev) => {
-      const memRt = optRt ? makeOpSlot(optRt, slotIndex, optRuntimesById) : null
-      if (!memRt) {
-        return prev
-      }
-
-      const next = [...prev] as [EchoPlan | null, EchoPlan | null]
-      next[slotIndex] = selMainEcho(
-        prev[slotIndex] ?? derEchoPlan(memRt.build.echoes),
-        null,
-      )
-      return next
-    })
-  }, [optRt, optRuntimesById, setEchoPlans])
-
-  const openResPckr = useCallback((slot: OpSlot = 'active') => {
-    resPckr.show(slot)
-  }, [resPckr])
-
-  const clsResPckr = (onClosed?: () => void) => {
-    resPckr.hide(onClosed)
-  }
-
-  const openWpnPckr = (slot: OpSlot) => {
-    weaponPicker.show(slot)
-  }
-
-  const clsWpnPckr = (onClosed?: () => void) => {
-    weaponPicker.hide(onClosed)
-  }
 
   const openMainEcho = (target: OpEchoTarget = 'filter') => {
     mainEchoPckr.show(target)
@@ -1590,7 +1244,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     }
 
     setPageIndex(0)
-    setActiveIndex(0)
     showBasePrvw()
     setProgress(mkMptyPrgr())
     startOpt({
@@ -1635,82 +1288,9 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
     weaponSuggests,
   ])
 
-  const onTgtModeChn = useCallback((value: 'skill' | 'combo') => {
-    const nextRotMode = value === 'combo'
-    updOptSets((settings) => ({
-      ...settings,
-      targetMode: value,
-      rotationMode: nextRotMode,
-    }))
-    if (rotationMode !== nextRotMode) {
-      clearRun()
-    }
-  }, [clearRun, rotationMode, updOptSets])
-
   const handleHalt = useCallback(() => {
     cnclOpt()
   }, [cnclOpt])
-
-  function handleEquip() {
-    if (isLoading || !optResults[actRsltNdx]) {
-      return
-    }
-
-    applyOptRslt(actRsltNdx)
-  }
-
-  const controlProps = {
-    isLoading,
-    progressSource,
-    success,
-    cancelled,
-    resultLength,
-    fltrEchoCnt: isThryMode ? qppdChs.length : fltrInvEchoE.length,
-    cmbnLbl: isThryMode
-      // theory mode reports the exact compiled emit count once the worker
-      // has prepared the search payload.
-      ? '...'
-      : shldCntCombo
-      ? rslvComboCnt.toLocaleString()
-      : '0',
-    batchSize: optBtchSize,
-    resultsLimit: optSets.resultsLimit,
-    keepPercent: optSets.keepPercent,
-    lowMmryMode: optSets.lowMemoryMode,
-    searchMode: optMode,
-    onResultLimit: (value: number) => {
-      updOptSets((settings) => ({
-        ...settings,
-        resultsLimit: value,
-      }))
-    },
-    onKeepPrcnfe: (value: number) => {
-      updOptSets((settings) => ({
-        ...settings,
-        keepPercent: value,
-      }))
-    },
-    onLowMmryMch: (value: boolean) => {
-      updOptSets((settings) => ({
-        ...settings,
-        lowMemoryMode: value,
-      }))
-    },
-    onModeChg: (value: typeof optMode) => {
-      updOptSets((settings) => ({
-        ...settings,
-        searchMode: value,
-      }))
-    },
-    onRunOpt,
-    onHalt: handleHalt,
-    onEquip: handleEquip,
-    onGuide: () => {
-      navigate('/guides?category=optimizer')
-    },
-    onRules: openRlsMdl,
-    onClear: clearRun,
-  }
 
   const resultToolbar = !isLoading && optResults.length > 0 ? (
       <ResultToolbar
@@ -1783,7 +1363,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
                     disabled={pageIndex === 0}
                     onClick={() => {
                       setPageIndex((value) => Math.max(0, value - 1))
-                      setActiveIndex(0)
                     }}
                   >
                     ‹
@@ -1844,7 +1423,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
                         className={`opt-pagination__btn${item === pageIndex ? ' is-active' : ''}`}
                         onClick={() => {
                           setPageIndex(item as number)
-                          setActiveIndex(0)
                         }}
                       >
                         {(item as number) + 1}
@@ -1856,7 +1434,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
                     disabled={pageIndex >= totalPages - 1}
                     onClick={() => {
                       setPageIndex((value) => Math.min(totalPages - 1, value + 1))
-                      setActiveIndex(0)
                     }}
                   >
                     ›
@@ -1868,52 +1445,6 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
         </div>
       </div>
   )
-
-  const echoPreview = (
-    <div className="opt-echo-preview">
-      <div className="opt-echo-preview__grid" {...prvwSel.surfaceProps}>
-        {echoes.map((echo, index) => {
-          const itemId = `optimizer:${rslvPrvwTgt.kind}:${index}`
-          const tile = (
-            <OptPrvwEchoT
-              key={`preview-echo-${index}`}
-              echo={echo}
-              index={index}
-              selected={prvwSel.isSelected(itemId)}
-              selMode={prvwSel.selectionMode}
-              data-selection-focus-item="true"
-              aria-selected={prvwSel.isSelected(itemId) ? 'true' : 'false'}
-              onClickCapture={prvwSel.buildClickCapture(itemId)}
-            />
-          )
-
-          if (!echo) {
-            return tile
-          }
-
-          return (
-            <ContextTrigger
-              key={`preview-echo-menu-${index}`}
-              asChild
-              ariaLabel={`${getEchoById(echo.id)?.name ?? 'Echo'} actions`}
-              items={prvwSel.selectionMode ? prvwSel.contextItemsFor(itemId) : echoSrfcMenu.buildReadOnlyMenu({
-                id: itemId,
-                echo,
-                onSelect: () => {
-                  prvwSel.focusSurface()
-                  prvwSel.addToSelection(itemId)
-                },
-              })}
-            >
-              {tile}
-            </ContextTrigger>
-          )
-        })}
-      </div>
-    </div>
-  )
-
-
 
   const labEditable = !isLoading
   const previewKey = rslvPrvwTgt.kind === 'result'
@@ -2038,7 +1569,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
 
 
   return (
-    <div className={variant === 'legacy' ? 'calculator-stage' : 'opt-host'}>
+    <div className="opt-host">
       <AppModal
         state={uiModal.dialogProps}
         variant="optimizer"
@@ -2077,167 +1608,7 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       />
       </Suspense> : null}
 
-      {variant === 'embedded' ? labSurface : (
-        <Suspense fallback={<AppLdrVrly mode="inline" text="Loading optimizer controls..." />}>
-          <div className={`optimizer-pane ${isWide ? '' : 'compact'}`}>
-            {isWide ? <ControlBox isWide {...controlProps} /> : null}
-
-            <div className="optimizer-details">
-            <Expandable
-              header="Optimizer Settings"
-              defaultOpen className="optimizer-character-settings"
-              triggerClass="opt-expandable-trigger"
-              triggerStyle={{ alignItems: 'center' }}
-            >
-              <div className="character-options-container">
-                <CharPtnsPnl
-                  displayName={displayName}
-                  level={optRt?.base.level ?? 90}
-                  sequence={optRt?.base.sequence ?? 0}
-                  rarity={activeSeed?.rarity ?? 4}
-                  imageSrc={imageSrc}
-                  targetMode={targetMode}
-                  tgtSkllId={targetSkillId}
-                  tgtCmbId={optSets.targetComboSourceId}
-                  skillOptions={skillOptions}
-                  skillGroups={skillGroups}
-                  comboOptions={comboOptions}
-                  enableGpu={optSets.enableGpu}
-                  comboAvailable={comboAvailable}
-                  useSplash={isSprite}
-                  mainEcho={selMainEchoF}
-                  allowedSets={optSets.allowedSets}
-                  mainStatFilter={isThryMode ? thryMFltr.mainStatFilter : optSets.mainStatFilter}
-                  isTheory={isThryMode}
-                  excludeEquipped={optSets.excludeEquipped}
-                  includeWeapons={optSets.includeWeapons}
-                  selBonus={isThryMode ? thryMFltr.selectedBonus : optSets.selectedBonus}
-                  statCstrs={optSets.statConstraints}
-                  optRt={optRt}
-                  onOpenResPick={() => openResPckr('active')}
-                  onTgtModeClw={onTgtModeChn}
-                  onTgtSkllCdf={(value) => {
-                    updOptSets((settings) => ({
-                      ...settings,
-                      targetSkillId: value,
-                    }))
-                  }}
-                  onTgtCmbChng={(value) => {
-                    updOptSets((settings) => ({
-                      ...settings,
-                      targetComboSourceId: value,
-                    }))
-                  }}
-                  onNblGpuChng={(enabled) => {
-                    updOptSets((settings) => ({
-                      ...settings,
-                      enableGpu: enabled,
-                    }))
-                  }}
-                  onOptRtPdt={updateScenarioRuntime}
-                  onOpenMainEcho={openMainEcho}
-                  onOpenInventorySearch={optInvMdl.show}
-                  onOpenSetCond={setCondsMdl.show}
-                  onOpenWpnCond={wpnCondMdl.show}
-                  onClrMainEyq={() => {
-                    updOptSets((settings) => ({
-                      ...settings,
-                      lockedMainEchoId: null,
-                    }))
-                  }}
-                  onLlwdSetsxi={(value) => {
-                    updOptSets((settings) => ({
-                      ...settings,
-                      allowedSets: value,
-                    }))
-                  }}
-                  onToggleMain={(value) => {
-                    updOptSets((settings) => ({
-                      ...settings,
-                      mainStatFilter: settings.mainStatFilter.includes(value)
-                        ? settings.mainStatFilter.filter((entry) => entry !== value)
-                        : [...settings.mainStatFilter, value],
-                    }))
-                  }}
-                  onToggleExcludeEquipped={(value) => {
-                    updOptSets((settings) => ({
-                      ...settings,
-                      excludeEquipped: value,
-                    }))
-                  }}
-                  onToggleWeapons={(value) => {
-                    updOptSets((settings) => ({
-                      ...settings,
-                      includeWeapons: value,
-                    }))
-                  }}
-                  onPickBonus={(value) => {
-                    updOptSets((settings) => ({
-                      ...settings,
-                      selectedBonus: value,
-                      mainStatFilter: settings.mainStatFilter.includes('bonus')
-                        ? settings.mainStatFilter
-                        : [...settings.mainStatFilter, 'bonus'],
-                    }))
-                  }}
-                  onClrAllFltr={() => {
-                    updOptSets((settings) => ({
-                      ...settings,
-                      mainStatFilter: [],
-                      selectedBonus: null,
-                    }))
-                  }}
-                  onStatLmtCdd={(statKey, field, value) => {
-                    updOptSets((settings) => ({
-                      ...settings,
-                      statConstraints: {
-                        ...settings.statConstraints,
-                        [statKey]: {
-                          ...settings.statConstraints[statKey],
-                          [field]: value,
-                        },
-                      },
-                    }))
-                  }}
-                  setIsSprite={setIsSprite}
-                />
-              </div>
-            </Expandable>
-
-            <Expandable header="Sim Team" defaultOpen className="optimizer-search-results" triggerClass="opt-expandable-trigger" triggerStyle={{ alignItems: 'center' }}>
-              <TeamPanel
-                  rarity={activeSeed?.rarity ?? 4}
-                  displayName={displayName}
-                  optRt={effectRuntime}
-                  runtimesById={effectRuntimesById}
-                  invalidMainIds={nvldMateMain}
-                  mateSetPrefs={[
-                    rslvEchoPlns[0]?.setPrefs ?? [],
-                    rslvEchoPlns[1]?.setPrefs ?? [],
-                  ]}
-                  onRtPdt={updateScenarioRuntime}
-                  onMemberRtPdt={updateMemberRuntime}
-                  onOpenMate={openResPckr}
-                  onOpenWeapon={openWpnPckr}
-                  onOpenMateMenu={(slotIndex) => openMainEcho(slotIndex)}
-                  onAddMateSet={addSetPref}
-                  onRemoveMateSet={rmSetPref}
-                  onSetMateCount={setSetCount}
-                  onRemoveMate={rmMate}
-                  onClearMainEcho={rmMateMainEc}
-              />
-            </Expandable>
-
-            <Expandable header="Sim Results" defaultOpen className="optimizer-search-results" triggerClass="opt-expandable-trigger" triggerStyle={{ alignItems: 'center' }}>
-              {resultToolbar}
-              {resultsTable}
-              {echoPreview}
-              </Expandable>
-              {!isWide ? <ControlBox isWide={false} {...controlProps} /> : null}
-            </div>
-          </div>
-        </Suspense>
-      )}
+      {labSurface}
 
       {mainEchoPckr.visible ? <Suspense fallback={<AppLdrVrly mode="scrim" text="Loading Echo picker..." />}>
       <EchoPckrMdl
@@ -2320,85 +1691,13 @@ export function Optimizer({ variant = 'embedded' }: { variant?: OptimizerVariant
       />
       </Suspense> : null}
 
-      {resPckr.visible ? <Suspense fallback={<AppLdrVrly mode="scrim" text="Loading Resonator picker..." />}>
-      <ResPckrMdl
-        visible={resPckr.visible}
-        open={resPckr.open}
-        closing={resPckr.closing}
-        portalTarget={mdlPrtlTgt}
-        eyebrow={resPickerSlot === 'active' ? 'Roster' : 'Team Slots'}
-        title={resPickerSlot === 'active' ? 'Select Resonator' : 'Select Teammate'}
-        resonators={lgblOptTeamR}
-        selResId={
-          resPickerSlot === null
-            ? null
-            : resPickerSlot === 'active'
-              ? optResId
-              : optRt?.build.team[resPickerSlot + 1] ?? null
-        }
-        selLbl={resPickerSlot === 'active' ? 'Active' : 'Selected'}
-        smmrPrmr={{
-          label: resPickerSlot === 'active' ? 'Current' : 'Slot',
-          value:
-            resPickerSlot === 'active'
-              ? displayName
-              : `Teammate ${(resPickerSlot ?? 0) + 1}`,
-        }}
-        emptyState={<p>I hope Solon Lee releases the character you're searching for.</p>}
-        closeLabel="Close"
-        panelWidth="regular"
-        onSelect={(resonatorId) => {
-          clsResPckr(() => {
-            if (resPickerSlot === null || resPickerSlot === 'active') {
-              selectOptimizerResonator(resonatorId)
-            } else {
-              applyOptMate(resPickerSlot, resonatorId)
-            }
-          })
-        }}
-        onClose={clsResPckr}
-      />
-      </Suspense> : null}
-
-      {weaponPicker.visible ? <Suspense fallback={<AppLdrVrly mode="scrim" text="Loading weapon picker..." />}>
-      <WpnPckrMdl
-        visible={weaponPicker.visible}
-        open={weaponPicker.open}
-        closing={weaponPicker.closing}
-        portalTarget={mdlPrtlTgt}
-        weapons={selWpnPckrWp}
-        selWpnId={
-          selWpnPckrRt?.build.weapon.id && !isNoWeaponId(selWpnPckrRt.build.weapon.id)
-            ? selWpnPckrRt.build.weapon.id
-            : null
-        }
-        recommendedWeaponIds={selWpnPckrRecs}
-        onSelect={(weaponId) => {
-          if (selWpnPckrSl === null) {
-            return
-          }
-          clsWpnPckr(() => applyOptWpnS(selWpnPckrSl, weaponId))
-        }}
-        onClose={clsWpnPckr}
-      />
-      </Suspense> : null}
     </div>
   )
 }
 
 const EchoPckrMdl = lazy(() => import('@/modules/simulation/features/echoes/Picker.tsx').then((module) => ({ default: module.EchoPicker })))
 
-const WpnPckrMdl = lazy(() => import('@/modules/simulation/features/weapons/Picker.tsx').then((module) => ({ default: module.WeaponPicker })))
-
-const ResPckrMdl = lazy(() => import('@/modules/simulation/features/resonator/Picker.tsx').then((module) => ({ default: module.ResPckr })))
-
-const CharPtnsPnl = lazy(() => import('@/modules/simulation/surfaces/optimizer/ResonatorOptionsPanel.tsx').then((module) => ({ default: module.CharPtnsPnl })))
-
 const WpnCfgMdl = lazy(() => import('@/modules/simulation/surfaces/suggestions/WeaponConfig.tsx').then((module) => ({ default: module.WpnCfgMdl })))
-
-const TeamPanel = lazy(() => import('@/modules/simulation/surfaces/optimizer/TeamPanel.tsx').then((module) => ({ default: module.TeamPanel })))
-
-const ControlBox = lazy(() => import('@/modules/simulation/surfaces/optimizer/ControlBox.tsx').then((module) => ({ default: module.ProgressControlBox })))
 
 const Rules = lazy(() => import('@/modules/simulation/surfaces/optimizer/Rules.tsx').then((module) => ({ default: module.Rules })))
 

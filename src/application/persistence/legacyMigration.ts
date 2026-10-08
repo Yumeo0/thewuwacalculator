@@ -13,8 +13,55 @@ const LEGACY_STORAGE_VERSIONS = [26, 25, 24, 23, 22] as const
 
 interface LegacyMigrationDeps {
   parsePersisted: (raw: string) => HydratedAppState
-  saveAppState: (state: PersistedState) => void
+  saveAppState: (state: PersistedState) => boolean
   quarantine: (key: string, raw: string) => void
+}
+
+function currentStorageSnapshot(): Map<string, string> {
+  const snapshot = new Map<string, string>()
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index)
+    if (key !== APP_STORAGE_KEY && !key?.startsWith(`${APP_STORAGE_KEY}.`)) continue
+    const value = localStorage.getItem(key)
+    if (value != null) snapshot.set(key, value)
+  }
+  return snapshot
+}
+
+function restoreCurrentStorage(snapshot: Map<string, string>): void {
+  const currentKeys: string[] = []
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index)
+    if (key === APP_STORAGE_KEY || key?.startsWith(`${APP_STORAGE_KEY}.`)) currentKeys.push(key)
+  }
+  for (const key of currentKeys) localStorage.removeItem(key)
+  for (const [key, value] of snapshot) localStorage.setItem(key, value)
+}
+
+function persistMigrationSnapshot(
+  snapshot: PersistedState,
+  saveAppState: LegacyMigrationDeps['saveAppState'],
+): boolean {
+  let previous: Map<string, string>
+  try {
+    previous = currentStorageSnapshot()
+  } catch (error) {
+    console.warn('[storage] failed to prepare legacy migration transaction', error)
+    return false
+  }
+
+  try {
+    if (saveAppState(snapshot)) return true
+  } catch (error) {
+    console.warn('[storage] failed to persist legacy migration replacement', error)
+  }
+
+  try {
+    restoreCurrentStorage(previous)
+  } catch (error) {
+    console.warn('[storage] failed to roll back incomplete legacy migration', error)
+  }
+  return false
 }
 
 export function readMonolithicState({ parsePersisted, saveAppState, quarantine }: LegacyMigrationDeps): HydratedAppState | null {
@@ -25,8 +72,11 @@ export function readMonolithicState({ parsePersisted, saveAppState, quarantine }
 
   try {
     const snapshot = parsePersisted(raw)
-    saveAppState(snapshot)
-    localStorage.removeItem(APP_STORAGE_KEY)
+    if (persistMigrationSnapshot(snapshot, saveAppState)) {
+      localStorage.removeItem(APP_STORAGE_KEY)
+    } else {
+      console.warn('[storage] retained monolithic app snapshot after incomplete migration')
+    }
     return snapshot
   } catch (error) {
     console.warn('[storage] failed to migrate monolithic app snapshot', error)
@@ -48,8 +98,11 @@ function readLegacyStateVersion(
   if (monolith) {
     try {
       const snapshot = parsePersisted(monolith)
-      saveAppState(snapshot)
-      localStorage.removeItem(legacyStorageKey)
+      if (persistMigrationSnapshot(snapshot, saveAppState)) {
+        localStorage.removeItem(legacyStorageKey)
+      } else {
+        console.warn(`[storage] retained v${version} app snapshot after incomplete migration`)
+      }
       return snapshot
     } catch (error) {
       console.warn(`[storage] failed to migrate v${version} app snapshot`, error)
@@ -123,9 +176,12 @@ function readLegacyStateVersion(
   }
 
   const snapshot = initAppState(current.data as unknown as PersistedState)
-  saveAppState(snapshot)
-  for (const suffix of legacySuffixes) {
-    localStorage.removeItem(`${legacyStorageKey}.${suffix}`)
+  if (persistMigrationSnapshot(snapshot, saveAppState)) {
+    for (const suffix of legacySuffixes) {
+      localStorage.removeItem(`${legacyStorageKey}.${suffix}`)
+    }
+  } else {
+    console.warn(`[storage] retained split v${version} app state after incomplete migration`)
   }
   return snapshot
 }

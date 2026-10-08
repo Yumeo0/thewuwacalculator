@@ -1,5 +1,3 @@
-
-
 .mpgs {
   --mpgs-zoom: 1.3;
   display: flex;
@@ -33,7 +31,6 @@
 .mpgs-page[hidden] {
   display: none;
 }
-
 
 .mpgs-page > * {
   width: auto !important;
@@ -103,7 +100,6 @@
   color: var(--amdl-accent, var(--accent));
 }
 
-
 .mpgs-head .amdl__head {
   flex-wrap: wrap;
   row-gap: 0.4rem;
@@ -113,7 +109,6 @@
   flex-wrap: wrap;
   row-gap: 0.3rem;
 }
-
 
 .mpgs :is(input[type='text'], input[type='search']) {
   text-align: left;

@@ -8,7 +8,6 @@ import type { EvaluationSummary } from '@/engine/evaluation/buildEvaluationWorke
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { EnemyProfile } from '@/domain/entities/appState'
 import type { ResRuntime } from '@/domain/entities/runtime'
-import { getResSeedBy } from '@/data/catalog/resonatorSeedService'
 import type { EvaluationReportOpts, BuildEvaluationReport, DefRotEvaluationIn } from '@/engine/evaluation/buildEvaluation.ts'
 import {
   runEvaluationReport,
@@ -17,20 +16,10 @@ import {
   runEvaluationScore,
 } from '@/engine/evaluation/buildEvaluationClient.ts'
 import type { SimResult } from '@/engine/pipeline/types'
-import {
-  applyEvaluationAsm,
-  applyEvaluationMapAsm,
-  makeEvaluationEnemy,
-} from '@/modules/simulation/model/evaluationAssumptions.ts'
-import { useEvaluationTarget } from '@/modules/simulation/model/useEvaluationTarget.ts'
 import { scheduleAfterSettled } from '@/shared/lib/scheduleAfterSettled.ts'
-import { getTuneStrainMaxForTeam } from '@/engine/gameData/tuneStrain.ts'
 import { combatScenarioId, teamMemberId } from '@/domain/entities/combatScenario.ts'
 import { useAppStore } from '@/application/state'
 import { selectedCombatScenario } from '@/domain/entities/scenarioLibrary.ts'
-import { useStableEvaluationInputs } from '@/modules/simulation/model/useStableEvaluationInputs.ts'
-
-const EMPTY_RUNTIME_MAP: Record<string, ResRuntime> = Object.freeze({})
 
 export const FULL_EVALUATION_REPORT_OPTIONS: EvaluationReportOpts = Object.freeze({
   alternativesLimit: 12,
@@ -54,25 +43,6 @@ export const MODULATION_SUMMARY_REPORT_OPTIONS: EvaluationReportOpts = Object.fr
     evaluationTargets: true,
   }),
 })
-
-export const SCORE_ONLY_EVALUATION_REPORT_OPTIONS: EvaluationReportOpts = Object.freeze({
-  alternativesLimit: 0,
-  sections: Object.freeze({
-    rotationFeatures: false,
-    upgradePaths: false,
-    echoStatsTable: false,
-    evaluationTargets: false,
-  }),
-})
-
-export interface UseAsmEvaluationReportIn {
-  runtime: ResRuntime | null
-  runtimesById: Record<string, ResRuntime>
-  targetSelections: Record<string, string | null>
-  debounceMs?: number
-  enabled?: boolean
-  reportOptions?: EvaluationReportOpts
-}
 
 export interface EvaluationReportSt {
   report: BuildEvaluationReport | null
@@ -124,89 +94,6 @@ function mkEvaluationPayload({
     enemy,
     runtimesById: teammateRuntimesById,
   }
-}
-
-interface AsmEvaluationTarget {
-  runtime: ResRuntime | null
-  runtimesById: Record<string, ResRuntime>
-  simulation: SimResult | null
-  enemy: EnemyProfile
-}
-
-function useAsmEvaluationTarget({
-  runtime,
-  runtimesById,
-  targetSelections,
-}: Pick<UseAsmEvaluationReportIn, 'runtime' | 'runtimesById' | 'targetSelections'>): AsmEvaluationTarget {
-  // assumed evaluation mode runs on a cloned runtime/team map so evaluation
-  // scoring can apply its fixed enemy and assumptions without mutating app state
-  const nextInputs = useMemo(() => ({
-    runtime: runtime ? applyEvaluationAsm(runtime) : null,
-    runtimesById: applyEvaluationMapAsm(runtimesById),
-    targetSelections,
-  }), [runtime, runtimesById, targetSelections])
-  // Scenario persistence rebuilds runtime projections for edits such as live
-  // enemy or progression changes. After evaluation normalization those values
-  // can be identical; retain that identity so the settled-work gate does not
-  // blank and restart an unchanged score.
-  const evaluationInputs = useStableEvaluationInputs(nextInputs)
-  const evaluationRuntime = evaluationInputs.runtime
-  const evaluationRuntimesById = evaluationInputs.runtimesById
-  const targetSeed = useMemo(
-    () => (evaluationRuntime ? getResSeedBy(evaluationRuntime.id) ?? null : null),
-    [evaluationRuntime],
-  )
-  const evaluationTuneStrain = useMemo(
-    () => getTuneStrainMaxForTeam(evaluationRuntime),
-    [evaluationRuntime],
-  )
-  const evaluationEnemy = useMemo(
-    () => makeEvaluationEnemy(evaluationTuneStrain),
-    [evaluationTuneStrain],
-  )
-  const evaluationTarget = useEvaluationTarget({
-    targetRuntime: evaluationRuntime,
-    targetSeed,
-    targetSelections: evaluationInputs.targetSelections,
-    activeResId: null,
-    activeRuntimesById: evaluationRuntimesById,
-    initializedRuntimesById: evaluationRuntimesById,
-    enemy: evaluationEnemy,
-    showAllStates: false,
-    deferHeavyWork: true,
-  })
-
-  return {
-    runtime: evaluationRuntime,
-    runtimesById: evaluationTarget.runtimesById,
-    simulation: evaluationTarget.simulation,
-    enemy: evaluationEnemy,
-  }
-}
-
-export function useAsmEvaluationReport({
-  runtime,
-  runtimesById,
-  targetSelections,
-  debounceMs,
-  enabled = true,
-  reportOptions,
-}: UseAsmEvaluationReportIn): EvaluationReportSt {
-  const evaluationTarget = useAsmEvaluationTarget({
-    runtime: enabled ? runtime : null,
-    runtimesById: enabled ? runtimesById : EMPTY_RUNTIME_MAP,
-    targetSelections,
-  })
-
-  return useEvaluationReport({
-    runtime: evaluationTarget.runtime,
-    simulation: evaluationTarget.simulation,
-    enemy: evaluationTarget.enemy,
-    runtimesById: evaluationTarget.runtimesById,
-    debounceMs,
-    enabled,
-    reportOptions,
-  })
 }
 
 export function useEvaluationReport({

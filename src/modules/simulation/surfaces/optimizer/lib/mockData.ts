@@ -4,15 +4,6 @@
                by the optimizer controls and result grid.
 */
 
-export const STAT_LIST = [
-  { key: 'atk', label: 'ATK' },
-  { key: 'hp', label: 'HP' },
-  { key: 'def', label: 'DEF' },
-  { key: 'er', label: 'ER%' },
-  { key: 'cr', label: 'CR%' },
-  { key: 'cd', label: 'CD%' },
-] as const
-
 export const HEADER_TITLES = [
   'Set',
   'Main',

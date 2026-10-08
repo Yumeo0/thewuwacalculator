@@ -1011,8 +1011,8 @@
 :is(.mcc-modal .mcc-cell, .pgs-cell) .stack,
 :is(.mcc-modal .mcc-cell, .pgs-cell) .state-control-field {
   gap: 0.3rem;
-  font-size: 0.8rem !important;
-  line-height: 1.45 !important;
+  font-size: 0.9rem !important;
+  line-height: 1.4 !important;
 }
 
 :is(.mcc-modal .mcc-cell, .pgs-cell) .toggle-row,

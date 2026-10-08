@@ -10,6 +10,7 @@ import type { ResRuntime } from '@/domain/entities/runtime.ts'
 import type { CombatScenario, CombatScenarioId } from '@/domain/entities/combatScenario.ts'
 import type { SavedBuild } from '@/domain/entities/inventoryStorage.ts'
 import type { SourceState } from '@/domain/gameData/contracts.ts'
+import { unisonBoonStateForRuntime } from '@/domain/gameData/unisonBoon.ts'
 import { getResSeedBy } from '@/data/catalog/resonatorSeedService.ts'
 import { getResDtlsBy } from '@/data/gameData/resonators/resonatorDataStore.ts'
 import { setResRtSequence } from '@/engine/gameData/resonatorMax.ts'
@@ -122,9 +123,11 @@ export function useMemberModel(
     }
 
     // Team-targeted state visibility depends on the active runtime and composition.
-    return makeSourceCat(memberRt).states
+    const memberStates = makeSourceCat(memberRt).states
       .filter((state) => isSourceVisible(memberRt, memberRt, state, runtime))
       .filter((state) => state.source.type !== 'echo')
+    const teamState = unisonBoonStateForRuntime(memberRt)
+    return teamState ? [...memberStates, teamState] : memberStates
   }, [memberRt, runtime])
 
   const cmbtStts = useMemo(() => {

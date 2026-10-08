@@ -12,11 +12,11 @@ import { createPortal } from 'react-dom'
 import { useLocation } from 'react-router-dom'
 import { AxLink } from '@/shared/navigation/useNavX'
 import { useAppStore } from '@/application/state'
-import { SIMULATION_PAGES, creditFor } from '@/application/navigation/appIndex'
+import { SIMULATION_PAGES, creditFor, type ArtCredit } from '@/application/navigation/appIndex'
 import { useAppSnapshot } from '@/modules/home/model/useAppSnapshot'
 import { useChromeIndex } from '@/application/navigation/chromeIndex'
 import { STATE_LABELS, STATUS_DATA } from '@/data/content/appStatus'
-import { getWhatsNewEntries } from '@/data/content/changelogEntries'
+import { getLatestWhatsNew, getWhatsNewEntries } from '@/data/content/changelogEntries'
 import { APP_ROUTES, WHATS_NEW_ACT } from '@/shared/lib/appRoutes'
 import { mainPortal } from '@/shared/lib/portalTarget'
 import { ArrivalPlate } from '@/modules/home/features/ArrivalPlate'
@@ -57,7 +57,16 @@ function useRested<T>(value: T, ms: number): T {
   return rested
 }
 
+function Credit({ credit }: { credit: ArtCredit }) {
+  const line = <><b>{credit.subject}</b> by <i>{credit.artist}</i></>
+  return credit.source ? (
+    <a href={credit.source} target="_blank" rel="noopener noreferrer">{line}</a>
+  ) : line
+}
+
 const HAS_RELEASES = getWhatsNewEntries().length > 0
+// A missing entry selects the changelog fallback instead of an empty release target.
+const LATEST_RELEASE = getLatestWhatsNew()
 
 export function HomePage() {
   const snapshot = useAppSnapshot()
@@ -216,7 +225,7 @@ export function HomePage() {
           </div>
 
           <p className="hm-credit">
-            {credit ? <span key={backdrop}><b>{credit.subject}</b> by <i>{credit.artist}</i></span> : null}
+            {credit ? <span key={backdrop}><Credit credit={credit} /></span> : null}
           </p>
         </>,
         shell,
@@ -251,6 +260,19 @@ export function HomePage() {
               <ul>{STATUS_DATA.recentChanges.map((one) => <li key={one}>{one}</li>)}</ul>
             </div>
           ) : null}
+
+          <p className="hm-next">
+            {LATEST_RELEASE ? (
+              <a
+                href={`#${WHATS_NEW_ACT}`}
+                onClick={(event) => { event.preventDefault(); goToAct('whatsnew') }}
+              >
+                See what&rsquo;s new <span>{LATEST_RELEASE.title}</span>
+              </a>
+            ) : (
+              <AxLink to={APP_ROUTES.changelog}>See changelog</AxLink>
+            )}
+          </p>
 
           <p className="hm-stamp">
             <span>Patch <b>v{STATUS_DATA.patchVersion}</b></span>
@@ -458,7 +480,7 @@ export function HomePage() {
           {arts.map((art) => creditFor(art)).filter(Boolean).map((one, index) => (
             <span key={one!.subject}>
               {index > 0 ? ' · ' : ''}
-              <b>{one!.subject}</b> by <i>{one!.artist}</i>
+              <Credit credit={one!} />
             </span>
           ))}
         </p>

@@ -12,7 +12,7 @@ Primary files:
 - [src/engine/pipeline/buildCombatContext.ts](../src/engine/pipeline/buildCombatContext.ts)
 - [src/engine/pipeline/simulateRotation.ts](../src/engine/pipeline/simulateRotation.ts)
 - [src/engine/pipeline/prepareRuntimeSkill.ts](../src/engine/pipeline/prepareRuntimeSkill.ts)
-- [src/engine/rotation/system.ts](../src/engine/rotation/system.ts)
+- [src/engine/rotation/execute.ts](../src/engine/rotation/execute.ts)
 
 The shared execution flow is:
 
@@ -24,7 +24,7 @@ The shared execution flow is:
 6. simulate direct results or rotation results
 7. optionally inspect node level execution traces
 
-`runResonatorSimulation()` is the common path when the caller starts from an active runtime plus team context. `runCombatGraphSimulation()` is the path when the graph already exists and the caller wants to target a specific slot directly.
+`runResSmlt()` is the common path when the caller starts from an active runtime plus team context. `runCmbtGrphS()` is the path when the graph already exists and the caller wants to target a specific slot directly. Both delegate to `smltRot()` after preparing the graph and combat context.
 
 ## Combat Graph
 
@@ -89,7 +89,7 @@ Skill preparation turns registry backed feature definitions and runtime state in
 
 Primary files:
 
-- [src/engine/rotation/system.ts](../src/engine/rotation/system.ts)
+- [src/engine/rotation/execute.ts](../src/engine/rotation/execute.ts)
 - [src/engine/pipeline/simulateRotation.ts](../src/engine/pipeline/simulateRotation.ts)
 
 Rotation execution is another Simulation tool over the same combat context and skill resolution system.
@@ -107,7 +107,7 @@ The rotation inspector reuses the same graph and context setup as live simulatio
 
 Primary files:
 
-- [src/domain/gameData/negativeEffects.ts](../src/domain/gameData/negativeEffects.ts)
+- [src/engine/gameData/negativeEffects.ts](../src/engine/gameData/negativeEffects.ts)
 - [src/engine/formulas/negativeEffects.ts](../src/engine/formulas/negativeEffects.ts)
 
 Negative effects, tune systems, healing, and shield paths are part of the shared engine, not bolt on UI logic. They need to stay aligned with the same runtime and combat context model as standard damage rows.

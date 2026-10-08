@@ -8,7 +8,7 @@ import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useId, useMemo, useState } from 'react'
 import type { CSSProperties as CssProps, HTMLAttributes as HtmlAttrs, KeyboardEvent as KeyboardEvent, MouseEvent as RctMsVnt } from 'react'
 import { Ban, Check, Gem, RotateCcw, Search, SlidersHorizontal } from 'lucide-react'
-import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { useMobileUi } from '@/shared/responsive/mobileUi'
 import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import type { SavedEcho } from '@/domain/entities/inventoryStorage'
 import type { OptInventorySelection } from '@/domain/entities/profile'
@@ -22,6 +22,7 @@ import { EchoStatGlyph } from '@/modules/simulation/features/echoes/lib/statGlyp
 import { formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView'
 import { useSel } from '@/modules/simulation/lib/sel'
 import { useMediaQuery } from '@/shared/hooks/useMediaQuery'
+import { RESPONSIVE_MEDIA } from '@/shared/responsive/policy'
 import { AppModal } from '@/shared/ui/AppModal'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 import type { MenuEntry } from '@/shared/ui/CtxMenu'
@@ -336,7 +337,7 @@ export function OptimizerInventoryModal({
   const selection = session.draft
   const close = useCallback(() => onClose(session.finish), [onClose, session])
   const titleId = useId()
-  const railVisible = useMediaQuery('(min-width: 64rem)')
+  const railVisible = useMediaQuery(RESPONSIVE_MEDIA.wideRail)
   const [echoGridRef, echoGridCols] = useGridColumns()
   const mobile = useMobileUi()
   const [previewId, setPreviewId] = useState<string | null>(null)

@@ -10,6 +10,7 @@ import {
   instantiateCombatScenario,
   makeScenarioTeam,
   primaryScenarioMember,
+  reviseCombatScenario,
   teamMemberId,
   type ScenarioTeamMember,
 } from '@/domain/entities/combatScenario.ts'
@@ -56,6 +57,57 @@ function makeMember(id: string): ScenarioTeamMember {
 }
 
 describe('combat scenario invariants', () => {
+  it('stores Unison Boon once and projects the same count to each team runtime', () => {
+    const base = selectedCombatScenario(makeAppState().combat)
+    const hsin = makeMember('1311')
+    const suoming = makeMember('1312')
+    const team = makeScenarioTeam([
+      { ...hsin, progression: { ...hsin.progression, level: 90, sequence: 6 }, local: {
+        ...hsin.local, controls: { ...hsin.local.controls, 'resonator:1311:mode:value': 'unison' },
+      } },
+      suoming,
+    ])
+    const scenario = reviseCombatScenario(base, {
+      team,
+      contextMemberId: team.members[0].id,
+      initialOnFieldMemberId: team.members[0].id,
+      environment: { ...base.environment, teamEffects: { unisonBoon: 4 } },
+    })
+    const projected = projectScenarioRuntimes(scenario)
+    expect(projected.runtimesById['1311']?.state.teamEffects).toEqual({ unisonBoon: 4, unisonBoonMax: 4, unisonBoonPerStack: 3 })
+    expect(projected.runtimesById['1312']?.state.teamEffects).toEqual({ unisonBoon: 4, unisonBoonMax: 4, unisonBoonPerStack: 3 })
+
+    const edited = {
+      ...projected.runtimesById['1312']!,
+      state: {
+        ...projected.runtimesById['1312']!.state,
+        teamEffects: { unisonBoon: 2, unisonBoonMax: 4, unisonBoonPerStack: 3 },
+      },
+    }
+    const updated = applyRuntimeToSimulation(scenario, '1312', edited, projected.runtimesById['1312']!).scenario
+    expect(updated.environment.teamEffects.unisonBoon).toBe(2)
+    expect(projectScenarioRuntimes(updated).runtimesById['1311']?.state.teamEffects?.unisonBoon).toBe(2)
+
+    const reducedTeam = makeScenarioTeam([team.members[1]!])
+    const reduced = reviseCombatScenario(scenario, {
+      team: reducedTeam,
+      contextMemberId: reducedTeam.members[0].id,
+      initialOnFieldMemberId: reducedTeam.members[0].id,
+    })
+    expect(reduced.environment.teamEffects.unisonBoon).toBe(2)
+    expect(reviseCombatScenario(reduced, { team }).environment.teamEffects.unisonBoon).toBe(2)
+  })
+
+  it('round-trips the canonical team effect through scenario parsing', () => {
+    const base = selectedCombatScenario(makeAppState().combat)
+    const saved = reviseCombatScenario(base, {
+      environment: { ...base.environment, teamEffects: { unisonBoon: 2 } },
+    })
+    const parsed = parseCombatScenario(saved)
+    expect(parsed.success).toBe(true)
+    if (parsed.success) expect(parsed.data.environment.teamEffects.unisonBoon).toBe(2)
+  })
+
   it('shares unchanged runtime branches and leaves frozen canonical state untouched during simulation', () => {
     const base = selectedCombatScenario(makeAppState().combat)
     const member = base.team.members[0]

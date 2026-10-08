@@ -5,15 +5,15 @@
 
 import React from 'react'
 import { AxLink } from '@/shared/navigation/useNavX'
-import { chngSctn, getLatestWhatsNew, getLinkedWhatsNew, ltstCurChngE } from '@/data/content/changelogEntries'
+import { chngSctn, getLatestWhatsNew, getLinkedWhatsNew } from '@/data/content/changelogEntries'
 import { HtmlContent } from '@/shared/ui/HtmlContent'
 import { whatsNewHref } from '@/shared/lib/appRoutes'
 import { History, Radio, ArrowRight } from 'lucide-react'
 import { CllpPageHeyf } from '@/shared/ui/CollapsiblePageHero'
 
 export function ChngPage() {
-  const linkedLatestWhatsNew = getLinkedWhatsNew(ltstCurChngE)
-  const latestWhatsNewId = getLatestWhatsNew()?.id ?? null
+  const linkedLatestWhatsNew = getLatestWhatsNew()
+  const latestWhatsNewId = linkedLatestWhatsNew?.id ?? null
 
   return (
     <div className="page">

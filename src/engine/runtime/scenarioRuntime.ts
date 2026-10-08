@@ -15,6 +15,7 @@ import type { ResProf } from '@/domain/entities/profile'
 import type { ScenarioWorkspace } from '@/domain/entities/scenarioLibrary'
 import { cloneEchoLoadout } from '@/domain/entities/inventoryStorage'
 import { scopedTargetOwnerKey } from '@/domain/gameData/targetRouting'
+import { resolveUnisonBoon } from '@/domain/gameData/unisonBoon'
 import {
   cloneCmbtStt,
   cloneResBase,
@@ -93,12 +94,28 @@ function compactMember(scenario: CombatScenario, member: ScenarioTeamMember): Te
 }
 
 const runtimeByMember = new WeakMap<ScenarioTeamMember, ResRuntime>()
+const teamEffectsByScenario = new WeakMap<CombatScenario, NonNullable<ResRuntime['state']['teamEffects']>>()
+
+export function projectScenarioTeamEffects(scenario: CombatScenario): NonNullable<ResRuntime['state']['teamEffects']> {
+  const cached = teamEffectsByScenario.get(scenario)
+  if (cached) return cached
+  const resolved = resolveUnisonBoon(scenario.team.members, scenario.environment.teamEffects.unisonBoon)
+  const state = { unisonBoon: resolved.stacks, unisonBoonMax: resolved.max, unisonBoonPerStack: resolved.perStack }
+  teamEffectsByScenario.set(scenario, state)
+  return state
+}
+
 export function projectScenarioMemberRuntime(
   scenario: CombatScenario,
   member: ScenarioTeamMember,
 ): ResRuntime {
   const previous = runtimeByMember.get(member)
   const manualBuffs = projectedManualBuffs(scenario, member)
+  const resolvedTeamEffects = projectScenarioTeamEffects(scenario)
+  const teamEffects = previous?.state.teamEffects?.unisonBoon === resolvedTeamEffects.unisonBoon
+    && previous.state.teamEffects.unisonBoonMax === resolvedTeamEffects.unisonBoonMax
+    && previous.state.teamEffects.unisonBoonPerStack === resolvedTeamEffects.unisonBoonPerStack
+    ? previous.state.teamEffects : resolvedTeamEffects
   const team = scenarioTeamSlots(scenario)
   const stableTeam = previous && team.every((id, index) => id === previous.build.team[index])
     ? previous.build.team : team
@@ -110,6 +127,7 @@ export function projectScenarioMemberRuntime(
   const rotation = projectedRotation(scenario.program, member.resonatorId)
   if (previous && previous.build.team === stableTeam
     && previous.state.manualBuffs === manualBuffs
+    && previous.state.teamEffects === teamEffects
     && previous.state.combat === scenario.environment.combatState
     && previous.rotation === rotation
     && teamRuntimes.every((runtime, index) => runtime === previous.teamRuntimes[index])) return previous
@@ -126,6 +144,7 @@ export function projectScenarioMemberRuntime(
       controls: member.local.controls,
       manualBuffs,
       combat: scenario.environment.combatState,
+      teamEffects,
     },
     rotation,
     teamRuntimes,

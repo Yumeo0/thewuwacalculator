@@ -12,6 +12,7 @@ import { applyMainSta } from '@/engine/suggestions/mainStat-suggestion/utils.ts'
 import type {
   CompactSetPlanSuggest,
   MainStatSugg,
+  SetPlanDisplayEntry,
   SetPlanEntry,
   WeaponEntry,
 } from '@/engine/suggestions/types.ts'
@@ -19,6 +20,7 @@ import type { MainStatRecipe } from '@/engine/suggestions/mainStat-suggestion/ut
 import { formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import { getRarityColor } from '@/modules/simulation/model/display.ts'
 import { statIconSrc } from '@/modules/simulation/workspace/ui.tsx'
+import { readSetTiers } from '@/modules/simulation/workspace/LoadoutEffects.tsx'
 import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
 import {
   recipeSig,
@@ -61,6 +63,8 @@ export interface ClimbTray {
   lead: string
   leadUnit: string
   coins: Array<string | null>
+  /** One name per coin for set trays, the stat name for main-stat trays. */
+  names: string[]
   name: string | null
   primary: { icon: string | null; value: string } | null
   secondary: { icon: string | null; value: string } | null
@@ -132,6 +136,7 @@ function statTray(key: string, cost: number, held: boolean): ClimbTray {
     lead: String(cost),
     leadUnit: 'c',
     coins: [],
+    names: [formatStatKeyLabel(key)],
     name: null,
     primary: { icon: statIconSrc(key), value: formatStatKeyValue(key, value) },
     secondary: side
@@ -190,6 +195,78 @@ function mainStatRows(
   })
 }
 
+/* A row's slots list effect-equivalent sets that the engine scored alike.
+   Prefer the ones already worn so materializing the plan changes as few echoes
+   as possible. Ties keep the engine's pick. Concrete entries outside these
+   slots change no scored effect, so their echoes remain worn. */
+export function preferWornSets(
+  display: SetPlanDisplayEntry[],
+  concrete: SetPlanEntry[],
+  worn: SetPlanSmmrE[],
+): { setPlan: SetPlanEntry[], display: SetPlanDisplayEntry[] } {
+  const have = new Map<number, number>()
+  for (const entry of worn) have.set(entry.setId, (have.get(entry.setId) ?? 0) + entry.pieces)
+
+  // Pair each display slot with the concrete entry it was drawn from.
+  const taken = new Set<number>()
+  const slots = display.map((entry) => {
+    const at = concrete.findIndex((plan, index) => (
+      !taken.has(index) && plan.pieces === entry.pieces && entry.setIds.includes(plan.setId)
+    ))
+    if (at >= 0) taken.add(at)
+    return at
+  })
+
+  let best: number[] | null = null
+  let bestScore = -1
+  const pick: number[] = []
+  const walk = (slot: number) => {
+    if (slot === display.length) {
+      let score = 0
+      pick.forEach((setId, index) => {
+        score += Math.min(have.get(setId) ?? 0, display[index].pieces) * 100
+        if (slots[index] >= 0 && concrete[slots[index]].setId === setId) score += 1
+      })
+      if (score > bestScore) { bestScore = score; best = [...pick] }
+      return
+    }
+    for (const setId of display[slot].setIds) {
+      // Each slot is its own bonus: two slots never share one set.
+      if (pick.includes(setId)) continue
+      pick.push(setId)
+      walk(slot + 1)
+      pick.pop()
+    }
+  }
+  walk(0)
+  const chosen: number[] | null = best
+  // Unpaired slots mean the display is not drawn from this plan; keep it whole.
+  if (!chosen || slots.includes(-1)) return { setPlan: concrete, display }
+
+  // Worn echoes left in free slots add to whatever set they carry. Never let
+  // them lift a set over a tier the scored plan did not reach.
+  const crossesTier = (plan: SetPlanEntry[]) => {
+    const free = Math.max(0, 5 - plan.reduce((total, entry) => total + entry.pieces, 0))
+    return [...have].some(([setId, pieces]) => {
+      const planned = plan.reduce((total, entry) => total + (entry.setId === setId ? entry.pieces : 0), 0)
+      const most = planned + Math.min(pieces, free)
+      return (readSetTiers(setId)?.tiers ?? []).some((tier) => planned < tier.pieces && most >= tier.pieces)
+    })
+  }
+  const swapped = display.map((entry, index) => ({ setId: chosen[index], pieces: entry.pieces }))
+  const fillers = concrete.filter((_, index) => !taken.has(index))
+  const setPlan = !crossesTier(swapped) ? swapped
+    : !crossesTier([...swapped, ...fillers]) ? [...swapped, ...fillers]
+      : null
+  if (!setPlan) return { setPlan: concrete, display }
+  // Put the materialized set first while retaining its effect-equivalent alternatives.
+  const led = display.map((entry, index) => ({
+    ...entry,
+    setIds: [chosen[index], ...entry.setIds.filter((id) => id !== chosen[index])],
+  }))
+  return { setPlan, display: led }
+}
+
 function setPlanRows(
   results: CompactSetPlanSuggest[],
   base: number,
@@ -201,7 +278,7 @@ function setPlanRows(
       have.set(entry.setId, (have.get(entry.setId) ?? 0) + entry.pieces)
     }
 
-    const displayPlan = getSetPlanDisplay(result)
+    const { setPlan, display: displayPlan } = preferWornSets(getSetPlanDisplay(result), result.setPlan, worn)
 
     const marks: ClimbMark[] = []
     const trays: ClimbTray[] = []
@@ -228,6 +305,7 @@ function setPlanRows(
         lead: String(entry.pieces),
         leadUnit: 'pc',
         coins: entry.setIds.map((id) => getSntSetIco(id)),
+        names: entry.setIds.map((id) => getSntSetNam(id)),
         name: getSntSetNam(lead),
         primary: null,
         secondary: null,
@@ -247,7 +325,7 @@ function setPlanRows(
       marks,
       trays,
       recipe: null,
-      setPlan: result.setPlan,
+      setPlan,
       weapon: null,
       variants: [],
     }
@@ -287,6 +365,7 @@ function weaponRows(
         lead: plan.mode === 'max' ? 'MAX' : 'REST',
         leadUnit: '',
         coins: [],
+        names: [],
         name: null,
         primary: { icon: null, value: `${plan.damage > base ? '+' : ''}${percentDiff(plan.damage, base).toFixed(1)}%` },
         secondary: null,

@@ -113,6 +113,8 @@ export interface ResSttStt {
   controls: Record<string, boolean | number | string>
   manualBuffs: ManualBuffs
   combat: CombatState
+  /** Read-only projection of scenario-owned effects during calculation. */
+  teamEffects?: { unisonBoon: number; unisonBoonMax: number; unisonBoonPerStack: number }
 }
 
 export interface RotationState {

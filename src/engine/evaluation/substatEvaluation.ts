@@ -20,7 +20,7 @@ import {
   substatKeysForResonator as subKeysForRes,
 } from '@/engine/evaluation/substatMath'
 
-export interface SubstatEvaluationRow {
+interface SubstatEvaluationRow {
   id: 'base' | 'floor' | 'ceiling'
   label: string
   damage: number             // total build damage (reference)
@@ -38,7 +38,7 @@ export interface SubstatIdealEntry {
   target: number
 }
 
-export interface SubstatEvaluation {
+interface SubstatEvaluation {
   rows: SubstatEvaluationRow[]
   ideal: SubstatIdealEntry[]
   slots: number              // total ideal rolls actually allocated (<= 25)

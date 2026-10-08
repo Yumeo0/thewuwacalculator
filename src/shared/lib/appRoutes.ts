@@ -1,7 +1,7 @@
 /*
   Author: Runor Ewhro
   Description: Defines the Home, Read, and Simulation route hierarchy plus the
-               temporary development-only surfaces retained for comparison.
+               retired addresses that redirect into it.
 */
 
 import { matchPath } from 'react-router-dom'
@@ -29,12 +29,8 @@ export const APP_ROUTES = {
   ...READ_ROUTES,
 } as const
 
-// These routes exist only while the replacement surfaces are being verified.
-// They are deliberately excluded from primary navigation and SEO.
-export const LEGACY_SIMULATION_ROUTES = {
-  calculator: '/calculator',
-  optimizer: '/legacy-optimizer',
-} as const
+// The retired calculator now opens Modulation.
+export const LEGACY_CALCULATOR_ALIAS = '/calculator'
 
 export const LEGACY_HOME_ROUTE = '/home'
 
@@ -72,16 +68,14 @@ export const APP_NAVIGATION = {
 } as const
 
 export type SimulationRoute = keyof typeof SIMULATION_ROUTES
-export type LegacySimulationRoute = keyof typeof LEGACY_SIMULATION_ROUTES
 
 const SIMULATION_ROUTE_KEYS = Object.keys(SIMULATION_ROUTES) as SimulationRoute[]
-const LEGACY_SIMULATION_PATHS = Object.values(LEGACY_SIMULATION_ROUTES)
 
 // Every surface the simulation page can stand. The router builds its routes
 // from this table and the chrome reads it back, so a surface is declared once.
 // `workspace` surfaces share one Build Lab body and move between each other
 // without a page transition; `roster` stands the chrome-mounted roster column.
-export type SimulationPane = 'workspace' | 'rotation' | 'legacy-calculator' | 'legacy-optimizer'
+export type SimulationPane = 'workspace' | 'rotation'
 
 interface SimulationSurfaceSpec {
   path: string
@@ -95,8 +89,6 @@ export const SIMULATION_SURFACES = {
   showcase: { path: SIMULATION_ROUTES.showcase, pane: 'workspace', roster: true },
   suggestions: { path: SIMULATION_ROUTES.suggestions, pane: 'workspace', roster: true },
   rotation: { path: SIMULATION_ROUTES.rotation, pane: 'rotation', roster: true },
-  'legacy-calculator': { path: LEGACY_SIMULATION_ROUTES.calculator, pane: 'legacy-calculator', roster: false },
-  'legacy-optimizer': { path: LEGACY_SIMULATION_ROUTES.optimizer, pane: 'legacy-optimizer', roster: true },
 } as const satisfies Record<string, SimulationSurfaceSpec>
 
 export type SimulationSurface = keyof typeof SIMULATION_SURFACES
@@ -131,7 +123,7 @@ export function isSimulationSurfaceRoute(
 }
 
 export function isLegacySimulationRoute(pathname: string): boolean {
-  return [...LEGACY_SIMULATION_PATHS, ...Object.values(LEGACY_NESTED_SIMULATION_ROUTES)]
+  return [LEGACY_CALCULATOR_ALIAS, ...Object.values(LEGACY_NESTED_SIMULATION_ROUTES)]
     .some((route) => matchesPath(pathname, route))
 }
 
@@ -147,7 +139,7 @@ export function isPersistentWorkspaceRoute(pathname: string): boolean {
 
 export function resolveLegacyRoute(pathname: string): string | null {
   if (pathname === LEGACY_HOME_ROUTE) return APP_ROUTES.home
-  if (pathname === LEGACY_PROGRESSION_ALIAS) return SIMULATION_ROUTES.modulation
+  if (pathname === LEGACY_PROGRESSION_ALIAS || pathname === LEGACY_CALCULATOR_ALIAS) return SIMULATION_ROUTES.modulation
 
   for (const surface of ['optimizer', 'rotation'] as const) {
     const legacy = LEGACY_NESTED_SIMULATION_ROUTES[surface]

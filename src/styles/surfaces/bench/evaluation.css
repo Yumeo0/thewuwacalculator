@@ -10,33 +10,6 @@
     transform 180ms var(--workspace-ease);
 }
 
-.wk-main-body {
-  display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(18rem, 3fr);
-  gap: 1.5rem;
-  position: relative;
-  align-items: stretch;
-  min-width: 0;
-}
-
-.wk-main-body[data-side='off'] {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.wk-main-stack {
-  display: grid;
-  align-self: start;
-  height: max-content;
-  gap: 1rem;
-  align-content: start;
-  min-width: 0;
-}
-
-.wk-state-sources {
-  align-self: stretch;
-  min-width: 0;
-}
-
 .wk-span {
   grid-column: 1 / -1;
 }
@@ -62,7 +35,7 @@
 
 .wk-band[data-score="200"] :is(.wk-band-figure, .wk-track-marker-flag),
 .wk-portrait-grade[data-score="200"] {
-  --game-font: var(--game-font4);
+  --game-font: var(--score-200);
   font-weight: normal;
 }
 

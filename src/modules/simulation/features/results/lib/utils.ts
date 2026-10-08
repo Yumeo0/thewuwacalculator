@@ -6,13 +6,7 @@
 import type { SkillDef, SkillSubHit } from '@/domain/entities/stats.ts'
 import type { SimResult } from '@/engine/pipeline/types.ts'
 import type { RotationMemberContribution } from '@/domain/entities/rotationSummary.ts'
-import { formatTruncCompact } from '@/shared/lib/number.ts'
 import { getLoopAverageDivisor } from '@/engine/pipeline/rotationTotals.ts'
-
-// utility builders that keep the results pane damage and summary tables aligned with the latest simulation.
-const SUBHITNMBRFR = new Intl.NumberFormat('en-US', {
-  maximumFractionDigits: 0,
-})
 
 export interface CntrBrkdItem {
   label: string
@@ -22,28 +16,8 @@ export interface CntrBrkdItem {
   avg: number
 }
 
-export function mkSubHitForm(
-  subHits: SkillSubHit[],
-  valueKey: 'normal' | 'crit' | 'avg',
-): string {
-  return subHits
-    .map((hit) => {
-      const value = SUBHITNMBRFR.format(Math.floor(hit[valueKey]))
-      return hit.count > 1 ? `${value} x ${hit.count}` : value
-    })
-    .join(' + ')
-}
-
 export function shldViewSubH(subHits: SkillSubHit[]): boolean {
   return subHits.length > 0 && !(subHits.length === 1 && (subHits[0]?.count ?? 1) === 1)
-}
-
-export function fmtCntrPrcn(value: number): string {
-  if (value >= 100) {
-    return '100%'
-  }
-
-  return `${value >= 10 ? formatTruncCompact(value, 0) : formatTruncCompact(value, 1)}%`
 }
 
 function getNrmlEntTt(entry: SimResult['perSkill'][number]) {

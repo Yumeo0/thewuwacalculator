@@ -263,7 +263,6 @@
   transform: rotate(180deg);
 }
 
-
 .rte-team__profile {
   position: relative;
   width: 1.25rem;
@@ -302,7 +301,6 @@
   filter: drop-shadow(0 0 0.12rem var(--rte-res, var(--accent)));
 }
 
-
 .rte-team-menu {
   width: 16.25rem;
   overflow: hidden;
@@ -316,7 +314,6 @@
   border-radius: 0.2rem;
   overflow: hidden;
 }
-
 
 .rte-team-menu__split .rte-team-menu__tx {
   flex: var(--rte-team-share, 0) 1 0;
@@ -1282,7 +1279,6 @@ button.rte-bnd:focus-visible {
   transition: opacity 110ms ease, transform 240ms cubic-bezier(.3, .8, .35, 1);
 }
 
-
 button.rte-bnd:hover .rte-bnd__nm,
 button.rte-bnd:focus-visible .rte-bnd__nm,
 .rte-bnd.is-shut .rte-bnd__nm {
@@ -1290,7 +1286,6 @@ button.rte-bnd:focus-visible .rte-bnd__nm,
   transform: none;
   transition-delay: 110ms;
 }
-
 
 .rte-cols [data-band] {
   transition: opacity 110ms ease 110ms;

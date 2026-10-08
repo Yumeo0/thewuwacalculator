@@ -26,6 +26,8 @@ import { resSdsById } from '@/data/catalog/resonatorSeedService'
 import { cloneResProf, cloneRtSttVl } from '@/engine/runtime/runtimeCloning'
 import { catWpnAtk } from '@/engine/runtime/weaponState'
 import { getSuggsSttF } from '@/application/state/storeHelpers'
+import { roverIdForGender } from '@/domain/entities/roverGender'
+import { convertScenarioRoverGender } from './roverGenderConversion'
 
 function applyCombatScenario(
   combat: AppStore['combat'],
@@ -117,10 +119,11 @@ export function createResonatorActions({ get, persistedSet, deferForData, scenar
 
       for (const imported of profiles) {
         const profile = cloneResProf(imported)
-        const existingId = scenarioIdForContextResonator(workspace, profile.resonatorId)
+        const targetResonatorId = roverIdForGender(profile.resonatorId, state.ui.preferences.roverGender)
+        const existingId = scenarioIdForContextResonator(workspace, targetResonatorId)
         const scenarioId = existingId ?? nextScenarioId(workspace)
         const existingScenario = existingId ? workspace.scenariosById[existingId] : null
-        const scenario: CombatScenario = {
+        const scenario: CombatScenario = convertScenarioRoverGender({
           ...makeScenarioFromProfiles(
             { [profile.resonatorId]: profile },
             {
@@ -131,7 +134,7 @@ export function createResonatorActions({ get, persistedSet, deferForData, scenar
             profile.resonatorId,
           ),
           id: scenarioId,
-        }
+        }, state.ui.preferences.roverGender)
 
         if (existingScenario) {
           workspace = replaceScenario(workspace, scenario)
@@ -139,12 +142,12 @@ export function createResonatorActions({ get, persistedSet, deferForData, scenar
           workspace = addScenario(workspace, scenario, false)
         }
 
-        if (!nextSuggsByR[profile.resonatorId]) {
+        if (!nextSuggsByR[targetResonatorId]) {
           if (nextSuggsByR === state.simulation.suggestionsByResonatorId) {
             nextSuggsByR = { ...state.simulation.suggestionsByResonatorId }
           }
 
-          nextSuggsByR[profile.resonatorId] = makeSuggest()
+          nextSuggsByR[targetResonatorId] = makeSuggest()
         }
       }
 
@@ -277,6 +280,7 @@ export function createResonatorActions({ get, persistedSet, deferForData, scenar
   },
 
   setActRes: (resonatorId) => {
+    resonatorId = roverIdForGender(resonatorId, get().ui.preferences.roverGender)
     const id = scenarioIdForContextResonator(get().combat, resonatorId)
     if (id && deferForData(scenarioDataIds(id), () => get().setActRes(resonatorId), 'selection')) return
     if (getActResId(selectedCombatScenario(get().combat)) === resonatorId) {
@@ -301,6 +305,7 @@ export function createResonatorActions({ get, persistedSet, deferForData, scenar
   },
 
   actRes: (seed) => {
+    seed = resSdsById[roverIdForGender(seed.id, get().ui.preferences.roverGender)] ?? seed
     const existingId = scenarioIdForContextResonator(get().combat, seed.id)
     if (deferForData(existingId ? scenarioDataIds(existingId) : [seed.id], () => get().actRes(seed), 'selection')) return
     persistedSet(['combat.workspace', 'simulation.suggestions', 'ui.layout'], (state) => {
@@ -365,6 +370,7 @@ export function createResonatorActions({ get, persistedSet, deferForData, scenar
   },
 
   swRes: (resonatorId) => {
+    resonatorId = roverIdForGender(resonatorId, get().ui.preferences.roverGender)
     const seed = resSdsById[resonatorId]
     if (!seed) return
     get().actRes(seed)
@@ -409,6 +415,7 @@ export function createResonatorActions({ get, persistedSet, deferForData, scenar
   },
 
   ensResRt: (seed) => {
+    seed = resSdsById[roverIdForGender(seed.id, get().ui.preferences.roverGender)] ?? seed
     if (get().simulation.suggestionsByResonatorId[seed.id]) return
 
     persistedSet(['simulation.suggestions'], (state) => ({

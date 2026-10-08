@@ -135,7 +135,8 @@ export function formatStatKeyLabel(key: string, mode: StatKeyLabelMode = 'defaul
 
 // keys that should be rendered as percentages instead of flat values
 const PRCNSTATKEYS = new Set([
-  'critRate', 'critDmg', 'energyRegen', 'healingBonus', 'dmgVuln',
+  'critRate', 'critDmg', 'energyRegen', 'healingBonus', 'dmgBonus', 'amplify',
+  'defIgnore', 'defShred', 'resShred', 'dmgVuln', 'shieldBonus', 'finalDmg',
   'aero', 'glacio', 'spectro', 'fusion', 'electro', 'havoc',
   'basicAtk', 'heavyAtk', 'resonanceSkill', 'resonanceLiberation',
 ])

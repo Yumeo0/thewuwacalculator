@@ -733,18 +733,12 @@
   }
 }
 
-.wk-main > .wk-section,
-.wk-main-stack > .wk-section,
-.wk-main-body > .wk-state-sources {
+.wk-main > .wk-section {
   animation: workspace-rise 0.62s var(--workspace-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 .wk-main > :nth-child(1) { animation-delay: 40ms; }
 .wk-main > :nth-child(2) { animation-delay: 110ms; }
-.wk-main-stack > :nth-child(1) { animation-delay: 180ms; }
-.wk-main-stack > :nth-child(2) { animation-delay: 250ms; }
-.wk-main-stack > :nth-child(3) { animation-delay: 320ms; }
-.wk-main-body > .wk-state-sources { animation-delay: 180ms; }
 
 .wk-echo {
   animation: workspace-pop 0.46s var(--workspace-ease, cubic-bezier(0.22, 1, 0.36, 1)) backwards;
@@ -753,13 +747,9 @@
 
 .no-entrance-anim .wk-main .wk-band,
 .no-entrance-anim .wk-main > .wk-section,
-.no-entrance-anim .wk-main-stack > .wk-section,
-.no-entrance-anim .wk-main-body > .wk-state-sources,
 .no-entrance-anim .wk-echo,
 .reduce-animation .wk-main .wk-band,
 .reduce-animation .wk-main > .wk-section,
-.reduce-animation .wk-main-stack > .wk-section,
-.reduce-animation .wk-main-body > .wk-state-sources,
 .reduce-animation .wk-echo {
   animation: none;
 }

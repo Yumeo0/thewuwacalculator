@@ -29,7 +29,7 @@ export function selectSuggestionTarget(settings: SuggSets, value: string): SuggS
   }
 }
 
-export interface SuggTgtPtn {
+interface SuggTgtPtn {
   value: string
   label: string
   tab?: string

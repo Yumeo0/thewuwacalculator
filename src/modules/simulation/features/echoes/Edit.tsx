@@ -20,7 +20,7 @@ import { EchoPicker } from '@/modules/simulation/features/echoes/Picker.tsx'
 import { StatGlyph } from '@/modules/simulation/workspace/ui.tsx'
 import { formatStatKeyLabel } from '@/modules/simulation/model/statsView.ts'
 import { MAX_SUBSTATS, carryTier, fmtStatValue, stepIndex, useEchoDraft } from '@/modules/simulation/features/echoes/lib/echoDraft.ts'
-import { useMobileUi } from '@/shared/navigation/mobileUi'
+import { useMobileUi } from '@/shared/responsive/mobileUi'
 import { MobileEchoEdit } from '@/modules/simulation/features/echoes/mobile/MobileEchoEdit.tsx'
 
 export { carryTier }

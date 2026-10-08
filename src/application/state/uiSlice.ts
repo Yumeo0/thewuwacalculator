@@ -6,13 +6,14 @@
 
 import type { AppStore } from './store'
 import type { StoreSliceContext } from './storeContracts'
-import { HIST_MAX_OPTS, type HistoryMax, type LeftPaneView } from '@/domain/entities/appState'
+import { HIST_MAX_OPTS, type HistoryMax } from '@/domain/entities/appState'
 import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE } from '@/domain/entities/preferences'
-import { mkLeftPaneVi, trimHistEnts, type PrssHistStt } from './history'
+import { trimHistEnts, type PrssHistStt } from './history'
 import { getSystTheme } from '@/shared/lib/systemTheme'
 import { useInventoryUiStore } from './inventoryUiStore'
-
-const INV_LEFT_PANES = new Set<LeftPaneView>(['echoes', 'teams'])
+import { convertLibraryRoverGender, convertSimulationRoverGender, convertWorkspaceRoverGender } from './roverGenderConversion'
+import { cancelOptimizerRequest } from './optimizerSlice'
+import { resetOptimizerRun } from './optimizerRunStore'
 
 function trimHistStt(history: PrssHistStt, max: HistoryMax): PrssHistStt {
   return {
@@ -22,7 +23,7 @@ function trimHistStt(history: PrssHistStt, max: HistoryMax): PrssHistStt {
   }
 }
 
-export type UiActionNames = 'setTheme' | 'setThemePref' | 'syncTheme' | 'setLightVar' | 'setDarkVar' | 'setBgVar' | 'setBgImgKey' | 'setBgTxtMode' | 'setBodyFont' | 'setBlurMode' | 'setEntrAnim' | 'setCtxMenu' | 'setUpdToast' | 'setGameBetaData' | 'setRecMenus' | 'setEvaluationStates' | 'setMaxResInit' | 'setAnimatedRailPortraits' | 'commitAppearanceConfig' | 'patchShowcaseCardStyle' | 'toggleShowcaseHide' | 'patchShowcaseCardHidden' | 'resetShowcaseCard' | 'setShowcaseLayout' | 'setUploadPersist' | 'setImgbbApiKey' | 'setPlayerIdentity' | 'setEchoImportBands' | 'setRotationImportPick' | 'setSugView' | 'setLeftView' | 'openLeftView' | 'setSubHits' | 'setCmpInv' | 'setGrpInv' | 'setSeeEqp' | 'setHistOn' | 'setHistMax' | 'setOptHint' | 'setOptSprite' | 'setCmprXprts' | 'setRotEditorPrefs' | 'setRotPrefs' | 'setInvOpen' | 'setInvEchoQ'
+export type UiActionNames = 'setTheme' | 'setThemePref' | 'syncTheme' | 'setLightVar' | 'setDarkVar' | 'setBgVar' | 'setBgImgKey' | 'setBgTxtMode' | 'setBodyFont' | 'setBlurMode' | 'setEntrAnim' | 'setCtxMenu' | 'setUpdToast' | 'setGameBetaData' | 'setRoverGender' | 'setRecMenus' | 'setMaxResInit' | 'setAnimatedRailPortraits' | 'commitAppearanceConfig' | 'patchShowcaseCardStyle' | 'toggleShowcaseHide' | 'patchShowcaseCardHidden' | 'resetShowcaseCard' | 'setShowcaseLayout' | 'setUploadPersist' | 'setImgbbApiKey' | 'setPlayerIdentity' | 'setEchoImportBands' | 'setRotationImportPick' | 'setSugView' | 'setSubHits' | 'setCmpInv' | 'setGrpInv' | 'setSeeEqp' | 'setHistOn' | 'setHistMax' | 'setOptHint' | 'setCmprXprts' | 'setRotEditorPrefs' | 'setRotPrefs' | 'setInvOpen' | 'setInvEchoQ'
 
 export function createUiActions({ get, persistedSet }: Pick<StoreSliceContext, 'get' | 'persistedSet'>): Pick<AppStore, UiActionNames> {
   return {
@@ -186,6 +187,36 @@ export function createUiActions({ get, persistedSet }: Pick<StoreSliceContext, '
     }), { historyLabel: 'Changed Game Data Mode' })
   },
 
+  setRoverGender: (roverGender) => {
+    if (get().ui.preferences.roverGender === roverGender) return
+    if (roverGender !== 'both') {
+      get().ensureFullLibrary()
+      cancelOptimizerRequest()
+      resetOptimizerRun()
+    }
+    persistedSet([
+      'ui.layout', 'combat.workspace',
+      'library.builds', 'library.rotations', 'library.scenarios',
+      'simulation.optimizerSettings', 'simulation.suggestions',
+    ], (state) => {
+      if (state.ui.preferences.roverGender === roverGender) return state
+      const library = roverGender === 'both'
+        ? state.library
+        : convertLibraryRoverGender(state.library, roverGender)
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          preferences: { ...state.ui.preferences, roverGender },
+        },
+        combat: convertWorkspaceRoverGender(state.combat, roverGender),
+        library,
+        simulation: convertSimulationRoverGender(state.simulation, roverGender),
+        history: { past: [], future: [], isRestoring: false },
+      }
+    }, { recHist: false })
+  },
+
   setRecMenus: (rcmmMenuTms) => {
     persistedSet(['ui.layout'], (state) => ({
       ...state,
@@ -197,19 +228,6 @@ export function createUiActions({ get, persistedSet }: Pick<StoreSliceContext, '
         },
       },
     }), { historyLabel: 'Changed Recommended Menu Items' })
-  },
-
-  setEvaluationStates: (showAllStates) => {
-    persistedSet(['ui.layout'], (state) => ({
-      ...state,
-      ui: {
-        ...state.ui,
-        preferences: {
-          ...state.ui.preferences,
-          showEvaluationStates: showAllStates,
-        },
-      },
-    }), { historyLabel: 'Changed Evaluation State Visibility' })
   },
 
   setMaxResInit: (maxResOnInit) => {
@@ -397,40 +415,6 @@ export function createUiActions({ get, persistedSet }: Pick<StoreSliceContext, '
     }), { historyLabel: 'Changed Suggestions View' })
   },
 
-  setLeftView: (leftPaneView) => {
-    if (INV_LEFT_PANES.has(leftPaneView)) {
-      get().ensInvHydr()
-    }
-
-    persistedSet(['ui.layout'], (state) => ({
-      ...state,
-      ui: {
-        ...state.ui,
-        leftPaneView,
-      },
-    }), { historyLabel: 'Changed Left Pane View' })
-  },
-
-  openLeftView: (leftPaneView) => {
-    if (INV_LEFT_PANES.has(leftPaneView)) {
-      get().ensInvHydr()
-    }
-
-    persistedSet(['ui.layout'], (state) => {
-      if (state.ui.leftPaneView === leftPaneView) {
-        return state
-      }
-
-      return {
-        ...state,
-        ui: {
-          ...state.ui,
-          leftPaneView,
-        },
-      }
-    }, { historyLabel: mkLeftPaneVi(leftPaneView) })
-  },
-
   setSubHits: (showSubHits) => {
     persistedSet(['ui.layout'], (state) => ({
       ...state,
@@ -506,16 +490,6 @@ export function createUiActions({ get, persistedSet }: Pick<StoreSliceContext, '
       ui: {
         ...state.ui,
         optimizerCpuHintSeen: optCpuHintSe,
-      },
-    }))
-  },
-
-  setOptSprite: (useSprite) => {
-    persistedSet(['ui.layout'], (state) => ({
-      ...state,
-      ui: {
-        ...state.ui,
-        optimizerUseSprite: useSprite,
       },
     }))
   },

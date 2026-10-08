@@ -37,7 +37,6 @@ import { ATTR_COLORS } from '@/modules/simulation/model/display'
 import {
   FULL_EVALUATION_REPORT_OPTIONS,
   MODULATION_SUMMARY_REPORT_OPTIONS,
-  SCORE_ONLY_EVALUATION_REPORT_OPTIONS,
   useEvaluationReport,
   useSuggestionsRailScore,
 } from '@/modules/simulation/model/useBuildEvaluation.ts'
@@ -53,7 +52,7 @@ import {
   getBuildEvaluationGrade,
   getBuildEvaluationTone,
 } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
-import { makeStatsTree, makeStatsView } from '@/modules/simulation/model/statsView.ts'
+import { makeStatsView } from '@/modules/simulation/model/statsView.ts'
 import { getMaxEchoSc } from '@/engine/evaluation/echoScoring.ts'
 import { makeEvaluationKey } from '@/engine/evaluation/buildEvaluationKey.ts'
 import { peekEvaluationReport } from '@/engine/evaluation/buildEvaluationClient.ts'
@@ -80,7 +79,7 @@ import { Clipboard, Copy } from 'lucide-react'
 import { useSel } from '@/modules/simulation/lib/sel.tsx'
 import {
   EVALUATION_RAIL_ENTER_MS, EVALUATION_RAIL_EXIT_MS,
-  type EvaluationEchoSelection, type CssVars, type DetailBuildKey,
+  type EvaluationEchoSelection, type CssVars,
   buildSonataPlan,
   preloadEvaluationRailImages, scheduleEvaluationTargetWork,
 } from '@/modules/simulation/workspace/ui.tsx'
@@ -112,11 +111,10 @@ function reportSourceIdentity(
   runtime: ResRuntime | null,
   runtimesById: Record<string, ResRuntime>,
   targetSelections: Record<string, string | null>,
-  showAllStates: boolean,
 ): string | null {
   return runtime ? makeEvaluationKey({
     selectedScenarioId, targetScenarioId, memberId,
-    runtime, runtimesById, targetSelections, showAllStates,
+    runtime, runtimesById, targetSelections,
   }) : null
 }
 // Defer report construction beyond the 460ms drawer transition so its worker
@@ -155,7 +153,6 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   const showToast = useTstStr((state) => state.show)
   const confirmation = useConfirm()
   const portalTarget = mainPortal()
-  const [detailBuildKey, setDetailBuildKey] = useState<DetailBuildKey>('active')
   const [reportOpen, setReportOpen] = useState(false)
   const [reportWorkReady, setReportWorkReady] = useState(false)
   const reportWorkTimer = useRef<number | null>(null)
@@ -188,7 +185,6 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   }, [clearReportWorkTimer])
   const actResId = useAppStore(selActResId)
   const scenarioLibrary = useAppStore((state) => state.combat)
-  const showAllStates = useAppStore((state) => state.ui.preferences.showEvaluationStates)
   const themeMode = useAppStore((state) => state.ui.theme)
   const backgroundTextMode = useAppStore((state) => state.ui.backgroundTextMode)
   const isDarkTheme = themeMode === 'background' ? backgroundTextMode === 'dark' : themeMode === 'dark'
@@ -206,14 +202,9 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   const isModulation = page === 'modulation'
   const isOptimizer = page === 'optimizer'
   const isSuggestions = page === 'suggestions'
-  // Modulation needs target snapshots; the other surfaces request score only.
-  const reportOptions = isModulation
-    ? MODULATION_SUMMARY_REPORT_OPTIONS
-    : SCORE_ONLY_EVALUATION_REPORT_OPTIONS
   const pauseRailPortrait = isOptimizer && optimizerRunning
 
-  const surfacePhase = 'idle' as const
-  const analysisActive = surfacePhase === 'idle' && !inventoryOpen
+  const analysisActive = !inventoryOpen
   const [captureAction, setCaptureAction] = useState<'download' | 'clipboard' | null>(null)
 
   const railScenario = scenarioLibrary.scenariosById[railScenarioId] ?? null
@@ -229,7 +220,6 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   const railResId = railRuntime?.id ?? null
   const railScenarioIdRef = useRef(selectedScenarioId)
   const boardRef = useRef<HTMLDivElement | null>(null)
-  const mainStackRef = useRef<HTMLDivElement | null>(null)
 
   // Derive route context actions from the same canonical roster model used by chrome.
   const roster = useMemo<BuildRosterEntry[]>(
@@ -265,13 +255,13 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     .find((member) => member.resonatorId === railRuntime?.id)?.id ?? null
   const railSourceKey = useMemo(() => reportSourceIdentity(
     selectedScenarioId, railScenarioId, selectedMemberId,
-    railRuntime, railPartRtsById, railTargets, showAllStates,
+    railRuntime, railPartRtsById, railTargets,
   ), [
     railPartRtsById, railRuntime, railScenarioId, railTargets,
-    selectedMemberId, selectedScenarioId, showAllStates,
+    selectedMemberId, selectedScenarioId,
   ])
   const cachedRailReport = analysisActive && !isShowcase && !isOptimizer && !isSuggestions && railSourceKey
-    ? peekEvaluationReport(railSourceKey, reportOptions)
+    ? peekEvaluationReport(railSourceKey, MODULATION_SUMMARY_REPORT_OPTIONS)
     : undefined
 
   useLayoutEffect(() => {
@@ -378,17 +368,17 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
       ? railSourceKey
       : reportSourceIdentity(
         selectedScenarioId, reportTargetScenarioId, reportMemberId,
-        reportRuntime, reportParticipants, reportTargets, showAllStates,
+        reportRuntime, reportParticipants, reportTargets,
       )
   ), [
     railPartRtsById, railRuntime, railScenarioId, railSourceKey, railTargets,
     reportMemberId, reportParticipants, reportRuntime, reportTargetScenarioId,
-    reportTargets, selectedScenarioId, showAllStates,
+    reportTargets, selectedScenarioId,
   ])
   const cachedCurrentReport = reportSourceKey === railSourceKey
     ? cachedRailReport
     : analysisActive && !isShowcase && !isOptimizer && !isSuggestions && reportSourceKey
-      ? peekEvaluationReport(reportSourceKey, reportOptions)
+      ? peekEvaluationReport(reportSourceKey, MODULATION_SUMMARY_REPORT_OPTIONS)
       : undefined
   const needsReportSimulation = cachedCurrentReport === undefined || (isModulation && reportOpen)
   const reportCalculationEnabled = analysisActive
@@ -400,13 +390,9 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     targetRuntime: reportCalculationEnabled ? evaluationRuntime : null,
     targetSeed: reportCalculationEnabled ? reportSeed : null,
     targetSelections: isSuggestions ? EMPTY_TARGETS : reportTargets,
-    // Evaluation scoring has its own normalized runtime/enemy assumptions, so
-    // it must not reuse the live active prep even when evaluating the active resonator.
-    activeResId: null,
-    activeRuntimesById: isSuggestions ? EMPTY_RUNTIME_MAP : evaluationReportRuntimesById,
-    initializedRuntimesById: isSuggestions ? EMPTY_RUNTIME_MAP : evaluationReportRuntimesById,
+    // Evaluation scoring uses normalized runtime and enemy assumptions.
+    baseRuntimesById: isSuggestions ? EMPTY_RUNTIME_MAP : evaluationReportRuntimesById,
     enemy: evaluationEnemy,
-    showAllStates: isSuggestions ? false : showAllStates,
     deferHeavyWork: reportCalculationEnabled,
   })
   const showcaseInput = useMemo<ShowcaseAnalysisInput | null>(() => {
@@ -432,7 +418,6 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
   const showcaseAnalysis = useShowcaseAnalysis(showcaseInput, analysisActive)
   const reportRuntimesById = reportTarget.runtimesById
   const simulation = reportTarget.simulation
-  const reportStateGroups = reportTarget.stateGroups
   const echoRuntime = isModulation ? modulationRuntime ?? railRuntime : railRuntime
   const echoSeed = (isModulation && echoRuntime ? seedRsntById[echoRuntime.id] ?? null : null)
     ?? railSeed
@@ -635,7 +620,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     noun: { one: 'echo', many: 'echoes' },
     items: evaluationEchoItems,
     acts: evaluationEchoActions,
-    active: captureAction == null && surfacePhase === 'idle',
+    active: captureAction == null,
   })
   const focusEvaluationEchoSurface = evaluationEchoSelection.focusSurface
   const addEvaluationEchoToSelection = evaluationEchoSelection.addToSelection
@@ -692,7 +677,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     onEchoLoadoutChange: setEchoLoadout,
   })
 
-  const { report, loading, error } = useEvaluationReport({
+  const { report, error } = useEvaluationReport({
     runtime: evaluationRuntime,
     simulation,
     enemy: evaluationEnemy,
@@ -701,7 +686,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     clearOnDisable: isShowcase || isSuggestions || isOptimizer,
     identityKey: reportTargetScenarioId,
     sourceKey: reportSourceKey,
-    reportOptions,
+    reportOptions: MODULATION_SUMMARY_REPORT_OPTIONS,
   })
 
   const { report: detailReport, loading: detailReportLoading } = useEvaluationReport({
@@ -787,34 +772,6 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
     report,
     reportTargetScenarioId,
   ])
-
-  const overviewStatsTree = useMemo(
-    () => !isShowcase && simulation?.finalStats ? makeStatsTree(simulation.finalStats) : [],
-    [isShowcase, simulation],
-  )
-
-  useLayoutEffect(() => {
-    if (isShowcase) return undefined
-    const board = boardRef.current
-    const stack = mainStackRef.current
-    if (!board || !stack) return undefined
-
-    let frame = 0
-    const updateInset = () => {
-      cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(() => {
-        stack.style.setProperty('--workspace-stack-stick-top', `${board.clientHeight - stack.offsetHeight}px`)
-      })
-    }
-    const observer = new ResizeObserver(updateInset)
-    observer.observe(board)
-    observer.observe(stack)
-    updateInset()
-    return () => {
-      cancelAnimationFrame(frame)
-      observer.disconnect()
-    }
-  }, [isShowcase, report])
 
   const accent = railSeed ? ATTR_COLORS[railSeed.attribute] ?? '#6b7cff' : '#6b7cff'
   const dockResId = isModulation ? modulationMemberId : railResId
@@ -951,7 +908,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
               railProps={{ isShowcase, railPhase, railResId, scenarioId: railScenarioId, railModel,
                 animatedPortraits: animatedPortraits && !pauseRailPortrait,
                 onAnimatedPortraitsChange: pauseRailPortrait ? undefined : setAnimatedPortraits,
-                editable: true, onRuntimeUpdate: updateRailRuntime, surfacePhase,
+                editable: true, onRuntimeUpdate: updateRailRuntime,
                 score, grade, tone, showcaseBuild, showcaseAvgDamage,
                 onEchoOpen: openEchoSlot, echoSelection,
               }}
@@ -965,7 +922,7 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
                     text="Loading optimizer..."
                   />
                 )}>
-                  <EvaluationSummaryContext value={optimizerSummary}><EmbeddedOptimizer variant="embedded" /></EvaluationSummaryContext>
+                  <EvaluationSummaryContext value={optimizerSummary}><EmbeddedOptimizer /></EvaluationSummaryContext>
                 </Suspense>
               ) : null}
 
@@ -982,8 +939,6 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
 
               {!isOptimizer && !isSuggestions && !isShowcase ? (
                 <ModulationReport
-                  phase={surfacePhase}
-                  modulation={isModulation}
                   modulationRuntime={modulationRuntime}
                   modulationActRt={railRuntime}
                   modulationAnalysisSource={modulationAnalysisSource}
@@ -992,7 +947,6 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
                   onModulationMember={setModulationMemberId}
                   modulationDark={isDarkTheme}
                   onModulationUpdate={updateModulationRuntime}
-                  loading={loading || !reportMatchesRail}
                   report={visibleReport}
                   detailReport={reportWorkReady ? detailReport : null}
                   detailReportReady={reportWorkReady}
@@ -1006,20 +960,13 @@ export function BuildWorkspaceSurface({ page }: { page: WorkspaceSurface }) {
                   score={score}
                   grade={grade}
                   tone={tone}
-                  detailBuildKey={detailBuildKey}
-                  setDetailBuildKey={setDetailBuildKey}
-                  mainStackRef={mainStackRef}
-                  stateGroups={reportStateGroups}
                   reportRuntime={evaluationRuntime}
-                  reportRuntimesById={reportRuntimesById}
-                  enemyId={evaluationEnemy.id}
                   echoSelection={echoSelection}
                   echoActions={echoActions}
                   echoScores={echoScores}
                   loadoutSlots={loadoutSlots}
                   sourceEchoes={echoLoadout}
                   onEchoOpen={openEchoSlot}
-                  overviewStatsTree={overviewStatsTree}
                   echoRuntime={echoRuntime}
                   echoScenarioId={railScenarioId}
                   echoResonatorName={echoSeed?.name}

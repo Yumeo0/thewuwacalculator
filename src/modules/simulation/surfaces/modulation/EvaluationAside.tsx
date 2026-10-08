@@ -34,7 +34,7 @@ import {
   ROTATION_CHART_COLORS,
   getEvaluationFeatureTabLabel,
   groupRotationFeatureRows,
-} from './EvaluationReport.tsx'
+} from './evaluationFeatureDisplay.ts'
 
 /* ---------- the ladder the band is drawn from ---------- */
 

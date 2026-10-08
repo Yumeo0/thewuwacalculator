@@ -17,22 +17,150 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  transition: translate 0.25s var(--blm-io);
 }
 
-.blm--loading .app-loader-inline {
-  min-height: 100%;
-  padding: 0.25rem;
-  --app-loader-inline-figure: 2rem;
+body:has(.scw-tab) .blm {
+  translate: 1rem 0;
 }
 
-.blm--loading .app-loader-line {
+.blm--held {
+  animation: blm-held-show 260ms ease 120ms both;
+}
+
+.blm--held .blm-knot,
+.blm--held .blm-bead {
+  cursor: default;
+}
+
+.blm--held .blm-bead {
+  animation: none;
+}
+
+.blm-held-bubble,
+.blm-held-bubble i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.blm-held-bubble {
+  scale: 0.42;
+  background:
+    radial-gradient(circle at 34% 30%, color-mix(in srgb, var(--text) 34%, transparent) 0 9%, transparent 10%),
+    radial-gradient(circle, transparent 52%, color-mix(in srgb, var(--text) 12%, transparent) 100%),
+    var(--bg);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--text) 22%, transparent),
+    0 0 0 3px var(--bg);
+}
+
+.blm-held-bubble i {
+  opacity: 0;
+  background:
+    radial-gradient(circle at 34% 30%, color-mix(in srgb, #fff 70%, transparent) 0 6%, transparent 7%),
+    radial-gradient(circle, color-mix(in srgb, var(--row-ink) 14%, var(--bg)) 0%, color-mix(in srgb, var(--row-ink) 30%, var(--bg)) 72%, color-mix(in srgb, var(--row-ink) 55%, var(--bg)) 100%);
+  box-shadow:
+    inset 0 0 0 1.5px var(--row-ink),
+    0 0 0.9rem color-mix(in srgb, var(--row-ink) 45%, transparent);
+}
+
+.blm-held-lens {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: 0;
+  width: 3.9rem;
+  height: 3.9rem;
+  margin: -1.95rem 0 0 -1.95rem;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 33% 26%, color-mix(in srgb, #fff 16%, transparent), transparent 34%),
+    radial-gradient(circle, transparent 60%, color-mix(in srgb, var(--text) 9%, transparent) 100%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--text) 26%, transparent),
+    inset 0 -0.35rem 0.8rem color-mix(in srgb, var(--text) 7%, transparent),
+    0 0.4rem 1.2rem -0.3rem color-mix(in srgb, #000 40%, transparent);
+}
+
+.blm-held-lens::before {
+  content: '';
+  position: absolute;
+  inset: -0.28rem;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+.blm--held .blm-knot-mark {
+  box-shadow:
+    0 0 0 0.25rem var(--bg),
+    inset 0 0 0 1px color-mix(in srgb, var(--knot-ink) 40%, transparent);
+}
+
+.blm--held .blm-knot-mark img {
+  opacity: 0.4;
+}
+
+.blm--held .blm-socket {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.blm--held .blm-cap-name {
+  animation: none;
+}
+
+.blm-held-say {
   position: absolute;
   width: 1px;
   height: 1px;
-  padding: 0;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
+}
+
+.blm[data-from='held'] .blm-bead,
+.blm[data-from='held'] .blm-cap-name {
+  animation: none;
+}
+
+.blm[data-from='held'] .blm-bead:not([data-active]) .blm-bead-pic img {
+  animation: blm-held-fill 520ms var(--blm-ease) both;
+  animation-delay: calc(var(--bi, 0) * 36ms);
+}
+
+.blm[data-from='held'] .blm-knot-mark img {
+  animation: blm-held-ink 400ms ease both;
+}
+
+@keyframes blm-held-show {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes blm-held-fill {
+  from {
+    opacity: 0;
+    scale: 0.42;
+  }
+}
+
+@keyframes blm-held-ink {
+  from {
+    opacity: 0.4;
+  }
+}
+
+.no-entrance-anim .blm--held,
+.reduce-animation .blm--held,
+.no-entrance-anim .blm[data-from='held'] .blm-bead-pic img,
+.reduce-animation .blm[data-from='held'] .blm-bead-pic img,
+.no-entrance-anim .blm[data-from='held'] .blm-knot-mark img,
+.reduce-animation .blm[data-from='held'] .blm-knot-mark img {
+  animation: none;
 }
 
 .blm-scroll {
@@ -208,7 +336,6 @@
   transform: none;
 }
 
-
 .blm-spark-row {
   position: relative;
   display: block;
@@ -261,7 +388,6 @@
 .blm-spark:is(:hover, :focus-visible) .blm-spark-mark {
   transform: scale(1.3);
 }
-
 
 .blm-spark[data-on] .blm-spark-mark {
   transform: rotate(45deg) scale(1.45);

@@ -17,6 +17,7 @@ import type {
   SourceState,
 } from '@/domain/gameData/contracts'
 import type { SkillDamageEntry, SkillDef } from '@/domain/entities/stats'
+import { unisonBoonSource } from '@/domain/gameData/unisonBoon'
 
 const NO_OWNERS: SrcOwnDef[] = []
 const NO_EFFECTS: EffectDef[] = []
@@ -45,6 +46,9 @@ export function mkGameDataRe(
   sources: SrcPkg[],
   options: { resonatorStatesById?: Record<string, SourceState[]>; base?: GameDataReg } = {},
 ): GameDataReg {
+  const allSources = options.base?.sourcesByKey['teamEffect:unisonBoon']
+    || sources.some((source) => source.source.type === 'teamEffect' && source.source.id === 'unisonBoon')
+    ? sources : [...sources, unisonBoonSource]
   const resonatorStatesById = options.resonatorStatesById ?? {}
   const base = options.base
   const sourcesByKey: Record<string, SrcPkg> = { ...base?.sourcesByKey }
@@ -68,7 +72,7 @@ export function mkGameDataRe(
   const resFeatsById: Record<string, FeatDef[]> = { ...base?.resonatorFeaturesById }
   const resRttnById: Record<string, RotDef[]> = { ...base?.resonatorRotationsById }
 
-  for (const source of sources) {
+  for (const source of allSources) {
     const key = makeSourceKey(source.source)
 
     if (sourcesByKey[key]) {
@@ -165,7 +169,7 @@ export function mkGameDataRe(
     }
   }
 
-  for (const source of sources) {
+  for (const source of allSources) {
     for (const owner of source.owners ?? []) {
       if (ownersByKey[owner.ownerKey]) {
         throw new Error(`duplicate source owner key: ${owner.ownerKey}`)
@@ -175,7 +179,7 @@ export function mkGameDataRe(
     }
   }
 
-  for (const source of sources) {
+  for (const source of allSources) {
     const states = source.states?.length
       ? source.states
       : source.source.type === 'resonator'

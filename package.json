@@ -2,7 +2,7 @@
   "name": "wuwacalculator",
   "private": true,
   "version": "0.0.0",
-  "license": "ISC",
+  "license": "UNLICENSED",
   "type": "module",
   "engines": {
     "node": "24.x"
@@ -36,6 +36,8 @@
     "ingest:weapons": "node scripts/ingest/fetch/encore/weapons.mjs",
     "ingest:weapons:nanoka": "node scripts/ingest/fetch/nanoka/weapons.mjs",
     "ingest:weapons:module": "node scripts/ingest/build/weapons/module.mjs --input-file ingest/weapons/weapons.json",
+    "ingest:kits": "node scripts/kits/build.mjs",
+    "generate:kits:nodes": "node scripts/kits/runtime/translateProgram.mjs",
     "ingest:spine-slugs": "node scripts/ingest/fetch/nanoka/slugManifest.mjs",
     "ingest:spine": "node scripts/ingest/fetch/nanoka/spine.mjs && npm run assets:spine-atlas",
     "assets:spine-atlas": "node scripts/assets/downscaleSpineAtlas.mjs",

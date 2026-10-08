@@ -2,7 +2,7 @@
 
 ## Summary
 
-This document covers how Suggestions and Optimizer rank builds using the shared runtime engine. Use it when changing suggestion types, Echo generation, workers, optimizer preparation, or CPU and GPU search.
+This document covers how Suggestions and Optimizer rank builds using the shared runtime engine. Use it when changing suggestion types, workers, optimizer preparation, or CPU and GPU search.
 
 ## Shared Runtime Assumption
 
@@ -24,17 +24,15 @@ Primary files:
 - [src/engine/suggestions/mainStat-suggestion](../src/engine/suggestions/mainStat-suggestion)
 - [src/engine/suggestions/setPlan-suggestion](../src/engine/suggestions/setPlan-suggestion)
 - [src/engine/suggestions/worker.ts](../src/engine/suggestions/worker.ts)
-- [src/modules/simulation/surfaces/suggestions/surfaceAlgorithms](../src/modules/simulation/surfaces/suggestions/surfaceAlgorithms)
+- [src/modules/simulation/surfaces/suggestions/climb](../src/modules/simulation/surfaces/suggestions/climb)
 
 Top level suggestion families:
 
 - main stat suggestions
 - set plan suggestions
 - weapon suggestions
-- random echo generation
-- substat priority
 
-Main-stat, set-plan, and weapon ranking are shared engine systems. Random Echo generation and substat priority belong to the Suggestions feature under `surfaceAlgorithms`. They may be replaced with that feature and must not become dependencies of shared engine, scoring, or optimizer code. Random generation uses its own worker for its larger searches.
+Main-stat, set-plan, and weapon ranking are shared engine systems. The current Suggestions surface does not expose the retired Random Echo or Substat Priority modes. Feature-local experimental code under `surfaceAlgorithms` is not part of the mounted production surface and must not become a dependency of shared engine, scoring, or optimizer code.
 
 Suggestion results depend on:
 
@@ -49,7 +47,7 @@ Set plan suggestion rows are display-grouped after scoring. Plans with the same 
 
 ## Suggestions Worker Boundary
 
-The shared worker runs the durable main-stat, set-plan, and weapon families. Random Echo generation has a feature-owned worker and client contract under `surfaceAlgorithms`; deleting that surface must not require editing the shared worker.
+The shared worker runs the durable main-stat, set-plan, and weapon families. Any feature-local experiment under `surfaceAlgorithms` remains isolated from that shared worker contract.
 
 ## Optimizer Overview
 

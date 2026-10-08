@@ -5,6 +5,8 @@
 */
 
 import type { AppStore } from './store'
+import { roverIdForGender } from '@/domain/entities/roverGender'
+import { convertScenarioRoverGender } from './roverGenderConversion'
 import type { StoreSliceContext } from './storeContracts'
 import type { EchoInstance } from '@/domain/entities/runtime'
 import { makeEchoUid } from '@/domain/entities/runtime'
@@ -219,6 +221,7 @@ export function createInventoryActions({ get, persistedSet }: Pick<StoreSliceCon
 
   addInvBuild: ({ name, resonatorId, resonatorName: resName, build }) => {
     get().ensInvHydr()
+    resonatorId = roverIdForGender(resonatorId, get().ui.preferences.roverGender)
     if (isEmptyBuild(build)) {
       return null
     }
@@ -303,6 +306,7 @@ export function createInventoryActions({ get, persistedSet }: Pick<StoreSliceCon
 
   addInvRot: ({ name, duration, note, scenario }) => {
     get().ensureSavedRotations()
+    scenario = convertScenarioRoverGender(scenario, get().ui.preferences.roverGender)
     const rotations = get().library.rotations
     const contextMember = contextScenarioMember(scenario)
     const contextName = resSdsById[contextMember.resonatorId]?.name ?? contextMember.resonatorId

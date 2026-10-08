@@ -7,6 +7,7 @@
 
 import type { ResRuntime } from '@/domain/entities/runtime'
 import { getRotFormulaPath, ROT_FORMULA_STAT_DEFS } from '@/domain/gameData/rotationFormulaStats'
+import { UNISON_BOON_TEAM_PATH, unisonBoonMaxForRuntimes, unisonBoonState } from '@/domain/gameData/unisonBoon'
 import { makeSourceCat } from '@/engine/services/runtimeSourceService'
 import { resolveSkill } from '@/engine/pipeline/resolveSkill'
 import { getNegFfctCm, getNegFfctEn } from '@/engine/gameData/negativeEffects'
@@ -117,7 +118,7 @@ export function makeFeatureMeta(
       )
 
       lookup[feature.id] = {
-        label: skillResult?.label ?? feature.label,
+        label: feature.variant === 'subHit' ? feature.label : skillResult?.label ?? feature.label,
         skillId: feature.skillId,
         tab: skillResult?.tab ?? skill?.tab ?? 'feature',
         archetype: skillResult?.archetype ?? skill?.archetype,
@@ -287,6 +288,22 @@ export function makeConditionChoices(
     ...activeChoice,
     ...formulaChoices,
     ...memChcs,
+    ...(visibleMember.some((member) => member.id === '1311' || member.id === '1312')
+      ? [{
+          id: 'teamEffect:unisonBoon',
+          resonatorId: 'team',
+          resName: 'Team',
+          sourceName: 'Team',
+          label: unisonBoonState.label,
+          description: unisonBoonState.description,
+          changeTarget: 'rotation' as const,
+          state: {
+            ...unisonBoonState,
+            path: UNISON_BOON_TEAM_PATH,
+            max: unisonBoonMaxForRuntimes(visibleMember.map((member) => member.runtime)),
+          },
+        }]
+      : []),
     ...enemyChoices(runtime, enemyId, runtimesById),
   ]
 }

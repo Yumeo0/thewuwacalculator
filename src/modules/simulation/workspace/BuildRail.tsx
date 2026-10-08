@@ -7,6 +7,7 @@
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 import { Images, Pause, Play, Sword, UserRound } from 'lucide-react'
+import { flushSync } from 'react-dom'
 import { memo, useCallback, useMemo, type CSSProperties, type MouseEvent as ReactMouseEvent, type RefObject } from 'react'
 import type { ResRuntime, ResSeed, WeaponState } from '@/domain/entities/runtime'
 import type { CombatScenarioId } from '@/domain/entities/combatScenario.ts'
@@ -134,7 +135,6 @@ export const BuildRail = memo(function BuildRail({
   onAnimatedPortraitsChange,
   editable,
   onRuntimeUpdate,
-  surfacePhase,
   showcasePlacement,
   score,
   grade,
@@ -169,7 +169,6 @@ export const BuildRail = memo(function BuildRail({
   onAnimatedPortraitsChange?: (next: boolean) => void
   editable: boolean
   onRuntimeUpdate?: (resonatorId: string, updater: (runtime: ResRuntime) => ResRuntime) => void
-  surfacePhase: 'idle' | 'out' | 'in'
   showcasePlacement: SpinePlacement
   score: number | null
   grade: string | null
@@ -347,7 +346,7 @@ export const BuildRail = memo(function BuildRail({
             resId={railResId}
             onImageReady={onPortraitReady}
             animated={animatedPortraits}
-            playing={surfacePhase === 'idle' && railPhase === 'idle'}
+            playing={railPhase === 'idle'}
             spineClassName="wk-portrait-spine"
             placement={showcasePlacement}
             overrideImageUrl={resolvedPortrait}
@@ -427,7 +426,6 @@ export const BuildRail = memo(function BuildRail({
       </div>
 
       <div className="wk-rail-build"
-        data-phase={isShowcase ? surfacePhase : undefined}
         {...(isShowcase ? echoSelection?.surfaceProps : undefined)}
       >
         {isShowcase && showcaseBuild && seal ? (
@@ -560,8 +558,10 @@ function TeamBlock({
           team={scenario.team.members.map((member) => member.resonatorId)}
           onClose={closePicker}
           onCommit={(supports) => {
+            // The store write renders synchronously, so commit the closing
+            // phase first or the new team remounts an open picker.
+            flushSync(() => closePicker())
             setTeam(supports)
-            closePicker()
           }}
         />
       ) : null}

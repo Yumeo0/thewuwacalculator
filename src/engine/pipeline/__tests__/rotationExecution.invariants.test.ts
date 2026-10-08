@@ -29,7 +29,6 @@ import {
   runPrepWorkDetailedProgramTimed,
   runPrepWorkDetailedStoredProgram,
 } from '@/engine/pipeline/preparedWorkspace.ts'
-import { recordRotationTape, replayTape } from '@/engine/rotation/experimental/tape.ts'
 
 const seed: ResSeed = {
   // compact resonator fixture with one two-hit damage skill and one default
@@ -556,25 +555,6 @@ describe('rotation execution invariants', () => {
 
     expect(score.total.avg).toBeCloseTo(score.normalizedTotal.avg * 2)
     expect(score.resonators[0]?.avg).toBeCloseTo((score.normalizedResonators[0]?.avg ?? 0) * 2)
-  })
-
-  it('replays a genuinely different stat plane when rotation topology is unchanged', () => {
-    const enemy = makeEnemy()
-    const baseRuntime = makeResRuntime(seed)
-    const variantRuntime = makeResRuntime(seed)
-    variantRuntime.state.manualBuffs.quick.atk.flat += 250
-    const program = prepareRotationProgram([
-      { id: 'hit', type: 'feature', featureId: 'damage:test-skill' },
-    ])
-    const baseContext = prepareResSimulation(baseRuntime, seed, enemy).context
-    const variantContext = prepareResSimulation(variantRuntime, seed, enemy).context
-    const baseTape = recordRotationTape(prepareRunEnv(baseContext, seed), program)
-    const variantTape = recordRotationTape(prepareRunEnv(variantContext, seed), program)
-    const direct = executeRotationScore(prepareRunEnv(variantContext, seed), program)
-    const replayed = replayTape(baseTape, { planes: variantTape.planes })
-
-    expect(replayed.total.avg).toBeCloseTo(direct.total.avg)
-    expect(replayed.normalizedTotal.avg).toBeCloseTo(direct.normalizedTotal.avg)
   })
 
   it('updates numeric lanes without rebuilding or memoizing combat contexts', () => {

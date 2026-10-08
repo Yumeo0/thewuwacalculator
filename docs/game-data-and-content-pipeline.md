@@ -6,20 +6,17 @@ This document explains the format of runtime data, how the app loads it into cat
 
 ## Checked In Runtime Data
 
-Runtime JSON is stored under `public/data`:
+Runtime JSON is stored under parallel `public/data/live` and `public/data/beta` trees. Each mode contains:
 
-- `resonator-catalog.json`
-- `resonator-details.json`
-- `resonator-sources.json`
-- `weapon-data.json`
-- `echo-catalog.json`
-- `echo-sources.json`
-- `echo-stats.json`
-- `sonata-sets.json`
-- `sonata-set-defs.json`
-- `enemies.json`
+- `source-manifest.json`
+- `resonators/catalog.json`, `picker-catalog.json`, `details.json`, `damage-entries.json`, `feature-ids.json`, and `sources.json`
+- per-resonator `runtime-bundles/<id>.json` and `worker-bundles/<id>.json`
+- `weapons/catalog.json`, `core-catalog.json`, `sources.json`, and per-weapon runtime bundles
+- `echoes/catalog.json`, `sources.json`, and `stats.json`
+- `sonata/sets.json` and `effects.json`
+- `enemies/catalog.json`, `sources.json`, and `summary.json`
 
-These files are part of the production app contract. They are fetched at startup and treated as required runtime infrastructure.
+These files are part of the deployed app contract. Core routes load the smaller catalog set, while Simulation and worker consumers request the detailed bundles required by their current resonator and weapon scopes.
 
 ## Initialization Flow
 
@@ -29,11 +26,12 @@ Primary file:
 
 Initialization sequence:
 
-1. fetch checked in runtime files from `/data/*`
-2. initialize direct catalogs for resonators, details, weapons, echoes, echo stats, and sonata sets
-3. build shared source package lists from resonators, echoes, weapons, and sets
-4. construct the game data registry from those source packages
-5. cache the registry globally for later access
+1. resolve the persisted data mode and use `/data/<mode>` as the runtime root
+2. call `initCoreGameData()` for Home and Read, or `initGameData()` with the saved team scope for Simulation entry
+3. initialize direct catalogs for the requested resonators, details, weapons, Echoes, Echo stats, Sonata sets, enemies, and source manifest
+4. load resonator and weapon runtime or worker bundles when scoped consumers require them
+5. build shared source package lists from resonators, Echoes, weapons, sets, and enemies
+6. construct and cache the registry through `GameDataSession`, retaining and releasing detailed bundles by active leases
 
 Catalogs provide direct lookups. The registry provides skill, state, effect, and rotation definitions used during simulation.
 
@@ -67,15 +65,20 @@ Important output formats:
 - resonator source packages that resolve into feature, effect, rotation, state, and skill definitions
 - weapon runtime data that can be turned into registry participating source packages
 - echo source data and set definitions that can join the shared effect system
-- checked in catalog files that the browser can fetch at startup without additional server generation
+- checked-in catalogs, manifests, and scoped bundles that the browser can fetch without server-side generation
 
 The docs should focus on those output contracts rather than on hidden local producer internals.
 
-## Checked In Build And Ingest Scripts
+## Tracked Build Tools And Local Ingest Scripts
 
-Checked in scripts live mainly under `scripts/ingest` and `scripts/assets`.
+Tracked build tools live under `tools/`. They prepare assets and catalogs used
+by the dev and production builds. Data ingestion and authoring scripts live in
+the git-ignored root `scripts/` folder and are local-only; the corresponding
+npm commands require those private scripts to be present in the working copy.
+The commands are intentionally retained in `package.json` for the author's
+local workflow.
 
-Important checked in flows:
+Important local flows:
 
 - fetch resonator source data
 - build resonator module output
@@ -85,11 +88,17 @@ Important checked in flows:
 - sync resonator images
 - apply authored resonator overrides
 
-These scripts refresh or change the runtime data loaded by the production app.
+The local ingest scripts refresh or change runtime data loaded by the app. The
+checked-in outputs under `public/data` are the runtime source consumed by the
+browser and remain reviewable in Git.
 
 ## Authored Overrides
 
-The resonator override files under `scripts/ingest/resonatorOverrides/` are a central part of the data pipeline. They are where authored corrections, additions, or behavior shaping can override fallback generated output before the checked in runtime artifacts are finalized.
+Local resonator override files under `scripts/ingest/resonatorOverrides/` are
+part of the private authoring workflow. They can override fallback generated
+output before runtime artifacts are finalized, but are not available in a
+clean clone. The resulting checked-in runtime artifacts remain the app's
+source of truth.
 
 When documenting or debugging data behavior, treat authored overrides as source of truth ahead of generic fallback generation where the pipeline already does so.
 

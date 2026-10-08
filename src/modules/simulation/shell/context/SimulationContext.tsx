@@ -6,7 +6,6 @@
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { createContext as mkCtx, useCallback, useContext, useMemo } from 'react'
 import type { ReactNode } from 'react'
-import type { LeftPaneView } from '@/domain/entities/appState.ts'
 import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
 import type { SkillTabKey } from '@/domain/entities/resonator.ts'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
@@ -149,27 +148,13 @@ interface SimulationProviderProps {
   actResId: string | null
 }
 
-const WORKPANEPTNS: Array<{ id: LeftPaneView; label: string }> = [
-  { id: 'resonators', label: 'Resonators' },
-  { id: 'weapon', label: 'Weapon' },
-  { id: 'echoes', label: 'Echoes' },
-  { id: 'suggestions', label: 'Suggestions' },
-  { id: 'teams', label: 'Team Buffs' },
-  { id: 'enemy', label: 'Enemy' },
-  { id: 'buffs', label: 'Custom Bonuses' },
-]
-
 const simulationContext = mkCtx<SimulationContextValue | null>(null)
 
 export function SimulationProvider({
   children,
   actResId: actResId,
 }: SimulationProviderProps) {
-  const theme = useAppStore((state) => state.ui.theme)
-  const backgroundTextMode = useAppStore((state) => state.ui.backgroundTextMode)
-  const leftPaneView = useAppStore((state) => state.ui.leftPaneView)
   const showSubHits = useAppStore((state) => state.ui.showSubHits)
-  const openLeftPane = useAppStore((state) => state.openLeftView)
   const setShowSubHi = useAppStore((state) => state.setSubHits)
   const swtcToRes = useAppStore((state) => state.swRes)
   const rtChrmMenu = useRtChrmMen()
@@ -190,11 +175,6 @@ export function SimulationProvider({
   }, [])
 
   const curResName = actResId ? seedRsntById[actResId]?.name ?? actResId : 'None'
-  const toolbarIconTheme = (
-    theme === 'background'
-      ? backgroundTextMode === 'dark'
-      : theme === 'dark'
-  ) ? 'dark' : 'light'
   const swtcToEnts = useMemo<MenuEntry[]>(() => {
 
     const queueEntries = queue.map((entry) => ({
@@ -218,36 +198,17 @@ export function SimulationProvider({
     ]
   }, [openResPckr, queue, swtcToRes])
 
-  const paneEntries = useMemo<MenuEntry[]>(() => (
-    WORKPANEPTNS.map((option) => ({
-      id: `workspace-pane:${option.id}`,
-      label: option.label,
-      icon: <DisplayImage
-          style={{ width: '15px', height: '15px' }}
-          src={`/assets/app/icons/${toolbarIconTheme}/${option.id}.png`}
-          alt=""
-          loading="lazy"
-      />,
-      hint: leftPaneView === option.id ? 'Current' : undefined,
-      disabled: leftPaneView === option.id,
-      onSelect: () => {
-        openLeftPane(option.id)
-      },
-    }))
-  ), [leftPaneView, openLeftPane, toolbarIconTheme])
 
   const simulationMoreEntries = useMemo(() => simulationMenuBuilder.simulation.more({
     swtcToNtrs: swtcToEnts,
-    paneEntries,
     showSubHits,
     onToggleSubHits: () => setShowSubHi(!showSubHits),
-  }), [paneEntries, setShowSubHi, showSubHits, swtcToEnts])
+  }), [setShowSubHi, showSubHits, swtcToEnts])
 
   const builders = useMemo<SimulationContextValue['builders']>(() => ({
     simulation: {
       workspace: () => simulationMenuBuilder.simulation.workspace({
         swtcToNtrs: swtcToEnts,
-        paneEntries,
         showSubHits,
         onToggleSubHits: () => setShowSubHi(!showSubHits),
       }),
@@ -302,7 +263,6 @@ export function SimulationProvider({
     routeChrome: rtChrmMenu.builders.routeChrome,
   }), [
     simulationMoreEntries,
-    paneEntries,
     rtChrmMenu.builders.routeChrome,
     setShowSubHi,
     swtcToEnts,

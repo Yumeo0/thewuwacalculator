@@ -534,7 +534,6 @@ export function ShowcaseCustomizePanel({
   drawerOpen,
   onToggleDrawer,
   onExpandCss,
-  surfacePhase,
 }: {
   layout: ShowcaseLayout
   onLayoutChange: (layout: ShowcaseLayout) => void
@@ -583,7 +582,6 @@ export function ShowcaseCustomizePanel({
   drawerOpen: boolean
   onToggleDrawer: () => void
   onExpandCss: () => void
-  surfacePhase: 'idle' | 'out' | 'in'
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [baseTypeResetKey, setBaseTypeResetKey] = useState(0)
@@ -592,7 +590,6 @@ export function ShowcaseCustomizePanel({
     <aside className="wk-card wk-card--mod wk-tune"
       data-docked={docked ? 'true' : undefined}
       data-open={docked && drawerOpen ? 'true' : undefined}
-      data-phase={surfacePhase === 'idle' ? undefined : surfacePhase}
       style={{ '--resonator-accent': accent } as CssVars}
     >
       {docked ? (

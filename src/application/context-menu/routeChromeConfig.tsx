@@ -1,11 +1,10 @@
 /*
   Author: Runor Ewhro
-  Description: defines the authored route chrome navigation and legacy view
-               entries consumed by sidebar and route context menus.
+  Description: defines the authored route chrome navigation consumed by the
+               sidebar and route context menus.
 */
 
 import type { ComponentType as CompType } from 'react'
-import type { LeftPaneView } from '@/domain/entities/appState'
 import { FileText, Lightbulb, ListOrdered, Settings } from 'lucide-react'
 import { GiPokecog } from 'react-icons/gi'
 import { FaInfo, FaQuestion } from 'react-icons/fa'
@@ -20,12 +19,6 @@ export interface RouteNavLink {
   iconClssName?: string
 }
 
-export interface LegacyCalculatorView {
-  key: LeftPaneView
-  label: string
-  icon: string
-}
-
 export const rtNavLnks: RouteNavLink[] = [
   { to: APP_NAVIGATION.home.to, label: APP_NAVIGATION.home.name, Icon: TbGoGame },
   { to: APP_NAVIGATION.modulation.to, label: APP_NAVIGATION.modulation.name, Icon: TbMathFunction },
@@ -37,14 +30,4 @@ export const rtNavLnks: RouteNavLink[] = [
   { to: APP_NAVIGATION.guides.to, label: APP_NAVIGATION.guides.name, Icon: FaQuestion, iconClssName: 'help-icon' },
   { to: APP_NAVIGATION.docs.to, label: APP_NAVIGATION.docs.name, Icon: FileText, iconClssName: 'docs-icon' },
   { to: APP_NAVIGATION.changelog.to, label: APP_NAVIGATION.changelog.name, Icon: ImHistory, iconClssName: 'chl-icon' },
-]
-
-export const legacyCalculatorViews: LegacyCalculatorView[] = [
-  { key: 'resonators', label: 'Resonators', icon: 'resonators' },
-  { key: 'weapon', label: 'Weapon', icon: 'weapon' },
-  { key: 'echoes', label: 'Echoes', icon: 'echoes' },
-  { key: 'suggestions', label: 'Suggestions', icon: 'suggestions' },
-  { key: 'teams', label: 'Team Buffs', icon: 'teams' },
-  { key: 'enemy', label: 'Enemy', icon: 'enemy' },
-  { key: 'buffs', label: 'Custom Bonuses', icon: 'buffs' },
 ]

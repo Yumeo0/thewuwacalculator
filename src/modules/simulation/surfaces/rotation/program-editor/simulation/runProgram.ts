@@ -1124,7 +1124,9 @@ function buildStep(
     sourceNode: asAttachment ? stripFeatureAttachments(node) : node,
     ...attachedNoteFrom(node),
     owner: echoSource ? { kind: 'echo', echoId: echoSource.id } : ownerOf(owner),
-    label: skill?.label ?? feature?.label ?? node.featureId,
+    label: feature?.variant === 'subHit'
+      ? feature.label
+      : skill?.label ?? feature?.label ?? node.featureId,
     index,
     featureId: node.featureId,
     color: skill ? skillDisplayColor(skill, member?.attribute) : undefined,
@@ -1967,7 +1969,9 @@ function exactStepFor(
     type: 'step',
     id: entry.nodeId,
     owner: echoSource ? { kind: 'echo', echoId: echoSource.id } : ownerOf(exact.resonatorId),
-    label: exact.skill.label ?? exact.feature.label ?? exact.feature.id,
+    label: exact.feature.variant === 'subHit'
+      ? exact.feature.label
+      : exact.skill.label ?? exact.feature.label ?? exact.feature.id,
     index: 0,
     featureId: exact.feature.id,
     multiplier: exact.multiplier,
@@ -2262,7 +2266,9 @@ export function projectRun({
     for (const feature of member.features) {
       labels.set(
         feature.id,
-        skillById.get(`${member.id}:${feature.skillId}`) || feature.label,
+        feature.variant === 'subHit'
+          ? feature.label
+          : skillById.get(`${member.id}:${feature.skillId}`) || feature.label,
       )
     }
   }

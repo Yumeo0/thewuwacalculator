@@ -10,6 +10,7 @@ import type { SavedBuild, SavedBuildSnap } from '@/domain/entities/inventoryStor
 import { scenarioForContextResonator } from '@/domain/entities/scenarioLibrary'
 import { makeResProfile, makeScenarioMemberFromProfile } from '@/engine/runtime/defaults'
 import { useAppStore } from './store'
+import { roverIdForGender } from '@/domain/entities/roverGender'
 
 function filledEchoSlots(build: SavedBuildSnap): number {
   let filled = 0
@@ -22,6 +23,7 @@ function filledEchoSlots(build: SavedBuildSnap): number {
 // Call at the assignment boundary, before entering a store or draft reducer:
 // inventory hydration can itself update the store.
 export function makeInitialTeammate(resonatorId: string, destination: CombatScenario): ScenarioTeamMember | null {
+  resonatorId = roverIdForGender(resonatorId, useAppStore.getState().ui.preferences.roverGender)
   const existing = destination.team.members.find((member) => member.resonatorId === resonatorId)
     ?? destination.dormantMembersByResonatorId?.[resonatorId]?.member
   if (existing) return existing

@@ -10,12 +10,12 @@ import { countEchoSets } from '@/engine/pipeline/buildCombatContext.ts'
 import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
 import { mkDefEchoNst } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
 
-export interface TeammateSetPreference {
+interface TeammateSetPreference {
   setId: number
   count: number
 }
 
-export function getTeammateSetCounts(setId: number): number[] {
+function getTeammateSetCounts(setId: number): number[] {
   const definition = getEchoSetDe(setId)
   if (!definition) {
     return []
@@ -380,36 +380,6 @@ export function selMainEcho(
     mainEchoMode: 'selected',
     mainEchoId: echoId,
   }
-}
-
-export function addSetPref(
-  plan: EchoPlan,
-  setId: number,
-): EchoPlan {
-  const defaultCount = getTeammateSetCounts(setId)[0]
-  if (!defaultCount) {
-    return plan
-  }
-
-  return normPlan({
-    ...plan,
-    setMode: 'selected',
-    setPrefs: [
-      { setId, count: defaultCount },
-      ...plan.setPrefs.filter((entry) => entry.setId !== setId),
-    ],
-  })
-}
-
-export function rmSetPref(
-  plan: EchoPlan,
-  setId: number,
-): EchoPlan {
-  return normPlan({
-    ...plan,
-    setMode: 'selected',
-    setPrefs: plan.setPrefs.filter((entry) => entry.setId !== setId),
-  })
 }
 
 export function setSetCount(

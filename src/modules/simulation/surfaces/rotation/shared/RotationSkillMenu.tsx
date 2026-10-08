@@ -15,7 +15,8 @@ import {useAppStore} from "@/application/state";
 import {useMemo, useRef, useState} from "react";
 import type {CSSProperties as CssProps} from "react";
 import {ChevronDown, Layers, Search, X} from "lucide-react";
-import {isSkllVsbl, resolveSkill} from "@/engine/pipeline/resolveSkill.ts";
+import {resolveSkill} from "@/engine/pipeline/resolveSkill.ts";
+import {isRotationSkillVisible} from "@/modules/simulation/surfaces/rotation/shared/visibility.ts";
 import type {SkillDef} from "@/domain/entities/stats.ts";
 import {ROT_SKILL_TABS, SKILL_TAB_NAMES, type SkillTabKey} from "@/modules/simulation/model/skillTabs.ts";
 import {AppModal} from "@/shared/ui/AppModal.tsx";
@@ -88,6 +89,12 @@ export function RotationSkillMenu({
       ]),
     ) as Record<string, SkillDef>
   }, [activeMember, actRt, runtimesById])
+  const visibleSkillIds = useMemo(
+    () => new Set(activeMember?.skills
+      .filter((skill) => actRt && isRotationSkillVisible(actRt, skill, runtimesById))
+      .map((skill) => skill.id) ?? []),
+    [activeMember, actRt, runtimesById],
+  )
   const entries = useMemo<SkillMenuEntry[]>(() => {
     if (!activeMember) {
       return []
@@ -95,7 +102,7 @@ export function RotationSkillMenu({
 
     return activeMember.features.reduce<SkillMenuEntry[]>((list, feature) => {
       const skill = rslvSkllById[feature.skillId]
-      if (!skill || (actRt && !isSkllVsbl(actRt, skill, undefined, runtimesById))) {
+      if (!skill || !visibleSkillIds.has(feature.skillId)) {
         return list
       }
 
@@ -112,7 +119,7 @@ export function RotationSkillMenu({
 
       return list
     }, [])
-  }, [activeMember, actRt, rslvSkllById, runtimesById])
+  }, [activeMember, rslvSkllById, visibleSkillIds])
 
   const grpdEnts = useMemo(() => {
     const grouped: Partial<Record<SkillTabKey, SkillMenuGroup[]>> = {}
@@ -127,7 +134,7 @@ export function RotationSkillMenu({
 
     for (const rawSkill of activeMember?.skills ?? []) {
       const skill = rslvSkllById[rawSkill.id] ?? rawSkill
-      if (actRt && !isSkllVsbl(actRt, skill, undefined, runtimesById)) {
+      if (!visibleSkillIds.has(rawSkill.id)) {
         continue
       }
 
@@ -154,7 +161,7 @@ export function RotationSkillMenu({
     }
 
     return grouped
-  }, [activeMember, actMmbrId, actMemName, actRt, entries, rslvSkllById, runtimesById])
+  }, [activeMember, actMmbrId, actMemName, entries, rslvSkllById, visibleSkillIds])
 
   const hasSubHitEnt = useMemo(() => entries.some((entry) => entry.variant === 'subHit'), [entries])
 

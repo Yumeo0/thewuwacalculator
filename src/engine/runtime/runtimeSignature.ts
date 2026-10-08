@@ -30,6 +30,7 @@ export function runtimeSig(runtime: ResRuntime): string {
       controls: Object.entries(runtime.state.controls).sort(([left], [right]) => left.localeCompare(right)),
       manualBuffs: runtime.state.manualBuffs,
       combat: runtime.state.combat,
+      teamEffects: runtime.state.teamEffects,
     },
     rotation: runtime.rotation,
     teamRuntimes: runtime.teamRuntimes,

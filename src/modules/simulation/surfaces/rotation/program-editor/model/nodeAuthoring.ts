@@ -9,6 +9,7 @@ import type {
   RuntimeValue,
   SourceState,
 } from '@/domain/gameData/contracts.ts'
+import { openingConditionChoices } from '@/domain/gameData/rotationPreambleDefaults.ts'
 import type { SkillAggType } from '@/domain/entities/stats.ts'
 import type { PaletteSpec } from './paletteSpec.ts'
 import { writesFromChanges } from './conditionWrites.ts'
@@ -33,7 +34,6 @@ import {
 import {
   condActionFromChange,
   getCondChoice,
-  isFormulaChoice,
   makeCondChange,
   makeCondValue,
   makeRawCondition,
@@ -49,7 +49,6 @@ import { getSubHitLbl } from '@/modules/simulation/surfaces/rotation/shared/node
 import { skillDisplayColor } from '@/modules/simulation/surfaces/rotation/shared/skillDisplay.ts'
 import {
   ACTIVE_RESONATOR_PATH,
-  SELECTED_TARGET_PATH_PREFIX,
 } from '@/domain/gameData/rotationPaths.ts'
 import { regTextValue } from '@/modules/simulation/surfaces/rotation/program-editor/model/registerValues.ts'
 
@@ -154,12 +153,6 @@ export function makeConditionNode(
  * the rotation formula modifiers, which are one pseudo-state standing for a
  * whole group.
  */
-function isOpeningState(choice: CondChoice): boolean {
-  return choice.state.path !== ACTIVE_RESONATOR_PATH
-    && !choice.state.path.startsWith(SELECTED_TARGET_PATH_PREFIX)
-    && !isFormulaChoice(choice)
-}
-
 function isActiveResonatorNode(
   node: EditorNode,
 ): boolean {
@@ -193,15 +186,10 @@ export interface OpeningState {
  * written block can never disagree about how many there are.
  */
 export function openingStates(condChoices: CondChoice[]): OpeningState[] {
-  const seen = new Set<string>()
   const states: OpeningState[] = []
 
-  for (const choice of condChoices) {
+  for (const choice of openingConditionChoices(condChoices)) {
     const key = `${choice.resonatorId}:${choice.state.path}`
-    if (!isOpeningState(choice) || seen.has(key)) {
-      continue
-    }
-    seen.add(key)
     states.push({
       key,
       resonatorId: choice.resonatorId,
@@ -246,9 +234,9 @@ export function buildPreambleEntries({
   )
 
   const added: EditorCondition[] = []
-  for (const choice of condChoices) {
+  for (const choice of openingConditionChoices(condChoices)) {
     const key = `${choice.resonatorId}:${choice.state.path}`
-    if (!isOpeningState(choice) || written.has(key)) {
+    if (written.has(key)) {
       continue
     }
     written.add(key)

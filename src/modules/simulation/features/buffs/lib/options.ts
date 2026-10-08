@@ -164,4 +164,3 @@ export const SKLLSCLRPTNS: Array<BuffOption<MnlSkllSclrK>> = [
 ]
 
 export const SKILL_TAB_OPTIONS: Array<BuffOption> = makeSkillTabOptions(BUFF_SKILL_TABS)
-export const BUFF_CLIP_VER = 1

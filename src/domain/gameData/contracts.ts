@@ -39,7 +39,7 @@ export interface TeamCmpsInfo {
   weaponTypeCounts: Record<string, number>
 }
 
-export type DataSrcType = 'resonator' | 'weapon' | 'echo' | 'echoSet' | 'enemy'
+export type DataSrcType = 'resonator' | 'weapon' | 'echo' | 'echoSet' | 'enemy' | 'teamEffect'
 
 export interface DataSrcRef {
   type: DataSrcType

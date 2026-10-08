@@ -11,15 +11,13 @@
 }
 
 :root {
-  --app-layout-min-width: 1190px;
+  --app-layout-min-width: __APP_LAYOUT_MIN_WIDTH_PX__px;
+  --wuwa-font: "mc-gamefont", sans-serif;
   --body-font: var(--wuwa-font);
-  --display-font: 'Chakra Petch', 'Sen', sans-serif;
+  --display-font: 'Montserrat', sans-serif;
   --mono-font: "Roboto Mono", monospace;
   --game-font: 'Stormfaze', sans-serif;
-  --game-font2: 'Righteous', 'sans-serif';
-  --game-font3: "Montserrat Alternates", sans-serif;
-  --game-font4: "Rubik Glitch", sans-serif;
-  --wuwa-font: "mc-gamefont", sans-serif;
+  --score-200: "Rubik Glitch", sans-serif;
   --cute-font: "Indie Flower", cursive;
   font-family: var(--body-font);
 }

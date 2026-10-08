@@ -18,6 +18,8 @@ import {
 import {
   insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember,
 } from '@/engine/runtime/scenarioMembers'
+import { convertMemberRoverGender, convertScenarioRoverGender } from './roverGenderConversion'
+import { roverIdForGender } from '@/domain/entities/roverGender'
 
 interface ScenarioSliceContext extends Pick<StoreSliceContext, 'get' | 'persistedSet'> {
   deferForData: (ids: string[], action: () => void, key?: string) => boolean
@@ -29,14 +31,15 @@ export type ScenarioActionNames = 'applyScenarioSnapshot' | 'commitScenarioConfi
 export function createScenarioActions({ get, persistedSet, deferForData, scenarioDataIds }: ScenarioSliceContext): Pick<AppStore, ScenarioActionNames> {
   return {
   applyScenarioSnapshot: (source) => {
-    const contextResonatorId = contextScenarioMember(source).resonatorId
+    const normalizedSource = convertScenarioRoverGender(source, get().ui.preferences.roverGender)
+    const contextResonatorId = contextScenarioMember(normalizedSource).resonatorId
     const current = get()
     const existingId = scenarioIdForContextResonator(current.combat, contextResonatorId)
     const id = existingId ?? nextScenarioId(current.combat)
     persistedSet(['combat.workspace'], (state) => {
       const latestId = scenarioIdForContextResonator(state.combat, contextResonatorId)
       const targetId = latestId ?? id
-      const scenario = instantiateCombatScenario(source, targetId)
+      const scenario = instantiateCombatScenario(normalizedSource, targetId)
       const combat = latestId
         ? replaceScenario(state.combat, scenario)
         : addScenario(state.combat, scenario)
@@ -65,6 +68,7 @@ export function createScenarioActions({ get, persistedSet, deferForData, scenari
   },
 
   selectContextResonator: (resonatorId) => {
+    resonatorId = roverIdForGender(resonatorId, get().ui.preferences.roverGender)
     const id = scenarioIdForContextResonator(get().combat, resonatorId)
     if (id && deferForData(scenarioDataIds(id), () => get().selectContextResonator(resonatorId), 'selection')) return
     persistedSet(['combat.workspace'], (state) => {
@@ -99,7 +103,8 @@ export function createScenarioActions({ get, persistedSet, deferForData, scenari
     persistedSet(['combat.workspace'], (state) => {
       const scenario = state.combat.scenariosById[scenarioId]
       if (!scenario) return state
-      const next = replaceScenarioTeamMember(scenario, memberId, member)
+      const normalizedMember = convertMemberRoverGender(member, state.ui.preferences.roverGender)
+      const next = replaceScenarioTeamMember(scenario, memberId, normalizedMember)
       return next === scenario ? state : replaceScenarioInWorkspace(state, scenarioId, next)
     }, { historyLabel: 'Updated Team Member' })
   },
@@ -123,7 +128,8 @@ export function createScenarioActions({ get, persistedSet, deferForData, scenari
     persistedSet(['combat.workspace'], (state) => {
       const scenario = state.combat.scenariosById[scenarioId]
       if (!scenario) return state
-      const next = insertScenarioTeamMember(scenario, index, member)
+      const normalizedMember = convertMemberRoverGender(member, state.ui.preferences.roverGender)
+      const next = insertScenarioTeamMember(scenario, index, normalizedMember)
       return next === scenario ? state : replaceScenarioInWorkspace(state, scenarioId, next)
     }, { historyLabel: 'Added Team Member' })
   },

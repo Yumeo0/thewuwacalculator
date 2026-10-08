@@ -265,7 +265,7 @@ export function resSuggDmg(
 }
 
 // build the stat-weight map used by suggestion scoring heuristics
-export function mkSuggWghtMa(
+function mkSuggWghtMa(
     simulation: SuggestionSimulation,
     input: SuggestInput,
     bias = 0,

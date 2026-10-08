@@ -16,7 +16,6 @@ import {
   ListChevronsDownUp as ListChvrDown,
   ListChevronsUpDown as ListChvrUpDo,
   ListCollapse,
-  Milestone,
   PackageOpen,
   Pencil,
   Save,
@@ -32,7 +31,6 @@ import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
 
 interface SimulationMoreBuilder {
   swtcToNtrs: MenuEntry[]
-  paneEntries: MenuEntry[]
   showSubHits: boolean
   onToggleSubHits: () => void
 }
@@ -168,7 +166,6 @@ export const simulationMenuBuilder = {
   simulation: {
     more({
            swtcToNtrs: swtcToNtrs,
-           paneEntries,
            showSubHits,
            onToggleSubHits: onTgglShowSu,
          }: SimulationMoreBuilder): MenuEntry[] {
@@ -178,12 +175,6 @@ export const simulationMenuBuilder = {
           label: 'Switch to...',
           icon: <RrwRghtLeft size="1em" />,
           submenu: swtcToNtrs,
-        },
-        {
-          id: 'main-open-pane',
-          label: 'Open pane...',
-          icon: <Milestone size="1em" />,
-          submenu: paneEntries,
         },
         {
           id: 'main-show-subhits',

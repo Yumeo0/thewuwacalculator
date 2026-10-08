@@ -4,6 +4,8 @@
                editor behavior, motion, exports, and local image storage.
 */
 
+import type { RoverGender } from './roverGender'
+
 export type StatsColumnHighlight = 'build' | 'combat' | 'both'
 
 /** Showcase-only layout selection; Build Lab always uses the classic layout. */
@@ -134,8 +136,8 @@ export interface UiPrefs {
   ctxMenu: boolean
   updateToast: boolean
   gameBetaData: boolean
+  roverGender: RoverGender
   recommendedMenuItems: boolean
-  showEvaluationStates: boolean
   maxResOnInit: boolean
   animatedRailPortraits: boolean
   showcaseCards: Record<string, ShowcaseCardConfig>
@@ -158,8 +160,8 @@ export const DEF_UI_PREFS: UiPrefs = {
   ctxMenu: true,
   updateToast: true,
   gameBetaData: true,
+  roverGender: 'both',
   recommendedMenuItems: false,
-  showEvaluationStates: false,
   maxResOnInit: true,
   animatedRailPortraits: true,
   showcaseCards: {},

@@ -5,6 +5,7 @@
 */
 
 import { Select } from '@/application/ui/Select'
+import { openingConditionValue } from '@/domain/gameData/rotationPreambleDefaults.ts'
 import {
   formatEffectConditionName,
   getStateEffectName,
@@ -30,20 +31,7 @@ export function isFormulaChoice(choice: CondChoice | null | undefined): boolean 
 import { NumberInput } from '@/modules/simulation/features/controls/NumberInput.tsx'
 
 export function makeCondValue(definition: SourceState): RotationConditionValue {
-  // default values from game data win; otherwise choose the smallest value that makes the condition meaningful.
-  if (definition.defaultValue !== undefined) {
-    return definition.defaultValue
-  }
-
-  if (definition.kind === 'toggle') {
-    return true
-  }
-
-  if (definition.kind === 'select') {
-    return definition.options?.[0]?.id ?? ''
-  }
-
-  return Math.max(definition.min ?? 0, definition.kind === 'stack' ? 1 : 0)
+  return openingConditionValue(definition)
 }
 
 /** A state sitting at its zero: switched off, empty, or holding nothing. */

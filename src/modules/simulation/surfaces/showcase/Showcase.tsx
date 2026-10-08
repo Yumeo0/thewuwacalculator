@@ -22,6 +22,7 @@ import {
   formatStatKeyValue,
 } from '@/modules/simulation/model/statsView.ts'
 import type { StatViewRow, StatsView } from '@/modules/simulation/model/statsView.ts'
+import { buildTotalsByKey, showcaseSecondaryRows } from './lib/showcaseStats.ts'
 import { formatBuildEvaluationScore } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { formatTruncCompact } from '@/shared/lib/number.ts'
@@ -341,15 +342,6 @@ export function loadoutCv(slots: Array<EchoInstance | null>, blank?: boolean): {
   return { total, tone: !blank && total > 0 ? getCvToneColor((total - (44 * fourCost)) / 5) : undefined }
 }
 
-// Canonical keys align build and combat values independently of display labels.
-export function buildTotalsByKey(view: StatsView | null): Map<string, number> {
-  const totals = new Map<string, number>()
-  for (const row of [...(view?.mainStats ?? []), ...(view?.secondaryStats ?? [])]) {
-    totals.set(row.key, row.total)
-  }
-  return totals
-}
-
 export const ShowcaseBuild = memo(function ShowcaseBuild({
   echoes,
   combatStatsView,
@@ -399,6 +391,7 @@ export const ShowcaseBuild = memo(function ShowcaseBuild({
   const echoScores = useEchoScores(charId, slots)
   const showRel = !hideRelStats
   const buildByKey = buildTotalsByKey(buildStatsView)
+  const secondaryRows = combatStatsView ? showcaseSecondaryRows(combatStatsView, buildStatsView) : []
 
   return (
     <>
@@ -475,8 +468,8 @@ export const ShowcaseBuild = memo(function ShowcaseBuild({
                 />
               ))}
             </div>
-            <div className="sc-ladder-group" style={{ '--rows': combatStatsView.secondaryStats.length } as CssVars}>
-              {combatStatsView.secondaryStats.map((row) => (
+            <div className="sc-ladder-group" style={{ '--rows': secondaryRows.length } as CssVars}>
+              {secondaryRows.map((row) => (
                 <ShowcaseStatRow
                   key={row.key}
                   row={row}

@@ -2,7 +2,6 @@
   min-height: 0;
 }
 
-
 .bp-modal .amdl__head .amdl__fill {
   display: none;
 }
@@ -31,8 +30,6 @@
   display: grid;
   grid-template-columns: 9.5rem minmax(0, 1fr);
 }
-
-
 
 .bp-rail {
   display: flex;
@@ -160,8 +157,6 @@
   text-underline-offset: 3px;
 }
 
-
-
 .bp-list {
   position: relative;
   min-height: 0;
@@ -229,7 +224,6 @@
     color-mix(in srgb, var(--bp-accent) 3%, var(--c-transparent)));
   box-shadow: inset 2px 0 0 var(--bp-accent);
 }
-
 
 .bp-star {
   display: block;
@@ -413,8 +407,6 @@
   mask-repeat: no-repeat;
 }
 
-
-
 .bp-row__settings {
   display: flex;
   flex-wrap: wrap;
@@ -572,8 +564,6 @@
   color: var(--amdl-text);
   font: 600 0.92rem/1.2 var(--display-font);
 }
-
-
 
 .bp-foot {
   justify-content: space-between;

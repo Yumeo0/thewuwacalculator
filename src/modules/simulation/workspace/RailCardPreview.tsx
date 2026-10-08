@@ -74,7 +74,6 @@ export function RailCardPreview({ resId, animated }: { resId: string; animated: 
             resolvedPortrait={null}
             animatedPortraits={animated}
             editable={false}
-            surfacePhase="idle"
             showcasePlacement={getEvaluationSpinePlacement(resId)}
             score={null}
             grade={null}

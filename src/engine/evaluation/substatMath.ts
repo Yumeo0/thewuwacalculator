@@ -43,7 +43,7 @@ export function substatKeysForResonator(resonatorId: string): string[] {
     : [...SUBSTAT_KEYS]
 }
 
-export function substatRollBounds(key: string): SubstatRollBounds {
+function substatRollBounds(key: string): SubstatRollBounds {
   const steps = getSbstStepP(key)
   return {
     key,
@@ -55,8 +55,4 @@ export function substatRollBounds(key: string): SubstatRollBounds {
 
 export function allSubstatRollBounds(): Record<string, SubstatRollBounds> {
   return Object.fromEntries(SUBSTAT_KEYS.map((key) => [key, substatRollBounds(key)]))
-}
-
-export function substatQuality(total: number, count: number, maxRoll: number): number {
-  return count > 0 && maxRoll > 0 ? (total / (count * maxRoll)) * 100 : 0
 }

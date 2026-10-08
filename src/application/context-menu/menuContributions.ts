@@ -5,7 +5,6 @@
 */
 
 import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
-import { LEGACY_SIMULATION_ROUTES } from '@/shared/lib/appRoutes'
 
 export interface MenuContribution<TContext = unknown> {
   id: string
@@ -72,9 +71,4 @@ export function createMenuContributionRegistry() {
       return normalizeMenuEntries(entries)
     },
   }
-}
-
-export function isLegacyMenuRoute(pathname: string): boolean {
-  const path = pathname.replace(/\/+$/, '') || '/'
-  return Object.values(LEGACY_SIMULATION_ROUTES).some((legacyPath) => path === legacyPath)
 }

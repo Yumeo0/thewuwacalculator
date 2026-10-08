@@ -1,6 +1,0 @@
-.co-portrait__ring,
-.opt-team__thumb-ring {
-  --avatar-rarity-accent: var(--avatar-rarity-color, var(--resonator-accent));
-  --avatar-rarity-border: color-mix(in srgb, var(--avatar-rarity-accent) 72%, transparent);
-  --avatar-rarity-surface: color-mix(in srgb, var(--avatar-rarity-accent) 11%, transparent);
-}

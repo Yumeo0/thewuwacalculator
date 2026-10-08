@@ -1,0 +1,10 @@
+{
+  "layoutMinWidthPx": 1190,
+  "breakpointsPx": {
+    "denseLayoutMax": 1300,
+    "stackLayoutMax": 1070,
+    "wideRailMin": 1024
+  },
+  "phoneCapabilityQuery": "(hover: none) and (pointer: coarse)",
+  "mobileRouteIds": ["home"]
+}

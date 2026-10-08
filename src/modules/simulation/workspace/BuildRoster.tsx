@@ -8,6 +8,7 @@ import {
   Fragment,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -23,6 +24,7 @@ import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
 import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
 import { type CssVars } from '@/modules/simulation/workspace/ui.tsx'
 import { RosterCapsule, type CapsuleMate, type CapsuleTarget } from './RosterCapsule.tsx'
+import { clearRosterHeld, readRosterHeld } from './RosterHeld.tsx'
 
 /*
   A surface can ask the column to say more than who is on it. Only the rotation
@@ -120,6 +122,17 @@ export function BuildRoster({
   const [geom, setGeom] = useState<{ id: string; x: number; y: number } | null>(null)
   const [find, setFind] = useState('')
   const releaseTimer = useRef(0)
+  // Restore the captured scroll position before paint, then consume the handoff once.
+  const [held] = useState(readRosterHeld)
+
+  useLayoutEffect(() => {
+    const box = scrollRef.current
+    if (held && box) {
+      box.scrollTop = held.scrollTop
+      box.scrollLeft = held.scrollLeft
+    }
+    clearRosterHeld()
+  }, [held])
 
   const contextEntry = useMemo(
     () => roster.find((entry) => entry.id === contextResId) ?? roster[0] ?? null,
@@ -382,7 +395,7 @@ export function BuildRoster({
           : backgroundItems ?? []
       }}
     >
-    <div className="blm" data-reads={reads} ref={columnRef}>
+    <div className="blm" data-reads={reads} data-from={held ? 'held' : undefined} ref={columnRef}>
       <div className="blm-scroll" ref={scrollRef}>
         <nav className="blm-thread"
           aria-label="Context resonators"

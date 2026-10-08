@@ -7,18 +7,15 @@
   to { opacity: 0; }
 }
 
-
 @keyframes irc-open {
   from { clip-path: inset(calc(50% - 1px) 0 calc(50% - 1px) 0); }
   to { clip-path: inset(-1rem 0 -1rem 0); }
 }
 
-
 @keyframes irc-shut {
   from { clip-path: inset(calc(50% - 1px) 0 calc(50% - 1px) 0); }
   to { clip-path: inset(-1rem 0 -1rem 0); }
 }
-
 
 .app-modal-panel.irc-band {
   --irc-gold: var(--loader-glow, #f8e56c);
@@ -43,7 +40,6 @@
 .app-modal-panel.irc-band.open {
   box-shadow: none;
 }
-
 
 [data-app-modal-content].irc-band.open {
   animation: irc-open 0.55s cubic-bezier(0.3, 0.9, 0.3, 1) both;
@@ -152,7 +148,6 @@
   text-align: center;
   cursor: pointer;
 }
-
 
 .irc-tile__art {
   position: relative;
@@ -287,7 +282,6 @@
 .irc-tile[aria-checked='true'] .irc-tile__name {
   color: var(--irc-ink);
 }
-
 
 .irc-tile[data-included] .irc-tile__art {
   filter: none;

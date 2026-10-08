@@ -33,14 +33,16 @@ import {
   normalizePckrFreqState,
 } from '@/engine/runtime/pickerFrequency'
 
-function stripLegacyMainMode(value: unknown): unknown {
+// Strip retired keys before strict validation so older persisted layouts remain readable.
+function stripRetiredUiKeys(value: unknown): unknown {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return value
   }
 
   const rest = { ...value as Record<string, unknown> }
   delete rest.mainMode
-  if (rest.leftPaneView === 'rotations') rest.leftPaneView = 'resonators'
+  delete rest.leftPaneView
+  delete rest.optimizerUseSprite
   return rest
 }
 
@@ -809,6 +811,7 @@ const scenarioMemberSchm = z.lazy(() => z.strictObject({
 
 const scenarioEnvironmentSchm = z.lazy(() => z.strictObject({
   combatState: cmbtSttSchm,
+  teamEffects: z._default(z.strictObject({ unisonBoon: z.number() }), { unisonBoon: 0 }),
   manualEffects: z.array(z.strictObject({
     id: z.string(),
     enabled: z.boolean(),
@@ -891,7 +894,7 @@ const combatScenarioSchm = z.lazy(() => z.pipe(z.transform((value) => {
     }]
   })
   if (team) scenario.team = { ...team, members }
-  const environment = rawEnvironment && typeof rawEnvironment === 'object'
+  const environment: Record<string, unknown> = rawEnvironment && typeof rawEnvironment === 'object'
     && !Array.isArray(rawEnvironment)
     && 'combatState' in rawEnvironment
     ? { ...(rawEnvironment as Record<string, unknown>) }
@@ -906,6 +909,7 @@ const combatScenarioSchm = z.lazy(() => z.pipe(z.transform((value) => {
       routing: scenario.routing,
     }
   environment.manualEffects ??= legacyManualEffects
+  environment.teamEffects ??= { unisonBoon: 0 }
   environment.targetModifiers ??= {
     defenseReduction: 0,
     resistanceReduction: {},
@@ -1107,14 +1111,12 @@ function normalizeSimulationPrefs(value: unknown): unknown {
 
   const normalized: Record<string, unknown> = {
     ...prefs,
-    showEvaluationStates: typeof prefs.showEvaluationStates === 'boolean'
-      ? prefs.showEvaluationStates
-      : typeof prefs.showBenchStates === 'boolean' ? prefs.showBenchStates : DEF_UI_PREFS.showEvaluationStates,
     animatedRailPortraits: typeof prefs.animatedRailPortraits === 'boolean'
       ? prefs.animatedRailPortraits
       : typeof prefs.benchAnim2d === 'boolean' ? prefs.benchAnim2d : DEF_UI_PREFS.animatedRailPortraits,
     showcaseCards,
   }
+  delete normalized.showEvaluationStates
   delete normalized.showBenchStates
   delete normalized.benchAnim2d
   delete normalized.benchmarkCards
@@ -1195,8 +1197,8 @@ const uiPersistSchema = z.strictObject({
     ctxMenu: z._default(z.boolean(), DEF_UI_PREFS.ctxMenu),
     updateToast: z._default(z.boolean(), DEF_UI_PREFS.updateToast),
     gameBetaData: z._default(z.boolean(), DEF_UI_PREFS.gameBetaData),
+    roverGender: z._default(z.enum(['both', 'male', 'female']), DEF_UI_PREFS.roverGender),
     recommendedMenuItems: z._default(z.boolean(), DEF_UI_PREFS.recommendedMenuItems),
-    showEvaluationStates: z._default(z.boolean(), DEF_UI_PREFS.showEvaluationStates),
     maxResOnInit: z._default(z.boolean(), DEF_UI_PREFS.maxResOnInit),
     animatedRailPortraits: z._default(z.boolean(), DEF_UI_PREFS.animatedRailPortraits),
     showcaseCards: z._default(z.record(
@@ -1218,15 +1220,6 @@ const uiPersistSchema = z.strictObject({
       save: z._default(z.boolean(), DEF_UI_PREFS.rotationImportPick.save),
     }), DEF_UI_PREFS.rotationImportPick),
   }), DEF_UI_PREFS)),
-  leftPaneView: z.enum([
-    'resonators',
-    'buffs',
-    'echoes',
-    'enemy',
-    'weapon',
-    'teams',
-    'suggestions',
-  ]),
   suggsViewMode: z._default(z.enum(['mainStats', 'setPlans', 'weapons', 'random', 'substats']), 'mainStats'),
   showSubHits: z.boolean(),
   compactInv: z._default(z.boolean(), false),
@@ -1236,10 +1229,6 @@ const uiPersistSchema = z.strictObject({
   historyMax: histMaxSchm,
   itemFreq: pckrFreqSttS,
   optimizerCpuHintSeen: z._default(z.boolean(), false),
-  // portrait-mode preference for the optimizer (sprite vs profile art). a
-  // display preference, not resonator-scoped, so it persists globally with
-  // other UI preferences.
-  optimizerUseSprite: z._default(z.boolean(), true),
   // export files default to the compact .wwcalc format; plain json is the
   // readable fallback.
   compressedExports: z._default(z.boolean(), true),
@@ -1270,7 +1259,6 @@ export const prssUiPprnSc = z.lazy(() => z.strictObject({
 
 export const prssUiLytSch = z.lazy(() => z.strictObject({
   preferences: uiPersistSchema.shape.preferences,
-  leftPaneView: uiPersistSchema.shape.leftPaneView,
   suggsViewMode: uiPersistSchema.shape.suggsViewMode,
   showSubHits: uiPersistSchema.shape.showSubHits,
   compactInv: uiPersistSchema.shape.compactInv,
@@ -1280,7 +1268,6 @@ export const prssUiLytSch = z.lazy(() => z.strictObject({
   historyMax: uiPersistSchema.shape.historyMax,
   itemFreq: uiPersistSchema.shape.itemFreq,
   optimizerCpuHintSeen: uiPersistSchema.shape.optimizerCpuHintSeen,
-  optimizerUseSprite: uiPersistSchema.shape.optimizerUseSprite,
   compressedExports: uiPersistSchema.shape.compressedExports,
   rotationEditorPreferences: uiPersistSchema.shape.rotationEditorPreferences,
 }))
@@ -1433,7 +1420,7 @@ export const prssInvScenarios = z.lazy(() => z.strictObject({
 function makePersistSchema(version: typeof APP_STATE_VER) {
   return z.strictObject({
     version: z.literal(version),
-    ui: z.pipe(z.transform(stripLegacyMainMode), uiPersistSchema),
+    ui: z.pipe(z.transform(stripRetiredUiKeys), uiPersistSchema),
     // Optional only at the schema boundary so v22 state can materialize its
     // first scenario from legacy profiles/session during initialization.
     combat: z.optional(prssCombatWorkspace),
@@ -1575,7 +1562,7 @@ export const prssUiPprnSl = z.lazy(() => z.strictObject({
 
 export const prssUiLytSlc = z.lazy(() => z.strictObject({
   version: z.literal(APP_STATE_VER),
-  ui: z.pipe(z.transform(stripLegacyMainMode), prssUiLytSch),
+  ui: z.pipe(z.transform(stripRetiredUiKeys), prssUiLytSch),
 }))
 
 export const prssUiSvdRoh = z.lazy(() => z.strictObject({

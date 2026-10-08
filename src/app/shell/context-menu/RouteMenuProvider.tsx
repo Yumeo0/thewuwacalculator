@@ -16,10 +16,7 @@ import { ConfirmHost } from '@/shared/ui/ConfirmationModal'
 import { useAppModal } from '@/shared/ui/useAppModal'
 import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay'
 import { routeCtxBuilder } from '@/application/context-menu/routeContextBuilders.tsx'
-import {
-  legacyCalculatorViews,
-  rtNavLnks,
-} from '@/application/context-menu/routeChromeConfig'
+import { rtNavLnks } from '@/application/context-menu/routeChromeConfig'
 import {
   RouteMenuContext,
   type RouteHistoryScope,
@@ -258,9 +255,7 @@ export function RtMenuProv({ children }: { children: ReactNode }) {
 
   const value = useMemo<RouteMenuValue>(() => ({
     pageLinks: rtNavLnks,
-    legacyCalculatorViews,
     actions: {
-      navigateTo,
       undo: effectiveUndo,
       redo: effectiveRedo,
       canUndo: () => canUndo,
@@ -271,19 +266,16 @@ export function RtMenuProv({ children }: { children: ReactNode }) {
       openModulation,
       tgglRotEd: tglRotEd,
       openStatus,
-      rstActRes: rstActRes,
     },
     builders,
   }), [
     builders,
-    navigateTo,
     canRedo,
     canUndo,
     effectiveRedo,
     effectiveUndo,
     openInv,
     openStatus,
-    rstActRes,
     tglOpt,
     openModulation,
     tglRotEd,

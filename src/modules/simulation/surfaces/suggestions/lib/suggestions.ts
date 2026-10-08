@@ -7,19 +7,19 @@
 import type { EnemyProfile } from '@/domain/entities/appState.ts'
 import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime.ts'
 import { cloneSntSet, type SntSetConds } from '@/domain/entities/sonataSetConditionals.ts'
-import type { RandGnrtSets, RandGnrtSetP, WeaponPlanSet } from '@/domain/entities/suggestions.ts'
+import type { RandGnrtSets, WeaponPlanSet } from '@/domain/entities/suggestions.ts'
 import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@/data/gameData/catalog/echoStats.ts'
 import { ECHO_SET_DEFS } from '@/data/gameData/echoSets/effects.ts'
 import { runtimeSig } from '@/engine/runtime/runtimeSignature.ts'
 import type { MainStatRecipe } from '@/engine/suggestions/mainStat-suggestion/utils.ts'
-import { formatCompactNum, formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
-import { getQppdEchoC, sortByCost } from '@/modules/simulation/features/echoes/lib/echoes.ts'
+import { formatCompactNum} from '@/modules/simulation/model/statsView.ts'
+import { getQppdEchoC} from '@/modules/simulation/features/echoes/lib/echoes.ts'
 import { formatTruncCompact } from '@/shared/lib/number.ts'
 
 export type { SuggsViewMod } from '@/domain/entities/suggestions.ts'
 export { runtimeSig } from '@/engine/runtime/runtimeSignature.ts'
 
-export const DEFRANDSETS: RandGnrtSets = {
+const DEFRANDSETS: RandGnrtSets = {
   bias: 0.5,
   rollQuality: 0.3,
   targetEnergyRegen: 0,
@@ -95,34 +95,6 @@ export function getDiffLabel(diffPercent: number, isCurrent: boolean): string {
   return `${formatTruncCompact(Math.abs(diffPercent), 2)}%`
 }
 
-export function getDiffArrow(diffPercent: number): string {
-  if (diffPercent > 0) {
-    return '⬆'
-  }
-
-  if (diffPercent < 0) {
-    return '⬇'
-  }
-
-  return ''
-}
-
-// capture an exact equipped-echo signature for cache keys and equality checks
-export function mkEchoFullSi(echoes: Array<EchoInstance | null>): string {
-  return echoes
-    .filter((echo): echo is EchoInstance => echo != null)
-    .map((echo) => [
-      echo.id,
-      echo.set,
-      `${echo.mainStats.primary.key}:${echo.mainStats.primary.value}`,
-      ...Object.entries(echo.substats)
-        .sort(([left], [right]) => left.localeCompare(right))
-        .map(([key, value]) => `${key}:${value}`),
-    ].join('::'))
-    .sort()
-    .join('||')
-}
-
 // turn an object into a stable string form for cache signatures
 export function strnSrtdRcrd(record: Record<string, unknown>): string {
   return Object.entries(record)
@@ -154,17 +126,6 @@ export function memberSig(
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([resonatorId, runtime]) => `${resonatorId}:${runtimeSig(runtime)}`)
     .join('##')
-}
-
-// serialize random-generator settings for result caching
-export function randomSig(settings: RandGnrtSets): string {
-  return JSON.stringify({
-    bias: settings.bias,
-    rollQuality: settings.rollQuality,
-    targetEnergyRegen: settings.targetEnergyRegen,
-    mainEchoId: settings.mainEchoId,
-    setPreferences: [...settings.setPreferences].sort((left, right) => left.setId - right.setId || left.count - right.count),
-  })
 }
 
 // serialize weapon suggestion settings for result caching
@@ -234,11 +195,6 @@ export function inputSig(options: {
     includeEchoAttacks,
     fixedEchoLoadout,
   })
-}
-
-// order echoes by cost for modal preview displays
-export function sortChsForDs(echoes: Array<EchoInstance | null>): EchoInstance[] {
-  return sortByCost(echoes)
 }
 
 // capture the full recipe layout so identical suggestions can be compared cheaply
@@ -332,85 +288,4 @@ export function costSig(recipes: MainStatRecipe[]): string {
     .map((recipe) => recipe.cost)
     .sort((left, right) => right - left)
     .join(' • ')
-}
-
-// aggregate substats into a display-ready list for random suggestions
-export function mkGrpdSbst(echoes: Array<EchoInstance | null>) {
-  const totals = new Map<string, number>()
-  for (const echo of echoes) {
-    if (!echo) {
-      continue
-    }
-
-    for (const [key, value] of Object.entries(echo.substats)) {
-      totals.set(key, (totals.get(key) ?? 0) + value)
-    }
-  }
-
-  return [...totals.entries()]
-    .sort((left, right) => right[1] - left[1])
-    .map(([key, value]) => ({
-      key,
-      label: formatStatKeyLabel(key),
-      value: formatStatKeyValue(key, value),
-    }))
-}
-
-// list valid piece counts for a set in random-generation constraints
-export function getRandSetCn(setId: number): number[] {
-  const definition = ECHO_SET_DEFS.find((entry) => entry.id === setId)
-  if (!definition) {
-    return []
-  }
-
-  if (definition.setMax === 1) {
-    return [1]
-  }
-
-  return definition.setMax === 3 ? [3] : [2, 5]
-}
-
-// coerce a requested count to the nearest valid set-piece option
-export function normSetCount(setId: number, count: number): number {
-  const options = getRandSetCn(setId)
-  if (options.length === 0) {
-    return 0
-  }
-
-  const numeric = Number(count)
-  if (!Number.isFinite(numeric)) {
-    return options[0]
-  }
-
-  return options.reduce((closest, current) => (
-    Math.abs(current - numeric) < Math.abs(closest - numeric) ? current : closest
-  ))
-}
-
-// sanitize random-set preferences down to the supported three-set constraint model
-export function trimRandSetP(
-  preferences: RandGnrtSetP[],
-): RandGnrtSetP[] {
-  let next = preferences
-    .filter((entry, index, array) => (
-      entry.count > 0 &&
-      getRandSetCn(entry.setId).length > 0 &&
-      array.findIndex((candidate) => candidate.setId === entry.setId) === index
-    ))
-    .map((entry) => ({
-      setId: entry.setId,
-      count: normSetCount(entry.setId, entry.count),
-    }))
-
-  if (next.length > 3) {
-    next = next.slice(0, 3)
-  }
-
-  let total = next.reduce((sum, entry) => sum + entry.count, 0)
-  while (total > 5 && next.length > 0) {
-    next = next.slice(0, -1)
-    total = next.reduce((sum, entry) => sum + entry.count, 0)
-  }
-
-  return next
 }

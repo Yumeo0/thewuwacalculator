@@ -7,7 +7,6 @@
 import { createContext, useContext } from 'react'
 import type { routeCtxBuilder } from '@/application/context-menu/routeContextBuilders'
 import type {
-  LegacyCalculatorView,
   RouteNavLink,
 } from '@/application/context-menu/routeChromeConfig'
 
@@ -22,9 +21,7 @@ export interface RouteHistoryScope {
 
 export interface RouteMenuValue {
   pageLinks: RouteNavLink[]
-  legacyCalculatorViews: LegacyCalculatorView[]
   actions: {
-    navigateTo: (to: string) => void
     undo: () => void
     redo: () => void
     canUndo: () => boolean
@@ -35,7 +32,6 @@ export interface RouteMenuValue {
     openModulation: () => void
     tgglRotEd: () => void
     openStatus: () => void
-    rstActRes: () => void
   }
   builders: {
     routeChrome: {

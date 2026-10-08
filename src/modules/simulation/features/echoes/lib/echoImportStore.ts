@@ -30,3 +30,7 @@ export const useEchoImport = create<EchoImportState>((set) => ({
 export function openEchoImport(resonatorId?: string | null): void {
   useEchoImport.getState().open(resonatorId)
 }
+
+export function useEchoImportRequested(): boolean {
+  return useEchoImport((state) => state.isOpen)
+}

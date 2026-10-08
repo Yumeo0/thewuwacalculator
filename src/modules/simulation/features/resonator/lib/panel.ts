@@ -4,10 +4,7 @@
                control options, and image preloading.
 */
 
-import type { ResRuntime } from '@/domain/entities/runtime.ts'
-import { resResCntrPt } from '@/engine/gameData/controlOptions.ts'
-import type { ResControlOption, ResControlOptionValue } from '@/domain/entities/resonator.ts'
-import type { ResonatorSkillTabKey as SkillTabKey, ResonatorStateControl as ResStateControl } from '@/modules/simulation/features/resonator/lib/resonator.ts'
+import type { ResonatorSkillTabKey as SkillTabKey} from '@/modules/simulation/features/resonator/lib/resonator.ts'
 
 export const skllLblMap: Record<SkillTabKey, string> = {
   normalAttack: 'Normal Attack',
@@ -26,19 +23,6 @@ export function fmtSkllKey(key: string): string {
     .replace(/^./, (text) => text.toUpperCase())
 }
 
-export function isCntrVsblAc(
-  control: ResStateControl,
-  value: boolean | number | string | undefined,
-): boolean {
-  if (control.kind === 'toggle') {
-    return Boolean(value ?? control.defaultValue)
-  }
-
-  const numericValue = typeof value === 'number' ? value : Number(value ?? control.defaultValue ?? control.min ?? 0)
-  const nctvVl = typeof control.defaultValue === 'number' ? control.defaultValue : control.min ?? 0
-  return numericValue > nctvVl
-}
-
 // merge keyword lists without duplicates for description rendering
 export function mrgDscrKywr(...lists: Array<string[] | undefined>): string[] {
   const merged = new Set<string>()
@@ -49,40 +33,4 @@ export function mrgDscrKywr(...lists: Array<string[] | undefined>): string[] {
   }
 
   return Array.from(merged)
-}
-
-// preload an image asset without failing the ui flow
-export function preloadImage(src: string): Promise<void> {
-  return new Promise((resolve) => {
-    const image = new Image()
-    image.onload = () => resolve()
-    image.onerror = () => resolve()
-    image.src = src
-  })
-}
-
-// resolve select options that change once the resonator reaches a threshold sequence
-export function getCntrPtns(
-  control: ResStateControl,
-  runtime: ResRuntime,
-): Array<ResControlOptionValue | ResControlOption> {
-  return resResCntrPt(runtime, control)
-}
-
-// scale a stored control value into its user-facing display value
-export function getScldVl(control: ResStateControl, storedValue: number): number {
-  if (!control.displayMultiplier) {
-    return storedValue
-  }
-
-  return storedValue * control.displayMultiplier
-}
-
-// convert a displayed control value back into the stored representation
-export function toStrdCntrVl(control: ResStateControl, rawValue: number): number {
-  if (!control.displayMultiplier) {
-    return rawValue
-  }
-
-  return Math.floor(rawValue / control.displayMultiplier)
 }

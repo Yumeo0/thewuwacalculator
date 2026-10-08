@@ -18,7 +18,7 @@ export interface CoverageDomain {
 }
 
 export const STATUS_DATA = {
-  lastUpdated: '18/08/2026',
+  lastUpdated: '07/10/2026',
 
   wallpaper: {
     src: '/assets/app/phoebeW.webp',
@@ -28,16 +28,16 @@ export const STATUS_DATA = {
   overallState: 'stable' as AppState,
   patchVersion: CURRENT_VERSION,
   dataSources: [
-    { label: 'Encore', href: 'https://encore.moe/new?lang=en' },
-    { label: 'Nanoka', href: 'https://ww.nanoka.cc/' },
+    { label: 'encore.moe', href: 'https://encore.moe/new?lang=en' },
+    { label: 'nanoka.cc', href: 'https://ww.nanoka.cc/' },
   ],
   notes: [
     'hello my lovelies~! ٩(ˊᗜˋ*)و ♡',
     'Where you\'re reading this from looks different doesn\'t it? so does a lot of other stuff~! As you may have noticed the whole interface looks way WAY different now..',
     'A series of visual changes that would affect your experience (positively yes?) while using this have been made while some not so visual changes have been made as well to have stuff run' +
     ' more smoothly.',
-    'IMPORTANT: As a lot has been changed, if you feel like there\'s something missing or something you don\'t quite like, please POLITELY let me know in the discord server. It\'s not like i don\'t' +
-    ' listen and/or act on your feedback. I\'m very active i promise.',
+    'IMPORTANT: As a lot has been changed, if you feel like there\'s something missing or something you don\'t quite like, please POLITELY let me know in the discord server. But if possible, please give the new interface a fair chance instead of immediately dooming it and me to oblivion!',
+    'Take a look at the guides, THEY\'RE SUPER USEFUL NOW! (i promise), explore, do whatever.',
   ],
   // Consumers join these status records with live catalog counts by key.
   coverage: [
@@ -47,7 +47,7 @@ export const STATUS_DATA = {
     { key: 'enemies',    title: 'Enemies',    status: 'ok', note: '' },
   ] as CoverageDomain[],
   recentChanges: [
-    '3.6 patch stuff.',
+    'New UI.',
   ],
 
   knownIssues: [] as string[]

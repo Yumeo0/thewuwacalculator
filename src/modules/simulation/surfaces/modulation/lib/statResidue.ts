@@ -8,6 +8,7 @@ import type { StatTreeNode } from '@/modules/simulation/model/statsView.ts'
 export interface ScopedAddend {
   /* scope + modifier is the identity: one scope can reach several modifiers */
   id: string
+  scopeKind: 'attribute' | 'skillType'
   scopeKey: string
   scopeLabel: string
   color?: string
@@ -89,7 +90,8 @@ export function makeStatResidue(statsTree: StatTreeNode[]): StatResidue {
         if (leaf.key === 'dmgBonus' && SHEET_DMG_SCOPES.has(scope.key)) continue
 
         const addend: ScopedAddend = {
-          id: `${scope.key}:${leaf.key}`,
+          id: `${node.key}:${scope.key}:${leaf.key}`,
+          scopeKind: node.key as ScopedAddend['scopeKind'],
           scopeKey: scope.key,
           scopeLabel: scope.label,
           color: scope.color,

@@ -4,7 +4,9 @@
                decisions match the document's CSS width floor.
 */
 
-export const APP_LAYOUT_MIN_WIDTH = 1190
+import { RESPONSIVE_POLICY } from '@/shared/responsive/policy'
+
+export const APP_LAYOUT_MIN_WIDTH = RESPONSIVE_POLICY.layoutMinWidthPx
 
 const WIDTH_QUERY = /^\(\s*(min|max)-width\s*:\s*([0-9.]+)(px|r?em)\s*\)$/i
 

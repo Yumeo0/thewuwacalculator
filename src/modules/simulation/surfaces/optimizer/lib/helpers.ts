@@ -8,11 +8,6 @@ import { getSntSetIco } from '@/data/gameData/catalog/sonataSets.ts'
 import { getEchoSetDe } from '@/data/gameData/echoSets/effects.ts'
 import type { EchoInstance, ResRuntime } from '@/domain/entities/runtime.ts'
 import { getEchoById } from '@/data/catalog/echoCatalogService.ts'
-import {
-  apWpnStts,
-  clrSrcCtrls,
-  type RtCtlMap,
-} from '@/engine/runtime/sourceStateInit.ts'
 import { makeTeamMember } from '@/engine/runtime/defaults.ts'
 import { materializeLegacyTeamMember } from '@/engine/runtime/runtimeMaterialization.ts'
 import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
@@ -23,7 +18,7 @@ export type PrvwTgt =
   | { kind: 'base' }
   | { kind: 'result'; index: number }
 
-export type OpSlot = 'active' | 0 | 1
+type OpSlot = 'active' | 0 | 1
 export type OpEchoTarget = 'filter' | 0 | 1
 
 // keep the idle progress object in one place so the stage can reset consistently.
@@ -166,25 +161,4 @@ export function makeOpSlot(
     runtime.state.combat,
     runtime.build.team,
   )
-}
-
-// remove any persisted weapon state keys tied to a weapon before swapping it out.
-export function clrWpnSttCnt(
-  controls: RtCtlMap,
-  weaponId: string | null,
-  prefix = '',
-) {
-  clrSrcCtrls(controls, { type: 'weapon', id: weaponId }, prefix)
-}
-
-// seed default state values for a freshly selected weapon.
-export function applyWpnSttD(
-  controls: RtCtlMap,
-  weaponId: string,
-  prefix = '',
-  runtime?: ResRuntime,
-  maxed = false,
-) {
-  if (!runtime) return
-  apWpnStts(controls, runtime, weaponId, { prefix, maxed })
 }
