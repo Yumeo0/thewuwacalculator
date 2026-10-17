@@ -39,7 +39,7 @@ import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedDa
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
 import { weaponStatsAt } from '@/modules/simulation/features/weapons/lib/weapon.ts'
-import { getSntSetIco } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import type { DataSrcRef } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import {
   makeLoopInfo,
@@ -71,7 +71,7 @@ import {
   normalizeFeatureAttachments,
   stripFeatureAttachments,
 } from '@wuwacalc/core/domain/gameData/rotationAttached.ts'
-import { getSkillType } from '@wuwacalc/core/domain/gameData/skillTypes.ts'
+import { getSkillType } from '@/domain/gameData/skillTypes.ts'
 import { getSkillTabLabel } from '@/modules/simulation/model/skillTabs.ts'
 import type { CondChoice } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
 import type {

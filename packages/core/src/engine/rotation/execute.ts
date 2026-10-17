@@ -37,7 +37,7 @@ import {
 } from '@core/domain/gameData/rotationAttached'
 import {
   getRotFormulaStatKey,
-  ROT_FORMULA_STAT_DEFS,
+  ROT_FORMULA_STAT_KEYS,
   type RotFormulaStatKey,
   type RotFormulaStats,
 } from '@core/domain/gameData/rotationFormulaStats'
@@ -223,7 +223,7 @@ type RotPartRt = Pick<RotPartStt, 'seed' | 'runtime'>
 // they are not immediately mutating the base graph/runtime directly
 type RotVrlyVl = string | number | boolean
 const ROT_FORMULA_INDEX = new Map(
-  ROT_FORMULA_STAT_DEFS.map((definition, index) => [definition.key, index]),
+  ROT_FORMULA_STAT_KEYS.map((key, index) => [key, index]),
 )
 
 interface RotVrlyStt {
@@ -986,7 +986,7 @@ function mkRotStt(
     },
     mutableOverlay: !captureEntries && !inspect,
     numericTeam,
-    formulaRegisters: new Float64Array(ROT_FORMULA_STAT_DEFS.length),
+    formulaRegisters: new Float64Array(ROT_FORMULA_STAT_KEYS.length),
     offTune: 0,
     offTuneSeal: makeOffTuneSealState(),
     rslvRtCch: {},
@@ -1570,9 +1570,9 @@ function hasRotFormulaStats(state: RotationExec): boolean {
 
 function materializeFormulaStats(state: RotationExec): RotFormulaStats {
   const formula: RotFormulaStats = {}
-  for (let index = 0; index < ROT_FORMULA_STAT_DEFS.length; index += 1) {
+  for (let index = 0; index < ROT_FORMULA_STAT_KEYS.length; index += 1) {
     const value = state.formulaRegisters[index] ?? 0
-    if (value !== 0) formula[ROT_FORMULA_STAT_DEFS[index]!.key] = value
+    if (value !== 0) formula[ROT_FORMULA_STAT_KEYS[index]!] = value
   }
   return formula
 }

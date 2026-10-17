@@ -4,10 +4,10 @@
                a canonical combat scenario for imports and schema migration.
 */
 
-import type { LegacyProfileMap } from '@core/domain/entities/appState'
-import type { CombatScenario } from '@core/domain/entities/combatScenario'
-import type { CombatSession } from '@core/domain/entities/session'
-import { makeScenarioFromProfiles } from '@core/engine/runtime/defaults'
+import type { LegacyProfileMap } from '@wuwacalc/core/domain/entities/appState'
+import type { CombatScenario } from '@wuwacalc/core/domain/entities/combatScenario'
+import type { CombatSession } from '@wuwacalc/core/domain/entities/session'
+import { makeScenarioFromProfiles } from '@wuwacalc/core/engine/runtime/defaults'
 
 export interface LegacyCombatScenarioSource {
   profiles: LegacyProfileMap

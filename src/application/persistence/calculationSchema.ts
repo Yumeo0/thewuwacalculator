@@ -10,7 +10,7 @@ export { APP_STATE_VER } from '@/application/persistence/appStateVersion'
 import { DEF_SET_COND } from '@wuwacalc/core/domain/entities/sonataSetConditionals'
 import { makeOptInventorySelection } from '@wuwacalc/core/domain/entities/profile'
 import { mnlBffsSchm } from '@wuwacalc/core/engine/runtime/manualBuffsSchema'
-import { migrateLegacySavedRotationRecord } from '@wuwacalc/core/engine/runtime/savedRotationMigration'
+import { migrateLegacySavedRotationRecord } from '@/application/persistence/savedRotationMigration'
 import { migrateLegacyRotationItems } from '@wuwacalc/core/domain/gameData/loopPasses'
 import type { CondExpr, FormExpr, RotationNode } from '@wuwacalc/core/domain/gameData/contracts'
 

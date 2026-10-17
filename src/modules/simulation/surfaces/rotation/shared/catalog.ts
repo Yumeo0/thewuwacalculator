@@ -6,12 +6,13 @@
 */
 
 import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
-import { getRotFormulaPath, ROT_FORMULA_STAT_DEFS } from '@wuwacalc/core/domain/gameData/rotationFormulaStats'
+import { getRotFormulaPath, ROT_FORMULA_STAT_KEYS } from '@wuwacalc/core/domain/gameData/rotationFormulaStats'
+import { ROT_FORMULA_STAT_LABELS } from '@/domain/gameData/rotationFormulaDisplay'
 import { UNISON_BOON_TEAM_PATH, unisonBoonMaxForRuntimes, unisonBoonState } from '@wuwacalc/core/domain/gameData/unisonBoon'
 import { makeSourceCat } from '@wuwacalc/core/engine/services/runtimeSourceService'
 import { resolveSkill } from '@wuwacalc/core/engine/pipeline/resolveSkill'
 import { getNegFfctCm, getNegFfctEn } from '@wuwacalc/core/engine/gameData/negativeEffects'
-import { getSkillType } from '@wuwacalc/core/domain/gameData/skillTypes'
+import { getSkillType } from '@/domain/gameData/skillTypes'
 import {
   getStateTeamTag,
   getTeamTgtPt,
@@ -209,24 +210,25 @@ export function makeConditionChoices(
       },
     }]
     : []
-  const formulaChoices: CondChoice[] = ROT_FORMULA_STAT_DEFS.map((definition) => ({
-    id: `rotation:formula:${definition.key}`,
+  const formulaChoices: CondChoice[] = ROT_FORMULA_STAT_KEYS.map((key) => ({
+    ...ROT_FORMULA_STAT_LABELS[key],
+    id: `rotation:formula:${key}`,
     resonatorId: 'rotation',
     resName: 'Rotation',
     sourceName: 'Overrides',
-    label: definition.label,
-    description: definition.description,
+    label: ROT_FORMULA_STAT_LABELS[key].label,
+    description: ROT_FORMULA_STAT_LABELS[key].description,
     changeTarget: 'rotation',
     state: {
-      id: `rotation:formula:${definition.key}`,
-      label: definition.label,
+      id: `rotation:formula:${key}`,
+      label: ROT_FORMULA_STAT_LABELS[key].label,
       source: { type: 'resonator', id: runtime.id },
       ownerKey: 'rotation:formula',
-      controlKey: `rotation.formula.${definition.key}`,
-      path: getRotFormulaPath(definition.key),
+      controlKey: `rotation.formula.${key}`,
+      path: getRotFormulaPath(key),
       kind: 'number' as const,
       defaultValue: 0,
-      description: definition.description,
+      description: ROT_FORMULA_STAT_LABELS[key].description,
     },
   }))
 

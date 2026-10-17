@@ -9,7 +9,7 @@ import { isNoWeaponId, type ResRuntime } from '@wuwacalc/core/domain/entities/ru
 import type { AttributeKey, FinalStats, ModBuff, SkillTypeKey } from '@wuwacalc/core/domain/entities/stats.ts'
 import { resResBaseSt } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
 import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
-import { getSkillType } from '@wuwacalc/core/domain/gameData/skillTypes.ts'
+import { getSkillType } from '@/domain/gameData/skillTypes.ts'
 import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display.ts'
 import { toTitle } from '@/shared/lib/format.ts'

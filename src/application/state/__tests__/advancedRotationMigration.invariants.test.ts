@@ -11,7 +11,7 @@ import { savedRotationItems } from '@wuwacalc/core/domain/entities/inventoryStor
 import { makeAppStateWithUi } from '@/application/persistence/appState.ts'
 import {
   migrateAdvancedScenarioRotations,
-} from '@wuwacalc/core/engine/runtime/advancedRotationMigration.ts'
+} from '@/application/persistence/advancedRotationMigration.ts'
 import { useAppStore } from '@/application/state/store.ts'
 import { consumePersist } from '@/application/persistence/storage.ts'
 

@@ -6,7 +6,8 @@
 
 import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@wuwacalc/core/data/gameData/catalog/echoStats.ts'
-import { getSntSetClr, getSntSetIco, getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetClr, getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { applySetPlan, mkEchoMainSt } from '@wuwacalc/core/engine/suggestions/mutate.ts'
 import { applyMainSta } from '@wuwacalc/core/engine/suggestions/mainStat-suggestion/utils.ts'
 import type {

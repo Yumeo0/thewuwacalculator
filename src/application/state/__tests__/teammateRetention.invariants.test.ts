@@ -16,7 +16,7 @@ import { makeResProfile, makeScenarioMemberFromProfile } from '@wuwacalc/core/en
 import { makeAppStateWithUi } from '@/application/persistence/appState'
 import { prepareCombatScenario } from '@wuwacalc/core/engine/pipeline/combatScenario'
 import { makeMemberManualEffect, resolveEnvironmentManualBuffs } from '@wuwacalc/core/engine/runtime/scenarioEnvironment'
-import { insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember } from '@wuwacalc/core/engine/runtime/scenarioMembers'
+import { insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember } from '@/engine/runtime/scenarioMembers'
 import { withSupports } from '@/modules/simulation/features/teams/lib/teamSlots'
 
 function makeMember(resonatorId = '1211') {

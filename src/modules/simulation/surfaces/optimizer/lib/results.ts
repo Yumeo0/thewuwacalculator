@@ -14,7 +14,7 @@ import {
   resOptRsltCh,
 } from '@wuwacalc/core/engine/optimizer/results/materialize.ts'
 import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
-import { getSntSetIco } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
 import type {

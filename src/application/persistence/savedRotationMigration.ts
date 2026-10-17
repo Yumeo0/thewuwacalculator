@@ -4,7 +4,7 @@
                saved-program contract without replacing their saved record.
 */
 
-import type { TeamSlots } from '@core/domain/entities/runtime'
+import type { TeamSlots } from '@wuwacalc/core/domain/entities/runtime'
 
 type StoredRecord = Record<string, unknown>
 

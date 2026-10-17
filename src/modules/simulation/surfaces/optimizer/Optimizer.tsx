@@ -37,7 +37,7 @@ import {
 } from '@/application/state'
 import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import { contextScenarioMember } from '@wuwacalc/core/domain/entities/combatScenario.ts'
-import { indexEquippedEchoes } from '@wuwacalc/core/engine/runtime/inventoryUsage.ts'
+import { indexEquippedEchoes } from '@/engine/runtime/inventoryUsage.ts'
 import {deriveOptSets, preserveToggles} from '@wuwacalc/core/engine/optimizer/config/defaultSettings.ts'
 import { getDefaultRotation } from '@wuwacalc/core/data/catalog/gameDataService.ts'
 import {applyKeepPrc, makeStatWeights} from '@wuwacalc/core/engine/optimizer/search/filtering.ts'

@@ -3,7 +3,8 @@
   description: extracts the sonata plan, cost, and main echo provenance for generated evaluation builds.
 */
 
-import { getSntSetIco, getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'
 import type {
   EvaluationBuildSnapshot,

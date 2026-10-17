@@ -24,7 +24,7 @@ import {
   makeTeamMember,
 } from '@wuwacalc/core/engine/runtime/defaults.ts'
 import { makeAppState } from '@/application/persistence/hydration'
-import { projectCombatScenario } from '@wuwacalc/core/engine/runtime/combatScenarioProjection.ts'
+import { projectCombatScenario } from '@/application/persistence/combatScenarioProjection.ts'
 import {
   projectScenarioMemberProfile,
   projectScenarioProfiles,

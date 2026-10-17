@@ -19,7 +19,8 @@ import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats.ts'
 import type { SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import type { SimResult } from '@wuwacalc/core/engine/pipeline/types.ts'
-import { ENEMY_CLASS_TXT, ENEMY_PRST, getEnemyIcon } from '@wuwacalc/core/domain/entities/enemy.ts'
+import { ENEMY_PRST } from '@wuwacalc/core/domain/entities/enemy.ts'
+import { ENEMY_CLASS_TXT, ENEMY_ELEM_TXT, getEnemyIcon } from '@/domain/gameData/enemyDisplay'
 import { readRtPath } from '@wuwacalc/core/domain/gameData/runtimePath.ts'
 import { NEG_EFFECT_ELEM, negEffectsFor } from '@wuwacalc/core/engine/gameData/negativeEffects.ts'
 import { getTuneStrainMaxForTeam } from '@wuwacalc/core/engine/gameData/tuneStrain.ts'
@@ -525,7 +526,7 @@ export function EnemyConsole({
                   type="button"
                   aria-pressed={row.elementId === focus}
                   style={{ '--el': ATTR_ID_COLORS[row.elementId] } as CssProps}
-                  title={`${row.label} · RES ${fmtRes(row.value)}`
+                  title={`${ENEMY_ELEM_TXT[row.elementId]} · RES ${fmtRes(row.value)}`
                     + `${row.shred ? ` (effective ${fmtRes(row.effective)})` : ''}`
                     + ` · damage x${formatTruncCompact(row.base, 3)}`}
                   onClick={() => setFocus(row.elementId)}
@@ -547,7 +548,7 @@ export function EnemyConsole({
             </div>
 
             <div className="enc-read">
-              <b>{picked.label}</b>
+              <b>{ENEMY_ELEM_TXT[picked.elementId]}</b>
               {custom ? null : (
                 <span className="enc-read__s">
                   {`RES ${fmtRes(picked.value)}`}

@@ -27,12 +27,7 @@ export function getSntSetNam(id: number): string {
   return sntSetsById[id]?.name ?? `Set ${id}`
 }
 
-// get the icon path for a sonata set id
-export function getSntSetIco(id: number): string | null {
-  return sntSetsById[id]?.icon ?? null
-}
-
-// get the ring color sampled from the sonata set icon
-export function getSntSetClr(id: number): string | null {
-  return sntSetsById[id]?.color ?? null
+/** the catalog definition for a sonata set id, if it is known. */
+export function getSntSetById(id: number): SntSetDef | undefined {
+  return sntSetsById[id]
 }

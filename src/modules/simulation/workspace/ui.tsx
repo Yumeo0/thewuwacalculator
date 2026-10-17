@@ -28,7 +28,7 @@ import { cmptEchoCrit } from '@/modules/simulation/features/echoes/lib/metric.ts
 import { ATTR_COLORS } from '@/modules/simulation/model/display'
 import { countEchoSets } from '@wuwacalc/core/engine/pipeline/buildCombatContext'
 import { makeEffectiveSetPlan } from '@wuwacalc/core/engine/gameData/sonataPlan'
-import { getSntSetClr, getSntSetIco } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
+import { getSntSetClr, getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'
 import { formatCompactNum, formatStatKeyLabel } from '@/modules/simulation/model/statsView.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'

@@ -17,7 +17,7 @@ import {
 } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import {
   insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember,
-} from '@wuwacalc/core/engine/runtime/scenarioMembers'
+} from '@/engine/runtime/scenarioMembers'
 import { convertMemberRoverGender, convertScenarioRoverGender } from './roverGenderConversion'
 import { roverIdForGender } from '@/domain/entities/roverGender'
 

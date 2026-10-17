@@ -16,7 +16,7 @@ import { Select } from '@/application/ui/Select'
 import type { SelectOption } from '@/application/ui/Select'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
 import { ECHO_SET_DEFS } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
-import { getSntSetClr, getSntSetIco } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetClr, getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import {
   getSntSetOn,
   type SntSetConds,

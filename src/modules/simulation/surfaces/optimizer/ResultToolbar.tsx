@@ -20,7 +20,7 @@ import { Select, type SelectOption } from '@/application/ui/Select'
 import { SonataTokens } from '@/modules/simulation/workspace/ui.tsx'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
-import { getSntSetIco } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import {
   OP_SYMBOL,
   VIEW_COLUMNS,

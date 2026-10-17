@@ -10,7 +10,6 @@ import {
   applyTwrOfDv,
   makeEnemyProf,
   ENEMY_ELEM_ATTR,
-  ENEMY_ELEM_TXT,
   getEnemyResi,
   isEnemyClssI,
   rmTwrOfDvrsR,
@@ -22,7 +21,6 @@ function clamp(value: number, min: number, max: number): number {
 
 export interface EnemyResistR {
   elementId: EnemyElemId
-  label: string
   attributeKey: string
   value: number
 }
@@ -45,7 +43,6 @@ export function getEnemyReys(
 ): EnemyResistR[] {
   return elemPtns.map((elementId) => ({
     elementId,
-    label: ENEMY_ELEM_TXT[elementId],
     attributeKey: ENEMY_ELEM_ATTR[elementId],
     value: profile.res[elementId],
   }))

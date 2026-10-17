@@ -7,22 +7,22 @@
 import {
   contextScenarioMember,
   reviseCombatScenario,
-} from '@core/domain/entities/combatScenario'
+} from '@wuwacalc/core/domain/entities/combatScenario'
 import type {
   SavedArtifactLibrary,
   SavedRotation,
-} from '@core/domain/entities/inventoryStorage'
+} from '@wuwacalc/core/domain/entities/inventoryStorage'
 import {
   cloneRotationNodes,
   makeSavedRotation,
   savedRotationItems,
   savedRotationResonatorId,
-} from '@core/domain/entities/inventoryStorage'
-import type { RotationNode } from '@core/domain/gameData/contracts'
-import type { ScenarioWorkspace } from '@core/domain/entities/scenarioLibrary'
-import { isRotationSequence } from '@core/domain/gameData/rotationSequence'
-import { getResSeedBy } from '@core/data/catalog/resonatorSeedService'
-import { mkDefRot } from '@core/engine/runtime/defaults'
+} from '@wuwacalc/core/domain/entities/inventoryStorage'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts'
+import type { ScenarioWorkspace } from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { isRotationSequence } from '@wuwacalc/core/domain/gameData/rotationSequence'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
+import { mkDefRot } from '@wuwacalc/core/engine/runtime/defaults'
 
 export interface AdvancedRotationMigration {
   profileId: string

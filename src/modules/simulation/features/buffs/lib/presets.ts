@@ -5,7 +5,8 @@
 */
 
 import { getGameData } from '@wuwacalc/core/data/gameData'
-import { getSntSetIco, getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
 import type { MnlMod, MnlSkllMtchM } from '@wuwacalc/core/domain/entities/manualBuffs.ts'
 import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'

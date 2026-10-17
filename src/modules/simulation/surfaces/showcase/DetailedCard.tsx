@@ -12,7 +12,7 @@ import type { ShowcaseCardHidden, StatsColumnHighlight } from '@/domain/entities
 import { useAppStore } from '@/application/state'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'
 import { weaponStatsAt } from '@wuwacalc/core/domain/services/weaponPlan.ts'
-import { getSntSetIco } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
+import { getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { getRarityColor, getRarityInk } from '@/modules/simulation/model/display.ts'
 import { getWpnVisKey } from '@/modules/simulation/workspace/weaponVisual.ts'
 import { useEchoScores } from '@/application/hooks/useEchoScoringRevision.ts'

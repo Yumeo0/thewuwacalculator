@@ -19,6 +19,7 @@ import type { CSSProperties as CssProps } from 'react'
 import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState.ts'
 import type { EnemyElemId } from '@wuwacalc/core/domain/entities/enemy.ts'
 import { getEnemyReys, setEnemyResi } from '@wuwacalc/core/domain/services/enemyProfileService.ts'
+import { ENEMY_ELEM_TXT } from '@/domain/gameData/enemyDisplay'
 import { NumberInput } from '@/modules/simulation/features/controls/NumberInput.tsx'
 import { ATTR_ID_COLORS } from '@/modules/simulation/model/display.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
@@ -58,7 +59,8 @@ export function ResistanceGrid({
 }: ResistanceGridProps) {
   return (
     <div className="enr-grid">
-      {getEnemyReys(profile, elements).map(({ elementId, label, attributeKey, value }) => {
+      {getEnemyReys(profile, elements).map(({ elementId, attributeKey, value }) => {
+        const label = ENEMY_ELEM_TXT[elementId]
         const effRes = value - shredFor(attributeKey)
         const resMult = resistMultiplier(effRes)
         const shifted = Math.abs(effRes - value) >= 0.05

@@ -3,7 +3,7 @@
   description: resolves canonical skill-type labels, icons, and primary type selection.
 */
 
-import type { SkillTypeKey } from '@core/domain/entities/stats'
+import type { SkillTypeKey } from '@wuwacalc/core/domain/entities/stats'
 
 // ui display metadata for known skill types
 // if a type is missing here, we fall back to a formatted text desc

@@ -11,9 +11,9 @@ import {
   type DormantScenarioMember,
   type ScenarioTeamMember,
   type TeamMemberId,
-} from '@core/domain/entities/combatScenario'
-import { makeCustomBuff } from '@core/engine/runtime/defaults'
-import { makeMemberManualEffect, memberManualEffectId, removeMemberEnvironmentState } from '@core/engine/runtime/scenarioEnvironment'
+} from '@wuwacalc/core/domain/entities/combatScenario'
+import { makeCustomBuff } from '@wuwacalc/core/engine/runtime/defaults'
+import { makeMemberManualEffect, memberManualEffectId, removeMemberEnvironmentState } from '@wuwacalc/core/engine/runtime/scenarioEnvironment'
 
 function retainMember(scenario: CombatScenario, member: ScenarioTeamMember): DormantScenarioMember {
   const effect = scenario.environment.manualEffects.find((effect) => effect.id === memberManualEffectId(member.id))

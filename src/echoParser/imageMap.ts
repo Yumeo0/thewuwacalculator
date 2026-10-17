@@ -6,7 +6,7 @@
 
 import { listEchoes } from '@wuwacalc/core/data/catalog/echoCatalogService'
 import { SONATA_SETS } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
-import { getPhantomEchoIcon } from '@wuwacalc/core/data/gameData/catalog/phantomEchoes'
+import { getPhantomEchoIcon } from '@/domain/gameData/catalog/phantomEchoes'
 
 // an echo can be met in a phantom form, whose art differs enough to need its own
 // reference; both forms carry the same echo, so both keys answer with one name

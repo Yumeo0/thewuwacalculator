@@ -9,7 +9,8 @@ import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { CSSProperties as CssProps, HTMLAttributes as HtmlAttrs, MouseEventHandler as MsVntHnd, ReactNode } from 'react'
 import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'
-import { getSntSetClr, getSntSetIco, getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
+import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
+import { getSntSetClr, getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { EchoStatGlyph } from '@/modules/simulation/features/echoes/lib/statGlyph.tsx'
 import {
   cmptBldCritGr,

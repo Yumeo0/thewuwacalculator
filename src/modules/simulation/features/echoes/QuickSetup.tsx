@@ -10,7 +10,8 @@ import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { getEchoById, listEchoes } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import { ECHO_MAIN_STATS, SUBSTAT_KEYS, getSbstStepP } from '@wuwacalc/core/data/gameData/catalog/echoStats.ts'
 import { ECHO_SET_DEFS } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
-import { getSntSetClr, getSntSetIco, getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetClr, getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { fmtEchoStatV } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
 import {
   QUICK_COSTS,

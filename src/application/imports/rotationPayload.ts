@@ -15,7 +15,7 @@ import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import { migrateLegacyRotationItems } from '@wuwacalc/core/domain/gameData/loopPasses.ts'
 import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
 import { makeResProfile, makeScenarioFromProfiles } from '@wuwacalc/core/engine/runtime/defaults.ts'
-import { migrateLegacySavedRotationRecord } from '@wuwacalc/core/engine/runtime/savedRotationMigration.ts'
+import { migrateLegacySavedRotationRecord } from '@/application/persistence/savedRotationMigration.ts'
 import { parseCombatScenario } from '@/application/persistence/calculationSchema.ts'
 
 function normalizeImportedRotation(raw: unknown): {

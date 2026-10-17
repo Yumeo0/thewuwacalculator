@@ -40,11 +40,8 @@ import {
 } from 'lucide-react'
 import { ATTR_COLORS, getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
 import { withDefEchoMg, withDefIconM, withDefResMg, withDefWpnMg } from '@/shared/lib/imageFallback.ts'
-import {
-  getSntSetClr,
-  getSntSetIco,
-  getSntSetNam,
-} from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetClr, getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
 import type {
   ConditionWriteAction,

@@ -20,7 +20,7 @@ import {isRotationSkillVisible} from "@/modules/simulation/surfaces/rotation/sha
 import type {SkillDef} from "@wuwacalc/core/domain/entities/stats.ts";
 import {ROT_SKILL_TABS, SKILL_TAB_NAMES, type SkillTabKey} from "@/modules/simulation/model/skillTabs.ts";
 import {AppModal} from "@/shared/ui/AppModal.tsx";
-import {getSkillType} from "@wuwacalc/core/domain/gameData/skillTypes.ts";
+import {getSkillType} from "@/domain/gameData/skillTypes.ts";
 import {
   getFeatVar,
   getSkllMenuL,

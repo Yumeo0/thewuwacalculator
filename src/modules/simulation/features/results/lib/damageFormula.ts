@@ -24,7 +24,7 @@ import {
 } from '@wuwacalc/core/engine/formulas/damageFactors.ts'
 import { getEnemyMaxOffTune, getTuneLevel } from '@wuwacalc/core/engine/formulas/tuneRupture.ts'
 import { mergeSkillType } from '@wuwacalc/core/engine/resolvers/buffPool.ts'
-import { getSkillType, fmtSkllTypeL } from '@wuwacalc/core/domain/gameData/skillTypes.ts'
+import { getSkillType, fmtSkllTypeL } from '@/domain/gameData/skillTypes.ts'
 import { formatTrunc, formatTruncCompact, truncTo } from '@wuwacalc/core/shared/lib/number.ts'
 
 /** the engine's factors, plus how this pane names the skill's types. */

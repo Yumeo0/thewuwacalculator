@@ -34,7 +34,7 @@ import {
 } from '@wuwacalc/core/data/catalog/gameDataService'
 import { getMainEchoS } from '@wuwacalc/core/engine/services/runtimeSourceService'
 import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
-import { getSkillType } from '@wuwacalc/core/domain/gameData/skillTypes'
+import { getSkillType } from '@/domain/gameData/skillTypes'
 import { getSourceOwnerName } from '@/modules/simulation/model/sourceStateDisplay'
 import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects'
 import { toTitle } from '@/shared/lib/format'

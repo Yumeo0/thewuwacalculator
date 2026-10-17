@@ -18,7 +18,7 @@ import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE } from '@/domain/entities/pr
 import { projectScenarioWorkspaceProfiles } from '@wuwacalc/core/engine/runtime/scenarioRuntime'
 import { projectScenarioMemberRuntime } from '@wuwacalc/core/engine/runtime/scenarioRuntime'
 import { getDefaultRotation } from '@wuwacalc/core/data/catalog/gameDataService.ts'
-import { migrateAdvancedScenarioRotations } from '@wuwacalc/core/engine/runtime/advancedRotationMigration.ts'
+import { migrateAdvancedScenarioRotations } from '@/application/persistence/advancedRotationMigration.ts'
 import { useAppStore } from '@/application/state/store'
 import {
   APP_STORAGE_KEY,

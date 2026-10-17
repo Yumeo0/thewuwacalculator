@@ -25,7 +25,7 @@ import {
   PALETTE_MIME,
 } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/dragPayload.ts'
 import type { PaletteSpec } from '@/modules/simulation/surfaces/rotation/program-editor/model/paletteSpec.ts'
-import { getEnemyIcon } from '@wuwacalc/core/domain/entities/enemy.ts'
+import { getEnemyIcon } from '@/domain/gameData/enemyDisplay'
 import {
   ROT_SKILL_TABS,
   SKILL_TAB_NAMES,

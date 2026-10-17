@@ -16,7 +16,8 @@ import { equalBuildSnapshots } from '@wuwacalc/core/domain/entities/inventorySto
 import { getEchoById, listEchoes } from '@wuwacalc/core/data/catalog/echoCatalogService'
 import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
 import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService'
-import { getSntSetClr, getSntSetIco, getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
+import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
+import { getSntSetClr, getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { cmptEchoCrit } from '@/modules/simulation/features/echoes/lib/metric.ts'
 import { cmptTtlEchoC } from '@/modules/simulation/features/echoes/lib/echoes.ts'
 import { mkDefEchoNst } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
@@ -27,7 +28,7 @@ import {
   sortEntsByNa,
   type InvSlotFitSt,
 } from '@/modules/simulation/features/inventory/lib/inventory.ts'
-import type { InvBldUsr, InvEchoSg } from '@wuwacalc/core/engine/runtime/inventoryUsage.ts'
+import type { InvBldUsr, InvEchoSg } from '@/engine/runtime/inventoryUsage.ts'
 import { toTitle } from '@/shared/lib/format'
 import { hideBrknMg, withDefIconM, withDefResMg, withDefWpnMg } from '@/shared/lib/imageFallback'
 import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'

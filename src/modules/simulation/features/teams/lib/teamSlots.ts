@@ -12,7 +12,7 @@ import { makeScenarioTeam, reviseCombatScenario } from '@wuwacalc/core/domain/en
 import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 import { useAppStore } from '@/application/state'
 import { makeInitialTeammate } from '@/application/state/teammateInitialization'
-import { insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember } from '@wuwacalc/core/engine/runtime/scenarioMembers.ts'
+import { insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember } from '@/engine/runtime/scenarioMembers.ts'
 import { RES_MENU } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { roverIsVisible } from '@/domain/entities/roverGender'
 

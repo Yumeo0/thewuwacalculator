@@ -14,7 +14,7 @@ import { combatScenarioId, contextScenarioMember, makeScenarioTeam, type Scenari
 import { makeSavedBuild, type SavedBuild } from '@wuwacalc/core/domain/entities/inventoryStorage'
 import { addScenario, selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import { makeResProfile, makeScenarioFromProfiles, makeScenarioMemberFromProfile } from '@wuwacalc/core/engine/runtime/defaults'
-import { insertScenarioTeamMember, removeScenarioTeamMember } from '@wuwacalc/core/engine/runtime/scenarioMembers'
+import { insertScenarioTeamMember, removeScenarioTeamMember } from '@/engine/runtime/scenarioMembers'
 import { withSupports } from '@/modules/simulation/features/teams/lib/teamSlots'
 
 const RESONATOR_ID = '1211'

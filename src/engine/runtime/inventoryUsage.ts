@@ -4,10 +4,10 @@
                echoes and builds.
 */
 
-import type { SavedBuild, SavedBuildSnap } from '@core/domain/entities/inventoryStorage'
-import { getBuildSig } from '@core/domain/entities/inventoryStorage'
-import type { ResProf } from '@core/domain/entities/profile'
-import { getResSeedBy } from '@core/data/catalog/resonatorSeedService'
+import type { SavedBuild, SavedBuildSnap } from '@wuwacalc/core/domain/entities/inventoryStorage'
+import { getBuildSig } from '@wuwacalc/core/domain/entities/inventoryStorage'
+import type { ResProf } from '@wuwacalc/core/domain/entities/profile'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
 
 export interface InvEchoSg {
   resonatorId: string

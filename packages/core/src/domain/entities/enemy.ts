@@ -45,17 +45,6 @@ export const STD_ENEMY_RES: EnemyResistT = {
   6: 10,
 }
 
-// display labels for enemy elements
-export const ENEMY_ELEM_TXT: Record<EnemyElemId, string> = {
-  0: 'Physical',
-  1: 'Glacio',
-  2: 'Fusion',
-  3: 'Electro',
-  4: 'Aero',
-  5: 'Spectro',
-  6: 'Havoc',
-}
-
 // attribute keys for enemy elements
 export const ENEMY_ELEM_ATTR: Record<EnemyElemId, AttributeKey> = {
   0: 'physical',
@@ -67,28 +56,11 @@ export const ENEMY_ELEM_ATTR: Record<EnemyElemId, AttributeKey> = {
   6: 'havoc',
 }
 
-// display labels for enemy classes
-export const ENEMY_CLASS_TXT: Record<EnemyClassId, string> = {
-  1: 'Common',
-  2: 'Elite',
-  3: 'Overlord',
-  4: 'Calamity',
-}
-
 export interface EnemyPrstDef {
   id: string
   label: string
   caption: string
   profile: EnemyProfile
-}
-
-// resolve an enemy icon path from a numeric enemy id
-export function getEnemyIcon(enemyId: string | null | undefined): string | null {
-  if (!enemyId) {
-    return null
-  }
-
-  return /^\d+$/.test(enemyId) ? `/assets/game/enemies/icons/${enemyId}.webp` : null
 }
 
 // built-in quick enemy presets

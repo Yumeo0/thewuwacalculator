@@ -4,7 +4,7 @@
                eligibility, stat-filter keys, and weapon-state replacements.
 */
 
-import { getSntSetIco } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
+import { getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
 import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'

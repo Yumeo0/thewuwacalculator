@@ -88,7 +88,7 @@ import {selectPersisted} from '@/application/state/serialization'
 import {
     migrateAdvancedScenarioRotations,
     type AdvancedRotationMigration,
-} from '@wuwacalc/core/engine/runtime/advancedRotationMigration.ts'
+} from '@/application/persistence/advancedRotationMigration.ts'
 
 
 function applyPrssSna(
