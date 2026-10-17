@@ -9,7 +9,7 @@ import type {
   EvaluationFeature,
   BuildEvaluationReport,
 } from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
-import { GRADE_LADDER } from '@wuwacalc/core/engine/evaluation/evaluation/grades.ts'
+import { GRADE_LADDER } from '@/shared/lib/evaluationGrades.ts'
 import {
   formatBuildEvaluationScore,
   getBuildEvaluationTone,
@@ -238,7 +238,7 @@ export function EvaluationAside({
     for (const group of build.featureGroups.tabs) {
       nodes.push({
         key: group.key,
-        label: getEvaluationFeatureTabLabel(group.key, group.label),
+        label: getEvaluationFeatureTabLabel(group.key),
         color: nodeColor.get(group.key) ?? ROTATION_CHART_COLORS[0],
         glyph: isNodeKey(group.key) ? resNodeIcon(resonatorId, group.key) : null,
         share: group.sharePct,
@@ -357,7 +357,7 @@ export function EvaluationAside({
         <span>
           <span className="rpt-eyebrow">Build Details</span>
           <b className="rpt-name">
-            {build.label}
+            {DETAIL_BUILD_LABEL[buildKey]}
             <span className="rpt-mode">{build.substatMode}</span>
           </b>
         </span>

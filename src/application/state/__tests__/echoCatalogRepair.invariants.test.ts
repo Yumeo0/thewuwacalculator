@@ -19,7 +19,7 @@ import {
   repairEchoLoadoutForCatalog,
 } from '@wuwacalc/core/engine/runtime/echoCatalogRepair'
 import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService'
-import type { PersistedUnknown } from '@/domain/entities/appState'
+import type { PersistedUnknown } from '@/application/persistence/appStateTypes'
 import { makeSavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage'
 import { makeScenarioFromProfiles } from '@wuwacalc/core/engine/runtime/defaults'
 import { projectScenarioWorkspaceProfiles } from '@wuwacalc/core/engine/runtime/scenarioRuntime'

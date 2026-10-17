@@ -9,8 +9,9 @@ import { makeSavedBuild, makeSavedRotation, makeSavedScenario } from '@wuwacalc/
 import { ROVER_PAIRS, roverIdForGender, roverIsVisible } from '@/domain/entities/roverGender'
 import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService'
-import { makeAppState, makeCustomBuff, makeResProfile, makeScenarioFromProfiles, makeScenarioMemberFromProfile } from '@wuwacalc/core/engine/runtime/defaults'
-import { parseCombatScenario } from '@wuwacalc/core/engine/runtime/schema'
+import { makeCustomBuff, makeResProfile, makeScenarioFromProfiles, makeScenarioMemberFromProfile } from '@wuwacalc/core/engine/runtime/defaults'
+import { makeAppState } from '@/application/persistence/hydration'
+import { parseCombatScenario } from '@/application/persistence/calculationSchema'
 import { parsePersistedState } from '@/application/persistence/appState'
 import {
   convertScenarioRoverGender,

@@ -13,7 +13,7 @@ import { makeResProfile, makeScenarioMemberFromProfile } from '@wuwacalc/core/en
 import { insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember } from '@wuwacalc/core/engine/runtime/scenarioMembers.ts'
 import { applyRuntimeToSimulation, materializeScenarioRuntime } from '@wuwacalc/core/engine/runtime/runtimeAdapters.ts'
 import { makeEmptyManualBuffs } from '@wuwacalc/core/engine/runtime/scenarioEnvironment.ts'
-import { parseScenarioEnvironment } from '@wuwacalc/core/engine/runtime/schema.ts'
+import { parseScenarioEnvironment } from '@/application/persistence/calculationSchema.ts'
 import { createConfigurationTransaction } from '@/shared/ui/useConfigurationSession.ts'
 
 describe('configuration commit boundaries', () => {

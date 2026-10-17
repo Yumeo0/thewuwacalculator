@@ -67,7 +67,6 @@ function reportBuildOptions(options: EvaluationReportOpts = {}): BuildEvaluation
     includeFeatures: sections.rotationFeatures,
     includeStatRows: sections.echoStatsTable,
     includeEvaluationTargets: sections.evaluationTargets,
-    includeInvariantStats: sections.evaluationTargets,
   }
 }
 

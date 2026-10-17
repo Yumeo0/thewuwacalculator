@@ -5,14 +5,14 @@
 */
 
 import * as z from 'zod/mini'
-import { APP_STATE_VER } from '@core/domain/entities/appStateVersion'
-export { APP_STATE_VER } from '@core/domain/entities/appStateVersion'
-import { DEF_SET_COND } from '@core/domain/entities/sonataSetConditionals'
-import { makeOptInventorySelection } from '@core/domain/entities/profile'
-import { mnlBffsSchm } from '@core/engine/runtime/manualBuffsSchema'
-import { migrateLegacySavedRotationRecord } from '@core/engine/runtime/savedRotationMigration'
-import { migrateLegacyRotationItems } from '@core/domain/gameData/loopPasses'
-import type { CondExpr, FormExpr, RotationNode } from '@core/domain/gameData/contracts'
+import { APP_STATE_VER } from '@wuwacalc/core/domain/entities/appStateVersion'
+export { APP_STATE_VER } from '@wuwacalc/core/domain/entities/appStateVersion'
+import { DEF_SET_COND } from '@wuwacalc/core/domain/entities/sonataSetConditionals'
+import { makeOptInventorySelection } from '@wuwacalc/core/domain/entities/profile'
+import { mnlBffsSchm } from '@wuwacalc/core/engine/runtime/manualBuffsSchema'
+import { migrateLegacySavedRotationRecord } from '@wuwacalc/core/engine/runtime/savedRotationMigration'
+import { migrateLegacyRotationItems } from '@wuwacalc/core/domain/gameData/loopPasses'
+import type { CondExpr, FormExpr, RotationNode } from '@wuwacalc/core/domain/gameData/contracts'
 
 
 // shared base stat buff shape

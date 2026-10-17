@@ -537,7 +537,6 @@ describe('evaluation scoring invariants', () => {
       expect(norm(cached.builds.maximumBuild)).toEqual(norm(full.builds.maximumBuild))
       expect(cached.userDamage).toBe(full.userDamage)
       expect(cached.percent).toBe(full.percent)
-      expect(cached.grade).toBe(full.grade)
       expect(norm(cached.builds.active)).toEqual(norm(full.builds.active))
     }
 

@@ -3,7 +3,7 @@
   description: shared evaluation stat math, roll budgets, and encoded stat summaries.
 */
 import type { EchoInstance } from '@core/domain/entities/runtime';
-import type { AttributeKey, FinalStats, ModBuff, SkillTypeKey } from '@core/domain/entities/stats';
+import type { AttributeKey, SkillTypeKey } from '@core/domain/entities/stats';
 import { SUBSTAT_KEYS, ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@core/data/gameData/catalog/echoStats';
 import type { EchoDef } from '@core/domain/entities/catalog';
 import { ECHO_STAT_STRIDE, MAIN_BUFF_LEN, SET_SLOT_COUNT } from '@core/engine/optimizer/config/constants';
@@ -11,9 +11,7 @@ import { addEchoStat } from '@core/engine/optimizer/encode/echoes';
 import { applySetVec as applySetBonuses } from '@core/engine/optimizer/encode/sets';
 import type { SuggestContext } from '@core/engine/suggestions/types';
 import type { SetPlanEntry } from '@core/engine/suggestions/types';
-import { getSkillType } from '@core/domain/gameData/skillTypes';
-import { truncTo } from '@core/shared/lib/number';
-import type { EvaluationOverviewStatRow, EvaluationOverviewStats, EvaluationStatTreeLeaf, EvaluationStatTreeNode, EvaluationSubstatEntry, BuildEvaluation } from './types.ts';
+import type { EvaluationOverviewStatRow, EvaluationOverviewStats, EvaluationSubstatEntry, BuildEvaluation } from './types.ts';
 import { resolveEvaluationStats } from './scoring.ts';
 import {
   aggregateSubstats,
@@ -25,19 +23,6 @@ import {
 export const MAX_SUBS = IDEAL_SUBSTAT_SLOTS
 export const MAX_ROLLS_PER_KEY = MAX_SUBSTAT_SLOTS_PER_KEY
 export { ENERGY_REGEN }
-export const EVALUATION_FEATURE_TAB_LABELS: Record<string, string> = {
-  combo: 'Combo',
-  normalAttack: 'Normal Attack',
-  resonanceSkill: 'Resonance Skill',
-  forteCircuit: 'Forte Circuit',
-  resonanceLiberation: 'Resonance Liberation',
-  introSkill: 'Intro Skill',
-  outroSkill: 'Outro Skill',
-  tuneBreak: 'Tune Break',
-  echoAttacks: 'Echo Attacks',
-  negativeEffect: 'Negative Effects',
-  feature: 'Feature',
-}
 export const EVALUATION_STAT_KEYS = [
   'atkPercent',
   'atkFlat',
@@ -118,8 +103,6 @@ export const MAXIMUM_SCORING_PARAMS: EvaluationScoringParams = {
   substatGoal: MAX_SUBS,
   maxPerSub: MAX_ROLLS_PER_KEY,
 }
-
-export { gradeForPercent } from './grades.ts'
 
 // piecewise-linear normalization: baseline -> 0, reference -> 1, maximum -> 2.
 export function scorePercent(score: number, baseline: number, reference: number, maximum: number): number {
@@ -244,13 +227,11 @@ export function sumEncodedEnergyRegen(stats: Float32Array, comboIds: Int32Array)
 
 export function makeOverviewRow(
   key: string,
-  label: string,
   base: number,
   total: number,
 ): EvaluationOverviewStatRow {
   return {
     key,
-    label,
     base,
     total,
     bonus: total - base,
@@ -303,193 +284,42 @@ export function makeEvaluationOverviewStats({
     mainIndex,
   })
 
-  const elementRows: Array<{ key: AttributeKey; label: string; value: number }> = [
-    { key: 'aero', label: 'Aero DMG Bonus', value: echoStats.aero + setBonus.aero + mainAt(6) },
-    { key: 'glacio', label: 'Glacio DMG Bonus', value: echoStats.glacio + setBonus.glacio + mainAt(7) },
-    { key: 'spectro', label: 'Spectro DMG Bonus', value: echoStats.spectro + setBonus.spectro + mainAt(9) },
-    { key: 'fusion', label: 'Fusion DMG Bonus', value: echoStats.fusion + setBonus.fusion + mainAt(8) },
-    { key: 'electro', label: 'Electro DMG Bonus', value: echoStats.electro + setBonus.electro + mainAt(11) },
-    { key: 'havoc', label: 'Havoc DMG Bonus', value: echoStats.havoc + setBonus.havoc + mainAt(10) },
+  const elementRows: Array<{ key: AttributeKey; value: number }> = [
+    { key: 'aero', value: echoStats.aero + setBonus.aero + mainAt(6) },
+    { key: 'glacio', value: echoStats.glacio + setBonus.glacio + mainAt(7) },
+    { key: 'spectro', value: echoStats.spectro + setBonus.spectro + mainAt(9) },
+    { key: 'fusion', value: echoStats.fusion + setBonus.fusion + mainAt(8) },
+    { key: 'electro', value: echoStats.electro + setBonus.electro + mainAt(11) },
+    { key: 'havoc', value: echoStats.havoc + setBonus.havoc + mainAt(10) },
   ]
 
   return {
     mainStats: [
-      makeOverviewRow('atk', 'ATK', source.atk.base, resolved?.atk ?? source.atk.final + atkBonus),
-      makeOverviewRow('hp', 'HP', source.hp.base, resolved?.hp ?? source.hp.final + hpBonus),
-      makeOverviewRow('def', 'DEF', source.def.base, resolved?.def ?? source.def.final + defBonus),
+      makeOverviewRow('atk', source.atk.base, resolved?.atk ?? source.atk.final + atkBonus),
+      makeOverviewRow('hp', source.hp.base, resolved?.hp ?? source.hp.final + hpBonus),
+      makeOverviewRow('def', source.def.base, resolved?.def ?? source.def.final + defBonus),
     ],
     secondaryStats: [
-      makeOverviewRow('energyRegen', 'Energy Regen', source.energyRegen, resolved?.er ?? energyRegen),
-      makeOverviewRow('critRate', 'Crit Rate', source.critRate, resolved?.cr ?? critRate),
-      makeOverviewRow('critDmg', 'Crit DMG', source.critDmg, resolved?.cd ?? critDmg),
-      makeOverviewRow('healingBonus', 'Healing Bonus', source.healingBonus, source.healingBonus + echoStats.healingBonus),
-      makeOverviewRow('tuneBreakBoost', 'Tune Break Boost', source.tbb, source.tbb),
+      makeOverviewRow('energyRegen', source.energyRegen, resolved?.er ?? energyRegen),
+      makeOverviewRow('critRate', source.critRate, resolved?.cr ?? critRate),
+      makeOverviewRow('critDmg', source.critDmg, resolved?.cd ?? critDmg),
+      makeOverviewRow('healingBonus', source.healingBonus, source.healingBonus + echoStats.healingBonus),
+      makeOverviewRow('tuneBreakBoost', source.tbb, source.tbb),
     ],
     dmgMdfrStts: [
       ...elementRows.map((row) => makeOverviewRow(
         row.key,
-        row.label,
         source.attribute[row.key].dmgBonus,
         source.attribute[row.key].dmgBonus + allAttrBonus + row.value,
       )),
-      makeOverviewRow('basicAtk', 'Basic Attack DMG Bonus', 0, source.skillType.basicAtk.dmgBonus + allSkillBonus + echoStats.basic + setBonus.basic + mainAt(2)),
-      makeOverviewRow('heavyAtk', 'Heavy Attack DMG Bonus', 0, source.skillType.heavyAtk.dmgBonus + allSkillBonus + echoStats.heavy + setBonus.heavy + mainAt(3)),
-      makeOverviewRow('resonanceSkill', 'Resonance Skill DMG Bonus', 0, source.skillType.resonanceSkill.dmgBonus + allSkillBonus + echoStats.skill + setBonus.skill + mainAt(4)),
-      makeOverviewRow('resonanceLiberation', 'Resonance Liberation DMG Bonus', 0, source.skillType.resonanceLiberation.dmgBonus + allSkillBonus + echoStats.lib + setBonus.lib + mainAt(5)),
+      makeOverviewRow('basicAtk', 0, source.skillType.basicAtk.dmgBonus + allSkillBonus + echoStats.basic + setBonus.basic + mainAt(2)),
+      makeOverviewRow('heavyAtk', 0, source.skillType.heavyAtk.dmgBonus + allSkillBonus + echoStats.heavy + setBonus.heavy + mainAt(3)),
+      makeOverviewRow('resonanceSkill', 0, source.skillType.resonanceSkill.dmgBonus + allSkillBonus + echoStats.skill + setBonus.skill + mainAt(4)),
+      makeOverviewRow('resonanceLiberation', 0, source.skillType.resonanceLiberation.dmgBonus + allSkillBonus + echoStats.lib + setBonus.lib + mainAt(5)),
     ],
   }
 }
 
-const INVARIANT_MOD_LABELS: Record<keyof ModBuff, string> = {
-  resShred: 'RES Shred',
-  dmgBonus: 'DMG Bonus',
-  amplify: 'Amplify',
-  defIgnore: 'DEF Ignore',
-  defShred: 'DEF Shred',
-  dmgVuln: 'Vulnerability',
-  critRate: 'Crit Rate',
-  critDmg: 'Crit DMG',
-}
-
-const INVARIANT_MOD_KEYS = Object.keys(INVARIANT_MOD_LABELS) as (keyof ModBuff)[]
-const INVARIANT_ATTR_KEYS: ('all' | AttributeKey)[] = ['all', 'aero', 'glacio', 'spectro', 'fusion', 'electro', 'havoc', 'physical']
-const INVARIANT_ATTR_LABELS: Record<'all' | AttributeKey, string> = {
-  all: 'Universal',
-  aero: 'Aero',
-  glacio: 'Glacio',
-  spectro: 'Spectro',
-  fusion: 'Fusion',
-  electro: 'Electro',
-  havoc: 'Havoc',
-  physical: 'Physical',
-}
-const INVARIANT_SKILL_TYPES: SkillTypeKey[] = [
-  'all', 'basicAtk', 'heavyAtk', 'resonanceSkill', 'resonanceLiberation',
-  'introSkill', 'outroSkill', 'echoSkill', 'coord',
-  'spectroFrazzle', 'aeroErosion', 'fusionBurst', 'havocBane', 'glacioChafe', 'electroFlare',
-  'healing', 'shield', 'tuneRupture', 'hack',
-]
-const TABLE_SKILL_DMG_TYPES = new Set<SkillTypeKey>([
-  'basicAtk',
-  'heavyAtk',
-  'resonanceSkill',
-  'resonanceLiberation',
-])
-
-function fmtInvariantNum(value: number): string {
-  const truncated = truncTo(value, 2)
-  return Number.isInteger(truncated) ? String(truncated) : truncated.toFixed(2).replace(/\.?0+$/, '')
-}
-
-function fmtInvariantFlat(value: number): string {
-  return Math.floor(value).toLocaleString()
-}
-
-function fmtInvariantPct(value: number): string {
-  return `${fmtInvariantNum(value)}%`
-}
-
-function fmtInvariantSigned(value: number, suffix: string): string {
-  const sign = value >= 0 ? '+' : ''
-  return `${sign}${fmtInvariantNum(value)}${suffix}`
-}
-
-function invariantLeaf(key: string, label: string, value: number, displayValue: string): EvaluationStatTreeLeaf | null {
-  if (!Number.isFinite(value) || Math.abs(value) < 0.0001) return null
-  return {
-    kind: 'leaf',
-    key,
-    label,
-    value,
-    displayValue,
-  }
-}
-
-function invariantModLeaves(buff: ModBuff, opts?: { omitDmgBonus?: boolean }): EvaluationStatTreeLeaf[] {
-  const leaves: EvaluationStatTreeLeaf[] = []
-  for (const key of INVARIANT_MOD_KEYS) {
-    if (opts?.omitDmgBonus && key === 'dmgBonus') continue
-    const value = buff[key]
-    const leaf = invariantLeaf(key, INVARIANT_MOD_LABELS[key], value, fmtInvariantSigned(value, '%'))
-    if (leaf) leaves.push(leaf)
-  }
-  return leaves
-}
-
-export function makeEvaluationInvariantStats(finalStats: FinalStats): EvaluationStatTreeNode[] {
-  const root: EvaluationStatTreeNode[] = []
-  const combatChildren = [
-    invariantLeaf('flatDmg', 'Flat DMG', finalStats.flatDmg, fmtInvariantFlat(finalStats.flatDmg)),
-    invariantLeaf('dmgBonus', 'DMG Bonus', finalStats.dmgBonus, fmtInvariantPct(finalStats.dmgBonus)),
-    invariantLeaf('amplify', 'Amplify', finalStats.amplify, fmtInvariantPct(finalStats.amplify)),
-    invariantLeaf('defIgnore', 'DEF Ignore', finalStats.defIgnore, fmtInvariantPct(finalStats.defIgnore)),
-    invariantLeaf('defShred', 'DEF Shred', finalStats.defShred, fmtInvariantPct(finalStats.defShred)),
-    invariantLeaf('dmgVuln', 'DMG Vulnerability', finalStats.dmgVuln, fmtInvariantPct(finalStats.dmgVuln)),
-    invariantLeaf('shieldBonus', 'Shield Bonus', finalStats.shieldBonus, fmtInvariantPct(finalStats.shieldBonus)),
-    invariantLeaf('finalDmg', 'Final DMG', finalStats.finalDmg, fmtInvariantPct(finalStats.finalDmg)),
-  ].filter((row): row is EvaluationStatTreeLeaf => row != null)
-  if (combatChildren.length > 0) {
-    root.push({
-      kind: 'branch',
-      key: 'combat',
-      label: 'Combat',
-      flow: 'grid',
-      children: combatChildren,
-    })
-  }
-
-  const attrChildren: EvaluationStatTreeNode[] = []
-  for (const key of INVARIANT_ATTR_KEYS) {
-    const leaves = invariantModLeaves(finalStats.attribute[key], { omitDmgBonus: true })
-    if (leaves.length === 0) continue
-    attrChildren.push({
-      kind: 'branch',
-      key,
-      label: INVARIANT_ATTR_LABELS[key],
-      children: leaves,
-    })
-  }
-  if (attrChildren.length > 0) {
-    root.push({
-      kind: 'branch',
-      key: 'attribute',
-      label: 'Attribute',
-      flow: 'grid',
-      children: attrChildren,
-    })
-  }
-
-  const skillTypeChildren: EvaluationStatTreeNode[] = []
-  for (const key of INVARIANT_SKILL_TYPES) {
-    const leaves = invariantModLeaves(finalStats.skillType[key], { omitDmgBonus: TABLE_SKILL_DMG_TYPES.has(key) })
-    if (leaves.length === 0) continue
-    skillTypeChildren.push({
-      kind: 'branch',
-      key,
-      label: getSkillType(key).label,
-      children: leaves,
-    })
-  }
-  if (skillTypeChildren.length > 0) {
-    root.push({
-      kind: 'branch',
-      key: 'skillType',
-      label: 'Skill Type',
-      flow: 'grid',
-      children: skillTypeChildren,
-    })
-  }
-
-  return root
-}
-
-export function formatFeatureTabLabel(tab: string): string {
-  return EVALUATION_FEATURE_TAB_LABELS[tab] ?? tab
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/[-_]+/g, ' ')
-    .replace(/\b\w/g, (match) => match.toUpperCase())
-    .trim()
-}
 
 export function removeSubstatTotals(buffer: Float32Array, totals: Record<string, number>): void {
   for (const [key, value] of Object.entries(totals)) {

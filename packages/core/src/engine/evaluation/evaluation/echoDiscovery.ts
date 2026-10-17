@@ -18,7 +18,7 @@ import { getSntSetNam } from '@core/data/gameData/catalog/sonataSets';
 import { listEffectsFor } from '@core/data/catalog/gameDataService';
 import { isMaxSetPlan, isUtilitySet, makeEffectiveSetPlan } from '@core/engine/gameData/sonataPlan';
 import type { EvaluationBuildSnapshot, EvaluationEchoSlot, EvaluationFeature, EvaluationFeatureGroup, EvaluationFeatureGroups, EvaluationOverviewStats, EvaluationSetSummary, EvaluationStatContribution, EvaluationSubstatEntry, EvaluationSubstatMode } from './types.ts';
-import { addStatTotal, collectMainStatSources, formatFeatureTabLabel, getEvaluationStatKeys, type EvaluationEchoFrame, type MainEchoChoice, type MainEchoProfile, type MainStatCandidate, type MainStatSourceSummary } from './stats.ts';
+import { addStatTotal, collectMainStatSources, getEvaluationStatKeys, type EvaluationEchoFrame, type MainEchoChoice, type MainEchoProfile, type MainStatCandidate, type MainStatSourceSummary } from './stats.ts';
 
 
 export function cloneEchoSlot(echo: EchoInstance): EchoInstance {
@@ -309,7 +309,6 @@ export function makeEchoSlots(
 }
 
 export function makeEvaluationBuildSnapshot({
-  label,
   score,
   damage,
   echoes,
@@ -323,7 +322,6 @@ export function makeEvaluationBuildSnapshot({
   substatMode,
   includeStatRows = true,
 }: {
-  label: string
   score: number
   damage: number
   echoes: EchoInstance[]
@@ -343,7 +341,6 @@ export function makeEvaluationBuildSnapshot({
     : []
   const featureGroups = makeFeatureGroups(features)
   return {
-    label,
     score,
     damage,
     sets: makeSetSummary(setRows, echoes),
@@ -363,13 +360,11 @@ export function makeFeatureGroups(features: EvaluationFeature[]): EvaluationFeat
   const add = (
     map: Map<string, EvaluationFeatureGroup & { weightedDamage: number }>,
     key: string,
-    label: string,
     row: EvaluationFeature,
     skillType?: SkillTypeKey,
   ) => {
     const existing = map.get(key) ?? {
       key,
-      label,
       weightedDamage: 0,
       sharePct: 0,
       skillType,
@@ -382,8 +377,8 @@ export function makeFeatureGroups(features: EvaluationFeature[]): EvaluationFeat
     const skillType = row.skillType[0]
     const skillTypeKey = skillType ?? 'feature'
     const tabKey = row.tab || 'feature'
-    add(bySkillType, skillTypeKey, skillTypeKey, row, skillType)
-    add(byTab, tabKey, formatFeatureTabLabel(tabKey), row)
+    add(bySkillType, skillTypeKey, row, skillType)
+    add(byTab, tabKey, row)
   }
 
   const normalize = (map: Map<string, EvaluationFeatureGroup & { weightedDamage: number }>) => {
@@ -391,13 +386,12 @@ export function makeFeatureGroups(features: EvaluationFeature[]): EvaluationFeat
     return [...map.values()]
       .map((group) => ({
         key: group.key,
-        label: group.label,
         sharePct: total > 0 ? (Math.max(0, group.weightedDamage) / total) * 100 : 0,
         skillType: group.skillType,
         sortDamage: group.weightedDamage,
       }))
       .sort((left, right) => right.sortDamage - left.sortDamage)
-      .map(({ key, label, sharePct, skillType }) => ({ key, label, sharePct, skillType }))
+      .map(({ key, sharePct, skillType }) => ({ key, sharePct, skillType }))
   }
 
   return {

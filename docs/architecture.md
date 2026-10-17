@@ -31,6 +31,7 @@ Boundaries:
 
 - Host app code imports the core through `@wuwacalc/core/*`; core internals import each other through `@core/*`.
 - The core must not import app code, React, or Zustand, and the app must not use the `@core/*` alias. `npm run check:architecture` enforces both.
+- The core is calculation only: app state and its persisted document (schema, hydration, migrations, ui slice) live in `src/application/persistence`, app-owned entities in `src/domain/entities`, and presentation (labels, number formats, accents, icons, grades) stays in host code. Core reports keys and numbers.
 - Game data I/O and workers are host-provided seams: hosts call `configureCore({ createWorker })` from `src/app/coreWorkers.ts`, and the fetch-backed `GameDataSource` from `src/main.tsx`.
 - `npm run build -w packages/core` emits `dist/` JavaScript and declarations; `npm run smoke -w packages/core` packs the tarball and imports it from a throwaway consumer.
 

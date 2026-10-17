@@ -12,14 +12,14 @@ import type { CSSProperties, ReactNode } from 'react'
 import type {
   EvaluationBuildSnapshot,
   EvaluationOverviewStats,
-  EvaluationOverviewStatRow,
   EvaluationStatContribution,
 } from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
 import { isNoWeaponId, type ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { getSbstStepP } from '@wuwacalc/core/data/gameData/catalog/echoStats.ts'
 import { aggregateSubstats } from '@wuwacalc/core/engine/evaluation/substatMath.ts'
 import type { StateGroup, StatSourceTerm, StatStateSummaryTarget } from '@/modules/simulation/model/stateSummary.ts'
-import type { StatTreeNode } from '@/modules/simulation/model/statsView.ts'
+import type { StatTreeNode, StatViewRow } from '@/modules/simulation/model/statsView.ts'
+import { overviewRowView } from '@/modules/simulation/model/statsView.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback'
 import { makeStatResidue, type ResidueRow, type ScopedAddend } from './lib/statResidue.ts'
 import {
@@ -105,7 +105,7 @@ interface SheetGroup {
   id: string
   label: string
   glyph: string | undefined
-  rows: EvaluationOverviewStatRow[]
+  rows: StatViewRow[]
 }
 
 /*
@@ -217,7 +217,7 @@ function StatTip({
   label: string
   statKey: string
   tri: TriContrib
-  overview: Record<keyof TriContrib, EvaluationOverviewStatRow | undefined>
+  overview: Record<keyof TriContrib, StatViewRow | undefined>
   displayBase: number
   ready: Record<keyof TriContrib, boolean>
   showDamageShare: boolean
@@ -451,10 +451,10 @@ function StatRow({
   open,
   onOpen,
 }: {
-  row: EvaluationOverviewStatRow
+  row: StatViewRow
   displayBase: number
-  b100: EvaluationOverviewStatRow | undefined
-  b200: EvaluationOverviewStatRow | undefined
+  b100: StatViewRow | undefined
+  b200: StatViewRow | undefined
   contrib: TriContrib
   evaluationReady: { current: boolean; b100: boolean; b200: boolean }
   picked: boolean
@@ -763,7 +763,7 @@ function StatWorksheet({
   sourceLines,
   scopedSections = [],
 }: {
-  row: EvaluationOverviewStatRow
+  row: StatViewRow
   statRows: EvaluationStatContribution[]
   stateGroups: StateGroup[]
   runtime: ResRuntime
@@ -1138,8 +1138,8 @@ function StatGroup({
   onShut: () => void
   picked: string | null
   onPick: (key: string) => void
-  by100: Map<string, EvaluationOverviewStatRow>
-  by200: Map<string, EvaluationOverviewStatRow>
+  by100: Map<string, StatViewRow>
+  by200: Map<string, StatViewRow>
   statRows: TriRows
   evaluationReady: { current: boolean; b100: boolean; b200: boolean }
   actualBaseByKey: Map<string, number>
@@ -1259,18 +1259,18 @@ export function ModulationStats({
     if (!active) return []
     const { mainStats, secondaryStats, dmgMdfrStts } = active
     return [
-      { id: 'main', label: 'Main stats', glyph: STAT_ICON_MAP.ATK, rows: mainStats },
-      { id: 'secondary', label: 'Secondary', glyph: STAT_ICON_MAP['Crit Rate'], rows: secondaryStats },
-      { id: 'modifiers', label: 'Damage modifiers', glyph: STAT_ICON_MAP['Basic Attack DMG Bonus'], rows: dmgMdfrStts },
+      { id: 'main', label: 'Main stats', glyph: STAT_ICON_MAP.ATK, rows: mainStats.map(overviewRowView) },
+      { id: 'secondary', label: 'Secondary', glyph: STAT_ICON_MAP['Crit Rate'], rows: secondaryStats.map(overviewRowView) },
+      { id: 'modifiers', label: 'Damage modifiers', glyph: STAT_ICON_MAP['Basic Attack DMG Bonus'], rows: dmgMdfrStts.map(overviewRowView) },
     ].filter((group) => group.rows.length > 0)
   }, [active])
 
   const indexOf = (build: EvaluationBuildSnapshot | null) => {
-    const map = new Map<string, EvaluationOverviewStatRow>()
+    const map = new Map<string, StatViewRow>()
     if (!build) return map
     const { mainStats, secondaryStats, dmgMdfrStts } = build.overviewStats
     for (const row of [...mainStats, ...secondaryStats, ...dmgMdfrStts]) {
-      map.set(row.key, row)
+      map.set(row.key, overviewRowView(row))
     }
     return map
   }

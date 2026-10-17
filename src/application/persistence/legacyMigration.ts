@@ -4,7 +4,7 @@
                without treating newly introduced defaults as stored values.
 */
 
-import type { HydratedAppState, PersistedState } from '@/domain/entities/appState'
+import type { HydratedAppState, PersistedState } from '@/application/persistence/appStateTypes'
 import { makeAppStateWithUi, parsePersistedState } from './appState'
 import { APP_STORAGE_KEY } from './storageKeys'
 

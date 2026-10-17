@@ -5,15 +5,15 @@
 */
 
 import { compressToUTF16, decompressFromUTF16 } from 'lz-string'
-import type { PersistedState } from '@/domain/entities/appState'
+import type { PersistedState } from '@/application/persistence/appStateTypes'
 import { makeScenarioTeam, contextScenarioMember, type CombatScenario, type CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScenario'
 import { summarizeScenario, type ScenarioSummary } from '@wuwacalc/core/domain/entities/scenarioLibrary'
-import { normalizeStoredCombatScenario } from '@wuwacalc/core/engine/runtime/defaults'
+import { normalizeStoredCombatScenario } from '@/application/persistence/hydration'
 import { isRotationSequence } from '@wuwacalc/core/domain/gameData/rotationSequence'
 import {
   APP_STATE_VER, parseCombatScenario, parseScenarioMember, parseScenarioTarget,
   parseScenarioEnvironment, parseScenarioProgram, parseDormantScenarioMembers,
-} from '@wuwacalc/core/engine/runtime/schema'
+} from '@/application/persistence/calculationSchema'
 import { readStoredScenarioIds } from './resonatorScope'
 import { APPSTORECMBT, APPSTORECMBTINDEX, APPSTORECMBTREC } from './storageKeys'
 import { COMPRESSED_ROTATIONS_PREFIX } from './storageCodec'

@@ -12,7 +12,7 @@ import {
 } from '@wuwacalc/core/engine/runtime/defaults'
 import { makeAppStateWithUi } from '@/application/persistence/appState'
 import { loadPrssAppS } from '@/application/persistence/storage'
-import type { HydratedAppState } from '@/domain/entities/appState'
+import type { HydratedAppState } from '@/application/persistence/appStateTypes'
 import type { AppStore } from './store'
 
 export function mkDefMkName(resName: string, xstnCnt: number): string {

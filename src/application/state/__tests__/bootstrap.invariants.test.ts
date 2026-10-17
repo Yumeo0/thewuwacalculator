@@ -111,7 +111,7 @@ describe('game data bootstrap invariants', () => {
       }>
       const oneWeapon = fullWeapons[0]
       expect(getWpnsById()[oneWeapon.id].statsByLevel[90]).toEqual(oneWeapon.statsByLevel['90'])
-      const { makeAppState } = await import('@wuwacalc/core/engine/runtime/defaults')
+      const { makeAppState } = await import('@/application/persistence/hydration')
       expect(makeAppState().combat.order).toHaveLength(1)
       const { useAppStore, selScenarioProfiles } = await import('@/application/state')
       expect(Object.keys(selScenarioProfiles(useAppStore.getState()))).toContain(DEF_RES_ID)

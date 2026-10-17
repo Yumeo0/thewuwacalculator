@@ -2,7 +2,7 @@
   Author: Runor Ewhro
   description: persists showcase cards independently, publishing the index only after records are safe.
 */
-import type { PersistedState } from '@/domain/entities/appState'
+import type { PersistedState } from '@/application/persistence/appStateTypes'
 import { showcaseCardSchema } from '@/application/persistence/uiPersist'
 import { APP_STORAGE_KEY } from './storageKeys'
 

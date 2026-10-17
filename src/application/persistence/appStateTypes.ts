@@ -5,8 +5,8 @@
 */
 
 import type { PersistedState as CalculationState } from '@wuwacalc/core/domain/entities/appState'
-import type { PersistedUnknown as CalculationUnknown } from '@wuwacalc/core/engine/runtime/defaults'
-import type { StoredUiState, UiState } from './uiState'
+import type { PersistedUnknown as CalculationUnknown } from '@/application/persistence/hydration'
+import type { StoredUiState, UiState } from '@/domain/entities/uiState'
 
 export interface PersistedState extends CalculationState {
   ui: UiState

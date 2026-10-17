@@ -4,11 +4,13 @@
 
 Primary files:
 
-- [packages/core/src/domain/entities/appState.ts](../packages/core/src/domain/entities/appState.ts)
+- [src/application/persistence/appStateTypes.ts](../src/application/persistence/appStateTypes.ts)
 - [src/application/state/store.ts](../src/application/state/store.ts)
 - [src/application/state/optimizerRunStore.ts](../src/application/state/optimizerRunStore.ts)
 - [src/application/state/inventoryUiStore.ts](../src/application/state/inventoryUiStore.ts)
-- [packages/core/src/engine/runtime/schema.ts](../packages/core/src/engine/runtime/schema.ts)
+- [src/application/persistence/calculationSchema.ts](../src/application/persistence/calculationSchema.ts)
+- [src/application/persistence/uiPersist.ts](../src/application/persistence/uiPersist.ts)
+- [src/application/persistence/hydration.ts](../src/application/persistence/hydration.ts)
 - [src/application/persistence/storage.ts](../src/application/persistence/storage.ts)
 - [src/application/persistence/scenarioRecords.ts](../src/application/persistence/scenarioRecords.ts)
 - [src/application/persistence/persistenceCoordinator.ts](../src/application/persistence/persistenceCoordinator.ts)

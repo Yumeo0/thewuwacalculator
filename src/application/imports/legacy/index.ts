@@ -4,7 +4,7 @@
                data into the current persistence schema.
 */
 
-import type { HydratedAppState, PersistedState } from '@/domain/entities/appState'
+import type { HydratedAppState, PersistedState } from '@/application/persistence/appStateTypes'
 import type { UiState } from '@/domain/entities/uiState'
 import type { SavedBuild, SavedEcho } from '@wuwacalc/core/domain/entities/inventoryStorage'
 import type { ManualBuffs, MnlMod } from '@wuwacalc/core/domain/entities/manualBuffs'

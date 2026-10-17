@@ -15,7 +15,7 @@ import { cancelOptimizerRequest, createOptimizerActions } from './optimizerSlice
 import { resetOptimizerRun } from './optimizerRunStore'
 import type { EnemyProfile, SimulationState } from '@wuwacalc/core/domain/entities/appState'
 import type { HistoryMax, PckrFreqUpd, ThemeMode, ThemePref, UiState } from '@/domain/entities/uiState'
-import type { PersistedState } from '@/domain/entities/appState'
+import type { PersistedState } from '@/application/persistence/appStateTypes'
 import type {BgThemeVar, BlurMode, DarkThemeVar, LightThemeVar,} from '@/domain/entities/themes'
 import type {
     EchoInstance,

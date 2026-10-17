@@ -1,7 +1,7 @@
 /*
   Author: Runor Ewhro
   description: maps normalized evaluation percentages to the shared grade
-               thresholds.
+               thresholds used by the app's score readouts.
 */
 
 export const GRADE_LADDER: ReadonlyArray<readonly [number, string]> = [
@@ -17,5 +17,5 @@ export function gradeForPercent(percentX100: number): string {
       return grade
     }
   }
-  return '🥀'
+  return '??'
 }

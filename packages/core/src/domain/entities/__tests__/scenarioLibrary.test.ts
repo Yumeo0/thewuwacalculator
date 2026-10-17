@@ -14,12 +14,29 @@ import {
   summarizeScenario,
   type ScenarioWorkspace,
 } from '@core/domain/entities/scenarioLibrary'
-import { makeAppState, makeResProfile, makeScenarioFromProfiles } from '@core/engine/runtime/defaults'
-import { listResSds } from '@core/data/catalog/resonatorSeedService'
+import { DEF_RES_ID, makeResProfile, makeScenarioFromProfiles } from '@core/engine/runtime/defaults'
+import { getResSeedBy, listResSds } from '@core/data/catalog/resonatorSeedService'
+
+/** the default workspace the app state would hydrate: one maxed fallback scenario. */
+function makeWorkspace(): ScenarioWorkspace {
+  const seed = getResSeedBy(DEF_RES_ID) ?? listResSds()[0]
+  if (!seed) throw new Error('Cannot build a workspace without resonator game data.')
+  const scenario = makeScenarioFromProfiles(
+    { [seed.id]: makeResProfile(seed, { maxed: true }) },
+    null,
+    0,
+    seed.id,
+  )
+  return {
+    selectedScenarioId: scenario.id,
+    order: [scenario.id],
+    scenariosById: { [scenario.id]: scenario },
+  }
+}
 
 describe('scenario workspace', () => {
   it('replaces a getter-backed record without hydrating other scenarios or mutating the original', () => {
-    const workspace = makeAppState().combat
+    const workspace = makeWorkspace()
     const current = workspace.scenariosById[workspace.selectedScenarioId]
     const inactiveId = combatScenarioId('scenario:inactive')
     const inactive = vi.fn(() => { throw new Error('Inactive scenario was hydrated') })
@@ -53,7 +70,7 @@ describe('scenario workspace', () => {
   })
 
   it('indexes one stable working scenario for each context resonator', () => {
-    const workspace = makeAppState().combat
+    const workspace = makeWorkspace()
     const seed = listResSds().find((candidate) => (
       candidate.id !== workspace.scenariosById[workspace.selectedScenarioId].team.members[0].resonatorId
     ))!
@@ -69,7 +86,7 @@ describe('scenario workspace', () => {
   })
 
   it('permits in-place replacement of an existing live scenario and rejects a second one', () => {
-    const workspace = makeAppState().combat
+    const workspace = makeWorkspace()
     const current = workspace.scenariosById[workspace.selectedScenarioId]
     const duplicate = { ...structuredClone(current), id: combatScenarioId('scenario:duplicate') }
 

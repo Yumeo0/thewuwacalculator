@@ -85,6 +85,9 @@ export function formatStatValue(label: string, value: number): string {
 export type StatKeyLabelMode = 'default' | 'bonus'
 
 const STAT_KEY_LABELS: Record<string, string> = {
+  atk: 'ATK',
+  hp: 'HP',
+  def: 'DEF',
   atkPercent: 'ATK%',
   hpPercent: 'HP%',
   defPercent: 'DEF%',
@@ -131,6 +134,11 @@ export function formatStatKeyLabel(key: string, mode: StatKeyLabelMode = 'defaul
   }
 
   return STAT_KEY_LABELS[key] ?? toTitle(key)
+}
+
+/** evaluation overview row plus the host-owned label. */
+export function overviewRowView(row: { key: string; base: number; bonus: number; total: number }): StatViewRow {
+  return { ...row, label: formatStatKeyLabel(row.key, 'bonus') }
 }
 
 // stat keys rendered as percentages.

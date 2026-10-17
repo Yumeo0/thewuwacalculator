@@ -4,7 +4,7 @@
 */
 
 import { getGameDataMode } from '@wuwacalc/core/data/gameData'
-import type { PersistedState } from '@/domain/entities/appState'
+import type { PersistedState } from '@/application/persistence/appStateTypes'
 import { WorkerChannel } from '@wuwacalc/core/shared/lib/WorkerChannel'
 import type { DataImportJob, DataImportResult, DataImportSource } from './dataImport'
 import type { DataImportWorkerRequest, DataImportWorkerResponse } from './dataImport.worker'

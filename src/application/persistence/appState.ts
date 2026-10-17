@@ -4,10 +4,10 @@
                core owns, for storage, snapshots, and legacy imports.
 */
 
-import { initAppState, makeAppState } from '@wuwacalc/core/engine/runtime/defaults'
-import type { PersistedUnknown as CalculationUnknown } from '@wuwacalc/core/engine/runtime/defaults'
-import { persistedSchema } from '@wuwacalc/core/engine/runtime/schema'
-import type { HydratedAppState } from '@/domain/entities/appState'
+import { initAppState, makeAppState } from '@/application/persistence/hydration'
+import type { PersistedUnknown as CalculationUnknown } from '@/application/persistence/hydration'
+import { persistedSchema } from '@/application/persistence/calculationSchema'
+import type { HydratedAppState } from '@/application/persistence/appStateTypes'
 import type { StoredUiState } from '@/domain/entities/uiState'
 import { makeDefaultUiState, normalizeUiState, persistedUiSchema } from './uiPersist'
 

@@ -18,19 +18,19 @@ import { scopedTargetOwnerKey } from '@wuwacalc/core/domain/gameData/targetRouti
 import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
 import { getDefaultRotation } from '@wuwacalc/core/data/catalog/gameDataService.ts'
 import {
-  makeAppState,
   makeResProfile,
   makeScenarioFromProfiles,
   makeScenarioMemberFromProfile,
   makeTeamMember,
 } from '@wuwacalc/core/engine/runtime/defaults.ts'
+import { makeAppState } from '@/application/persistence/hydration'
 import { projectCombatScenario } from '@wuwacalc/core/engine/runtime/combatScenarioProjection.ts'
 import {
   projectScenarioMemberProfile,
   projectScenarioProfiles,
   projectScenarioRuntimes,
 } from '@wuwacalc/core/engine/runtime/scenarioRuntime.ts'
-import { parseCombatScenario } from '@wuwacalc/core/engine/runtime/schema.ts'
+import { parseCombatScenario } from '@/application/persistence/calculationSchema.ts'
 import {
   prepareCombatScenario,
   simulateCombatScenarioTeam,

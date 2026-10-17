@@ -23,7 +23,7 @@ import {
   type DocTopic,
 } from '@/data/content/docsContent'
 import { resDocTopic } from '@/modules/read/model/docs'
-import { GRADE_LADDER } from '@wuwacalc/core/engine/evaluation/evaluation/grades.ts'
+import { GRADE_LADDER } from '@/shared/lib/evaluationGrades.ts'
 import { getNegBase, type NegFfctArch } from '@wuwacalc/core/engine/formulas/negativeEffects'
 import { getTuneLevel } from '@wuwacalc/core/engine/formulas/tuneRupture'
 import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay'

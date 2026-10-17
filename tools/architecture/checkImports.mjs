@@ -12,7 +12,9 @@ const APP_LAYERS = new Set([
   'application',
   'cloudflare',
   'data',
+  'domain',
   'echoParser',
+  'engine',
   'infra',
   'modules',
   'shared',
@@ -23,12 +25,14 @@ const CORE_LAYERS = new Set(['data', 'domain', 'engine', 'shared'])
 const ALLOWED = {
   shared: new Set(['shared']),
   data: new Set(['data', 'shared']),
-  echoParser: new Set(['echoParser', 'shared']),
+  domain: new Set(['domain', 'shared']),
+  echoParser: new Set(['echoParser', 'domain', 'shared']),
+  engine: new Set(['engine', 'domain', 'data', 'shared']),
   infra: new Set(['infra', 'shared']),
-  application: new Set(['application', 'infra', 'data', 'shared']),
-  modules: new Set(['modules', 'application', 'data', 'echoParser', 'shared']),
-  app: new Set(['app', 'application', 'modules', 'infra', 'data', 'echoParser', 'shared']),
-  cloudflare: new Set(['cloudflare', 'application', 'infra', 'data', 'shared']),
+  application: new Set(['application', 'infra', 'data', 'domain', 'engine', 'shared']),
+  modules: new Set(['modules', 'application', 'data', 'domain', 'echoParser', 'engine', 'shared']),
+  app: new Set(['app', 'application', 'modules', 'infra', 'data', 'domain', 'echoParser', 'engine', 'shared']),
+  cloudflare: new Set(['cloudflare', 'application', 'infra', 'data', 'domain', 'engine', 'shared']),
 }
 
 const CORE_ALLOWED = {

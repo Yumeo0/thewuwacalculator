@@ -11,8 +11,8 @@ import {
   type CombatScenario,
   type ScenarioTeamMember,
 } from '@core/domain/entities/combatScenario'
-import { listResSds } from '@core/data/catalog/resonatorSeedService'
-import { makeAppState, makeResProfile } from '@core/engine/runtime/defaults'
+import { getResSeedBy, listResSds } from '@core/data/catalog/resonatorSeedService'
+import { DEF_RES_ID, makeResProfile, makeScenarioFromProfiles } from '@core/engine/runtime/defaults'
 import { selectedCombatScenario } from '@core/domain/entities/scenarioLibrary'
 import {
   traceScenarioRestState,
@@ -33,7 +33,19 @@ function makeMember(resonatorId: string): ScenarioTeamMember {
 }
 
 function makeTraceScenario(): CombatScenario {
-  const base = selectedCombatScenario(makeAppState().combat)
+  const seed = getResSeedBy(DEF_RES_ID) ?? listResSds()[0]
+  if (!seed) throw new Error('Cannot build a scenario without resonator game data.')
+  const scenario = makeScenarioFromProfiles(
+    { [seed.id]: makeResProfile(seed, { maxed: true }) },
+    null,
+    0,
+    seed.id,
+  )
+  const base = selectedCombatScenario({
+    selectedScenarioId: scenario.id,
+    order: [scenario.id],
+    scenariosById: { [scenario.id]: scenario },
+  })
   const aalto = makeMember('1403')
   const augusta = makeMember('1511')
   const routedOwner = 'team:1403:dissolving_mist'

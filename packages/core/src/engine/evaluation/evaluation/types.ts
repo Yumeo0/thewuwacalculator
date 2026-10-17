@@ -46,7 +46,6 @@ export type EvaluationSubstatMode = 'none' | 'equipped' | 'generated'
 export type EvaluationBuildKey = 'baselineBuild' | 'active' | 'referenceBuild' | 'maximumBuild'
 
 export interface EvaluationBuildSnapshot {
-  label: string
   score: number
   damage: number
   sets: EvaluationSetSummary[]
@@ -94,6 +93,7 @@ export interface EvaluationAlternative {
 
 export interface EvaluationFeature {
   skillId: string
+  /** skill name carried from game data so reports stay readable. */
   label: string
   tab: string
   skillType: SkillTypeKey[]
@@ -104,7 +104,6 @@ export interface EvaluationFeature {
 
 export interface EvaluationFeatureGroup {
   key: string
-  label: string
   sharePct: number
   skillType?: SkillTypeKey
 }
@@ -116,7 +115,6 @@ export interface EvaluationFeatureGroups {
 
 export interface EvaluationOverviewStatRow {
   key: string
-  label: string
   base: number
   bonus: number
   total: number
@@ -128,32 +126,12 @@ export interface EvaluationOverviewStats {
   dmgMdfrStts: EvaluationOverviewStatRow[]
 }
 
-export interface EvaluationStatTreeLeaf {
-  kind: 'leaf'
-  key: string
-  label: string
-  value: number
-  displayValue: string
-}
-
-export interface EvaluationStatTreeBranch {
-  kind: 'branch'
-  key: string
-  label: string
-  flow?: 'grid'
-  children: EvaluationStatTreeNode[]
-}
-
-export type EvaluationStatTreeNode = EvaluationStatTreeLeaf | EvaluationStatTreeBranch
-
 export interface BuildEvaluation {
   userDamage: number
   baselineDamage: number      // no echo stats, sonata rows, or main echo effect (0%)
   referenceDamage: number     // best legal generated echo frame + evaluation-quality substats (100%)
   maximumDamage: number       // best legal generated echo frame + max-roll substats (200%)
   percent: number             // 0 = baseline, 1 = evaluation, 2 = perfection
-  grade: string
-  invariantStats: EvaluationStatTreeNode[]
   builds: Record<EvaluationBuildKey, EvaluationBuildSnapshot>
 }
 

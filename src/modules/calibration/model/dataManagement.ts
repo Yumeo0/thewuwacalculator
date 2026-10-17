@@ -4,7 +4,7 @@
                envelopes, and merges selected domains into persisted snapshots.
 */
 
-import type { HydratedAppState, PersistedState } from '@/domain/entities/appState'
+import type { HydratedAppState, PersistedState } from '@/application/persistence/appStateTypes'
 import type { LegacyProfileMap } from '@wuwacalc/core/domain/entities/appState'
 import type { ResProf } from '@wuwacalc/core/domain/entities/profile'
 import type { CombatSession } from '@wuwacalc/core/domain/entities/session'

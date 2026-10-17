@@ -20,7 +20,11 @@ Browser side configuration uses `VITE_*` values. Server side OAuth exchange and 
 - `src/app`
   App bootstrap, providers, and router wiring.
 - `packages/core`
-  Framework-free calculation core (`@wuwacalc/core`): game data bootstrap, catalogs, domain entities and contracts, simulation pipeline, evaluation, Suggestions, and the Optimizer. See `packages/core/README.md`.
+  Framework-free calculation core (`@wuwacalc/core`): game data bootstrap, catalogs, domain entities and contracts, simulation pipeline, evaluation, Suggestions, and the Optimizer. No app state, no UI. See `packages/core/README.md`.
+- `src/application`
+  App state, persistence (`src/application/persistence`), theme, media, and imported-data handling.
+- `src/domain`
+  App-owned domain types that are not calculation: appearance, themes, ui preferences, ui state, attribute display metadata.
 - `src/data`
   Authored app content such as guides and changelog entries.
 - `src/echoParser`

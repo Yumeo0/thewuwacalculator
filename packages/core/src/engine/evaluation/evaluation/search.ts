@@ -12,7 +12,7 @@ import { applySetPlan, mkSetPlanCnd, prepSetPlanFsb } from '@core/engine/suggest
 import { ignoresEr } from '@core/engine/evaluation/energyRegenPolicy';
 import { aggregateSubstats } from '@core/engine/evaluation/substatMath';
 import type { EvaluationBuildSnapshot, EvaluationSubstatEntry, BuildEvaluation } from './types.ts';
-import { addStatTotal, ENERGY_REGEN, gradeForPercent, makeEvaluationInvariantStats, makeEvaluationOverviewStats, makeSubstatPlan, MAXIMUM_SCORING_PARAMS, MAX_ROLLS_PER_KEY, removeSubstatTotals, scorePercent, sumEncodedEnergyRegen, sumSubstats, type EvaluationEchoFrame, type EvaluationScoringParams, type MainStatCandidate, type SubstatCandidate } from './stats.ts';
+import { addStatTotal, ENERGY_REGEN, makeEvaluationOverviewStats, makeSubstatPlan, MAXIMUM_SCORING_PARAMS, MAX_ROLLS_PER_KEY, removeSubstatTotals, scorePercent, sumEncodedEnergyRegen, sumSubstats, type EvaluationEchoFrame, type EvaluationScoringParams, type MainStatCandidate, type SubstatCandidate } from './stats.ts';
 import { echoesMatchSetPlan, enumerateMainStatCandidates, findUsefulStatImpacts, prepareMainEchoChoices, makeEvaluationBuildSnapshot, makeEvaluationEchoFrame, makeMainEchoProfiles, makeReferenceEvaluationEchoes, makeSetSummary, preservedMainEchoFor, retainsUtilityPlan, setEffectSig, utilityPlanFor } from './echoDiscovery.ts';
 import { buildEvaluationFeatureBreakdownFromEncoded } from './features.ts';
 import { distributeStepSubstats, prepareStepAllocator, stepSubstatPlan } from './stepAllocation';
@@ -49,7 +49,6 @@ export interface BuildEvaluationOptions {
   includeFeatures?: boolean
   includeStatRows?: boolean
   includeEvaluationTargets?: boolean
-  includeInvariantStats?: boolean
 }
 
 export type EvaluationCancelCheck = (() => void) | undefined
@@ -58,7 +57,6 @@ const DEFAULT_EVALUATION_OPTIONS: Required<BuildEvaluationOptions> = {
   includeFeatures: true,
   includeStatRows: true,
   includeEvaluationTargets: true,
-  includeInvariantStats: true,
 }
 
 // lean report assembly can skip the active build's expensive per-stat
@@ -69,7 +67,6 @@ export const LEAN_SCORE_OPTIONS: BuildEvaluationOptions = {
   includeFeatures: false,
   includeStatRows: false,
   includeEvaluationTargets: true,
-  includeInvariantStats: false,
 }
 
 const MAIN_IMPACT_STAT_LIMIT = 5
@@ -109,14 +106,12 @@ function resolveEvaluationOptions(options: BuildEvaluationOptions = {}): Require
     includeFeatures: options.includeFeatures ?? DEFAULT_EVALUATION_OPTIONS.includeFeatures,
     includeStatRows: options.includeStatRows ?? DEFAULT_EVALUATION_OPTIONS.includeStatRows,
     includeEvaluationTargets: options.includeEvaluationTargets ?? DEFAULT_EVALUATION_OPTIONS.includeEvaluationTargets,
-    includeInvariantStats: options.includeInvariantStats ?? DEFAULT_EVALUATION_OPTIONS.includeInvariantStats,
   }
 }
 
 function materializeAnchorBuild(
   ctx: SuggestContext,
   anchor: EvaluationAnchorBuild,
-  label: string,
   score: number,
   damage: number,
   includeDetails: boolean,
@@ -125,7 +120,6 @@ function materializeAnchorBuild(
 ): EvaluationBuildSnapshot {
   if (!includeDetails) {
     return {
-      label,
       score,
       damage,
       sets: makeSetSummary(Uint8Array.from(anchor.echoes.map((echo) => echo.set)), anchor.echoes),
@@ -142,7 +136,6 @@ function materializeAnchorBuild(
   // still return one during a hot update, and scoring requires subarray().
   const stats = Float32Array.from(anchor.stats)
   return makeEvaluationBuildSnapshot({
-    label,
     score,
     damage,
     echoes: anchor.echoes,
@@ -175,13 +168,13 @@ export function materializeEvaluationAnchorBuilds(
   const details = resolved.includeEvaluationTargets
   return {
     baselineBuild: materializeAnchorBuild(ctx, anchors.builds.baselineBuild,
-      'Baseline build', 0, anchors.baselineDamage, details,
+      0, anchors.baselineDamage, details,
       resolved.includeStatRows, resolved.includeFeatures),
     referenceBuild: materializeAnchorBuild(ctx, anchors.builds.referenceBuild,
-      'Reference build', 100, anchors.referenceDamage, details,
+      100, anchors.referenceDamage, details,
       resolved.includeStatRows, resolved.includeFeatures),
     maximumBuild: materializeAnchorBuild(ctx, anchors.builds.maximumBuild,
-      'Maximum build', 200, anchors.maximumDamage, details,
+      200, anchors.maximumDamage, details,
       resolved.includeStatRows, resolved.includeFeatures),
   }
 }
@@ -806,14 +799,9 @@ export function assembleEvaluation(
     referenceDamage: anchors.referenceDamage,
     maximumDamage: anchors.maximumDamage,
     percent,
-    grade: gradeForPercent(percent * 100),
-    invariantStats: resolvedOptions.includeInvariantStats
-      ? makeEvaluationInvariantStats(ctx.sourceFinals)
-      : [],
     builds: {
       baselineBuild: anchorBuilds.baselineBuild,
       active: makeEvaluationBuildSnapshot({
-        label: 'Active build',
         score: percent * 100,
         damage: userDamage,
         echoes: activeEchoes,

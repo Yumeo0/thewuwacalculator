@@ -2,6 +2,12 @@
 
 Framework-free calculation core for the Wuthering Waves build calculator. It owns the checked-in game data, the domain contracts, and all calculation logic: the simulation pipeline, evaluation, Suggestions, and the Optimizer (CPU and WebGPU).
 
+The core is pure calculation. It does not own app state, persistence, or presentation:
+
+- the persisted document (schema, hydration, migrations, ui slice) lives in `src/application/persistence`
+- app-owned entities such as appearance, themes, ui preferences, and ui state live in `src/domain/entities`
+- labels, number formatting, element accents, icons, and grade names are host code; the core reports keys and numbers
+
 The package has no UI dependencies (no React, no Zustand) and does not fetch or spawn workers on its own. Hosts inject those through two seams, so the same core can run in a browser app, a Node tool, or a test harness.
 
 ## Layout

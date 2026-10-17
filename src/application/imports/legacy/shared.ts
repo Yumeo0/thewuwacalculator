@@ -4,7 +4,7 @@
                normalization of older persisted values.
 */
 
-import type { HydratedAppState } from '@/domain/entities/appState'
+import type { HydratedAppState } from '@/application/persistence/appStateTypes'
 
 export interface LegMprtSs {
   scope: 'backup' | 'ui' | 'profile' | 'inventory' | 'rotation' | 'suggestions'
