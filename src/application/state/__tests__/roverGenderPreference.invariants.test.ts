@@ -6,11 +6,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { contextScenarioMember, combatScenarioId, makeScenarioTeam, type CombatScenario } from '@wuwacalc/core/domain/entities/combatScenario'
 import { makeSavedBuild, makeSavedRotation, makeSavedScenario } from '@wuwacalc/core/domain/entities/inventoryStorage'
-import { ROVER_PAIRS, roverIdForGender, roverIsVisible } from '@wuwacalc/core/domain/entities/roverGender'
+import { ROVER_PAIRS, roverIdForGender, roverIsVisible } from '@/domain/entities/roverGender'
 import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService'
 import { makeAppState, makeCustomBuff, makeResProfile, makeScenarioFromProfiles, makeScenarioMemberFromProfile } from '@wuwacalc/core/engine/runtime/defaults'
-import { parseCombatScenario, persistedSchema } from '@wuwacalc/core/engine/runtime/schema'
+import { parseCombatScenario } from '@wuwacalc/core/engine/runtime/schema'
+import { parsePersistedState } from '@/application/persistence/appState'
 import {
   convertScenarioRoverGender,
   convertWorkspaceRoverGender,
@@ -167,7 +168,7 @@ describe('Rover gender preference', () => {
     useAppStore.getState().setRoverGender('both')
     expect(useAppStore.getState().library.builds[0].resonatorId).toBe('1501')
     expect(useAppStore.getState()).not.toHaveProperty('roverModeArchives')
-    expect(persistedSchema.safeParse(selectPersisted(useAppStore.getState())).success).toBe(true)
+    expect(parsePersistedState(selectPersisted(useAppStore.getState())).ok).toBe(true)
   })
 
   it('initializes the other Rover fresh after returning to Both', () => {

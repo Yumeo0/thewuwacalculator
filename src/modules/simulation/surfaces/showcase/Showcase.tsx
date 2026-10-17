@@ -7,7 +7,7 @@
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { memo, useMemo, type KeyboardEvent } from 'react'
 import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
-import type { StatsColumnHighlight } from '@wuwacalc/core/domain/entities/preferences'
+import type { StatsColumnHighlight } from '@/domain/entities/preferences'
 import { useAppStore } from '@/application/state'
 import { groupUid } from '@/modules/simulation/features/echoes/lib/playerIdentity.ts'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'

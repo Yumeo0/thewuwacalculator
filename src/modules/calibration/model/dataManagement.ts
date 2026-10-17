@@ -4,11 +4,13 @@
                envelopes, and merges selected domains into persisted snapshots.
 */
 
-import type { HydratedAppState, LegacyProfileMap, PersistedState } from '@wuwacalc/core/domain/entities/appState'
+import type { HydratedAppState, PersistedState } from '@/domain/entities/appState'
+import type { LegacyProfileMap } from '@wuwacalc/core/domain/entities/appState'
 import type { ResProf } from '@wuwacalc/core/domain/entities/profile'
 import type { CombatSession } from '@wuwacalc/core/domain/entities/session'
 import type { SuggestState } from '@wuwacalc/core/domain/entities/suggestions'
-import { initAppState, makeScenarioFromProfiles, makeSuggest } from '@wuwacalc/core/engine/runtime/defaults'
+import { makeScenarioFromProfiles, makeSuggest } from '@wuwacalc/core/engine/runtime/defaults'
+import { initAppStateWithUi } from '@/application/persistence/appState'
 import {
   addScenario,
   replaceScenario,
@@ -365,7 +367,7 @@ export function resMprtData(raw: string, currentState: PersistedState): RslvMprt
           profiles,
           selectedScenario.team.members[0].resonatorId,
         )
-        const migrated = initAppState({
+        const migrated = initAppStateWithUi({
           ...currentState,
           combat: undefined,
           simulation: {

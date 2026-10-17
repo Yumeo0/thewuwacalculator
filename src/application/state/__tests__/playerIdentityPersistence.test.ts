@@ -5,7 +5,7 @@
 */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { persistedSchema } from '@wuwacalc/core/engine/runtime/schema'
+import { persistedUiSchema } from '@/application/persistence/uiPersist'
 import { selectPersisted } from '@/application/state/serialization'
 import { useAppStore } from '@/application/state/store'
 import {
@@ -46,10 +46,10 @@ describe('player identity persistence', () => {
     delete snapshot.ui.preferences.playerId
     delete snapshot.ui.preferences.playerUid
 
-    const parsed = persistedSchema.parse(snapshot)
+    const parsed = persistedUiSchema.parse(snapshot.ui)
 
-    expect(parsed.ui.preferences.playerId).toBe('')
-    expect(parsed.ui.preferences.playerUid).toBe('')
+    expect(parsed.preferences.playerId).toBe('')
+    expect(parsed.preferences.playerUid).toBe('')
   })
 
   it('writes and reloads player identity through the ui layout domain', () => {

@@ -1,89 +1,16 @@
 /*
   Author: Runor Ewhro
-  description: defines app state data contracts and state invariants.
+  description: defines the persisted calculation state contracts shared by the
+               calculator core: scenarios, saved artifacts, and optimizer state.
 */
 
 import type { ResProf } from './profile'
 import type { SavedArtifactLibrary } from './inventoryStorage'
 import type { OptSets } from './optimizer'
-import type { SuggestState, SuggsViewMod, WeaponPlanSet } from './suggestions'
-import type {
-  BlurMode,
-  BgThemeVar,
-  DarkThemeVar,
-  LightThemeVar,
-} from './themes'
+import type { SuggestState, WeaponPlanSet } from './suggestions'
 import type { AttributeKey } from './stats'
-import type { UiPrefs } from './preferences'
-import type { RotationEditorPreferences } from './rotationEditorPreferences'
 import type { ScenarioWorkspace } from './scenarioLibrary'
 import type { ResonatorId } from './runtime'
-
-export type ThemeMode = 'light' | 'dark' | 'background'
-export type ThemePref = 'system' | ThemeMode
-export const HIST_MAX_OPTS = [5, 10, 25, 50, 75, 100] as const
-export type HistoryMax = typeof HIST_MAX_OPTS[number]
-export const PICK_FREQ_WEPS = [
-  'broadblade',
-  'sword',
-  'pistols',
-  'gauntlets',
-  'rectifier',
-] as const
-export type PickFreqWeapon = typeof PICK_FREQ_WEPS[number]
-export const PICK_FREQ_TEAM = ['active', 'teammate1', 'teammate2'] as const
-export type PckrFreqTeam = typeof PICK_FREQ_TEAM[number]
-
-export interface PckrFreqItmS {
-  id: string
-  count: number
-  firstUsedAt: string | null
-  lastUsedAt: string | null
-  previousUsedAt: string | null
-  firstUseSeq: number
-  lastUseSeq: number
-  usesByDay: Record<string, number>
-  firstActiveResonatorId: string | null
-  lastActiveResonatorId: string | null
-  previousActiveResonatorId: string | null
-  usesByActiveResonator: Record<string, number>
-}
-
-export interface PckrFreqBktS {
-  version: 2
-  totalUses: number
-  firstUsedAt: string | null
-  lastUsedAt: string | null
-  order: string[]
-  items: Record<string, PckrFreqItmS>
-}
-
-export interface PckrFreqStt {
-  resonator: PckrFreqBktS
-  echo: PckrFreqBktS
-  enemy: PckrFreqBktS
-  weaponByType: Record<PickFreqWeapon, PckrFreqBktS>
-  resonatorByTeamSlot: Record<PckrFreqTeam, PckrFreqBktS>
-}
-
-export type PckrFreqUpd =
-  | {
-    bucket: 'resonator' | 'echo' | 'enemy'
-    ids: string[]
-    activeResonatorId?: string | null
-  }
-  | {
-    bucket: 'weapon'
-    weaponType: PickFreqWeapon
-    ids: string[]
-    activeResonatorId?: string | null
-  }
-  | {
-    bucket: 'teamResonator'
-    slot: PckrFreqTeam
-    ids: string[]
-    activeResonatorId?: string | null
-  }
 
 // shared unset enemy id
 export const NONE_ENEMY_ID = '0'
@@ -127,39 +54,6 @@ export function isNoEnemy(enemy: Pick<EnemyProfile, 'id'>): boolean {
   return enemy.id === NONE_ENEMY_ID
 }
 
-export interface UiState {
-  theme: ThemeMode
-  themePreference: ThemePref
-  lightVariant: LightThemeVar
-  darkVariant: DarkThemeVar
-  backgroundVariant: BgThemeVar
-  backgroundImageKey: string
-  backgroundTextMode: 'light' | 'dark'
-  bodyFontName: string
-  bodyFontUrl: string
-  blurMode: BlurMode
-  entranceAnimations: boolean
-  preferences: UiPrefs
-  suggsViewMode: SuggsViewMod
-  showSubHits: boolean
-  compactInv: boolean
-  seeEquipped: boolean
-  haveHistory: boolean
-  historyMax: HistoryMax
-  itemFreq: PckrFreqStt
-  optimizerCpuHintSeen: boolean
-  compressedExports: boolean
-  groupInv: boolean
-  rotationEditorPreferences: RotationEditorPreferences
-  savedRotationPreferences: {
-    sortBy: 'date' | 'name' | 'avg' | 'dps'
-    sortOrder: 'asc' | 'desc'
-    contributionFilter: 'unset' | 'solo' | 'duo' | 'trio'
-    autoSearchActiveResonator: boolean
-    showLiveRotation: boolean
-    scaleToSelected: boolean
-  }
-}
 
 export interface SimulationState {
   /** resonator whose derived build choices the current optimizer settings belong to. */
@@ -173,7 +67,6 @@ export type LegacyProfileMap = Record<string, ResProf>
 
 export interface PersistedState {
   version: 28
-  ui: UiState
   /** canonical live combat state, independent of simulation tooling. */
   combat: ScenarioWorkspace
   /** user-authored snapshots, independent from any simulation surface. */

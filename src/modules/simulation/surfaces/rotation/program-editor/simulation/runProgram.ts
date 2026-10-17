@@ -34,7 +34,7 @@ import {
 } from '@wuwacalc/core/engine/pipeline/rotationTotals.ts'
 import { resolveSkill } from '@wuwacalc/core/engine/pipeline/resolveSkill.ts'
 import type { AttributeKey, SkillDef } from '@wuwacalc/core/domain/entities/stats.ts'
-import { ATTR_COLORS, getAttributeIconSrc } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
+import { ATTR_COLORS, getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
 import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'

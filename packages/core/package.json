@@ -22,7 +22,6 @@
       "types": "./dist/*.d.ts",
       "default": "./dist/*.js"
     },
-    "./data/gameData/portraitSurfaces.json": "./dist/data/gameData/portraitSurfaces.json",
     "./package.json": "./package.json"
   },
   "scripts": {

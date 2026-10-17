@@ -32,7 +32,7 @@ import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioL
 import { openTeamCnsl } from '@/modules/simulation/features/teams/lib/teamConsoleStore.ts'
 import { openWpnCnsl } from '@/modules/simulation/features/weapons/lib/weaponConsoleStore.ts'
 import type {RotationNode} from '@wuwacalc/core/domain/gameData/contracts.ts'
-import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
+import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
 import {
   editableRotMembers,
   makeConditionChoices,
@@ -90,7 +90,7 @@ import { placeLeader } from '@/modules/simulation/surfaces/rotation/program-edit
 import type {
   RotationDamageBasis,
   RotationEditorPreferences,
-} from '@wuwacalc/core/domain/entities/rotationEditorPreferences.ts'
+} from '@/domain/entities/rotationEditorPreferences.ts'
 import type {SearchNames} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeSearch.ts'
 import {getEchoById} from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import {StartMemberModal} from '@/modules/simulation/surfaces/rotation/program-editor/components/StartMemberModal.tsx'

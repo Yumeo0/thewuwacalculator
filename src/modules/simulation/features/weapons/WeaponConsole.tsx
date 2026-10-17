@@ -13,7 +13,7 @@ import type { CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScen
 import { useAppStore } from '@/application/state'
 import { listWpnsByTy } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
 import {getRarityColor, getWpnTypeLb, WPNTYPETOKEY} from '@/modules/simulation/model/display.ts'
-import type { PickFreqWeapon } from '@wuwacalc/core/domain/entities/appState'
+import type { PickFreqWeapon } from '@/domain/entities/uiState'
 import { glyphVars } from '@/shared/lib/gameAssets.ts'
 import { withDefWpnMg } from '@/shared/lib/imageFallback.ts'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'

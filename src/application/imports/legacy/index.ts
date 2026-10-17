@@ -4,14 +4,15 @@
                data into the current persistence schema.
 */
 
-import type { HydratedAppState, PersistedState, UiState } from '@wuwacalc/core/domain/entities/appState'
+import type { HydratedAppState, PersistedState } from '@/domain/entities/appState'
+import type { UiState } from '@/domain/entities/uiState'
 import type { SavedBuild, SavedEcho } from '@wuwacalc/core/domain/entities/inventoryStorage'
 import type { ManualBuffs, MnlMod } from '@wuwacalc/core/domain/entities/manualBuffs'
 import type { ResProf } from '@wuwacalc/core/domain/entities/profile'
 import type { TeamMemRt, TeamSlots, TraceNodeBuffs, WeaponState } from '@wuwacalc/core/domain/entities/runtime'
 import type { AttributeKey, SkillTypeKey } from '@wuwacalc/core/domain/entities/stats'
-import { makeAppState, makeResProfile, makeSuggest, makeCustomBuff, makeEnemy, makeTeamMember, makeTraceNode, normProfTeam } from '@wuwacalc/core/engine/runtime/defaults'
-import { initAppState } from '@wuwacalc/core/engine/runtime/defaults'
+import { makeResProfile, makeSuggest, makeCustomBuff, makeEnemy, makeTeamMember, makeTraceNode, normProfTeam } from '@wuwacalc/core/engine/runtime/defaults'
+import { initAppStateWithUi, makeAppStateWithUi } from '@/application/persistence/appState'
 import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
 import { cnvrLegEchoL } from './echoes'
@@ -425,10 +426,9 @@ export function mprtLegAppSt(
   options: { baseState?: PersistedState | HydratedAppState } = {},
 ): LegAppSttMpr {
   const backup = xtrcLegAppBc(parsed)
-  const baseState = initAppState(options.baseState ?? makeAppState())
+  const baseState = initAppStateWithUi(options.baseState ?? makeAppStateWithUi())
   const issues: LegMprtSs[] = []
   const statesById = xtrcLegProfS(backup.charInfo, issues)
-
   const profiles: Record<string, ResProf> = {}
   const suggsByResId: Record<string, ReturnType<typeof makeSuggest>> = {}
   const mprtProfIds: string[] = []
@@ -462,7 +462,7 @@ export function mprtLegAppSt(
 
   // initialize again after composing the snapshot so any missing new domains
   // are filled from current defaults without preserving stale optimizer state.
-  const snapshot = initAppState({
+  const snapshot = initAppStateWithUi({
     ...baseState,
     // legacy backups define their encounter through imported profiles/session;
     // the default scenario must not override that migration input.

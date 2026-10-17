@@ -12,7 +12,6 @@ import type {
 } from '@core/domain/entities/resonator'
 import type { CombatState, ResRuntime } from '@core/domain/entities/runtime'
 import type { AttributeKey, SkillDef } from '@core/domain/entities/stats'
-import { ATTR_COLORS } from '@core/domain/gameData/attributeDisplay'
 import { makeTeamComp } from '@core/engine/gameData/teamComposition'
 import { getResSeedBy } from '@core/data/catalog/resonatorSeedService'
 import { makeResRuntime } from '@core/engine/runtime/defaults'
@@ -30,7 +29,6 @@ export interface NegEffectCat {
   key: NegEffectKey
   label: string
   defaultMax: number
-  accent: string
   linkedTo?: NegEffectKey
 }
 
@@ -66,43 +64,36 @@ export const NEG_EFFECT_CATS: Record<NegEffectKey, NegEffectCat> = {
     key: 'spectroFrazzle',
     label: 'Spectro Frazzle',
     defaultMax: 10,
-    accent: ATTR_COLORS[NEG_EFFECT_ELEM.spectroFrazzle],
   },
   aeroErosion: {
     key: 'aeroErosion',
     label: 'Aero Erosion',
     defaultMax: 3,
-    accent: ATTR_COLORS[NEG_EFFECT_ELEM.aeroErosion],
   },
   fusionBurst: {
     key: 'fusionBurst',
     label: 'Fusion Burst',
     defaultMax: 10,
-    accent: ATTR_COLORS[NEG_EFFECT_ELEM.fusionBurst],
   },
   havocBane: {
     key: 'havocBane',
     label: 'Havoc Bane',
     defaultMax: 3,
-    accent: ATTR_COLORS[NEG_EFFECT_ELEM.havocBane],
   },
   glacioChafe: {
     key: 'glacioChafe',
     label: 'Glacio Chafe',
     defaultMax: 10,
-    accent: ATTR_COLORS[NEG_EFFECT_ELEM.glacioChafe],
   },
   electroFlare: {
     key: 'electroFlare',
     label: 'Electro Flare',
     defaultMax: 10,
-    accent: ATTR_COLORS[NEG_EFFECT_ELEM.electroFlare],
   },
   electroRage: {
     key: 'electroRage',
     label: 'Electro Rage',
     defaultMax: 10,
-    accent: ATTR_COLORS[NEG_EFFECT_ELEM.electroRage],
     linkedTo: 'electroFlare',
   },
 }

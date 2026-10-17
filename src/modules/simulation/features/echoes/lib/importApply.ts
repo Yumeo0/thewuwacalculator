@@ -5,7 +5,7 @@
 */
 
 import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
-import type { UiPrefs } from '@wuwacalc/core/domain/entities/preferences.ts'
+import type { UiPrefs } from '@/domain/entities/preferences.ts'
 import type { ParsedBuildScreenshot } from '@/echoParser/ocrParsing.ts'
 import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
 import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'

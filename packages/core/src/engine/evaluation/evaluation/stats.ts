@@ -11,7 +11,6 @@ import { addEchoStat } from '@core/engine/optimizer/encode/echoes';
 import { applySetVec as applySetBonuses } from '@core/engine/optimizer/encode/sets';
 import type { SuggestContext } from '@core/engine/suggestions/types';
 import type { SetPlanEntry } from '@core/engine/suggestions/types';
-import { ATTR_COLORS } from '@core/domain/gameData/attributeDisplay';
 import { getSkillType } from '@core/domain/gameData/skillTypes';
 import { truncTo } from '@core/shared/lib/number';
 import type { EvaluationOverviewStatRow, EvaluationOverviewStats, EvaluationStatTreeLeaf, EvaluationStatTreeNode, EvaluationSubstatEntry, BuildEvaluation } from './types.ts';
@@ -248,7 +247,6 @@ export function makeOverviewRow(
   label: string,
   base: number,
   total: number,
-  color?: string,
 ): EvaluationOverviewStatRow {
   return {
     key,
@@ -256,7 +254,6 @@ export function makeOverviewRow(
     base,
     total,
     bonus: total - base,
-    color,
   }
 }
 
@@ -334,7 +331,6 @@ export function makeEvaluationOverviewStats({
         row.label,
         source.attribute[row.key].dmgBonus,
         source.attribute[row.key].dmgBonus + allAttrBonus + row.value,
-        ATTR_COLORS[row.key],
       )),
       makeOverviewRow('basicAtk', 'Basic Attack DMG Bonus', 0, source.skillType.basicAtk.dmgBonus + allSkillBonus + echoStats.basic + setBonus.basic + mainAt(2)),
       makeOverviewRow('heavyAtk', 'Heavy Attack DMG Bonus', 0, source.skillType.heavyAtk.dmgBonus + allSkillBonus + echoStats.heavy + setBonus.heavy + mainAt(3)),
@@ -398,7 +394,7 @@ function fmtInvariantSigned(value: number, suffix: string): string {
   return `${sign}${fmtInvariantNum(value)}${suffix}`
 }
 
-function invariantLeaf(key: string, label: string, value: number, displayValue: string, color?: string): EvaluationStatTreeLeaf | null {
+function invariantLeaf(key: string, label: string, value: number, displayValue: string): EvaluationStatTreeLeaf | null {
   if (!Number.isFinite(value) || Math.abs(value) < 0.0001) return null
   return {
     kind: 'leaf',
@@ -406,7 +402,6 @@ function invariantLeaf(key: string, label: string, value: number, displayValue: 
     label,
     value,
     displayValue,
-    color,
   }
 }
 
@@ -451,7 +446,6 @@ export function makeEvaluationInvariantStats(finalStats: FinalStats): Evaluation
       kind: 'branch',
       key,
       label: INVARIANT_ATTR_LABELS[key],
-      color: key !== 'all' ? ATTR_COLORS[key] : undefined,
       children: leaves,
     })
   }

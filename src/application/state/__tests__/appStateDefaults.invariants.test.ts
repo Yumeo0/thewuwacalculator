@@ -6,20 +6,19 @@
 import { describe, expect, it } from 'vitest'
 import { contextScenarioMember } from '@wuwacalc/core/domain/entities/combatScenario'
 import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
-import { DEF_UI_PREFS } from '@wuwacalc/core/domain/entities/preferences'
+import { DEF_UI_PREFS } from '@/domain/entities/preferences'
 import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
 import {
   DEF_RES_ID,
-  initAppState,
-  makeAppState,
   makeResProfile,
   makeScenarioFromProfiles,
 } from '@wuwacalc/core/engine/runtime/defaults'
+import { initAppStateWithUi, makeAppStateWithUi } from '@/application/persistence/appState'
 
 describe('app state defaults', () => {
   it('initializes the first resonator using the default max-on-init preference', () => {
     const seed = getResSeedBy(DEF_RES_ID)!
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const member = contextScenarioMember(selectedCombatScenario(state.combat))
     const expected = makeResProfile(seed, { maxed: DEF_UI_PREFS.maxResOnInit })
 
@@ -33,11 +32,11 @@ describe('app state defaults', () => {
   })
 
   it('does not max a saved resonator just because max-on-init is enabled', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const seed = getResSeedBy(DEF_RES_ID)!
     const profile = makeResProfile(seed)
     const scenario = makeScenarioFromProfiles({ [seed.id]: profile }, null, 0, seed.id)
-    const restored = initAppState({
+    const restored = initAppStateWithUi({
       ...state,
       combat: {
         selectedScenarioId: scenario.id,

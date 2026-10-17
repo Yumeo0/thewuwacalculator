@@ -13,17 +13,10 @@ import { createScenarioActions } from './scenarioSlice'
 import { createResonatorActions } from './resonatorSlice'
 import { cancelOptimizerRequest, createOptimizerActions } from './optimizerSlice'
 import { resetOptimizerRun } from './optimizerRunStore'
-import type {
-    EnemyProfile,
-    SimulationState,
-    HistoryMax,
-    PckrFreqUpd,
-    PersistedState,
-    ThemeMode,
-    ThemePref,
-    UiState,
-} from '@wuwacalc/core/domain/entities/appState'
-import type {BgThemeVar, BlurMode, DarkThemeVar, LightThemeVar,} from '@wuwacalc/core/domain/entities/themes'
+import type { EnemyProfile, SimulationState } from '@wuwacalc/core/domain/entities/appState'
+import type { HistoryMax, PckrFreqUpd, ThemeMode, ThemePref, UiState } from '@/domain/entities/uiState'
+import type { PersistedState } from '@/domain/entities/appState'
+import type {BgThemeVar, BlurMode, DarkThemeVar, LightThemeVar,} from '@/domain/entities/themes'
 import type {
     EchoInstance,
     ResonatorId,
@@ -51,8 +44,8 @@ import type {
     SavedRotation,
     SavedScenario,
 } from '@wuwacalc/core/domain/entities/inventoryStorage'
-import type { ShowcaseCardStyle, ShowcaseCardHidden, ShowcaseLayout, UploadPersistMode } from '@wuwacalc/core/domain/entities/preferences'
-import type { RoverGender } from '@wuwacalc/core/domain/entities/roverGender'
+import type { ShowcaseCardStyle, ShowcaseCardHidden, ShowcaseLayout, UploadPersistMode } from '@/domain/entities/preferences'
+import type { RoverGender } from '@/domain/entities/roverGender'
 import type {OptSets} from '@wuwacalc/core/domain/entities/optimizer'
 import type {OptInventorySelection, ResProf} from '@wuwacalc/core/domain/entities/profile'
 import type {SntSetConds} from '@wuwacalc/core/domain/entities/sonataSetConditionals'
@@ -62,10 +55,9 @@ import type {
     OptStartPay,
 } from '@wuwacalc/core/engine/optimizer/types'
 import {
-    makeAppState,
     DEF_RES_ID,
-    initAppState,
 } from '@wuwacalc/core/engine/runtime/defaults'
+import { initAppStateWithUi, makeAppStateWithUi } from '@/application/persistence/appState'
 import {
     applyHistoryEntry,
     makeHistoryEntry,
@@ -105,7 +97,7 @@ function applyPrssSna(
 ): AppStore {
   return {
     ...state,
-    ...initAppState(snapshot),
+    ...initAppStateWithUi(snapshot),
     invHydr: true,
     savedRotationsHydrated: true,
     history,
@@ -559,7 +551,7 @@ export const useAppStore = create<AppStore>((set, get) => {
     if (deferForData(collectResonatorIds(payload), () => get().hydrate(payload), 'hydrate')) return
     get().ensureFullLibrary()
     const curSnap = selectPersisted(get())
-    const nextSnapshot = initAppState(structuredClone(payload))
+    const nextSnapshot = initAppStateWithUi(structuredClone(payload))
     const { ui } = get()
 
     cancelOptimizerRequest()
@@ -592,7 +584,7 @@ export const useAppStore = create<AppStore>((set, get) => {
     cancelOptimizerRequest()
     resetOptimizerRun()
     set(() => ({
-      ...makeAppState(),
+      ...makeAppStateWithUi(),
       invHydr: true,
       savedRotationsHydrated: false,
       history: mkMptyHistSt(),

@@ -8,7 +8,7 @@ import Tesseract from 'tesseract.js'
 import { listEchoes } from '@wuwacalc/core/data/catalog/echoCatalogService'
 import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService'
 import { listWpnsByTy } from '@wuwacalc/core/data/catalog/weaponCatalogService'
-import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay'
+import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay'
 import {
   getEchoMgKeys,
   getEchoMgMap,

@@ -9,14 +9,14 @@ import type {
   PckrFreqStt,
   PckrFreqUpd,
   PickFreqWeapon,
-} from '@core/domain/entities/appState'
+} from '@/domain/entities/uiState'
 import {
   PICK_FREQ_WEPS,
-} from '@core/domain/entities/appState'
-import type { ResProf } from '@core/domain/entities/profile'
-import type { ResRuntime, TeamMemRtVie } from '@core/domain/entities/runtime'
-import { isNoWeaponId } from '@core/domain/entities/runtime'
-import { getResSeedBy } from '@core/data/catalog/resonatorSeedService'
+} from '@/domain/entities/uiState'
+import type { ResProf } from '@wuwacalc/core/domain/entities/profile'
+import type { ResRuntime, TeamMemRtVie } from '@wuwacalc/core/domain/entities/runtime'
+import { isNoWeaponId } from '@wuwacalc/core/domain/entities/runtime'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value)

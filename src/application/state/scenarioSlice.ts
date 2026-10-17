@@ -19,7 +19,7 @@ import {
   insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember,
 } from '@wuwacalc/core/engine/runtime/scenarioMembers'
 import { convertMemberRoverGender, convertScenarioRoverGender } from './roverGenderConversion'
-import { roverIdForGender } from '@wuwacalc/core/domain/entities/roverGender'
+import { roverIdForGender } from '@/domain/entities/roverGender'
 
 interface ScenarioSliceContext extends Pick<StoreSliceContext, 'get' | 'persistedSet'> {
   deferForData: (ids: string[], action: () => void, key?: string) => boolean

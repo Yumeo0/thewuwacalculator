@@ -4,9 +4,8 @@
                without treating newly introduced defaults as stored values.
 */
 
-import type { HydratedAppState, PersistedState } from '@wuwacalc/core/domain/entities/appState'
-import { makeAppState, initAppState } from '@wuwacalc/core/engine/runtime/defaults'
-import { persistedSchema } from '@wuwacalc/core/engine/runtime/schema'
+import type { HydratedAppState, PersistedState } from '@/domain/entities/appState'
+import { makeAppStateWithUi, parsePersistedState } from './appState'
 import { APP_STORAGE_KEY } from './storageKeys'
 
 const LEGACY_STORAGE_VERSIONS = [26, 25, 24, 23, 22] as const
@@ -127,7 +126,7 @@ function readLegacyStateVersion(
     'inventory.rotations',
     ...(version === 26 ? ['inventory.scenarios'] : []),
   ]
-  const defaults = makeAppState()
+  const defaults = makeAppStateWithUi()
   const draft = structuredClone(defaults) as unknown as Record<string, unknown>
   const draftUi = draft.ui as Record<string, unknown>
   const draftCalculator = draft.simulation as Record<string, unknown>
@@ -169,13 +168,13 @@ function readLegacyStateVersion(
   }
 
   if (!found) return null
-  const current = persistedSchema.safeParse(draft)
-  if (!current.success) {
+  const current = parsePersistedState(draft)
+  if (!current.ok) {
     console.warn(`[storage] failed to validate assembled v${version} app state`, current.error)
     return null
   }
 
-  const snapshot = initAppState(current.data as unknown as PersistedState)
+  const snapshot = current.state
   if (persistMigrationSnapshot(snapshot, saveAppState)) {
     for (const suffix of legacySuffixes) {
       localStorage.removeItem(`${legacyStorageKey}.${suffix}`)

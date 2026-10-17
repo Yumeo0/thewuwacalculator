@@ -120,7 +120,6 @@ export interface EvaluationOverviewStatRow {
   base: number
   bonus: number
   total: number
-  color?: string
 }
 
 export interface EvaluationOverviewStats {
@@ -135,14 +134,12 @@ export interface EvaluationStatTreeLeaf {
   label: string
   value: number
   displayValue: string
-  color?: string
 }
 
 export interface EvaluationStatTreeBranch {
   kind: 'branch'
   key: string
   label: string
-  color?: string
   flow?: 'grid'
   children: EvaluationStatTreeNode[]
 }

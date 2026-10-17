@@ -4,6 +4,7 @@
 */
 
 import type { StatTreeNode } from '@/modules/simulation/model/statsView.ts'
+import { attributeAccent } from '@/domain/gameData/attributeDisplay'
 
 export interface ScopedAddend {
   /* scope + modifier is the identity: one scope can reach several modifiers */
@@ -94,7 +95,7 @@ export function makeStatResidue(statsTree: StatTreeNode[]): StatResidue {
           scopeKind: node.key as ScopedAddend['scopeKind'],
           scopeKey: scope.key,
           scopeLabel: scope.label,
-          color: scope.color,
+          color: node.key === 'attribute' ? attributeAccent(scope.key) : undefined,
           displayValue: leaf.displayValue,
           value: leaf.value,
         }

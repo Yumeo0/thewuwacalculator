@@ -19,7 +19,7 @@ import type {
 } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import { editorNodeLabel } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats.ts'
-import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
+import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
 import { findNode, collectSubtrees } from '@/modules/simulation/surfaces/rotation/program-editor/model/treeEdit.ts'
 import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 import {

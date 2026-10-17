@@ -4,7 +4,7 @@
                domain writes, and recovery cleanup.
 */
 
-import { DEF_UI_PREFS } from '@wuwacalc/core/domain/entities/preferences'
+import { DEF_UI_PREFS } from '@/domain/entities/preferences'
 import { COMPRESSED_ROTATIONS_PREFIX, encodePersistedDomain, decodePersistedDomain } from './storageCodec'
 import { readCombatWorkspace, writeCombatWorkspace, scenarioRecords } from './scenarioRecords'
 import { persistenceCoordinator } from './persistenceCoordinator'
@@ -12,24 +12,12 @@ import { readMonolithicState, readLegacyState } from './legacyMigration'
 export { PersistenceCoordinator } from './persistenceCoordinator'
 export { ScenarioRecordRepository } from './scenarioRecords'
 import { SHOWCASE_INDEX, readShowcaseCards, writeShowcaseCards, clearShowcaseCards } from './showcaseCards'
-import type { HydratedAppState, PersistedState } from '@wuwacalc/core/domain/entities/appState'
-import type { PersistedUnknown } from '@wuwacalc/core/engine/runtime/defaults'
+import type { HydratedAppState, PersistedState } from '@/domain/entities/appState'
+import type { PersistedUnknown } from '@/domain/entities/appState'
 import { copyScenarioRecords, summarizeScenario, type ScenarioWorkspace } from '@wuwacalc/core/domain/entities/scenarioLibrary'
-import { makeAppState, initAppState } from '@wuwacalc/core/engine/runtime/defaults'
-import {
-  APP_STATE_VER,
-  persistedSchema,
-  prssInvBldsS,
-  prssInvChsSl,
-  prssInvRttnS,
-  prssInvScenariosSl,
-  prssOptSettingsSl,
-  prssCmbtWrkspSlcS,
-  prssSuggsSlc,
-  prssUiPprnSl,
-  prssUiLytSlc,
-  prssUiSvdRoh,
-} from '@wuwacalc/core/engine/runtime/schema'
+import { makeAppStateWithUi, initAppStateWithUi, parsePersistedState } from './appState'
+import { APP_STATE_VER, prssInvBldsS, prssInvChsSl, prssInvRttnS, prssInvScenariosSl, prssOptSettingsSl, prssCmbtWrkspSlcS, prssSuggsSlc } from '@wuwacalc/core/engine/runtime/schema'
+import { prssUiPprnSl, prssUiLytSlc, prssUiSvdRoh } from '@/application/persistence/uiPersist'
 
 import {
   APP_STORAGE_KEY,
@@ -448,7 +436,7 @@ function readPrssDmn<K extends PersistKey>(
 }
 
 function makePersistDraft(includeInventory: boolean): PersistDraft {
-  const defaults = makeAppState()
+  const defaults = makeAppStateWithUi()
 
   return {
     version: APP_STATE_VER,
@@ -464,14 +452,8 @@ function makePersistDraft(includeInventory: boolean): PersistDraft {
 }
 
 function normPrssAppS(parsed: unknown): HydratedAppState {
-  if (!parsed || typeof parsed !== 'object') {
-    throw new Error('Snapshot must be a JSON object.')
-  }
-
-  const current = persistedSchema.safeParse(parsed)
-  if (current.success) {
-    return initAppState(current.data as unknown as PersistedState)
-  }
+  const result = parsePersistedState(parsed)
+  if (result.ok) return result.state
 
   throw new Error('Snapshot validation failed.')
 }
@@ -484,7 +466,7 @@ function normalizeAppState(
     Boolean(Object.getOwnPropertyDescriptor(indexed.scenariosById, id)?.get))) {
     const selectedId = indexed.selectedScenarioId
     const selected = indexed.scenariosById[selectedId]
-    const normalized = initAppState({
+    const normalized = initAppStateWithUi({
       ...state,
       combat: {
         selectedScenarioId: selectedId,
@@ -513,7 +495,7 @@ function normalizeAppState(
       },
     }
   }
-  return initAppState(state)
+  return initAppStateWithUi(state)
 }
 
 function ssmbPrssAppS(includeInventory: boolean | 'gear'): HydratedAppState | null {

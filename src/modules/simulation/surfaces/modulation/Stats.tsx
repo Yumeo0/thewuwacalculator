@@ -33,6 +33,7 @@ import {
   formatStatKeyValue,
 } from '@/modules/simulation/model/statsView.ts'
 import { getBuildEvaluationTone } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
+import { attributeAccent } from '@/domain/gameData/attributeDisplay'
 import { getResSeedBy, resResBaseSt } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
 import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
 import { wpnAtkAt } from '@wuwacalc/core/engine/runtime/weaponState.ts'
@@ -510,7 +511,7 @@ function StatRow({
       className={classes}
       data-row={row.key}
       data-open={hasScopes && open ? 'true' : 'false'}
-      style={{ '--el': row.color ?? 'var(--text)' } as CssVars}
+      style={{ '--el': attributeAccent(row.key) ?? 'var(--text)' } as CssVars}
     >
       <button
         type="button" className="pgd-pick"
@@ -784,7 +785,7 @@ function StatWorksheet({
 
   return (
     <aside className="pgd-aside rte-scope"
-      style={{ '--el': row.color ?? 'var(--text)' } as CssVars}
+      style={{ '--el': attributeAccent(row.key) ?? 'var(--text)' } as CssVars}
     >
       <div className="pgd-card">
         <header className="pgd-card-head pst-card-head">
@@ -1410,7 +1411,6 @@ export function ModulationStats({
             base: 0,
             bonus: pickedDirectScope.value,
             total: pickedDirectScope.value,
-            color: pickedDirectScope.color,
           }}
           statRows={[]}
           stateGroups={[]}

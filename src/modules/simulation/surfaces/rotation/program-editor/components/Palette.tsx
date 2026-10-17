@@ -16,7 +16,7 @@ import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { selEnemyProf, selWorkDrvd } from '@/application/state'
 import { resolveSkill } from '@wuwacalc/core/engine/pipeline/resolveSkill.ts'
 import { isRotationSkillVisible } from '@/modules/simulation/surfaces/rotation/shared/visibility.ts'
-import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
+import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import { withDefEchoMg, withDefIconM, withDefResMg } from '@/shared/lib/imageFallback.ts'
 import {

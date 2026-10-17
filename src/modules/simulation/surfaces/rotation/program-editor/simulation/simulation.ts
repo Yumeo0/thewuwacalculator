@@ -9,7 +9,7 @@ import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState.ts'
 import { type SavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import type { RotationComparisonSummary } from '@wuwacalc/core/domain/entities/rotationSummary.ts'
 import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
-import type { RotationDamageBasis } from '@wuwacalc/core/domain/entities/rotationEditorPreferences.ts'
+import type { RotationDamageBasis } from '@/domain/entities/rotationEditorPreferences.ts'
 import { projectScenarioRuntimes } from '@wuwacalc/core/engine/runtime/scenarioRuntime.ts'
 import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import {

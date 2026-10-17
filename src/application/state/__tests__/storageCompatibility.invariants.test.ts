@@ -11,9 +11,10 @@ import { combatScenarioId, contextScenarioMember, makeScenarioTeam } from '@wuwa
 import { makeSavedScenario } from '@wuwacalc/core/domain/entities/inventoryStorage'
 import { makeSavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage'
 import { addScenario, listContextResonatorScenarios, replaceScenario, selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
-import { makeAppState, makeResProfile, makeScenarioFromProfiles, mkDefRandGnr } from '@wuwacalc/core/engine/runtime/defaults'
+import { makeResProfile, makeScenarioFromProfiles, mkDefRandGnr } from '@wuwacalc/core/engine/runtime/defaults'
+import { makeAppStateWithUi } from '@/application/persistence/appState'
 import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService'
-import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE } from '@wuwacalc/core/domain/entities/preferences'
+import { DEF_SHOWCASE_CARD_STYLE, DEF_SHOWCASE_HIDE } from '@/domain/entities/preferences'
 import { projectScenarioWorkspaceProfiles } from '@wuwacalc/core/engine/runtime/scenarioRuntime'
 import { projectScenarioMemberRuntime } from '@wuwacalc/core/engine/runtime/scenarioRuntime'
 import { getDefaultRotation } from '@wuwacalc/core/data/catalog/gameDataService.ts'
@@ -64,7 +65,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('loads saves that still carry ui keys retired with the legacy pages', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     state.ui.compressedExports = false
     saveAppState(state, { domains: ['ui.layout'] })
     const stored = JSON.parse(localStorage.getItem(APPSTOREUILY)!)
@@ -80,7 +81,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('writes only the changed Showcase card and keeps it out of layout serialization', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const card = { style: { ...DEF_SHOWCASE_CARD_STYLE }, hidden: { ...DEF_SHOWCASE_HIDE } }
     state.ui.preferences.showcaseCards = { a: card, b: { ...card } }
     saveAppState(state, { domains: ['ui.layout'] })
@@ -96,7 +97,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('migrates legacy cards before removing their layout copy and preserves reset deletions', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     saveAppState(state)
     const layout = JSON.parse(localStorage.getItem(APPSTOREUILY)!)
     layout.ui.preferences.showcaseCards = { a: { style: { ...DEF_SHOWCASE_CARD_STYLE, opacity: 31 }, hidden: DEF_SHOWCASE_HIDE } }
@@ -111,7 +112,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('keeps the legacy card copy when migration storage fails', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     saveAppState(state)
     const layout = JSON.parse(localStorage.getItem(APPSTOREUILY)!)
     layout.ui.preferences.showcaseCards = { a: { style: DEF_SHOWCASE_CARD_STYLE, hidden: DEF_SHOWCASE_HIDE } }
@@ -128,7 +129,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('round-trips preset targets and discards legacy current-rotation selections', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     state.simulation.suggestionsByResonatorId = {
       '1208': { settings: { targetFeatureId: null, rotationMode: true }, random: mkDefRandGnr() },
       '1108': { settings: { targetFeatureId: 'damage:1108001', rotationMode: true }, random: mkDefRandGnr() },
@@ -152,7 +153,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('uses catalog defaults in place of old compact sequences and omits them from new records', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const scenario = selectedCombatScenario(state.combat)
     const resonatorId = contextScenarioMember(scenario).resonatorId
     const manual = [{
@@ -178,7 +179,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('retains old advanced sequence content until it is archived', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const scenario = selectedCombatScenario(state.combat)
     const advanced = [{
       id: 'old-advanced-condition', type: 'condition' as const,
@@ -201,7 +202,7 @@ describe('persisted state compatibility', () => {
   it('edits a reloaded getter-backed scenario through the runtime store and persists the change', () => {
     const originalState = useAppStore.getState()
     try {
-      const initial = makeAppState()
+      const initial = makeAppStateWithUi()
       const seed = listResSds().find((entry) => entry.id === '1108')!
       const inactive = {
         ...makeScenarioFromProfiles({ [seed.id]: makeResProfile(seed) }, null, 0, seed.id),
@@ -231,7 +232,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('migrates v22 profiles and calculator inventory into canonical scenarios and the root library', () => {
-    const current = makeAppState()
+    const current = makeAppStateWithUi()
     const scenario = selectedCombatScenario(current.combat)
     const profiles = projectScenarioWorkspaceProfiles(current.combat)
     const legacy = {
@@ -277,7 +278,7 @@ describe('persisted state compatibility', () => {
     ['layout domain', APPSTOREUILY],
     ['combat index', APPSTORECMBTINDEX],
   ])('retains and cleanly retries a v22 monolith when the %s write fails', (_label, failingKey) => {
-    const current = makeAppState()
+    const current = makeAppStateWithUi()
     const scenario = selectedCombatScenario(current.combat)
     const profiles = projectScenarioWorkspaceProfiles(current.combat)
     const legacyKey = 'wwcalc.app.v22'
@@ -332,7 +333,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('retains and retries a current-version monolith when granular migration fails', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const monolith = JSON.stringify(state)
     localStorage.setItem(APP_STORAGE_KEY, monolith)
     const originalSetItem = localStorage.setItem.bind(localStorage)
@@ -356,7 +357,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('migrates split v26 optimizer settings without retaining the runtime copy', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const scenario = selectedCombatScenario(state.combat)
     const savedScenario = makeSavedScenario({
       name: 'v26 scenario',
@@ -394,7 +395,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('renames calculator-root and benchmark-era preferences at the v28 boundary', () => {
-    const current = makeAppState()
+    const current = makeAppStateWithUi()
     const legacyPreferenceKeys = new Set([
       'animatedRailPortraits',
       'showcaseCards',
@@ -438,7 +439,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('collapses experimental v25 duplicate contexts and keeps the selected document', () => {
-    const current = makeAppState()
+    const current = makeAppStateWithUi()
     const original = selectedCombatScenario(current.combat)
     const duplicateId = combatScenarioId('scenario:selected-duplicate')
     const duplicate = {
@@ -467,7 +468,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('round-trips working scenarios and all root artifact categories through granular storage', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const scenario = selectedCombatScenario(state.combat)
     const rotation = makeSavedRotation({ name: 'Stored rotation', scenario }, 122)
     state.library.rotations.push(rotation)
@@ -501,7 +502,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('rewrites only the edited scenario record and reloads the complete workspace', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const first = selectedCombatScenario(state.combat)
     const otherSeed = listResSds().find((seed) => seed.id !== first.team.members[0].resonatorId)!
     const other = {
@@ -553,7 +554,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('keeps an inactive scenario on disk during a selected-scenario edit', () => {
-    const initial = makeAppState()
+    const initial = makeAppStateWithUi()
     const selected = selectedCombatScenario(initial.combat)
     const seed = listResSds().find((entry) => entry.id !== contextScenarioMember(selected).resonatorId)!
     const inactive = {
@@ -584,7 +585,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('writes only an edited member and rejects invalid cross-member references', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const original = selectedCombatScenario(state.combat)
     saveAppState(state, { domains: ['combat.workspace'] })
     const firstIndex = JSON.parse(localStorage.getItem(APPSTORECMBTINDEX)!) as { recordsById: Record<string, string> }
@@ -621,7 +622,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('migrates the prior whole-workspace key without losing its scenarios', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     localStorage.setItem(APPSTORECMBT, JSON.stringify({ version: state.version, combat: state.combat }))
 
     expect(loadPrssAppS()?.combat).toEqual(state.combat)
@@ -630,7 +631,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('keeps the prior workspace and removes uncommitted records if migration runs out of quota', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const legacy = JSON.stringify({ version: state.version, combat: state.combat })
     localStorage.setItem(APPSTORECMBT, legacy)
     const originalSetItem = localStorage.setItem.bind(localStorage)
@@ -649,7 +650,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('keeps Echo attacks in the live program across storage hydration', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const scenario = selectedCombatScenario(state.combat)
     const echoAttack = {
       id: 'rotation:feature:echo-attack',
@@ -674,7 +675,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('backfills the optimizer owner in earlier granular v28 settings', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const resonatorId = contextScenarioMember(selectedCombatScenario(state.combat)).resonatorId
     saveAppState(state)
     localStorage.setItem(APPSTOREOPTS, JSON.stringify({
@@ -693,7 +694,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('continues to read plain-json rotation domains written before compression', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const rotation = makeSavedRotation({
       name: 'Plain JSON rotation',
       scenario: selectedCombatScenario(state.combat),
@@ -708,7 +709,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('continues saving later domains when one storage write exceeds quota', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     state.library.scenarios.push(makeSavedScenario({
       name: 'Still persisted',
       scenario: selectedCombatScenario(state.combat),
@@ -730,7 +731,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('moves split v25 calculator artifacts into the v27 root library', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const scenario = selectedCombatScenario(state.combat)
     const rotation = makeSavedRotation({ name: 'Legacy split rotation', scenario }, 456)
     localStorage.setItem('wwcalc.app.v25.combat.workspace', JSON.stringify({
@@ -749,7 +750,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('retains and retries every split v25 source when a replacement domain fails', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const scenario = selectedCombatScenario(state.combat)
     const rotation = makeSavedRotation({ name: 'Retry split rotation', scenario }, 457)
     const combatKey = 'wwcalc.app.v25.combat.workspace'
@@ -786,7 +787,7 @@ describe('persisted state compatibility', () => {
   })
 
   it('can defer every artifact category without changing working scenarios', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     state.library.scenarios.push(makeSavedScenario({
       name: 'Deferred scenario',
       scenario: selectedCombatScenario(state.combat),

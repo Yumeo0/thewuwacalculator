@@ -9,13 +9,9 @@ import {
   type HydratedAppState,
   type PersistedState,
   type LegacyProfileMap,
-  type ThemeMode,
-  type ThemePref,
   type EnemyProfile,
   type SimulationState,
-  type UiState,
 } from '@core/domain/entities/appState'
-import { DEF_UI_PREFS } from '@core/domain/entities/preferences'
 import type {
   SavedEcho,
   SavedBuild,
@@ -42,17 +38,6 @@ import type {
   SuggSets,
   WeaponPlanSet,
 } from '@core/domain/entities/suggestions'
-import {
-  BG_THEMES,
-  DARK_THEMES,
-  LIGHT_THEMES,
-} from '@core/domain/entities/themes'
-import { mkDefPckrFre, normalizePckrFreqState } from '@core/engine/runtime/pickerFrequency'
-import {
-  DEF_BG_KEY,
-  DEFAULT_BODY_FONT,
-  getPresetFontUrl,
-} from '@core/domain/entities/appearance'
 import { DEF_ENEMY_ID, DEF_ENEMY_PROF } from '@core/domain/entities/enemy'
 import type {
   ResRuntime,
@@ -128,28 +113,14 @@ type LegacyCalculatorState = Partial<SimulationState> & {
   } | null
 }
 
-export type PersistedUnknown = Omit<PersistedState, 'version' | 'ui' | 'simulation' | 'combat' | 'library'> & {
+/** stored state before hydration: every calculation slice optional and legacies allowed. */
+export type PersistedUnknown = Omit<PersistedState, 'version' | 'simulation' | 'combat' | 'library'> & {
   version: number
   combat?: UnknownCombatWorkspace
   library?: Partial<SavedArtifactLibrary>
   simulation: LegacyCalculatorState
-  ui: Omit<
-    UiState,
-    | 'themePreference'
-    | 'historyMax'
-    | 'itemFreq'
-    | 'preferences'
-    | 'suggsViewMode'
-    | 'rotationEditorPreferences'
-  > & {
-    themePreference?: UiState['themePreference']
-    historyMax?: UiState['historyMax']
-    itemFreq?: UiState['itemFreq']
-    preferences?: UiState['preferences']
-    suggsViewMode?: UiState['suggsViewMode']
-    rotationEditorPreferences?: UiState['rotationEditorPreferences']
-  }
 }
+
 import type {
   ManualBuffs,
   MnlMod,
@@ -189,7 +160,6 @@ import {
   catWpnAtk,
 } from '@core/engine/runtime/weaponState'
 import { APP_STATE_VER } from '@core/domain/entities/appStateVersion'
-import { makeDefaultRotationEditorPreferences } from '@core/domain/entities/rotationEditorPreferences'
 import {
   repairEchoLoadoutForCatalog,
   repairSavedEchoForCatalog,
@@ -227,16 +197,6 @@ function hasSource(type: 'resonator' | 'weapon' | 'echo' | 'echoSet' | 'enemy', 
   }
 }
 
-export function defaultSavedPrefs(): UiState['savedRotationPreferences'] {
-  return {
-    sortBy: 'date',
-    sortOrder: 'desc',
-    contributionFilter: 'unset',
-    autoSearchActiveResonator: false,
-    showLiveRotation: false,
-    scaleToSelected: true,
-  }
-}
 
 const ttrbKeys: AttributeKey[] = [
   'aero',
@@ -1672,7 +1632,6 @@ function normScenariosCat(entries: SavedScenario[]): SavedScenario[] {
 export function initAppState(
     state: PersistedUnknown,
 ): HydratedAppState {
-  const rawUi = state.ui
   const initialized = mkInitData(state.simulation, state.library)
   const { simulation, library, profiles, runtimeRevision } = initialized
   const legacyScenario = makeScenarioFromProfiles(
@@ -1741,45 +1700,9 @@ export function initAppState(
       scenariosById: { ...combat.scenariosById, [id]: migrated },
     }
   }
-  const themePref: ThemePref = state.ui.themePreference
-    ?? (state.ui.theme === 'background' ? 'background' : 'system')
 
   return {
     version: APP_STATE_VER,
-    ui: {
-      ...rawUi,
-      themePreference: themePref,
-      backgroundImageKey: rawUi.backgroundImageKey ?? DEF_BG_KEY,
-      backgroundTextMode: rawUi.backgroundTextMode ?? 'light',
-      bodyFontName: rawUi.bodyFontName ?? DEFAULT_BODY_FONT,
-      bodyFontUrl: rawUi.bodyFontUrl ?? getPresetFontUrl(rawUi.bodyFontName ?? DEFAULT_BODY_FONT),
-      optimizerCpuHintSeen: rawUi.optimizerCpuHintSeen ?? false,
-      compressedExports: rawUi.compressedExports ?? true,
-      rotationEditorPreferences: {
-        ...makeDefaultRotationEditorPreferences(),
-        ...rawUi.rotationEditorPreferences,
-        statKeys: rawUi.rotationEditorPreferences?.statKeys
-          ? [...rawUi.rotationEditorPreferences.statKeys]
-          : makeDefaultRotationEditorPreferences().statKeys,
-        groupOrder: rawUi.rotationEditorPreferences?.groupOrder
-          ? [...rawUi.rotationEditorPreferences.groupOrder]
-          : makeDefaultRotationEditorPreferences().groupOrder,
-      },
-      preferences: {
-        ...DEF_UI_PREFS,
-        ...(rawUi.preferences ?? {}),
-      },
-      suggsViewMode: rawUi.suggsViewMode ?? 'mainStats',
-      compactInv: rawUi.compactInv ?? false,
-      groupInv: rawUi.groupInv ?? false,
-      seeEquipped: rawUi.seeEquipped ?? false,
-      historyMax: rawUi.historyMax ?? 10,
-      itemFreq: normalizePckrFreqState(rawUi.itemFreq),
-      savedRotationPreferences: {
-        ...defaultSavedPrefs(),
-        ...rawUi.savedRotationPreferences,
-      },
-    },
     combat,
     library,
     simulation: {
@@ -1792,12 +1715,13 @@ export function initAppState(
   }
 }
 
+/** fresh calculation state: one fallback scenario for the default resonator. */
 export function makeAppState(
-    theme: ThemeMode = 'dark',
+  options?: { maxedFallbackProfile?: boolean },
 ): HydratedAppState {
   const seed = getFallbackSeed()
   const scenario = makeScenarioFromProfiles(
-    { [seed.id]: makeResProfile(seed, { maxed: DEF_UI_PREFS.maxResOnInit }) },
+    { [seed.id]: makeResProfile(seed, { maxed: options?.maxedFallbackProfile ?? true }) },
     null,
     0,
     seed.id,
@@ -1810,32 +1734,7 @@ export function makeAppState(
       order: [scenario.id],
       scenariosById: { [scenario.id]: scenario },
     },
-    ui: {
-      theme,
-      themePreference: 'background' === theme ? 'background' : 'dark',
-      lightVariant: LIGHT_THEMES[0],
-      darkVariant: DARK_THEMES[0],
-      backgroundVariant: BG_THEMES[0],
-      backgroundImageKey: DEF_BG_KEY,
-      backgroundTextMode: 'dark',
-      bodyFontName: DEFAULT_BODY_FONT,
-      bodyFontUrl: getPresetFontUrl(DEFAULT_BODY_FONT),
-      blurMode: false,
-      entranceAnimations: true,
-      preferences: DEF_UI_PREFS,
-      suggsViewMode: 'mainStats',
-      showSubHits: false,
-      compactInv: false,
-      groupInv: false,
-      seeEquipped: true,
-      haveHistory: true,
-      historyMax: 10,
-      itemFreq: mkDefPckrFre(),
-      optimizerCpuHintSeen: false,
-      compressedExports: true,
-      rotationEditorPreferences: makeDefaultRotationEditorPreferences(),
-      savedRotationPreferences: defaultSavedPrefs(),
-    },
     simulation: {},
   })
 }
+

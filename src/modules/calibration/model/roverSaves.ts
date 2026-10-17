@@ -6,7 +6,7 @@
 
 import type { SavedArtifactLibrary } from '@wuwacalc/core/domain/entities/inventoryStorage'
 import type { CombatScenario } from '@wuwacalc/core/domain/entities/combatScenario'
-import { ROVER_PAIRS } from '@wuwacalc/core/domain/entities/roverGender'
+import { ROVER_PAIRS } from '@/domain/entities/roverGender'
 
 export type RoverForm = 'male' | 'female'
 

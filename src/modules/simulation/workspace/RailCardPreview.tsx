@@ -8,10 +8,10 @@
 import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService'
 import { useRef } from 'react'
 import type { ResSeed } from '@wuwacalc/core/domain/entities/runtime'
-import { DEF_SHOWCASE_HIDE } from '@wuwacalc/core/domain/entities/preferences'
+import { DEF_SHOWCASE_HIDE } from '@/domain/entities/preferences'
 import { spriteVars } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display'
-import { getAttributeIconSrc } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
+import { getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
 import { getEvaluationSpinePlacement } from '@/shared/spine/placement'
 import { BuildRail, type BuildRailModel } from '@/modules/simulation/workspace/BuildRail.tsx'
 

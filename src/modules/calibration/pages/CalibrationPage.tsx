@@ -46,14 +46,14 @@ import {
   makeFontStack,
   SYSTEM_FONT_NAME,
   WUWA_FONT_NAME,
-} from '@wuwacalc/core/domain/entities/appearance'
+} from '@/domain/entities/appearance'
 import { useGglDrvAut } from '@/application/hooks/useGoogleDriveAuth'
 import { DATAXPRTCTNS, mkDataXprtFi } from '@/modules/calibration/model/dataManagement'
 import { runDataImport } from '@/modules/calibration/model/dataImportClient'
 import { useTstStr } from '@/shared/util/toastStore.ts'
 import { gameDataModeFromBeta, type GameDataMode } from '@wuwacalc/core/domain/entities/gameDataMode'
 import { CllpPageHeyf } from '@/shared/ui/CollapsiblePageHero'
-import { HIST_MAX_OPTS, type HistoryMax } from '@wuwacalc/core/domain/entities/appState'
+import { HIST_MAX_OPTS, type HistoryMax } from '@/domain/entities/uiState'
 import { groupUid } from '@/modules/simulation/api/playerIdentity'
 import { RoverMedallion } from '@/modules/calibration/pages/RoverMedallion'
 import {
@@ -64,7 +64,7 @@ import {
   type DarkThemeVar,
   type LightThemeVar,
   type ThemeVariant,
-} from '@wuwacalc/core/domain/entities/themes'
+} from '@/domain/entities/themes'
 import { mkPrefGrps, type PrefTglItem } from '@/modules/calibration/model/preferences'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 import { useMenuContributions } from '@/application/context-menu/AppContextMenu'

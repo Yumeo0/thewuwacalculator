@@ -23,7 +23,7 @@ import {
   bandCells,
   useScrollbarInset,
 } from '@/modules/simulation/surfaces/rotation/program-editor/components/RegisterCells.tsx'
-import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
+import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
 import type { AttributeKey, SkillAggType } from '@wuwacalc/core/domain/entities/stats.ts'
 import type {
   EditorBlock,

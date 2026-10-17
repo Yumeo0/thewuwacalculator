@@ -38,7 +38,7 @@ import {
   MessageSquareText,
   MessageSquarePlus
 } from 'lucide-react'
-import { ATTR_COLORS, getAttributeIconSrc } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
+import { ATTR_COLORS, getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
 import { withDefEchoMg, withDefIconM, withDefResMg, withDefWpnMg } from '@/shared/lib/imageFallback.ts'
 import {
   getSntSetClr,

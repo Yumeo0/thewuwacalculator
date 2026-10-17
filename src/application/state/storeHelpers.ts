@@ -8,11 +8,11 @@
 import type { SuggestState } from '@wuwacalc/core/domain/entities/suggestions'
 import type { ResonatorId } from '@wuwacalc/core/domain/entities/runtime'
 import {
-  makeAppState,
   makeSuggest,
 } from '@wuwacalc/core/engine/runtime/defaults'
+import { makeAppStateWithUi } from '@/application/persistence/appState'
 import { loadPrssAppS } from '@/application/persistence/storage'
-import type { HydratedAppState } from '@wuwacalc/core/domain/entities/appState'
+import type { HydratedAppState } from '@/domain/entities/appState'
 import type { AppStore } from './store'
 
 export function mkDefMkName(resName: string, xstnCnt: number): string {
@@ -28,8 +28,8 @@ export function mkDefRotName(
 
 // gear is shared by every equipped-status surface. saved scenarios stay on disk.
 export function mkNtlAppStt(): HydratedAppState {
-  if (typeof window === 'undefined') return makeAppState()
-  return loadPrssAppS({ includeInventory: 'gear' }) ?? makeAppState()
+  if (typeof window === 'undefined') return makeAppStateWithUi()
+  return loadPrssAppS({ includeInventory: 'gear' }) ?? makeAppStateWithUi()
 }
 
 export function getSuggsSttF(

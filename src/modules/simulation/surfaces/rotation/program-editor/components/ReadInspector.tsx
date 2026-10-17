@@ -9,7 +9,7 @@ import { ArrowRight, BarChart3, MessageSquareText, Repeat, Swords } from 'lucide
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
 import { withDefEchoMg, withDefIconM, withDefResMg } from '@/shared/lib/imageFallback.ts'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
-import { getAttributeIconSrc } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
+import { getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
 import {
   formatDamage,
   fmtStat,
@@ -23,7 +23,7 @@ import {
   type RegisterGroup,
   type StatKey,
 } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
-import { ROTATION_EDITOR_REGISTER_GROUPS } from '@wuwacalc/core/domain/entities/rotationEditorPreferences.ts'
+import { ROTATION_EDITOR_REGISTER_GROUPS } from '@/domain/entities/rotationEditorPreferences.ts'
 import { formatExecutionRun } from '@/modules/simulation/surfaces/rotation/program-editor/model/executionScope.ts'
 import type { ReadNode } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/readNode.ts'
 import {

@@ -4,8 +4,8 @@
                for rendering the settings page preference cards.
 */
 
-import { HIST_MAX_OPTS } from '@wuwacalc/core/domain/entities/appState'
-import type { HistoryMax, UiState } from '@wuwacalc/core/domain/entities/appState'
+import { HIST_MAX_OPTS } from '@/domain/entities/uiState'
+import type { HistoryMax, UiState } from '@/domain/entities/uiState'
 
 export interface PrefSelPtn {
   value: HistoryMax

@@ -10,7 +10,7 @@ import type { SavedBuild, SavedBuildSnap } from '@wuwacalc/core/domain/entities/
 import { scenarioForContextResonator } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import { makeResProfile, makeScenarioMemberFromProfile } from '@wuwacalc/core/engine/runtime/defaults'
 import { useAppStore } from './store'
-import { roverIdForGender } from '@wuwacalc/core/domain/entities/roverGender'
+import { roverIdForGender } from '@/domain/entities/roverGender'
 
 function filledEchoSlots(build: SavedBuildSnap): number {
   let filled = 0

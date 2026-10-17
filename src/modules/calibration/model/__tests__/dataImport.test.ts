@@ -5,7 +5,7 @@
 */
 
 import { describe, expect, it, vi } from 'vitest'
-import { makeAppState } from '@wuwacalc/core/engine/runtime/defaults'
+import { makeAppStateWithUi } from '@/application/persistence/appState'
 import { runDataImportJob } from '../dataImport'
 import { runDataImport } from '../dataImportClient'
 
@@ -38,7 +38,7 @@ describe('calibration data import jobs', () => {
   })
 
   it('resolves a current snapshot supplied as transferred file bytes', async () => {
-    const snapshot = makeAppState()
+    const snapshot = makeAppStateWithUi()
     const bytes = new TextEncoder().encode(JSON.stringify(snapshot)).buffer
     const resolved = await runDataImportJob({
       kind: 'snapshot',
@@ -54,7 +54,7 @@ describe('calibration data import jobs', () => {
   })
 
   it('preserves the current state outside an imported settings slice', async () => {
-    const currentState = makeAppState()
+    const currentState = makeAppStateWithUi()
     const changedUi = {
       ...currentState.ui,
       compactInv: !currentState.ui.compactInv,

@@ -12,7 +12,8 @@ import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService'
 import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@wuwacalc/core/data/gameData/catalog/echoStats'
 import { teamMemberId } from '@wuwacalc/core/domain/entities/combatScenario'
 import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
-import { makeAppState, makeResProfile, makeScenarioMemberFromProfile } from '@wuwacalc/core/engine/runtime/defaults'
+import { makeResProfile, makeScenarioMemberFromProfile } from '@wuwacalc/core/engine/runtime/defaults'
+import { makeAppStateWithUi } from '@/application/persistence/appState'
 import { prepareCombatScenario } from '@wuwacalc/core/engine/pipeline/combatScenario'
 import { makeMemberManualEffect, resolveEnvironmentManualBuffs } from '@wuwacalc/core/engine/runtime/scenarioEnvironment'
 import { insertScenarioTeamMember, removeScenarioTeamMember, replaceScenarioTeamMember } from '@wuwacalc/core/engine/runtime/scenarioMembers'
@@ -75,7 +76,7 @@ describe('teammate configuration retention', () => {
     expect(prepared.subjectRuntime.state.controls).not.toHaveProperty('resonator:1211:mode:value')
     expect(resolveEnvironmentManualBuffs(removed.environment, removed.team.members[0]).quick.atk.percent).toBe(0)
 
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     state.combat = useAppStore.getState().combat
     const loaded = selectedCombatScenario(parsePersisted(JSON.stringify(state)).combat)
     const otherId = listResSds().find((seed) => seed.id !== member.resonatorId && seed.id !== base.team.members[0].resonatorId)!.id
@@ -88,7 +89,7 @@ describe('teammate configuration retention', () => {
   })
 
   it('retains each resonator independently across replacements and later edits', () => {
-    const base = selectedCombatScenario(makeAppState().combat)
+    const base = selectedCombatScenario(makeAppStateWithUi().combat)
     const member = configuredMember()
     const otherId = listResSds().find((seed) => seed.id !== member.resonatorId && seed.id !== base.team.members[0].resonatorId)!.id
     let scenario = insertScenarioTeamMember(base, 1, member)
@@ -106,7 +107,7 @@ describe('teammate configuration retention', () => {
   })
 
   it('retains configuration when the picker clears and reapplies the support list', () => {
-    const base = selectedCombatScenario(makeAppState().combat)
+    const base = selectedCombatScenario(makeAppStateWithUi().combat)
     const member = configuredMember()
     const initial = insertScenarioTeamMember(base, 1, member)
     const cleared = withSupports(initial, [], makeMember)

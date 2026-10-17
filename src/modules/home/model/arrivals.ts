@@ -8,7 +8,7 @@
 import { getResonatorSeedById, getEchoById } from '@wuwacalc/core/data/catalog/catalogService'
 import { getWpnsById } from '@wuwacalc/core/data/gameData/weapons/weaponDataStore'
 import { spineSetupUrl } from '@/shared/spine/spineManifest'
-import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay'
+import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay'
 import { WPNTYPELBLS } from '@/modules/simulation/api/display'
 import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats'
 

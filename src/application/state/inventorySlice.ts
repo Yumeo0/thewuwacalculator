@@ -5,7 +5,7 @@
 */
 
 import type { AppStore } from './store'
-import { roverIdForGender } from '@wuwacalc/core/domain/entities/roverGender'
+import { roverIdForGender } from '@/domain/entities/roverGender'
 import { convertScenarioRoverGender } from './roverGenderConversion'
 import type { StoreSliceContext } from './storeContracts'
 import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'

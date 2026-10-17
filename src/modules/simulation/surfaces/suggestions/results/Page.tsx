@@ -18,7 +18,7 @@ import { DEF_SET_COND } from '@wuwacalc/core/domain/entities/sonataSetConditiona
 import { cloneEchoLoadout } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime.ts'
 import type { CompactSetPlanSuggest, MainStatSugg, WeaponEntry } from '@wuwacalc/core/engine/suggestions/types.ts'
-import type { PickFreqWeapon } from '@wuwacalc/core/domain/entities/appState.ts'
+import type { PickFreqWeapon } from '@/domain/entities/uiState'
 import { getResonator, WPNTYPETOKEY } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { OptimizerEchoPreview } from '@/modules/simulation/surfaces/optimizer/transport/OptimizerEchoPreview.tsx'
 import { useSuggRuns } from '@/modules/simulation/surfaces/suggestions/lib/useSuggRuns.ts'

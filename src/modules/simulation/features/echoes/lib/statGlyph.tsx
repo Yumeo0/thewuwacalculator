@@ -5,7 +5,7 @@
 */
 
 import type { CSSProperties } from 'react'
-import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
+import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
 import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats'
 
 const STAT_ICON_FILE: Record<string, string> = {

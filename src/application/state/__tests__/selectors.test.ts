@@ -9,11 +9,11 @@ import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import { makeScenarioTeam } from '@wuwacalc/core/domain/entities/combatScenario.ts'
 import { addScenario, selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 import {
-  makeAppState,
   makeResProfile,
   makeScenarioMemberFromProfile,
   makeScenarioFromProfiles,
 } from '@wuwacalc/core/engine/runtime/defaults.ts'
+import { makeAppStateWithUi } from '@/application/persistence/appState'
 import {
   selActResId,
   selContextMemberId,
@@ -29,7 +29,7 @@ import { makeLiveRotationEntry } from '@wuwacalc/core/engine/runtime/liveRotatio
 
 describe('workspace selectors', () => {
   it('uses scenario member zero for active-based UI selection', () => {
-    const state = makeAppState() as AppStore
+    const state = makeAppStateWithUi() as AppStore
     const scenario = selectedCombatScenario(state.combat)
     const member = scenario.team.members[0]
 
@@ -42,7 +42,7 @@ describe('workspace selectors', () => {
 
   it('keeps UI preparation on member zero while context may name another equal member', () => {
     const [primarySeed, contextSeed] = listResSds().slice(0, 2)
-    const state = makeAppState() as AppStore
+    const state = makeAppStateWithUi() as AppStore
     const base = selectedCombatScenario(state.combat)
     const primaryMember = makeScenarioMemberFromProfile(makeResProfile(primarySeed))
     const contextMember = makeScenarioMemberFromProfile(makeResProfile(contextSeed))
@@ -71,7 +71,7 @@ describe('workspace selectors', () => {
   })
 
   it('returns referentially stable derived profiles until the workspace changes', () => {
-    const state = makeAppState() as AppStore
+    const state = makeAppStateWithUi() as AppStore
     const first = selScenarioProfiles(state)
     expect(selScenarioProfiles(state)).toBe(first)
 
@@ -94,7 +94,7 @@ describe('workspace selectors', () => {
 
   it('builds one initialized runtime per context scenario', () => {
     const [firstSeed, secondSeed] = listResSds().slice(0, 2)
-    const state = makeAppState() as AppStore
+    const state = makeAppStateWithUi() as AppStore
     const firstId = selectedCombatScenario(state.combat).team.members[0].resonatorId
     const otherSeed = secondSeed.id === firstId ? firstSeed : secondSeed
     const other = {
@@ -110,7 +110,7 @@ describe('workspace selectors', () => {
 
   it('reuses unchanged scenario projections after another scenario changes', () => {
     const [firstSeed, secondSeed] = listResSds().slice(0, 2)
-    const state = makeAppState() as AppStore
+    const state = makeAppStateWithUi() as AppStore
     const firstId = selectedCombatScenario(state.combat).team.members[0].resonatorId
     const otherSeed = secondSeed.id === firstId ? firstSeed : secondSeed
     const other = {

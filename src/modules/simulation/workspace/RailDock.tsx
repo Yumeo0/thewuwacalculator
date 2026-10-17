@@ -26,7 +26,7 @@ import {
   isEnemyClssI,
   type EnemyElemId,
 } from '@wuwacalc/core/domain/entities/enemy'
-import { ATTR_COLORS, getAttributeIconSrc } from '@wuwacalc/core/domain/gameData/attributeDisplay.ts'
+import { ATTR_COLORS, getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
 import { openEnemyCnsl } from '@/modules/simulation/features/enemies/consoleRequest'
 import { openEchoImport } from '@/modules/simulation/features/echoes/lib/echoImportStore.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback'

@@ -8,7 +8,7 @@ import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import { isRotationSequence } from '@wuwacalc/core/domain/gameData/rotationSequence.ts'
 import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 import { savedRotationItems } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
-import { makeAppState } from '@wuwacalc/core/engine/runtime/defaults.ts'
+import { makeAppStateWithUi } from '@/application/persistence/appState.ts'
 import {
   migrateAdvancedScenarioRotations,
 } from '@wuwacalc/core/engine/runtime/advancedRotationMigration.ts'
@@ -28,7 +28,7 @@ describe('advanced rotation migration', () => {
   })
 
   it('archives a working scenario exactly and resets only its compact sequence', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const scenario = selectedCombatScenario(state.combat)
     scenario.program.sequence = structuredClone(advancedItems)
     scenario.program.program = structuredClone(advancedItems)
@@ -46,7 +46,7 @@ describe('advanced rotation migration', () => {
   })
 
   it('reuses a matching archive and preserves its user metadata', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const scenario = selectedCombatScenario(state.combat)
     scenario.program.sequence = structuredClone(advancedItems)
     scenario.program.program = structuredClone(advancedItems)
@@ -98,7 +98,7 @@ describe('advanced rotation migration', () => {
   })
 
   it('archives imported advanced content during hydration', () => {
-    const payload = makeAppState()
+    const payload = makeAppStateWithUi()
     const scenario = selectedCombatScenario(payload.combat)
     scenario.program.sequence = structuredClone(advancedItems)
 

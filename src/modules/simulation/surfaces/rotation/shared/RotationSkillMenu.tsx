@@ -26,7 +26,7 @@ import {
   getSkllMenuL,
   getSubHitLbl,
 } from "@/modules/simulation/surfaces/rotation/shared/nodeTools.ts";
-import {ATTR_COLORS} from "@wuwacalc/core/domain/gameData/attributeDisplay.ts";
+import {ATTR_COLORS} from '@/domain/gameData/attributeDisplay.ts';
 import {withDefIconM, withDefResMg} from "@/shared/lib/imageFallback.ts";
 
 interface TabGroup {

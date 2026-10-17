@@ -10,17 +10,16 @@ import type { EchoDef } from '@wuwacalc/core/domain/entities/catalog'
 import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
 import { getEchoById, listEchoes } from '@wuwacalc/core/data/catalog/echoCatalogService'
 import {
-  initAppState,
-  makeAppState,
   makeResProfile,
   makeTeamMember,
 } from '@wuwacalc/core/engine/runtime/defaults'
+import { makeAppStateWithUi, initAppStateWithUi } from '@/application/persistence/appState'
 import {
   inferSavedEchoCost,
   repairEchoLoadoutForCatalog,
 } from '@wuwacalc/core/engine/runtime/echoCatalogRepair'
 import { listResSds } from '@wuwacalc/core/data/catalog/resonatorSeedService'
-import type { PersistedUnknown } from '@wuwacalc/core/engine/runtime/defaults'
+import type { PersistedUnknown } from '@/domain/entities/appState'
 import { makeSavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage'
 import { makeScenarioFromProfiles } from '@wuwacalc/core/engine/runtime/defaults'
 import { projectScenarioWorkspaceProfiles } from '@wuwacalc/core/engine/runtime/scenarioRuntime'
@@ -115,7 +114,7 @@ describe('echo catalog repair', () => {
     }
     const loadout = () => [structuredClone(existing), structuredClone(stale), null, null, null]
 
-    const raw = makeAppState() as unknown as PersistedUnknown
+    const raw = makeAppStateWithUi() as unknown as PersistedUnknown
     const profile = makeResProfile(seed)
     profile.runtime.build.echoes = loadout()
     const teammate = makeTeamMember(teammateSeed)
@@ -146,7 +145,7 @@ describe('echo catalog repair', () => {
       }, 3)],
       scenarios: [],
     }
-    const hydrated = initAppState(raw)
+    const hydrated = initAppStateWithUi(raw)
     const hydratedProfile = projectScenarioWorkspaceProfiles(hydrated.combat)[seed.id]
     const savedRotation = hydrated.library.rotations[0]?.scenario
     const repairedLoadouts = [

@@ -11,7 +11,7 @@ import { useTeamCnsl } from '@/modules/simulation/features/teams/lib/teamConsole
 import { mkNtlAppStt } from '@/application/state/storeHelpers'
 import { selectPersisted } from '@/application/state/serialization'
 import { isBuildSaved, isEchoSaved, selectSavedBuildSignatures, selectSavedEchoSignatures } from '@/application/state/savedGearStatus'
-import { makeAppState } from '@wuwacalc/core/engine/runtime/defaults'
+import { makeAppStateWithUi } from '@/application/persistence/appState'
 import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import { makeSavedRotation, makeSavedBuild, makeSavedEcho } from '@wuwacalc/core/domain/entities/inventoryStorage'
 import { listEchoes } from '@wuwacalc/core/data/catalog/echoCatalogService'
@@ -37,7 +37,7 @@ describe('inventory hydration writes', () => {
   })
 
   it('does not rewrite unchanged inventory on repeated loads, and sees later storage changes', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     state.library.rotations = [makeSavedRotation({
       name: 'Saved rotation', scenario: selectedCombatScenario(state.combat),
     }, 100)]
@@ -56,7 +56,7 @@ describe('inventory hydration writes', () => {
   })
 
   it('persists repaired Echo identities once without rewriting unrelated domains', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const definition = listEchoes().find((echo) => echo.sets.length > 0)!
     const [key, value] = Object.entries(ECHO_MAIN_STATS[definition.cost])[0]
     const echo = {
@@ -83,7 +83,7 @@ describe('inventory hydration writes', () => {
     vi.useFakeTimers()
     vi.stubGlobal('window', { setTimeout, clearTimeout })
     consumePersist()
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     const definition = listEchoes().find((echo) => echo.sets.length > 0)!
     const [key, value] = Object.entries(ECHO_MAIN_STATS[definition.cost])[0]
     const echo = {
@@ -166,7 +166,7 @@ describe('inventory hydration writes', () => {
   })
 
   it('loads only the requested domains even when the gear bag is empty', () => {
-    const state = makeAppState()
+    const state = makeAppStateWithUi()
     state.library.rotations = [makeSavedRotation({
       name: 'Saved', scenario: selectedCombatScenario(state.combat),
     })]

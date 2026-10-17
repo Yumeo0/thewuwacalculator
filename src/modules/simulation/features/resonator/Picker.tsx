@@ -25,7 +25,7 @@ import {
   orderRecs,
 } from '@/modules/simulation/features/resonator/lib/recommendations.ts'
 import { ATTR_COLORS, rarityVars } from '@/modules/simulation/model/display.ts'
-import { roverIsVisible } from '@wuwacalc/core/domain/entities/roverGender'
+import { roverIsVisible } from '@/domain/entities/roverGender'
 
 const ALL_ROLE_ID = '__all_roles__'
 

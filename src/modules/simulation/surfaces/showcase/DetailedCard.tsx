@@ -8,7 +8,7 @@
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { memo, useLayoutEffect, useMemo, useRef, type KeyboardEvent, type ReactNode } from 'react'
 import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
-import type { ShowcaseCardHidden, StatsColumnHighlight } from '@wuwacalc/core/domain/entities/preferences'
+import type { ShowcaseCardHidden, StatsColumnHighlight } from '@/domain/entities/preferences'
 import { useAppStore } from '@/application/state'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'
 import { weaponStatsAt } from '@wuwacalc/core/domain/services/weaponPlan.ts'

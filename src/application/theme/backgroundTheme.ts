@@ -8,7 +8,7 @@ import {
   BG_PRESETS,
   DEF_BG_KEY,
   type BgPreset,
-} from '@wuwacalc/core/domain/entities/appearance.ts'
+} from '@/domain/entities/appearance.ts'
 
 const ACTBGSTOREKE = 'activeBgKey'
 const BGCLRSTOREKE = 'user-bg-main-color'

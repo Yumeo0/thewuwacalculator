@@ -5,7 +5,7 @@
 */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { persistedSchema } from '@wuwacalc/core/engine/runtime/schema'
+import { persistedUiSchema } from '@/application/persistence/uiPersist'
 import { selectPersisted } from '@/application/state/serialization'
 import { useAppStore } from '@/application/state/store'
 import { APPSTOREUILY, consumePersist, loadPrssAppS, saveAppState } from '@/application/persistence/storage'
@@ -22,7 +22,7 @@ describe('Echo import band preferences', () => {
     }
     delete snapshot.ui.preferences.echoImportBands
 
-    expect(persistedSchema.parse(snapshot).ui.preferences.echoImportBands).toEqual({
+    expect(persistedUiSchema.parse(snapshot.ui).preferences.echoImportBands).toEqual({
       resonator: true,
       weapon: true,
       echoes: true,

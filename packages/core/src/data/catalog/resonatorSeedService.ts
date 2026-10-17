@@ -7,7 +7,6 @@
 import { getResCat, getResCatByI } from '@core/data/gameData/resonators/resonatorDataStore'
 import type { ResSeed } from '@core/domain/entities/runtime'
 import type { ResBaseStats } from '@core/domain/entities/stats'
-import {ATTR_COLORS} from "@core/domain/gameData/attributeDisplay";
 
 // proxy so existing callers doing resonatorSeedsById[id] still work
 export const resSdsById: Record<string, ResSeed> = new Proxy(
@@ -81,11 +80,4 @@ export function resResBaseSt(
     atk: lerp(lowerStats.atk, upperStats.atk),
     def: lerp(lowerStats.def, upperStats.def),
   }
-}
-
-// returns the accent color for a resonator, or null if none is defined
-export function getResAccent(resonatorId: string): string | null {
-  const seed = getResSeedBy(resonatorId)
-  if (seed) return ATTR_COLORS[seed.attribute] ?? null
-  return null
 }

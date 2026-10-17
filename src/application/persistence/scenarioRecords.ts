@@ -5,7 +5,7 @@
 */
 
 import { compressToUTF16, decompressFromUTF16 } from 'lz-string'
-import type { PersistedState } from '@wuwacalc/core/domain/entities/appState'
+import type { PersistedState } from '@/domain/entities/appState'
 import { makeScenarioTeam, contextScenarioMember, type CombatScenario, type CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScenario'
 import { summarizeScenario, type ScenarioSummary } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import { normalizeStoredCombatScenario } from '@wuwacalc/core/engine/runtime/defaults'

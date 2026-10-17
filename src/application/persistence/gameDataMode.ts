@@ -4,7 +4,7 @@
                game-data registry.
 */
 
-import { DEF_UI_PREFS } from '@wuwacalc/core/domain/entities/preferences'
+import { DEF_UI_PREFS } from '@/domain/entities/preferences'
 import { gameDataModeFromBeta, type GameDataMode } from '@wuwacalc/core/domain/entities/gameDataMode'
 import { APP_STORAGE_KEY, APPSTOREUILY } from '@/application/persistence/storageKeys'
 

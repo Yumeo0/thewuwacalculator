@@ -28,7 +28,7 @@ import {
   type RotationEditorPercentDisplay,
   type RotationEditorRegisterGroup,
   type RotationEditorStatKey,
-} from '@wuwacalc/core/domain/entities/rotationEditorPreferences.ts'
+} from '@/domain/entities/rotationEditorPreferences.ts'
 import type { OffTuneTrace } from '@wuwacalc/core/domain/entities/stats'
 
 /**

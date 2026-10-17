@@ -5,9 +5,9 @@
 */
 
 import type { EnemyElemId } from '@wuwacalc/core/domain/entities/enemy'
-import { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay'
+import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay'
 
-export { ATTR_COLORS } from '@wuwacalc/core/domain/gameData/attributeDisplay'
+export { ATTR_COLORS } from '@/domain/gameData/attributeDisplay'
 
 export type WeaponTypeId = 1 | 2 | 3 | 4 | 5
 export type RarityId = 1 | 2 | 3 | 4 | 5
