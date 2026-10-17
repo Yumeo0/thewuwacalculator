@@ -1,11 +1,11 @@
 /*
   Author: Runor Ewhro
-  Description: Builds stable signatures for materialized resonator runtimes.
+  description: builds stable signatures for materialized resonator runtimes.
 */
 
 import type { ResRuntime } from '@core/domain/entities/runtime'
 
-// Serialize the runtime fields that change Simulation and Optimizer behavior.
+// serialize the runtime fields that change simulation and optimizer behavior.
 export function runtimeSig(runtime: ResRuntime): string {
   return JSON.stringify({
     id: runtime.id,

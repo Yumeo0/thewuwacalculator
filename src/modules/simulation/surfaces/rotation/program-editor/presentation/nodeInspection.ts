@@ -1,9 +1,9 @@
 /*
   Author: Runor Ewhro
-  Description: Builds inspection projections for authored nodes, executed results, and loop passes.
+  description: builds inspection projections for authored nodes, executed results, and loop passes.
 */
 
-/* Simulation-backed details displayed for one editor node. */
+/* simulation-backed details displayed for one editor node. */
 
 import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState.ts'
 import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'

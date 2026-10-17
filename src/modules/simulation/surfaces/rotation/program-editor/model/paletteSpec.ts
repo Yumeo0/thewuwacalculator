@@ -1,6 +1,6 @@
 /*
   Author: Runor Ewhro
-  Description: Builds searchable palette specifications from live feature, condition, and owner metadata.
+  description: builds searchable palette specifications from live feature, condition, and owner metadata.
 */
 
 import type { SkillAggType } from '@wuwacalc/core/domain/entities/stats.ts'

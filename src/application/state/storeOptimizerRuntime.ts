@@ -1,8 +1,6 @@
 /*
   Author: Runor Ewhro
-  Description: Owns store-side optimizer worker lifecycle helpers, run-token
-               invalidation, payload transfer lists, and compile/materialize
-               request plumbing.
+  description: manages optimizer worker requests, run tokens, payload transfers, compilation, and result materialization.
 */
 
 import { payloadTransfers } from '@wuwacalc/core/engine/optimizer/workers/payloadBuffers'
@@ -24,7 +22,7 @@ import {
 } from '@wuwacalc/core/engine/optimizer/config/constants'
 import { errorOpt, logOptimizer } from '@wuwacalc/core/engine/optimizer/config/log.ts'
 
-/** Owns the store's compile worker and invalidates stale optimizer requests. */
+/** manages the store's compile worker and invalidates stale optimizer requests. */
 export class OptimizerCompileSession {
   private runToken = 0
   private worker: Worker | null = null

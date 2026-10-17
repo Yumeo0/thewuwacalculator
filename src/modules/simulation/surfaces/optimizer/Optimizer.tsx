@@ -1,6 +1,6 @@
 /*
   Author: Runor Ewhro
-  Description: Coordinates optimizer settings, search execution, result
+  description: coordinates optimizer settings, search execution, result
                filtering, preview state, and build application.
 */
 
@@ -137,11 +137,11 @@ const optimizerSurfaceMenu: MenuContribution<OptimizerSurfaceMenuContext>[] = [
   },
 ]
 
-// Bound transition waits even when no completion event arrives.
+// bound transition waits even when no completion event arrives.
 const BAND_SETTLE_CAP_MS = 700
 
-// Delay synchronous compilation until React commits the fold and its active
-// transitions finish. Skip the wait when no transition runs or motion is reduced.
+// delay synchronous compilation until react commits the fold and its active
+// transitions finish. skip the wait when no transition runs or motion is reduced.
 function settleBand(band: HTMLElement | null): Promise<unknown> {
   if (!band) {
     return Promise.resolve()
@@ -243,12 +243,12 @@ export function Optimizer() {
   const [pageIndex, setPageIndex] = useState(0)
   const [viewCriteria, setViewCriteria] = useState<ResultViewCriteria>(DEFAULT_VIEW_CRITERIA)
   // whether the filter/sort controls are expanded; opening them arms the facet
-  // pass so the dropdowns can list the echoes/sets/plans present.
+  // pass. the dropdowns then list available echoes, sets, and plans.
   const [optToolsOpen, setOptToolsOpen] = useState(false)
   const [facetTable, setFacetTable] = useState<ResultFacetTable | null>(null)
-  // which console mode the body shows: filter (WHERE, subsets) or find (jump).
+  // which console mode the body shows: filter (where, subsets) or find (jump).
   const [consoleMode, setConsoleMode] = useState<'filter' | 'find'>('filter')
-  // Find predicates navigate within the filtered view without removing rows.
+  // find predicates navigate within the filtered view without removing rows.
   // findPos records the last matching display position.
   const [findPreds, setFindPreds] = useState<Predicate[]>([])
   const [findPos, setFindPos] = useState(-1)
@@ -384,7 +384,7 @@ export function Optimizer() {
       return
     }
 
-    // The runtime remains canonical scenario state. Only the optimizer's
+    // the runtime remains canonical scenario state. only the optimizer's
     // resonator-specific inputs are re-instantiated for the new subject.
     updOptSets(() => optSets, optResId)
     setEchoPlanS({ resonatorId: optResId, plans: mkMptyEchoPl() })
@@ -431,8 +431,7 @@ export function Optimizer() {
       grouped.set(skill.tab, existing)
     }
 
-    // keep group ordering aligned with the shared skill-tab order instead of
-    // relying on whatever order the targetable skill catalog happened to emit.
+    // group order follows the shared skill-tab order.
     return OPT_SKILL_TABS
       .map((tab) => ({
         label: getSkillTabLabel(tab),
@@ -446,10 +445,10 @@ export function Optimizer() {
     [trgtSkll],
   )
 
-  // Target skill is an optimizer preference, while the available target list
-  // belongs to the current canonical runtime. A resonator/scenario switch can
+  // target skill is an optimizer preference, while the available target list
+  // belongs to the current canonical runtime. a resonator/scenario switch can
   // therefore leave the persisted preference pointing at the previous
-  // resonator for one render. Resolve the effective value synchronously so no
+  // resonator for one render. resolve the effective value synchronously so no
   // consumer can observe an impossible runtime/skill pair.
   const targetSkillId = trgtSkll.some((skill) => skill.id === optSets.targetSkillId)
     ? optSets.targetSkillId
@@ -462,7 +461,7 @@ export function Optimizer() {
 
     return defaultRotation ? [{
       value: `default:${optResId}`,
-      label: `${displayName} ┬À Default Rotation`,
+      label: `${displayName} · Default Rotation`,
     }] : []
   })()
 
@@ -969,8 +968,7 @@ export function Optimizer() {
     jumpToFind(next)
   }, [findMatches, findPos, jumpToFind])
 
-  // arm the jump from the current page: changing the find predicates lands on
-  // the first matching build at or after where the user is (wrapping if none).
+  // search from the current page and wrap to the first match if needed.
   const onFindPreds = useCallback((preds: Predicate[]) => {
     setFindPreds(preds)
     setFindPos(pageStart - 1)
@@ -1074,7 +1072,7 @@ export function Optimizer() {
   ) {
     const weaponId = resultIndex == null ? null : rsltWeaponId(resultIndex)
 
-    // A preview is detached until this explicit commit. Clone it once more at
+    // a preview is detached until this explicit commit. clone it once more at
     // the boundary so later local edits cannot share objects with live state.
     updateScenarioRuntime((runtime) => {
       const equip = weaponId
@@ -1118,7 +1116,7 @@ export function Optimizer() {
 
   const vsblHdrTtls = useMemo(() => {
     const base = rotationMode
-      ? HEADER_TITLES.filter((title) => title !== 'ã® BNS%' && title !== 'ã® AMP%')
+      ? HEADER_TITLES.filter((title) => title !== 'Ʃ BNS%' && title !== 'Ʃ AMP%')
       : HEADER_TITLES
     if (!showWeapon) {
       return base
@@ -1363,7 +1361,7 @@ export function Optimizer() {
                       setPageIndex((value) => Math.max(0, value - 1))
                     }}
                   >
-                    ÔÇ╣
+                    ‹
                   </button>
 
                   {pageItems.map((item, index) =>
@@ -1376,7 +1374,7 @@ export function Optimizer() {
                           inputMode="numeric"
                           pattern="[0-9]*"
                           aria-label={`Jump to page (1 to ${totalPages})`}
-                          placeholder={`1ÔÇô${totalPages}`}
+                          placeholder={`1–${totalPages}`}
                           value={jumpDraft}
                           onChange={(event) => {
                             const next = event.target.value.replace(/[^0-9]/g, '')
@@ -1392,7 +1390,7 @@ export function Optimizer() {
                             }
                           }}
                           onBlur={() => {
-                            // Blur cancels an empty draft and commits a populated one.
+                            // blur cancels an empty draft and commits a populated one.
                             if (jumpDraft.length === 0) {
                               closeJump()
                             } else {
@@ -1434,7 +1432,7 @@ export function Optimizer() {
                       setPageIndex((value) => Math.min(totalPages - 1, value + 1))
                     }}
                   >
-                    ÔÇ║
+                    ›
                   </button>
                 </div>
               ) : null}
@@ -1449,7 +1447,7 @@ export function Optimizer() {
     ? `${optResId}:result:${rslvPrvwTgt.index}`
     : `${optResId}:base`
 
-  // Theory search obtains its exact candidate count from worker progress,
+  // theory search obtains its exact candidate count from worker progress,
   // unlike inventory mode's precomputed combination count.
   const stagePermutations = isThryMode
     ? null

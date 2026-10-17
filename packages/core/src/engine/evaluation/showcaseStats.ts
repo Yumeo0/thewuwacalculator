@@ -1,6 +1,6 @@
 /*
   Author: Runor Ewhro
-  Description: Computes the current combat sheet without rotation execution or scoring.
+  description: computes the current combat sheet without rotation execution or scoring.
 */
 import { getResSeedBy } from '@core/data/catalog/resonatorSeedService'
 import { makeCombatGraph } from '@core/engine/runtime/combatGraph'

@@ -1,7 +1,7 @@
 /*
   Author: Runor Ewhro
-  Description: Builds and caches the full game-data source package list
-               and the derived registry used across Simulation tools.
+  description: builds and caches the full game-data source package list
+               and the derived registry used across simulation tools.
 */
 
 import { initEchoCat } from '@core/data/gameData/catalog/echoes'
@@ -28,7 +28,7 @@ const GAME_DATA_KEY = '__wuwaGameDataState__'
 const loadGameData = <T>(mode: GameDataMode, path: string): Promise<T> =>
   getGameDataSource().load<T>(mode, path)
 
-/** Owns registry subscriptions and delayed release around the HMR-safe data state. */
+/** manages registry subscriptions and delayed release around the hmr-safe data state. */
 export class GameDataSession {
   private readonly registryListeners = new Set<() => void>()
   private nonSimulationReleaseTimer: ReturnType<typeof setTimeout> | null = null
@@ -38,7 +38,7 @@ export class GameDataSession {
     const scope = globalThis as typeof globalThis & { [GAME_DATA_KEY]?: GameDataGlbl }
     const existing = scope[GAME_DATA_KEY]
     if (existing) {
-      // Development hot reload can retain an older singleton shape.
+      // development hot reload can retain an older singleton shape.
       existing.commonSources ??= null
       existing.commonRegistry ??= null
       existing.coreCatalogs ??= null
@@ -124,7 +124,7 @@ export class GameDataSession {
     return () => {
       state.leases.delete(lease)
       if (state.releaseRequested && state.leases.size === 0) {
-        // Allow a draft's cleanup/setup pair to settle before releasing kits.
+        // allow a draft's cleanup/setup pair to settle before releasing kits.
         setTimeout(() => {
           if (this.getState() === state && state.releaseRequested && state.leases.size === 0) {
             this.releaseCalculationData()
@@ -444,7 +444,7 @@ export class GameDataSession {
         featureIds: manifest.featureIds,
       }
       state.coreOnly = true
-      // Source identities are sufficient for persisted-state validation. The
+      // source identities are sufficient for persisted-state validation. the
       // full source graph is rebuilt only when a calculation route is entered.
       this.installRegistry(state, mkGameDataRe(state.coreCatalogs.sourceStubs))
     })().catch((error) => {
@@ -458,7 +458,7 @@ export class GameDataSession {
 
 const gameDataSession = new GameDataSession()
 
-/** Derived caches must release removed kits as soon as the registry changes. */
+/** derived caches must release removed kits as soon as the registry changes. */
 export function onGameDataChange(listener: () => void): () => void {
   return gameDataSession.onChange(listener)
 }
@@ -540,8 +540,8 @@ function assertDataSchema(manifest: SourceManifest): void {
   )
 }
 
-// Omitted IDs preserve the full registry for offline tools and migrations.
-// Browser and worker entry points request only their current team.
+// omitted ids preserve the full registry for offline tools and migrations.
+// browser and worker entry points request only their current team.
 export function initGameData(options: {
   mode?: GameDataMode
   resonatorIds?: readonly string[]
@@ -551,7 +551,7 @@ export function initGameData(options: {
   return gameDataSession.initialize(options)
 }
 
-/** Boot routes that only need catalogs and persisted-state validation without
+/** boot routes that only need catalogs and persisted-state validation without
  * constructing the calculation registry and all of its derived indexes. */
 export function initCoreGameData(options: { mode?: GameDataMode; resonatorIds?: readonly string[] } = {}): Promise<void> {
   return gameDataSession.initializeCore(options)
@@ -567,8 +567,8 @@ export function getGameData(): GameDataReg {
   return state.registry
 }
 
-// The browser keeps full picker metadata but only a bounded set of detailed
-// kits. Full initialization remains available to offline tools and migrations.
+// the browser keeps full picker metadata but only a bounded set of detailed
+// kits. full initialization remains available to offline tools and migrations.
 const RECENT_RESONATOR_LIMIT = 3
 
 export function hasResonatorData(ids: readonly string[]): boolean {
@@ -599,12 +599,12 @@ export async function ensureResonatorData(ids: readonly string[]): Promise<void>
   return gameDataSession.ensureResonators(ids)
 }
 
-/** Keep a kit resident while a detached modal or configuration draft uses it. */
+/** keep a kit resident while a detached modal or configuration draft uses it. */
 export function holdResonatorData(ids: readonly string[]): () => void {
   return gameDataSession.hold(getGameDataG(), ids)
 }
 
-/** Return to the catalog-only registry after leaving Simulation. Detached
+/** return to the catalog-only registry after leaving simulation. detached
  * modals can keep a kit lease and delay this release until they close. */
 export function releaseCalculationGameData(): void {
   gameDataSession.releaseCalculationData()
@@ -614,7 +614,7 @@ export function retainResonatorData(ids: readonly string[]): void {
   gameDataSession.retain(ids)
 }
 
-/** Validity metadata remains complete even when a detailed kit is not resident. */
+/** validity metadata remains complete even when a detailed kit is not resident. */
 export function getKnownFeatureIds(): ReadonlySet<string> {
   const state = getGameDataG()
   return state.knownFeatureIds ??= new Set(Object.values(getGameData().featuresBySourceKey).flatMap((features) => features.map((feature) => feature.id)))
