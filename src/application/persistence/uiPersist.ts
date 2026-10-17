@@ -5,7 +5,7 @@
 */
 
 import * as z from 'zod/mini'
-import { APP_STATE_VER } from '@wuwacalc/core/domain/entities/appStateVersion'
+import { APP_STATE_VER } from '@/application/persistence/appStateVersion'
 import { DEF_UI_PREFS } from '@/domain/entities/preferences'
 import { DEFAULT_BODY_FONT, DEF_BG_KEY, getPresetFontUrl } from '@/domain/entities/appearance'
 import {

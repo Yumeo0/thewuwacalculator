@@ -6,7 +6,7 @@
 import type { CombatScenario, CombatScenarioId, DormantScenarioMember, ScenarioTeamMember, TeamMemberId } from '@wuwacalc/core/domain/entities/combatScenario'
 import { contextScenarioMember, makeScenarioTeam } from '@wuwacalc/core/domain/entities/combatScenario'
 import type { SavedArtifactLibrary } from '@wuwacalc/core/domain/entities/inventoryStorage'
-import type { SimulationState } from '@wuwacalc/core/domain/entities/appState'
+import type { SimulationState } from '@/application/persistence/appStateTypes'
 import type { RotationNode, RtChng } from '@wuwacalc/core/domain/gameData/contracts'
 import type { RoverGender } from '@/domain/entities/roverGender'
 import { ROVER_PAIRS, roverIdForGender } from '@/domain/entities/roverGender'

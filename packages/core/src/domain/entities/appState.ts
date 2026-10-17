@@ -5,12 +5,7 @@
 */
 
 import type { ResProf } from './profile'
-import type { SavedArtifactLibrary } from './inventoryStorage'
-import type { OptSets } from './optimizer'
-import type { SuggestState, WeaponPlanSet } from './suggestions'
 import type { AttributeKey } from './stats'
-import type { ScenarioWorkspace } from './scenarioLibrary'
-import type { ResonatorId } from './runtime'
 
 // shared unset enemy id
 export const NONE_ENEMY_ID = '0'
@@ -54,24 +49,4 @@ export function isNoEnemy(enemy: Pick<EnemyProfile, 'id'>): boolean {
   return enemy.id === NONE_ENEMY_ID
 }
 
-
-export interface SimulationState {
-  /** resonator whose derived build choices the current optimizer settings belong to. */
-  optimizerSettingsResonatorId: ResonatorId | null
-  optimizerSettings: OptSets
-  weaponSuggests: WeaponPlanSet
-  suggestionsByResonatorId: Record<string, SuggestState>
-}
-
 export type LegacyProfileMap = Record<string, ResProf>
-
-export interface PersistedState {
-  version: 28
-  /** canonical live combat state, independent of simulation tooling. */
-  combat: ScenarioWorkspace
-  /** user-authored snapshots, independent from any simulation surface. */
-  library: SavedArtifactLibrary
-  simulation: SimulationState
-}
-
-export type HydratedAppState = PersistedState

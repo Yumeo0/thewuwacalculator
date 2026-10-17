@@ -5,8 +5,8 @@
 */
 
 import * as z from 'zod/mini'
-import { APP_STATE_VER } from '@wuwacalc/core/domain/entities/appStateVersion'
-export { APP_STATE_VER } from '@wuwacalc/core/domain/entities/appStateVersion'
+import { APP_STATE_VER } from '@/application/persistence/appStateVersion'
+export { APP_STATE_VER } from '@/application/persistence/appStateVersion'
 import { DEF_SET_COND } from '@wuwacalc/core/domain/entities/sonataSetConditionals'
 import { makeOptInventorySelection } from '@wuwacalc/core/domain/entities/profile'
 import { mnlBffsSchm } from '@wuwacalc/core/engine/runtime/manualBuffsSchema'

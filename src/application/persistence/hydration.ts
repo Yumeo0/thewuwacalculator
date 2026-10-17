@@ -4,7 +4,9 @@
                normalizes legacy slices, and rebuilds the workspace.
 */
 
-import { type HydratedAppState, type PersistedState, type LegacyProfileMap, type SimulationState } from '@wuwacalc/core/domain/entities/appState'
+import type { LegacyProfileMap } from '@wuwacalc/core/domain/entities/appState'
+import type { CalculationState, PersistedState, SimulationState } from './appStateTypes'
+import type { StoredUiState } from '@/domain/entities/uiState'
 import { type SavedEcho, type SavedBuild, type SavedRotation, type SavedScenario, type SavedArtifactLibrary, cloneRotationNodes, dedupeEchoUids, getEchoSignature, normalizeDuration, normalizeRotNote } from '@wuwacalc/core/domain/entities/inventoryStorage'
 import type { OptSets } from '@wuwacalc/core/domain/entities/optimizer'
 import type { CombatSession } from '@wuwacalc/core/domain/entities/session'
@@ -27,7 +29,7 @@ import { getDefaultRotation } from '@wuwacalc/core/data/catalog/gameDataService'
 import { isRotationSequence } from '@wuwacalc/core/domain/gameData/rotationSequence'
 import { cloneBuffs, cloneRotation, cloneSkllLvl, cloneTrcNode } from '@wuwacalc/core/engine/runtime/runtimeCloning'
 import { catTmWpnAtk, catWpnAtk } from '@wuwacalc/core/engine/runtime/weaponState'
-import { APP_STATE_VER } from '@wuwacalc/core/domain/entities/appStateVersion'
+import { APP_STATE_VER } from '@/application/persistence/appStateVersion'
 import { repairEchoLoadoutForCatalog, repairSavedEchoForCatalog } from '@wuwacalc/core/engine/runtime/echoCatalogRepair'
 import { MAX_RES_LVL, MAX_WPN_LVL, getFallbackSeed, mkMaxSkllLvl, makeCustomBuff, mkDefWpnSug, cloneOptSets, normWeaponForSeed, normEnemyForCatalog, mkDefRot, makeResProfile, cloneSlotRml, normProfTeam, makeScenarioFromProfiles } from '@wuwacalc/core/engine/runtime/defaults'
 
@@ -63,12 +65,16 @@ type LegacyCalculatorState = Partial<SimulationState> & {
 }
 
 /** stored state before hydration: every calculation slice optional and legacies allowed. */
-export type PersistedUnknown = Omit<PersistedState, 'version' | 'simulation' | 'combat' | 'library'> & {
+export type PersistedUnknown = Omit<PersistedState, 'version' | 'ui' | 'simulation' | 'combat' | 'library'> & {
   version: number
+  ui: StoredUiState
   combat?: UnknownCombatWorkspace
   library?: Partial<SavedArtifactLibrary>
   simulation: LegacyCalculatorState
 }
+
+/** calculation slices of a stored document, without the ui slice. */
+export type CalculationUnknown = Omit<PersistedUnknown, 'ui'>
 
 function preserveWeaponForSeed(
     seed: Pick<ResSeed, 'defaultWeaponId' | 'weaponType'> | null,
@@ -717,8 +723,8 @@ function normScenariosCat(entries: SavedScenario[]): SavedScenario[] {
 }
 
 export function initAppState(
-    state: PersistedUnknown,
-): HydratedAppState {
+    state: CalculationUnknown,
+): CalculationState {
   const initialized = mkInitData(state.simulation, state.library)
   const { simulation, library, profiles, runtimeRevision } = initialized
   const legacyScenario = makeScenarioFromProfiles(
@@ -805,7 +811,7 @@ export function initAppState(
 /** fresh calculation state: one fallback scenario for the default resonator. */
 export function makeAppState(
   options?: { maxedFallbackProfile?: boolean },
-): HydratedAppState {
+): CalculationState {
   const seed = getFallbackSeed()
   const scenario = makeScenarioFromProfiles(
     { [seed.id]: makeResProfile(seed, { maxed: options?.maxedFallbackProfile ?? true }) },
