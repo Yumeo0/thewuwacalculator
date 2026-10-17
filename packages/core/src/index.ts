@@ -9,7 +9,7 @@
 export * from './data/coreEnvironment.ts'
 export * from './data/gameData/index.ts'
 
-export * as appState from './domain/entities/appState.ts'
+export * as combatEntities from './domain/entities/appState.ts'
 export * as catalog from './domain/entities/catalog.ts'
 export * as combatGraphEntities from './domain/entities/combatGraph.ts'
 export * as combatScenario from './domain/entities/combatScenario.ts'
