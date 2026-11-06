@@ -6,14 +6,7 @@
                the pill smoothly scrolls the scroll container back to top.
 */
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence as NmtPrsn, motion } from 'motion/react'
 

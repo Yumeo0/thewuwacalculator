@@ -10,7 +10,7 @@ import { getEchoById, listEchoes } from '@core/data/catalog/echoCatalogService'
 import { getGameData } from '@core/data/gameData'
 import { ECHO_MAIN_STATS, getEchoSttsSrc } from '@core/data/gameData/catalog/echoStats'
 import { listEffects } from '@core/data/gameData/registry'
-import { mkSetPlanCnd } from '@core/engine/suggestions/mutate'
+import { mkSetPlanCnd } from '@core/engine/search/combos/setPlans'
 import {
   normOptSets,
   optSetIdSet,

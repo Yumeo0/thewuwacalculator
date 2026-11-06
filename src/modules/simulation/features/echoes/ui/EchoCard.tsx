@@ -9,11 +9,7 @@
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import type { CSSProperties as CssProps, ReactNode } from 'react'
 import { EchoStatGlyph } from '@/modules/simulation/features/echoes/lib/statGlyph.tsx'
-import {
-  getCvGrdPrcn,
-  getCvToneColor,
-  getScrToneColor,
-} from '@/modules/simulation/features/echoes/lib/metric.ts'
+import { getCvGrdPrcn, getCvToneColor, getScrToneColor } from '@/modules/simulation/features/echoes/lib/metric.ts'
 import { formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'

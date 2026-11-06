@@ -8,18 +8,8 @@ import type { CSSProperties, DragEvent as RctDrgEvt } from 'react'
 import type { ReactNode } from 'react'
 import { ModalHeader } from '@/shared/ui/AppModalShell'
 import { hideBrknMg } from '@/shared/lib/imageFallback'
-import {
-  CARD_HEIGHT,
-  CARD_WIDTH,
-  MIN_CARD_WIDTH,
-  getCardReadAreas,
-  type CardReadGroup,
-} from '@/echoParser/cardRegions'
-import {
-  getReadFraction,
-  type ReadProgress,
-  type ReadStage,
-} from '@/echoParser/readProgress'
+import { CARD_HEIGHT, CARD_WIDTH, MIN_CARD_WIDTH, getCardReadAreas, type CardReadGroup } from '@/echoParser/cardRegions'
+import { getReadFraction, type ReadProgress, type ReadStage } from '@/echoParser/readProgress'
 
 const SAMPLE_CARD = '/assets/app/samples/sample-import-image.png'
 const DISCORD_HOME = 'https://discord.gg/wNaauhE4uH'

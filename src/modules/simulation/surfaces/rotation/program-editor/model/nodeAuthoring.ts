@@ -3,53 +3,19 @@
   description: constructs and edits the advanced editor's working node model.
 */
 
-import type {
-  RotationNode,
-  RtChng,
-  RuntimeValue,
-  SourceState,
-} from '@wuwacalc/core/domain/gameData/contracts.ts'
+import type { RotationNode, RtChng, RuntimeValue, SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import { openingConditionChoices } from '@wuwacalc/core/domain/gameData/rotationPreambleDefaults.ts'
 import type { SkillAggType } from '@wuwacalc/core/domain/entities/stats.ts'
 import type { PaletteSpec } from './paletteSpec.ts'
 import { writesFromChanges } from './conditionWrites.ts'
-import type {
-  ConditionWriteAction,
-  EditorCondition,
-  EditorHandoff,
-  EditorNode,
-  EditorSection,
-  EditorStep,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
+import type { ConditionWriteAction, EditorCondition, EditorHandoff, EditorNode, EditorSection, EditorStep } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import { changeFromRegValue } from '@/modules/simulation/surfaces/rotation/program-editor/model/toRotationNodes.ts'
-import {
-  findNode,
-  makeCondition,
-  makeStep,
-  nextNodeId,
-  removeNode,
-  replaceNodeWith,
-  updateStep,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/treeEdit.ts'
-import {
-  condActionFromChange,
-  getCondChoice,
-  makeCondChange,
-  makeCondValue,
-  makeRawCondition,
-  normFeatCond,
-} from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
-import type {
-  CondChoice,
-  RotationMember,
-  RotationConditionValue,
-  SkillMenuEntry,
-} from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
+import { findNode, makeCondition, makeStep, nextNodeId, removeNode, replaceNodeWith, updateStep } from '@/modules/simulation/surfaces/rotation/program-editor/model/treeEdit.ts'
+import { condActionFromChange, getCondChoice, makeCondChange, makeCondValue, makeRawCondition, normFeatCond } from '@/modules/simulation/surfaces/rotation/shared/conditions.ts'
+import type { CondChoice, RotationMember, RotationConditionValue, SkillMenuEntry } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
 import { getSubHitLbl } from '@/modules/simulation/surfaces/rotation/shared/nodeTools.ts'
 import { skillDisplayColor } from '@/modules/simulation/surfaces/rotation/shared/skillDisplay.ts'
-import {
-  ACTIVE_RESONATOR_PATH,
-} from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
+import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 import { regTextValue } from '@/modules/simulation/surfaces/rotation/program-editor/model/registerValues.ts'
 
 function regChangeValue(change: RtChng): string {

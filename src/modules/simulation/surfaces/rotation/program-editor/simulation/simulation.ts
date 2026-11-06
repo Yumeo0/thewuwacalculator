@@ -12,35 +12,18 @@ import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import type { RotationDamageBasis } from '@/domain/entities/rotationEditorPreferences.ts'
 import { projectScenarioRuntimes } from '@wuwacalc/core/engine/runtime/scenarioRuntime.ts'
 import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
-import {
-  buildRun,
-  memberToReg,
-  projectRun,
-  type RunResult,
-  withRunMetadata,
-} from '@/modules/simulation/surfaces/rotation/program-editor/simulation/runProgram.ts'
-import type {
-  EditorMember,
-  EditorSection,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
+import { buildRun, memberToReg, projectRun, type RunResult, withRunMetadata } from '@/modules/simulation/surfaces/rotation/program-editor/simulation/runProgram.ts'
+import type { EditorMember, EditorSection } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import { editorSectionsToRotation } from '@/modules/simulation/surfaces/rotation/program-editor/model/toRotationNodes.ts'
 import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
 import { visibleRotMembers } from '@/modules/simulation/surfaces/rotation/shared/catalog.ts'
-import {
-  SimulationBatchRunner,
-  type SimulationBatchJob,
-} from '@wuwacalc/core/engine/pipeline/simulationBatch.ts'
+import { SimulationBatchRunner, type SimulationBatchJob } from '@wuwacalc/core/engine/pipeline/simulationBatch.ts'
 import type { PrepWork } from '@wuwacalc/core/engine/pipeline/preparedWorkspace.ts'
 import { prepareResSimulation } from '@wuwacalc/core/engine/pipeline/index.ts'
-import {
-  executeRotationProgram,
-  executeRotationScore,
-  prepareRunEnv,
-  prepareRotationProgram,
-} from '@wuwacalc/core/engine/rotation/execute.ts'
+import { executeRotationProgram, executeRotationScore, prepareRunEnv, prepareRotationProgram } from '@wuwacalc/core/engine/rotation/execute.ts'
 import { orderStoredRotationProgram } from '@wuwacalc/core/engine/rotation/programOrder.ts'
 import { collectResonatorIds } from '@/application/persistence/resonatorScope.ts'
-import { ensureResonatorData, holdResonatorData } from '@wuwacalc/core/data/gameData'
+import { ensureResonatorData, getGameDataMode, holdResonatorData } from '@wuwacalc/core/data/gameData'
 
 function editedRotationSections(
   runtime: ResRuntime | null | undefined,
@@ -387,7 +370,7 @@ function executeSavedRotationJob(
       savedWorkerFlushQueued = false
       const requests = savedWorkerQueue
       savedWorkerQueue = []
-      savedWorker?.postMessage({ requests })
+      savedWorker?.postMessage({ requests, gameDataMode: getGameDataMode() })
     })
   })
 }

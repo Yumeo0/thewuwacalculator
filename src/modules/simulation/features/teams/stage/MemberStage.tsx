@@ -8,17 +8,7 @@ import { flushSync } from 'react-dom'
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { isEchoSaved, isBuildSaved, selectSavedEchoSignatures, selectSavedBuildSignatures } from '@/application/state/savedGearStatus'
 
-import {
-  Suspense,
-  lazy,
-  type CSSProperties as CssProps,
-  type ReactNode,
-  useCallback,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { Suspense, lazy, type CSSProperties as CssProps, type ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ArrowRightLeft, Clipboard, Copy, Gem, Layers, Network, Package, Pencil, Save, Scissors, Sparkles, Trash2, X, Zap } from 'lucide-react'
 import { isNoWeaponId, type EchoInstance, type ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import type { GenWpn } from '@wuwacalc/core/domain/entities/weapon.ts'
@@ -38,33 +28,16 @@ import { getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { fmtEchoStatL, fmtEchoStatV, getEchoStatI, mkDefEchoNst } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
 import { isStateVisible } from '@wuwacalc/core/engine/services/sourceStateService.ts'
 import { buildSonataPlan } from '@/modules/simulation/workspace/ui.tsx'
-import {
-  applyCscdRst,
-  getStateTeamTag,
-  getTeamTgtPt,
-  isSourceVisible,
-} from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
+import { applyCscdRst, getStateTeamTag, getTeamTgtPt, isSourceVisible } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
 import { readRtPath, writeRtPath } from '@wuwacalc/core/domain/gameData/runtimePath.ts'
 import { mkCntrPath } from '@wuwacalc/core/domain/gameData/stateKeys.ts'
 import { getSrcSttNct } from '@wuwacalc/core/engine/gameData/controlOptions.ts'
 import type { RtUpdHnd } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
 import { TeammateManualBuffs } from '@/modules/simulation/features/teams/TeammateManualBuffs.tsx'
-import {
-  STAT_ICON_MAP,
-  formatStatKeyLabel,
-  formatStatValue,
-  type StatsView,
-} from '@/modules/simulation/model/statsView.ts'
+import { STAT_ICON_MAP, formatStatKeyLabel, formatStatValue, type StatsView } from '@/modules/simulation/model/statsView.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import { ATTR_COLORS, getWpnTypeLb, rarityVars } from '@/modules/simulation/model/display.ts'
-import {
-  getWeapon,
-  weaponStatsAt,
-  resPssvPrms,
-  fmtWpnStatDs,
-  WPNSTATLBLS,
-  WPN_STAT_CNS,
-} from '@/modules/simulation/features/weapons/lib/weapon.ts'
+import { getWeapon, weaponStatsAt, resPssvPrms, fmtWpnStatDs, WPNSTATLBLS, WPN_STAT_CNS } from '@/modules/simulation/features/weapons/lib/weapon.ts'
 import { scopedTargetOwnerKey } from '@wuwacalc/core/domain/gameData/targetRouting.ts'
 import { listActiveSets } from '@/modules/simulation/model/activeEchoSets.ts'
 import { useEchoClipboard } from '@/modules/simulation/model/useEchoClipboard.ts'
@@ -85,23 +58,9 @@ import { Select } from '@/application/ui/Select'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
 import { Expandable } from '@/shared/ui/Expandable.tsx'
 import { spriteVars, type ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
-import {
-  mkForteDock,
-  mkForteMode,
-  mkForteTree,
-  type ForteBranch,
-  type ForteDock,
-} from '@/modules/simulation/features/resonator/lib/forteTree.ts'
+import { mkForteDock, mkForteMode, mkForteTree, type ForteBranch, type ForteDock } from '@/modules/simulation/features/resonator/lib/forteTree.ts'
 import { ForteTree } from '@/modules/simulation/features/resonator/ForteTree.tsx'
-import {
-  ASCENSION_STOPS,
-  RES_LVL_MAX,
-  RES_LVL_MIN,
-  setResLvl,
-  setSkllLvl,
-  setWpnLvl,
-  tglTrcNd,
-} from '@/modules/simulation/features/resonator/lib/buildEdits.ts'
+import { ASCENSION_STOPS, RES_LVL_MAX, RES_LVL_MIN, setResLvl, setSkllLvl, setWpnLvl, tglTrcNd } from '@/modules/simulation/features/resonator/lib/buildEdits.ts'
 import { withDefIconM, withDefResMg, withDefWpnMg } from '@/shared/lib/imageFallback.ts'
 import { useMobileUi } from '@/shared/responsive/mobileUi'
 import { MobileConsoleBar } from '@/modules/simulation/features/teams/mobile/MobileConsoleBar.tsx'

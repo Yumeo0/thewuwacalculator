@@ -13,21 +13,7 @@ import { ECHO_SET_DEFS } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
 import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
 import { getSntSetClr, getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { fmtEchoStatV } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
-import {
-  QUICK_COSTS,
-  QUICK_SLOT_COUNT,
-  canMainEchoFitSetPlan,
-  fitQuickConfig,
-  generateQuickBuild,
-  makeQuickConfig,
-  maxSubCount,
-  normSetPlan,
-  quickCostOptions,
-  quickMainStatKeys,
-  setCountOptions,
-  setSubCount,
-  type QuickSetupConfig,
-} from '@/modules/simulation/features/echoes/lib/quickSetup.ts'
+import { QUICK_COSTS, QUICK_SLOT_COUNT, canMainEchoFitSetPlan, fitQuickConfig, generateQuickBuild, makeQuickConfig, maxSubCount, normSetPlan, quickCostOptions, quickMainStatKeys, setCountOptions, setSubCount, type QuickSetupConfig } from '@/modules/simulation/features/echoes/lib/quickSetup.ts'
 import { EchoPicker } from '@/modules/simulation/features/echoes/Picker.tsx'
 import { RollReel, StatField, carryTier } from '@/modules/simulation/features/echoes/Edit.tsx'
 import { StatGlyph } from '@/modules/simulation/workspace/ui.tsx'
@@ -124,7 +110,7 @@ export function QuickSetup({
 
   const addSet = (value: string) => {
     const setId = Number(value)
-    const count = setCountOptions(setId, config.echoCount)[0]
+    const count = setCountOptions(setId, config.echoCount - totalSetPc).at(-1)
     if (!Number.isFinite(setId) || !count) {
       return
     }
@@ -171,14 +157,21 @@ export function QuickSetup({
   const setMainEcho = (echoId: string | null) =>
     setConfig((prev) => {
       const echo = echoId ? getEchoById(echoId) : null
+      const echoCount = echo ? Math.max(prev.echoCount, 1) : prev.echoCount
       const slots = [...prev.slots]
-      if (echo) {
-        slots[0] = { ...slots[0], cost: echo.cost }
+      if (echo && slots[0].cost !== echo.cost) {
+        const swapIndex = slots.findIndex((slot, index) => index > 0 && index < echoCount && slot.cost === echo.cost)
+        if (swapIndex > 0) {
+          slots[0] = prev.slots[swapIndex]
+          slots[swapIndex] = prev.slots[0]
+        } else {
+          slots[0] = { ...slots[0], cost: echo.cost }
+        }
       }
 
       return fitQuickConfig({
         ...prev,
-        echoCount: echo ? Math.max(prev.echoCount, 1) : prev.echoCount,
+        echoCount,
         mainEchoId: echoId,
         slots,
       })

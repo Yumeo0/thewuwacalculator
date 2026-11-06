@@ -11,11 +11,7 @@ import type { EvaluationBuildSnapshot, EvaluationEchoSlot, BuildEvaluationReport
 import type { ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { MemberSelector } from '@/modules/simulation/surfaces/modulation/MemberSelector.tsx'
 import { TeamEditButton } from '@/modules/simulation/features/teams/TeamEditButton.tsx'
-import {
-  EchoCard,
-  type EvaluationEchoActions,
-  type EvaluationEchoSelection,
-} from '@/modules/simulation/workspace/ui.tsx'
+import { EchoCard, type EvaluationEchoActions, type EvaluationEchoSelection } from '@/modules/simulation/workspace/ui.tsx'
 import { EvaluationBand } from './EvaluationBand.tsx'
 import { LoadoutHead } from '@/modules/simulation/workspace/LoadoutHead.tsx'
 import { ModulationView, findScroller, memberAccent, type ModulationPanel } from './Modulation.tsx'

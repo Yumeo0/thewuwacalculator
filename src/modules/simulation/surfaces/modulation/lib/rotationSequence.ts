@@ -6,19 +6,15 @@
 import type { RotationNode, RotVl, RtChng } from '@wuwacalc/core/domain/gameData/contracts'
 import type { CombatState } from '@wuwacalc/core/domain/entities/runtime'
 import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats'
-import {
-  getNegFfctCm,
-  NEG_EFFECT_KEYS,
-  type NegEffectKey,
-} from '@wuwacalc/core/engine/gameData/negativeEffects'
+import { getNegFfctCm, NEG_EFFECT_KEYS, type NegEffectKey } from '@wuwacalc/core/engine/gameData/negativeEffects'
 import { fmtFormExpr } from '@/modules/simulation/model/formatGameData'
 import { truncTo } from '@wuwacalc/core/shared/lib/number.ts'
-import {featureMeta} from "@/modules/simulation/surfaces/rotation/shared/featureCatalog.ts";
-import {seedRsntById} from "@/modules/simulation/features/resonator/lib/seedData.ts";
-import { ROT_LOOP_COLORS } from "@/modules/simulation/surfaces/rotation/shared/loopMeta.ts";
+import { featureMeta } from '@/modules/simulation/surfaces/rotation/shared/featureCatalog.ts'
+import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
+import { ROT_LOOP_COLORS } from '@/modules/simulation/surfaces/rotation/shared/loopMeta.ts'
 import { normLoopRuns } from '@wuwacalc/core/domain/gameData/rotationLoops.ts'
 import type { CondChoice } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
-import { getCondChoice } from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
+import { getCondChoice } from '@/modules/simulation/surfaces/rotation/shared/conditions.ts'
 
 function getRotNodeItems(node: RotationNode): RotationNode[] {
   return 'items' in node && Array.isArray(node.items) ? node.items : []

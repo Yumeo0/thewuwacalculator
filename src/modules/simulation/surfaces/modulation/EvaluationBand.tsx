@@ -3,13 +3,9 @@
   description: shared evaluation score band used by every build-analysis page.
 */
 
-import { GRADE_LADDER } from '@/shared/lib/evaluationGrades.ts'
+import { GRADE_LADDER } from '@/shared/lib/evaluationGrades'
 import type { EvaluationSummary } from '@wuwacalc/core/engine/evaluation/buildEvaluationWorkerTypes'
-import {
-  formatBuildEvaluationScore,
-  getBuildEvaluationEmoji,
-  getBuildEvaluationTone,
-} from '@/modules/simulation/model/buildEvaluationDisplay.ts'
+import { formatBuildEvaluationScore, getBuildEvaluationEmoji, getBuildEvaluationTone } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
 import { formatCompactNum } from '@/modules/simulation/model/statsView.ts'
 import type { CssVars } from '@/modules/simulation/workspace/ui.tsx'
 

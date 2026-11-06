@@ -1,23 +1,15 @@
 /*
   Author: Runor Ewhro
-  description: routes teammate manual-buff edits through the shared modifier
-               operations so local teammate state matches simulation semantics.
+  description: edits teammate manual buffs through shared modifier operations.
 */
 
 import { readAppFile, xprtAppFile } from '@/application/persistence/fileCodec.ts'
+import { useAppStore } from '@/application/state'
+import { convertManualBuffsRoverGender } from '@/application/state/roverGenderConversion'
 import { type ChangeEvent, type CSSProperties as CssProps, type ReactNode, useMemo, useRef } from 'react'
 import { Bookmark, Copy, Plus, Trash2 } from 'lucide-react'
 import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
-import type {
-  MnlBaseStatK,
-  MnlMod,
-  MnlModScp,
-  MnlModVlKey,
-  MnlSkllMtchM,
-  MnlSkllSclrK,
-  MnlTopStatKe,
-  QuickBuffs,
-} from '@wuwacalc/core/domain/entities/manualBuffs.ts'
+import type { MnlBaseStatK, MnlMod, MnlModScp, MnlModVlKey, MnlSkllMtchM, MnlSkllSclrK, MnlTopStatKe, QuickBuffs } from '@wuwacalc/core/domain/entities/manualBuffs.ts'
 import type { AttributeKey, NegEffectKey, SkillTypeKey } from '@wuwacalc/core/domain/entities/stats.ts'
 import { mkDefMnlMod } from '@wuwacalc/core/engine/runtime/defaults.ts'
 import { mnlBffsSchm } from '@wuwacalc/core/engine/runtime/manualBuffsSchema.ts'
@@ -31,46 +23,8 @@ import type { RtUpdHnd } from '@/modules/simulation/features/controls/lib/runtim
 import { BuffPresetModal } from '@/modules/simulation/features/buffs/BuffPresetModal.tsx'
 import { clampQuickBuff, makeModId, mprtPay, cleanBuffs } from '@/modules/simulation/features/buffs/lib/helpers.ts'
 import { cloneManualMods } from '@/modules/simulation/features/buffs/lib/clipboard.ts'
-import {
-  ADV_SKILL_MATCH,
-  ADV_SKILL_TYPES,
-  DEFDVNCMODSC,
-  DVNCBASESTAT,
-  DVNCBASESTuv,
-  DVNCSCPPTNS,
-  DVNCTOPSTATP,
-  DVNCTTRBPTNS,
-  MAINSCLRBUFF,
-  MAINSTATBUFF,
-  MOD_VL_PTNS,
-  NEG_EFFECT_MODS,
-  NEG_EFFECT_OPTS,
-  SKILL_TAB_OPTIONS,
-  SKLLMODPTNS,
-  SKLLSCLRPTNS,
-} from '@/modules/simulation/features/buffs/lib/options.ts'
-import {
-  applySkillMod,
-  changeModScope,
-  getModVlMax,
-  getModVlSfx,
-  getSkllModPt,
-  modSummary,
-  setAttribute,
-  setBaseField,
-  setBaseStat,
-  setElementMod,
-  setModValue,
-  setNegEffect,
-  setNegMod,
-  setSkillHit,
-  setSkillMatchMode,
-  setSkillScalarField,
-  setSkillTarget,
-  setSkillType,
-  setTopStat,
-  skillMatchOptions,
-} from '@/modules/simulation/features/buffs/lib/manualBuffOps.ts'
+import { ADV_SKILL_MATCH, ADV_SKILL_TYPES, DEFDVNCMODSC, DVNCBASESTAT, DVNCBASESTuv, DVNCSCPPTNS, DVNCTOPSTATP, DVNCTTRBPTNS, MAINSCLRBUFF, MAINSTATBUFF, MOD_VL_PTNS, NEG_EFFECT_MODS, NEG_EFFECT_OPTS, SKILL_TAB_OPTIONS, SKLLMODPTNS, SKLLSCLRPTNS } from '@/modules/simulation/features/buffs/lib/options.ts'
+import { applySkillMod, changeModScope, getModVlMax, getModVlSfx, getSkllModPt, modSummary, setAttribute, setBaseField, setBaseStat, setElementMod, setModValue, setNegEffect, setNegMod, setSkillHit, setSkillMatchMode, setSkillScalarField, setSkillTarget, setSkillType, setTopStat, skillMatchOptions } from '@/modules/simulation/features/buffs/lib/manualBuffOps.ts'
 
 const ZERO_QUICK: QuickBuffs = {
   atk: { flat: 0, percent: 0 },
@@ -209,7 +163,7 @@ export function TeammateManualBuffs({ runtime, onRtPdt }: { runtime: ResRuntime;
       if (!parsed.success) {
         throw new Error(parsed.error.issues[0]?.message ?? 'Invalid manual buffs JSON.')
       }
-      const sanitized = cleanBuffs(parsed.data)
+      const sanitized = convertManualBuffsRoverGender(cleanBuffs(parsed.data), useAppStore.getState().ui.preferences.roverGender)
       onRtPdt((prev) => ({ ...prev, state: { ...prev.state, manualBuffs: sanitized } }))
     } catch (error) {
       window.alert(`Import failed: ${error instanceof Error ? error.message : 'Invalid manual buffs JSON.'}`)

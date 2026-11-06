@@ -18,6 +18,9 @@ import { makeResRuntime } from '@core/engine/runtime/defaults'
 import { materializeLegacyTeamMember } from '@core/engine/runtime/runtimeMaterialization'
 import { evalCond } from '@core/engine/effects/evaluator'
 import { countEchoSets } from '@core/engine/pipeline/buildCombatContext'
+import type { CondExpr } from '@core/domain/gameData/contracts'
+
+export type NegativeSourceEvaluator = (condition: CondExpr | undefined, source: ResRuntime, target: ResRuntime) => boolean
 
 export type NegEffectKey = keyof CombatState
 export type NegFfctCmbtK = keyof Pick<
@@ -181,7 +184,9 @@ function isNegFfctSrc(
     srcRt: ResRuntime,
     actRt: ResRuntime,
     source: ResNegFfcthn,
+    evaluate?: NegativeSourceEvaluator,
 ): boolean {
+  if (evaluate) return evaluate(source.enabledWhen, srcRt, actRt)
   return evalCond(source.enabledWhen, mkNegFfctSrc(srcRt, actRt))
 }
 
@@ -244,7 +249,9 @@ const negEffectsByKey = new WeakMap<ResRuntime, Map<NegEffectKey, RslvNegFfctE>>
 export function negEffectsFor(
     runtime: ResRuntime,
     runtimesById?: Readonly<Record<string, ResRuntime>>,
+    evaluate?: NegativeSourceEvaluator,
 ): RslvNegFfctE[] {
+  if (evaluate) return resolveNegEffectsFor(runtime, runtimesById, evaluate)
   if (runtimesById) {
     let byTeam = negEffectsByTeam.get(runtime)
     if (!byTeam) {
@@ -271,6 +278,7 @@ export function negEffectsFor(
 function resolveNegEffectsFor(
     runtime: ResRuntime,
     runtimesById?: Readonly<Record<string, ResRuntime>>,
+    evaluate?: NegativeSourceEvaluator,
 ): RslvNegFfctE[] {
   const resolved = new Map<NegEffectKey, RslvNegFfctE>()
   const nqMemIds = Array.from(
@@ -289,7 +297,7 @@ function resolveNegEffectsFor(
     }
 
     for (const entry of entries) {
-      if (!isNegFfctSrc(srcRt, runtime, entry)) {
+      if (!isNegFfctSrc(srcRt, runtime, entry, evaluate)) {
         continue
       }
 
@@ -388,7 +396,9 @@ export function getNegFfctEn(
     runtime: ResRuntime,
     key: NegEffectKey,
     runtimesById?: Readonly<Record<string, ResRuntime>>,
+    evaluate?: NegativeSourceEvaluator,
 ): RslvNegFfctE | null {
+  if (evaluate) return negEffectsFor(runtime, runtimesById, evaluate).find((entry) => entry.key === key) ?? null
   if (runtimesById) {
     return negEffectsFor(runtime, runtimesById).find((entry) => entry.key === key) ?? null
   }
@@ -430,8 +440,9 @@ export function isNegFfctVsb(
     runtime: ResRuntime,
     key: NegEffectKey,
     runtimesById?: Readonly<Record<string, ResRuntime>>,
+    evaluate?: NegativeSourceEvaluator,
 ): boolean {
-  return getNegFfctEn(runtime, key, runtimesById) !== null
+  return getNegFfctEn(runtime, key, runtimesById, evaluate) !== null
 }
 
 // map a negative effect archetype to its combat state key

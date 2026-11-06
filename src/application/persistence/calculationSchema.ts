@@ -1,3 +1,4 @@
+import { migrateLegacyEnemyProfile } from '@wuwacalc/core/domain/gameData/enemyStateMigration'
 /*
   Author: Runor Ewhro
   description: defines the zod schema used to validate and hydrate persisted
@@ -580,6 +581,7 @@ const suggSetsSchm = z.lazy(() => z.pipe(z.transform((value) => {
 }), z.strictObject({
   targetFeatureId: z._default(z.nullable(z.string()), null),
   rotationMode: z._default(z.boolean(), false),
+  rotationSourceId: z.optional(z.nullable(z.string())),
 })))
 
 // random suggestion set preference
@@ -722,7 +724,7 @@ const invRotSchm = z.lazy(() => z.pipe(z.transform((value) => {
   }
 }))))
 
-const enemyProfSchm = z.lazy(() => z.strictObject({
+const enemyProfSchm = z.lazy(() => z.pipe(z.transform(migrateLegacyEnemyProfile), z.strictObject({
     id: z.string(),
     level: z.number(),
     class: z.number(),
@@ -740,7 +742,7 @@ const enemyProfSchm = z.lazy(() => z.strictObject({
       5: z.number(),
       6: z.number(),
     }),
-  }))
+  })))
 
 // legacy active/target projection accepted only while importing old snapshots.
 const cmbtSssnSchm = z.lazy(() => z.strictObject({

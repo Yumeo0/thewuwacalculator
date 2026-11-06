@@ -7,31 +7,11 @@
 import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState.ts'
 import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import type { ResSeed } from '@wuwacalc/core/domain/entities/runtime.ts'
-import type {
-  FeatDef,
-  FeatureResult,
-  RotationNode,
-  RtChng,
-} from '@wuwacalc/core/domain/gameData/contracts.ts'
-import {
-  executeRotationProgram,
-  prepareRunEnv,
-  prepareRotationProgram,
-  type ProgramResult,
-  type InspectEntry,
-} from '@wuwacalc/core/engine/rotation/execute.ts'
+import type { FeatDef, FeatureResult, RotationNode, RtChng } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { executeRotationProgram, prepareRunEnv, prepareRotationProgram, type ProgramResult, type InspectEntry } from '@wuwacalc/core/engine/rotation/execute.ts'
 import { prepareResSimulation } from '@wuwacalc/core/engine/pipeline/index.ts'
-import {
-  runPrepWorkDetailedProgramTimed,
-  type PrepWork,
-} from '@wuwacalc/core/engine/pipeline/preparedWorkspace.ts'
-import {
-  getLoopAverageDivisor,
-  getOtherLoopAverageDivisor,
-  indexLoopDamageByRun,
-  sumRotTtlsByAggPair,
-  sumRotTtlsPair,
-} from '@wuwacalc/core/engine/pipeline/rotationTotals.ts'
+import { runPrepWorkDetailedProgramTimed, type PrepWork } from '@wuwacalc/core/engine/pipeline/preparedWorkspace.ts'
+import { getLoopAverageDivisor, getOtherLoopAverageDivisor, indexLoopDamageByRun, sumRotTtlsByAggPair, sumRotTtlsPair } from '@wuwacalc/core/engine/pipeline/rotationTotals.ts'
 import { resolveSkill } from '@wuwacalc/core/engine/pipeline/resolveSkill.ts'
 import type { AttributeKey, SkillDef } from '@wuwacalc/core/domain/entities/stats.ts'
 import { ATTR_COLORS, getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
@@ -41,74 +21,27 @@ import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
 import { weaponStatsAt } from '@/modules/simulation/features/weapons/lib/weapon.ts'
 import { getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import type { DataSrcRef } from '@wuwacalc/core/domain/gameData/contracts.ts'
-import {
-  makeLoopInfo,
-  ROT_LOOP_COLORS,
-} from '@/modules/simulation/surfaces/rotation/shared/loopMeta.ts'
-import {
-  findRotWrapLoop,
-  type RotWrapLoopPlan,
-} from '@wuwacalc/core/domain/gameData/rotationLoops.ts'
-import {
-  adjacentFeatures,
-  priorFeatures,
-  makeConditionChoices,
-} from '@/modules/simulation/surfaces/rotation/shared/catalog.ts'
-import {
-  isCheckoutableLoop,
-  seedLoopPassState,
-  type EditorPassForks,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/passCheckout.ts'
+import { makeLoopInfo, ROT_LOOP_COLORS } from '@/modules/simulation/surfaces/rotation/shared/loopMeta.ts'
+import { findRotWrapLoop, type RotWrapLoopPlan } from '@wuwacalc/core/domain/gameData/rotationLoops.ts'
+import { adjacentFeatures, priorFeatures, makeConditionChoices } from '@/modules/simulation/surfaces/rotation/shared/catalog.ts'
+import { isCheckoutableLoop, seedLoopPassState, type EditorPassForks } from '@/modules/simulation/surfaces/rotation/program-editor/model/passCheckout.ts'
 import type { RotationMember } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
-import {
-  condActionFromChange,
-  getCondChoice,
-} from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
+import { condActionFromChange, getCondChoice } from '@/modules/simulation/surfaces/rotation/shared/conditions.ts'
 import { getEmbeddedEchoSource } from '@/modules/simulation/surfaces/rotation/shared/featureCatalog.ts'
 import { getNegFfctCm, getNegFfctEn } from '@wuwacalc/core/engine/gameData/negativeEffects.ts'
-import {
-  attachedConditionChanges,
-  normalizeFeatureAttachments,
-  stripFeatureAttachments,
-} from '@wuwacalc/core/domain/gameData/rotationAttached.ts'
+import { attachedConditionChanges, normalizeFeatureAttachments, stripFeatureAttachments } from '@wuwacalc/core/domain/gameData/rotationAttached.ts'
 import { getSkillType } from '@/domain/gameData/skillTypes.ts'
 import { getSkillTabLabel } from '@/modules/simulation/model/skillTabs.ts'
 import type { CondChoice } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
-import type {
-  EditorBlock,
-  EditorCondition,
-  EditorHandoff,
-  EditorMember,
-  EditorNote,
-  EditorNode,
-  EditorExecutionScope,
-  NodeGate,
-  RotationBreakdown,
-  RotationSummary,
-  NodeOwner,
-  EditorSection,
-  StatLine,
-  EditorStep,
-  SummaryGroup,
-  StateWrite,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
+import type { EditorBlock, EditorCondition, EditorHandoff, EditorMember, EditorNote, EditorNode, EditorExecutionScope, NodeGate, RotationBreakdown, RotationSummary, NodeOwner, EditorSection, StatLine, EditorStep, SummaryGroup, StateWrite } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import { isEditorBlock } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import { splitEditorSections } from '@/modules/simulation/surfaces/rotation/program-editor/model/sections.ts'
-import {
-  findNode,
-  mapLoopBlocks,
-  setBlockExtent,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/treeEdit.ts'
+import { findNode, mapLoopBlocks, setBlockExtent } from '@/modules/simulation/surfaces/rotation/program-editor/model/treeEdit.ts'
 
 import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 import { regDisplayValue } from '@/modules/simulation/surfaces/rotation/program-editor/model/registerValues.ts'
 import { writesFromChanges } from '@/modules/simulation/surfaces/rotation/program-editor/model/conditionWrites.ts'
-import type {
-  FlatRow,
-  FlatRowTarget,
-  FlatScope,
-  FlatWrite,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/flatRows.ts'
+import type { FlatRow, FlatRowTarget, FlatScope, FlatWrite } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/flatRows.ts'
 import { skillDisplayColor } from '@/modules/simulation/surfaces/rotation/shared/skillDisplay.ts'
 
 export function srcAssetIcon(source: DataSrcRef | undefined): string | null {

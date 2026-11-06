@@ -1,8 +1,6 @@
 ideas
 .node-version
 .nvmrc
-
-.claude
 .idea
 /.idea-backup/
 .DS_Store
@@ -26,10 +24,10 @@ prod-app.json
 /ref
 
 /dev-app-state-test.json
-/eng.traineddata
-/text-sample.png
 /*.wwcalc
 
 /public/assets/display/
+
+/public/assets/app/ocr/*.js
 
 /legacy/

@@ -6,24 +6,8 @@
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useMemo, useState } from 'react'
-import type {
-  ComponentType,
-  CSSProperties,
-  MouseEvent as ReactMouseEvent,
-  SVGProps,
-} from 'react'
-import {
-  Boxes,
-  Copy,
-  Globe,
-  Layers,
-  Plus,
-  Search,
-  Swords,
-  User,
-  Users,
-  Zap,
-} from 'lucide-react'
+import type { ComponentType, CSSProperties, MouseEvent as ReactMouseEvent, SVGProps } from 'react'
+import { Boxes, Copy, Globe, Layers, Plus, Search, Swords, User, Users, Zap } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { MnlMod } from '@wuwacalc/core/domain/entities/manualBuffs.ts'
 import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
@@ -43,28 +27,11 @@ import { useTstStr } from '@/shared/util/toastStore.ts'
 import { resPssvPrms } from '@/modules/simulation/features/weapons/lib/weapon.ts'
 import { useSel } from '@/modules/simulation/lib/sel.tsx'
 import type { SelAct } from '@/modules/simulation/lib/sel.tsx'
-import {
-  cloneMnlMdfr,
-  makeModClip,
-  writeMnlModC,
-} from './lib/clipboard.ts'
+import { cloneMnlMdfr, makeModClip, writeMnlModC } from './lib/clipboard.ts'
 import EchoSourceIcon from '@/assets/echo.svg?react'
-import {
-  getBuffPresetEntryCtx,
-  getBuffPresetPaneCtx,
-} from '@/modules/simulation/features/buffs/lib/ctx.tsx'
-import {
-  buildBuffPresetCatalog,
-  buffTypeLabel,
-  describeManualModifier,
-  presetToManualModifiers,
-} from './lib/presets.ts'
-import type {
-  BuffPresetEntry,
-  BuffPresetSourceKind,
-  BuffPresetType,
-  BuffPresetValues,
-} from './lib/presets.ts'
+import { getBuffPresetEntryCtx, getBuffPresetPaneCtx } from '@/modules/simulation/features/buffs/lib/ctx.tsx'
+import { buildBuffPresetCatalog, buffTypeLabel, describeManualModifier, presetToManualModifiers } from './lib/presets.ts'
+import type { BuffPresetEntry, BuffPresetSourceKind, BuffPresetType, BuffPresetValues } from './lib/presets.ts'
 
 interface BuffPresetModalProps {
   state: AppModalState

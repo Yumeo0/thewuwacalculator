@@ -15,18 +15,12 @@ import { computeShowcaseStats } from '@wuwacalc/core/engine/evaluation/showcaseS
 import { useAppStore } from '@/application/state'
 import { useInventoryUiStore } from '@/application/state/inventoryUiStore'
 import { useOptimizerRunStore } from '@/application/state/optimizerRunStore'
-import {
-  selActResId,
-  selWorkDrvd,
-} from '@/application/state'
+import { selActResId, selWorkDrvd } from '@/application/state'
 import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
 import { getResonator, type ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/runtime'
 import type { WorkspaceSurface } from '@/shared/lib/appRoutes'
-import {
-  flattenScenarioRouting,
-  projectScenarioUiRuntimes,
-} from '@wuwacalc/core/engine/runtime/scenarioRuntime.ts'
+import { flattenScenarioRouting, projectScenarioUiRuntimes } from '@wuwacalc/core/engine/runtime/scenarioRuntime.ts'
 import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
 import { useEchoSrfcM } from '@/modules/simulation/features/echoes/lib/useEchoSurfaceMenu.tsx'
 import { parseEchoClip, pasteEchoes, readEchoClip, type EchoClipPayload } from '@/modules/simulation/features/echoes/lib/clipboard.ts'
@@ -34,24 +28,12 @@ import { qpEchoAtSlot } from '@/modules/simulation/features/echoes/lib/equip.ts'
 import { openEchoCnsl } from '@/modules/simulation/features/echoes/lib/echoConsoleStore.ts'
 
 import { ATTR_COLORS } from '@/modules/simulation/model/display'
-import {
-  FULL_EVALUATION_REPORT_OPTIONS,
-  MODULATION_SUMMARY_REPORT_OPTIONS,
-  useEvaluationReport,
-  useSuggestionsRailScore,
-} from '@/modules/simulation/model/useBuildEvaluation.ts'
+import { FULL_EVALUATION_REPORT_OPTIONS, MODULATION_SUMMARY_REPORT_OPTIONS, useEvaluationReport, useSuggestionsRailScore } from '@/modules/simulation/model/useBuildEvaluation.ts'
 import { useEvaluationTarget } from '@/modules/simulation/model/useEvaluationTarget.ts'
 import { useStableEvaluationInputs } from '@/modules/simulation/model/useStableEvaluationInputs.ts'
-import {
-  applyEvaluationAsm,
-  applyEvaluationMapAsm,
-  makeEvaluationEnemy,
-} from '@/modules/simulation/model/evaluationAssumptions.ts'
+import { applyEvaluationAsm, applyEvaluationMapAsm, makeEvaluationEnemy } from '@/modules/simulation/model/evaluationAssumptions.ts'
 import { getTuneStrainMaxForTeam } from '@wuwacalc/core/engine/gameData/tuneStrain.ts'
-import {
-  getBuildEvaluationGrade,
-  getBuildEvaluationTone,
-} from '@/modules/simulation/model/buildEvaluationDisplay.ts'
+import { getBuildEvaluationGrade, getBuildEvaluationTone } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
 import { makeStatsView } from '@/modules/simulation/model/statsView.ts'
 import { getMaxEchoSc } from '@wuwacalc/core/engine/evaluation/echoScoring.ts'
 import { makeEvaluationKey } from '@wuwacalc/core/engine/evaluation/buildEvaluationKey.ts'
@@ -62,10 +44,7 @@ import { mkPrepWork, type PrepWork } from '@wuwacalc/core/engine/pipeline/prepar
 import { selLiveRun } from '@/modules/simulation/model/selectors.ts'
 import type { SimResult } from '@wuwacalc/core/engine/pipeline/types.ts'
 import { scheduleAfterSettled } from '@/shared/lib/scheduleAfterSettled.ts'
-import {
-  cacheEchoMainStatScoringFromEvaluation,
-  prepareEchoMainStatScoring,
-} from '@wuwacalc/core/engine/evaluation/echoMainStatProfile.ts'
+import { cacheEchoMainStatScoringFromEvaluation, prepareEchoMainStatScoring } from '@wuwacalc/core/engine/evaluation/echoMainStatProfile.ts'
 import { resResBaseSt } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
 import { useTstStr } from '@/shared/util/toastStore.ts'
 import { isDtblVntTgt } from '@/shared/lib/isEditableEventTarget.ts'
@@ -77,16 +56,9 @@ import { ConfirmHost } from '@/shared/ui/ConfirmationModal'
 import type { EvaluationBuildSnapshot } from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
 import { Clipboard, Copy } from 'lucide-react'
 import { useSel } from '@/modules/simulation/lib/sel.tsx'
-import {
-  EVALUATION_RAIL_ENTER_MS, EVALUATION_RAIL_EXIT_MS,
-  type EvaluationEchoSelection, type CssVars,
-  buildSonataPlan,
-  preloadEvaluationRailImages, scheduleEvaluationTargetWork,
-} from '@/modules/simulation/workspace/ui.tsx'
+import { EVALUATION_RAIL_ENTER_MS, EVALUATION_RAIL_EXIT_MS, type EvaluationEchoSelection, type CssVars, buildSonataPlan, preloadEvaluationRailImages, scheduleEvaluationTargetWork } from '@/modules/simulation/workspace/ui.tsx'
 
-import {
-  type Entry as RosterEntry,
-} from '@/modules/simulation/workspace/roster/List.tsx'
+import { type Entry as RosterEntry } from '@/modules/simulation/workspace/roster/List.tsx'
 import { type BuildRailModel } from '@/modules/simulation/workspace/BuildRail.tsx'
 import { makeRailModel as buildRailModel } from '@/modules/simulation/workspace/railModel.ts'
 import { makeEntries } from '@/modules/simulation/workspace/roster/model.ts'

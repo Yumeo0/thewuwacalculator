@@ -38,14 +38,16 @@ console.log('package smoke ok:', Object.keys(core).length, 'named exports')
 `
 
 try {
-  const packOutput = runNpm(['pack', '--json', '--pack-destination', workDir], {
+  runNpm(['run', 'build'], { cwd: pkgDir, stdio: 'inherit' })
+  const packOutput = runNpm(['pack', '--json', '--ignore-scripts', '--pack-destination', workDir], {
     cwd: pkgDir,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit'],
   })
-  const jsonStart = packOutput.search(/\[\s*\{/)
+  const jsonStart = packOutput.search(/^[\[{]/m)
   if (jsonStart < 0) throw new Error(`unexpected npm pack output:\n${packOutput}`)
-  const packed = JSON.parse(packOutput.slice(jsonStart))
+  const parsed = JSON.parse(packOutput.slice(jsonStart))
+  const packed = Array.isArray(parsed) ? parsed : Object.values(parsed)
   const tarball = join(workDir, packed[0].filename)
   console.log('packed', packed[0].filename)
 

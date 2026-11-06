@@ -5,14 +5,7 @@
 
 import { useRef } from 'react'
 import type { ComponentType } from 'react'
-import {
-  BookOpen,
-  FileText,
-  History,
-  Scale,
-  Shield,
-  Settings as SttngsGlyph,
-} from 'lucide-react'
+import { BookOpen, FileText, History, Scale, Shield, Settings as SttngsGlyph } from 'lucide-react'
 import { AnchoredAppPopup, useAppPopupDismiss } from '@/shared/ui/AppPopup'
 import { APP_NAVIGATION } from '@/shared/lib/appRoutes'
 import { AxLink } from '@/shared/navigation/useNavX'

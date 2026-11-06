@@ -18,12 +18,7 @@ import { loadEnemySummary, type EnemySummary } from '@wuwacalc/core/data/catalog
 import { useAppStore, selEnemyProf } from '@/application/state'
 import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState'
 import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats'
-import {
-  ENEMY_ELEM_ATTR,
-  ENEMY_PRST,
-  isEnemyClssI,
-  type EnemyElemId,
-} from '@wuwacalc/core/domain/entities/enemy'
+import { ENEMY_ELEM_ATTR, ENEMY_PRST, isEnemyClssI, type EnemyElemId } from '@wuwacalc/core/domain/entities/enemy'
 import { ENEMY_CLASS_TXT, getEnemyIcon } from '@/domain/gameData/enemyDisplay'
 import { ATTR_COLORS, getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
 import { openEnemyCnsl } from '@/modules/simulation/features/enemies/consoleRequest'

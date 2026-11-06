@@ -3,11 +3,11 @@
   description: defines stable build-evaluation entry points over the internal scoring implementation.
 */
 
-export * from './evaluation/types.ts'
-export { buildEvaluation } from './evaluation/search.ts'
-export { buildEvaluationFeatureBreakdown } from './evaluation/features.ts'
+export * from './types.ts'
+export { buildEvaluation } from './search.ts'
+export { buildEvaluationFeatureBreakdown } from './features.ts'
 export {
   buildEvaluationAlternatives, buildEvaluationReport,
   rotationBuildEvaluationReport,
   ensureAnchorStoreHydrated,
-} from './evaluation/report.ts'
+} from './report.ts'

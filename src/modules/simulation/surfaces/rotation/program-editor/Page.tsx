@@ -8,306 +8,88 @@ import '@/styles/surfaces/rotation/program.css'
 import '@/styles/surfaces/rotation/flat-list.css'
 import '@/styles/surfaces/rotation/saved.css'
 import '@/styles/surfaces/rotation/console.css'
-import {
-  type CSSProperties,
-  lazy,
-  startTransition,
-  Suspense,
-  useCallback,
-  useDeferredValue,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { type CSSProperties, lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, ClipboardPaste, Copy, CopyPlus, FolderOpen, ListPlus, MessageSquarePlus, Pencil, Play, RotateCwSquare, Save, Scissors, Settings, Share2, SquareDashedMousePointer, Trash2 } from 'lucide-react'
+import { convertRotationNodesRoverGender } from '@/application/state/roverGenderConversion'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
-import {useTstStr} from '@/shared/util/toastStore.ts'
+import { useTstStr } from '@/shared/util/toastStore.ts'
 import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay.tsx'
-import {useAppStore} from '@/application/state'
-import {selEnemyProf, selWorkDrvd} from '@/application/state'
+import { useAppStore } from '@/application/state'
+import { selEnemyProf, selWorkDrvd } from '@/application/state'
 import { useSavedRotationsLease } from '@/application/hooks/useSavedRotationsLease.ts'
 import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 import { openTeamCnsl } from '@/modules/simulation/features/teams/lib/teamConsoleStore.ts'
 import { openWpnCnsl } from '@/modules/simulation/features/weapons/lib/weaponConsoleStore.ts'
-import type {RotationNode} from '@wuwacalc/core/domain/gameData/contracts.ts'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
-import {
-  editableRotMembers,
-  makeConditionChoices,
-  makeFeatureMeta,
-  visibleRotMembers,
-} from '@/modules/simulation/surfaces/rotation/shared/catalog.ts'
-import {
-  displayedRunMs,
-  getRunFlatRows,
-  type RunResult,
-  withRunMetadata,
-} from '@/modules/simulation/surfaces/rotation/program-editor/simulation/runProgram.ts'
-import {NodeList, useNodeDrag,} from '@/modules/simulation/surfaces/rotation/program-editor/components/NodeList.tsx'
-import {
-  countFlatSelectedEntries,
-  flatClipboardNodes as collectFlatClipboardNodes,
-  flatTargetMatchesRuns,
-  resolveFlatRowTarget,
-  type FlatRow,
-  type FlatRowTarget,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/flatRows.ts'
+import { editableRotMembers, makeConditionChoices, makeFeatureMeta, visibleRotMembers } from '@/modules/simulation/surfaces/rotation/shared/catalog.ts'
+import { displayedRunMs, getRunFlatRows, type RunResult, withRunMetadata } from '@/modules/simulation/surfaces/rotation/program-editor/simulation/runProgram.ts'
+import { NodeList, useNodeDrag } from '@/modules/simulation/surfaces/rotation/program-editor/components/NodeList.tsx'
+import { countFlatSelectedEntries, flatClipboardNodes as collectFlatClipboardNodes, flatTargetMatchesRuns, resolveFlatRowTarget, type FlatRow, type FlatRowTarget } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/flatRows.ts'
 import type { PaletteSpec } from '@/modules/simulation/surfaces/rotation/program-editor/model/paletteSpec.ts'
-import {
-  type BlockActions,
-  type BuildActions,
-  type ConditionActions,
-  type HandoffActions,
-  Inspector,
-  RotationTotalsPanel,
-  type SelectionActions,
-  type SelectionSummary,
-  type StepActions,
-} from '@/modules/simulation/surfaces/rotation/program-editor/components/InspectPanels.tsx'
-import {Palette, type PaletteFeature} from '@/modules/simulation/surfaces/rotation/program-editor/components/Palette.tsx'
+import { type BlockActions, type BuildActions, type ConditionActions, type HandoffActions, Inspector, RotationTotalsPanel, type SelectionActions, type SelectionSummary, type StepActions } from '@/modules/simulation/surfaces/rotation/program-editor/components/InspectPanels.tsx'
+import { Palette, type PaletteFeature } from '@/modules/simulation/surfaces/rotation/program-editor/components/Palette.tsx'
 import type { SavedListPanel } from '@/modules/simulation/surfaces/rotation/program-editor/components/SavedList.tsx'
-import {
-  CMP_MAX,
-  formatDuration,
-  formatSavedTime,
-  formatSavedFigure,
-  makeSavedEntries,
-  groupSavedEntries,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/savedRotationList.ts'
+import { CMP_MAX, formatDuration, formatSavedTime, formatSavedFigure, makeSavedEntries, groupSavedEntries } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/savedRotationList.ts'
 import { RotationProgramToolbar } from '@/modules/simulation/surfaces/rotation/program-editor/components/ProgramToolbar.tsx'
 import { ReadInspector } from '@/modules/simulation/surfaces/rotation/program-editor/components/ReadInspector.tsx'
 import { useCompareMount } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/compareRack.ts'
 import { useColumnCeiling } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/useColumnCeiling'
-import {
-  editColumnSelection,
-  fitColumnSelection,
-  resizeColumnSelection,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/columnSelection'
+import { editColumnSelection, fitColumnSelection, resizeColumnSelection } from '@/modules/simulation/surfaces/rotation/program-editor/model/columnSelection'
 import { resolveReadNode, type ReadNode } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/readNode.ts'
 import { placeLeader } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/leaderPlacement.ts'
-import type {
-  RotationDamageBasis,
-  RotationEditorPreferences,
-} from '@/domain/entities/rotationEditorPreferences.ts'
-import type {SearchNames} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeSearch.ts'
-import {getEchoById} from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
-import {StartMemberModal} from '@/modules/simulation/surfaces/rotation/program-editor/components/StartMemberModal.tsx'
-import {ConfigModal} from '@/modules/simulation/surfaces/rotation/program-editor/components/ConfigModal.tsx'
-import {
-  type DamageDecimals,
-  formatDamage,
-  loopBodyItems,
-  offTuneAuthoringStates,
-  statCeiling,
-  type PercentDisplay,
-  type RegisterGroup,
-  type StatKey,
-  stepCount,
-  stepDamageAt,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
-import {
-  appendInto,
-  attachFeature,
-  canLiftNode,
-  cloneNode,
-  collectSubtrees,
-  countNodes,
-  detachFeature,
-  type DropEdge,
-  attachNote,
-  addBlockSetup,
-  removeBlockSetup,
-  detachNote,
-  duplicateNodes,
-  findEnclosingLoop,
-  findNode,
-  insertBeside,
-  insertNode,
-  makeEmptyContainer,
-  makeEmptyNote,
-  makeStep,
-  mapLoopBlocks,
-  mapNode,
-  moveInto,
-  moveIntoMany,
-  collectHeldIds,
-  relocateNode,
-  relocateNodes,
-  removeLoopEnd,
-  removeNode,
-  removeSubtrees,
-  setAttachedMultiplier,
-  setBlockExtent,
-  setBlockValue,
-  setBlockUptime,
-  setCondAction,
-  setCondValue,
-  setHandoffTo,
-  offTuneResumeScope,
-  setOffTuneResume,
-  setStepMultiplier,
-  unwrapLoop,
-  updateStep,
-  wrapNode,
-  wrapNodes,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/treeEdit.ts'
-import {
-  applyRotationCleanup,
-  describeRotationCleanup,
-  planRotationCleanup,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/cleanup.ts'
-import {
-  checkinAllLoopPasses,
-  checkoutAllLoopPasses,
-  checkoutLoopPassById,
-  isCheckoutableLoop,
-  removeFromCheckedOutPass,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/passCheckout.ts'
-import {
-  type BuffLine,
-  type EditorBlock,
-  type EditorCondition,
-  type EditorExecutionScope,
-  type EditorHandoff,
-  type EditorMember,
-  type EditorNode,
-  type EditorNote,
-  type EditorSection,
-  type EditorStep,
-  isEditorBlock,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
+import type { RotationDamageBasis, RotationEditorPreferences } from '@/domain/entities/rotationEditorPreferences.ts'
+import type { SearchNames } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeSearch.ts'
+import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
+import { StartMemberModal } from '@/modules/simulation/surfaces/rotation/program-editor/components/StartMemberModal.tsx'
+import { ConfigModal } from '@/modules/simulation/surfaces/rotation/program-editor/components/ConfigModal.tsx'
+import { type DamageDecimals, formatDamage, loopBodyItems, offTuneAuthoringStates, statCeiling, type PercentDisplay, type RegisterGroup, type StatKey, stepCount, stepDamageAt } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
+import { appendInto, attachFeature, canLiftNode, cloneNode, collectSubtrees, countNodes, detachFeature, type DropEdge, attachNote, addBlockSetup, removeBlockSetup, detachNote, duplicateNodes, findEnclosingLoop, findNode, insertBeside, insertNode, makeEmptyContainer, makeEmptyNote, makeStep, mapLoopBlocks, mapNode, moveInto, moveIntoMany, collectHeldIds, relocateNode, relocateNodes, removeLoopEnd, removeNode, removeSubtrees, setAttachedMultiplier, setBlockExtent, setBlockValue, setBlockUptime, setCondAction, setCondValue, setHandoffTo, offTuneResumeScope, setOffTuneResume, setStepMultiplier, unwrapLoop, updateStep, wrapNode, wrapNodes } from '@/modules/simulation/surfaces/rotation/program-editor/model/treeEdit.ts'
+import { applyRotationCleanup, describeRotationCleanup, planRotationCleanup } from '@/modules/simulation/surfaces/rotation/program-editor/model/cleanup.ts'
+import { checkinAllLoopPasses, checkoutAllLoopPasses, checkoutLoopPassById, isCheckoutableLoop, removeFromCheckedOutPass } from '@/modules/simulation/surfaces/rotation/program-editor/model/passCheckout.ts'
+import { type BuffLine, type EditorBlock, type EditorCondition, type EditorExecutionScope, type EditorHandoff, type EditorMember, type EditorNode, type EditorNote, type EditorSection, type EditorStep, isEditorBlock } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import { makeConsoleModel } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/consoleModel.ts'
-import type {
-  CondChoice,
-  ConditionEditorState,
-  FeatureAttachmentState,
-  FeatureMenuState,
-  SkillMenuEntry,
-} from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
-import {RotationSkillMenu} from '@/modules/simulation/surfaces/rotation/shared/RotationSkillMenu.tsx'
-import {Condition} from '@/modules/simulation/surfaces/rotation/program-editor/components/AuthoringModals.tsx'
-import {getSubHitLbl, EMPTY_FEATURE_CONDS} from '@/modules/simulation/surfaces/rotation/shared/nodeTools.ts'
+import type { CondChoice, ConditionEditorState, FeatureAttachmentState, FeatureMenuState, SkillMenuEntry } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
+import { RotationSkillMenu } from '@/modules/simulation/surfaces/rotation/shared/RotationSkillMenu.tsx'
+import { Condition } from '@/modules/simulation/surfaces/rotation/program-editor/components/AuthoringModals.tsx'
+import { getSubHitLbl, EMPTY_FEATURE_CONDS } from '@/modules/simulation/surfaces/rotation/shared/nodeTools.ts'
 import { skillDisplayColor } from '@/modules/simulation/surfaces/rotation/shared/skillDisplay.ts'
-import {
-  isFormulaChoice,
-  makeCondChange,
-  makeCondValue,
-} from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
+import { isFormulaChoice, makeCondChange, makeCondValue } from '@/modules/simulation/surfaces/rotation/shared/conditions.ts'
 import { attachedConditionChanges } from '@wuwacalc/core/domain/gameData/rotationAttached.ts'
 import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 import { rotationBodiesEqual } from '@wuwacalc/core/domain/gameData/loopPasses.ts'
-import {findRotNode} from '@wuwacalc/core/domain/gameData/rotationTree.ts'
-import {useAppModalValue} from '@/shared/ui/useAppModal.ts'
-import {useConfirm} from '@/shared/hooks/useConfirmation.ts'
-import {makeAppendSource, appendRotationCopies, type AppendSource,} from '@/modules/simulation/surfaces/rotation/program-editor/model/append.ts'
-import {mainPortal} from '@/shared/lib/portalTarget.ts'
+import { findRotNode } from '@wuwacalc/core/domain/gameData/rotationTree.ts'
+import { useAppModalValue } from '@/shared/ui/useAppModal.ts'
+import { useConfirm } from '@/shared/hooks/useConfirmation.ts'
+import { makeAppendSource, appendRotationCopies, type AppendSource } from '@/modules/simulation/surfaces/rotation/program-editor/model/append.ts'
+import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import { ConfirmHost } from '@/shared/ui/ConfirmationModal.tsx'
-import type {MenuEntry} from '@/shared/ui/CtxMenu.tsx'
-import {makeAddToSelectionMenu, makeSelectedNodesMenu, makeSelectionMenu, makeRowMenu,} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/contextMenus.tsx'
-import {
-  applyConditionChanges,
-  applyFeatureConditionChanges,
-  applyFeatureSelection,
-  attachedWritesOf,
-  buildPreambleEntries,
-  openingStates,
-  makeConditionNode,
-  makeFeatureNode,
-  makePaletteNode,
-  removeAttachedWrite,
-  setAttachedWriteAction,
-  setAttachedWriteValue,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/nodeAuthoring.ts'
-import {
-  seedCondValueFor,
-  standingCondValue,
-  type CondAnchor,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/priorState.ts'
-import {
-  editedRotationItems,
-  pendingSavedRotationDetails,
-  prepareSavedRotationBatch,
-  projectAppendedRotation,
-  runEditedRotation,
-  runPreparedSavedRotationBatch,
-  runSavedRotationDetailBatch,
-  runStoredRotation,
-  savedRotationSummary,
-  type SavedRotationComparisonResult,
-} from '@/modules/simulation/surfaces/rotation/program-editor/simulation/simulation.ts'
-import {
-  blockAverageDamage,
-  blockRunTotals as getBlockRunTotals,
-  collectSectionSteps,
-  isDisabledInTree,
-  peakDamageForRun,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/nodeMetrics.ts'
+import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
+import { makeAddToSelectionMenu, makeSelectedNodesMenu, makeSelectionMenu, makeRowMenu } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/contextMenus.tsx'
+import { applyConditionChanges, applyFeatureConditionChanges, applyFeatureSelection, attachedWritesOf, buildPreambleEntries, openingStates, makeConditionNode, makeFeatureNode, makePaletteNode, removeAttachedWrite, setAttachedWriteAction, setAttachedWriteValue } from '@/modules/simulation/surfaces/rotation/program-editor/model/nodeAuthoring.ts'
+import { seedCondValueFor, standingCondValue, type CondAnchor } from '@/modules/simulation/surfaces/rotation/program-editor/model/priorState.ts'
+import { editedRotationItems, pendingSavedRotationDetails, prepareSavedRotationBatch, projectAppendedRotation, runEditedRotation, runPreparedSavedRotationBatch, runSavedRotationDetailBatch, runStoredRotation, savedRotationSummary, type SavedRotationComparisonResult } from '@/modules/simulation/surfaces/rotation/program-editor/simulation/simulation.ts'
+import { blockAverageDamage, blockRunTotals as getBlockRunTotals, collectSectionSteps, isDisabledInTree, peakDamageForRun } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/nodeMetrics.ts'
 import { buildBuffLines } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/nodeInspection.ts'
-import {
-  clampLoopRunSelections,
-  collectLoopColors,
-  editorLoopId,
-  findNodeExecutionScope,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/executionScope.ts'
-import {
-  findFeatureOccurrences,
-  prepareRotationNodeNavigation,
-  type RotationNodeRevealRequest,
-  type RotationNodeTarget,
-} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeNavigation.ts'
-import {
-  buildEditorSelectionModel,
-  buildFlatEditorSelectionModel,
-  carryFoldId,
-  collectEditorVisualFoldIds,
-} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/selection.ts'
-import {type SelAct, useSel,} from '@/modules/simulation/lib/sel.tsx'
-import {
-  captureRotationEditSnapshot,
-  commitRotationEdit,
-  emptyRotationEditHistory,
-  redoRotationEdit,
-  refreshRotationHistoryCursor,
-  restoreRotationEditSnapshot,
-  rotationEditRanAt,
-  rotationEditHistoryCursor,
-  rotationNodeSignatures,
-  rotationSimulationKey,
-  rotationStaleNodeIds,
-  undoRotationEdit,
-} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/history.ts'
-import {
-  getRotationEditorSession,
-  useRotationEditorSession,
-} from '@/modules/simulation/surfaces/rotation/program-editor/state/editorSessionStore.ts'
+import { clampLoopRunSelections, collectLoopColors, editorLoopId, findNodeExecutionScope } from '@/modules/simulation/surfaces/rotation/program-editor/model/executionScope.ts'
+import { findFeatureOccurrences, prepareRotationNodeNavigation, type RotationNodeRevealRequest, type RotationNodeTarget } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeNavigation.ts'
+import { buildEditorSelectionModel, buildFlatEditorSelectionModel, carryFoldId, collectEditorVisualFoldIds } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/selection.ts'
+import { type SelAct, useSel } from '@/modules/simulation/lib/sel.tsx'
+import { captureRotationEditSnapshot, commitRotationEdit, emptyRotationEditHistory, redoRotationEdit, refreshRotationHistoryCursor, restoreRotationEditSnapshot, rotationEditRanAt, rotationEditHistoryCursor, rotationNodeSignatures, rotationSimulationKey, rotationStaleNodeIds, undoRotationEdit } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/history.ts'
+import { getRotationEditorSession, useRotationEditorSession } from '@/modules/simulation/surfaces/rotation/program-editor/state/editorSessionStore.ts'
 import { useRtChrmMen } from '@/application/context-menu/routeMenuContext'
 import { useExpandableCollection } from '@/shared/ui/Expandable.tsx'
-import { useImportSurface } from '@/modules/simulation/shell/imports/ImportSurface.tsx'
+import { useImportSurface } from '@/modules/simulation/shell/imports/Surface.tsx'
 import { useLoadRotation, type RotationLoadMode } from '@/modules/simulation/surfaces/rotation/program-editor/saved/useLoadRotation.ts'
 import { RotationShareModal } from '@/modules/simulation/surfaces/rotation/program-editor/components/ShareModal.tsx'
 import { SavedRotationEditModal } from '@/modules/simulation/surfaces/rotation/program-editor/components/SavedRotationEditModal.tsx'
-import {
-  cloneRotationNodes,
-  type SavedRotation,
-} from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
+import { cloneRotationNodes, type SavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import { makeSourceKey } from '@wuwacalc/core/data/gameData/registry.ts'
-import {
-  isLiveRotEntId,
-  makeLiveRotationEntry,
-} from '@wuwacalc/core/engine/runtime/liveRotationEntry.ts'
+import { isLiveRotEntId, makeLiveRotationEntry } from '@wuwacalc/core/engine/runtime/liveRotationEntry.ts'
 import { editorNodesToRotation } from '@/modules/simulation/surfaces/rotation/program-editor/model/toRotationNodes.ts'
 import { splitEditorSections } from '@/modules/simulation/surfaces/rotation/program-editor/model/sections.ts'
 import { normLoopRuns } from '@wuwacalc/core/domain/gameData/rotationLoops.ts'
-import {
-  makeSavedRotClip,
-  readRotClip,
-  ROT_CLIP_KIND,
-  ROT_CLIP_VER,
-  type RotClipPayload,
-  writeRotClip,
-} from '@/modules/simulation/surfaces/rotation/shared/rotationClipboard.ts'
+import { makeSavedRotClip, readRotClip, ROT_CLIP_KIND, ROT_CLIP_VER, type RotClipPayload, writeRotClip } from '@/modules/simulation/surfaces/rotation/shared/rotationClipboard.ts'
 
 const ENTRANCE_MS = 1100
 const INITIAL_EDITOR_CLOSED_IDS = ['preamble'] as const
@@ -857,7 +639,10 @@ export function ProgramEditor() {
         if (!controller.signal.aborted) setSavedBatch({ key: savedBatchKey, runs })
       })
       .catch((error: unknown) => {
-        if (!controller.signal.aborted) showToast({
+        if (controller.signal.aborted) return
+        // clear batch state before reporting the error.
+        setSavedBatch({ key: savedBatchKey, runs: EMPTY_SAVED_COMPARISONS })
+        showToast({
           content: error instanceof Error ? error.message : 'Could not load saved rotation data.',
           variant: 'error',
         })
@@ -1021,11 +806,7 @@ export function ProgramEditor() {
     && (!storedSelectedId || !activeSelectionModel.availableIds.includes(storedSelectedId))
     ? defaultSelectedId
     : storedSelectedId
-  /*
-    the editor cursor's active resonator is authored rotation state. do not
-    remember a separate focused member: doing so lets one context rotation
-    leak its last member into another, and disagrees with preceding handoffs.
-  */
+  /* derive the active resonator from authored cursor state and prior handoffs. */
   const activeResonatorChoice = condChoices.find(
     (choice) => choice.state.path === ACTIVE_RESONATOR_PATH,
   )
@@ -1532,7 +1313,6 @@ export function ProgramEditor() {
     })
   }, [members, nodeCmpMode, readBuffsFor, result, runsByLoopId, sections, selectedId, view])
 
-  // folding a resonator run also folds rows under its heading.
   const setEditorFold = useCallback((id: string, open: boolean) => {
     setEditorFoldOpen(id, open)
     if (!open && !id.includes(':')) {
@@ -1586,8 +1366,7 @@ export function ProgramEditor() {
   const noteRef = useRef<HTMLElement | null>(null)
   const leaderRef = useRef<HTMLDivElement | null>(null)
 
-  /* switch the persisted surface and own its dom transition at the action
-     boundary, where both the leaving and arriving surfaces are known. */
+  /* update the persisted surface and transition at the action boundary. */
   const showSavedRots = useCallback((next: RotationEditorPreferences['savedView']) => {
     const nextSaved = next !== 'off'
     setEditorPreferences({ savedView: next })
@@ -1665,7 +1444,7 @@ export function ProgramEditor() {
     return () => window.clearTimeout(id)
   }, [entering])
 
-  // keep cleanup separate from the effect that mutates its own transition dependency.
+  // separate cleanup from the effect that updates its transition dependency.
   useEffect(() => {
     if (leaving === null) {
       return
@@ -1972,11 +1751,7 @@ export function ProgramEditor() {
 
   const runArmed = simulationDirty
 
-  /* the archive preview is the last exact completed run, not the current
-     authored tree with an older result attached. it is built only while the
-     saved surface is visible or finishing its exit transition, so ordinary
-     editor changes do not clone a profile or project a rotation for a hidden
-     surface. sharing remains a separate projection of the current editor. */
+  /* build the archive preview from the last completed run while its surface is mounted. */
   const savedSurfaceMounted = showSavedRotationList || drawnSaved || leaving === true
   const liveRotationEntry = useMemo(() => {
     if (
@@ -2358,13 +2133,7 @@ export function ProgramEditor() {
       return
     }
 
-    /*
-      the simulation projection appends the source at the main-section tail so
-      its nodes receive the same display metadata as ordinary additions. move
-      those projected editor nodes into the authored tree through insertNode,
-      which gives append the same after-selection and setup/loop guardrails as
-      the palette.
-    */
+    /* insert projected source nodes through the editor's normal placement rules. */
     const projected = collectSubtrees(projectedSections, appendedIds).filter(canLiftNode)
     if (projected.length === 0) {
       return
@@ -2483,7 +2252,7 @@ export function ProgramEditor() {
     return node
   }, [condChoices, focusedId, rotMembers, seedCondValueAt, showToast, standingCondValueAt])
 
-  // advance the insertion anchor so consecutive additions retain their order.
+    // advance the insertion anchor after each addition.
   const addFeatureNode = useCallback((entry: PaletteFeature) => {
     const node = featureNodeFor(entry)
     bump(insertNode(sections, node, selectedId, 'main'), `Add ${entry.label}`)
@@ -2671,9 +2440,7 @@ export function ProgramEditor() {
   }, [actRt, members])
 
   const storeClipboard = useCallback((nodes: readonly EditorNode[]): number => {
-    // mint each occurrence before serialization. repeated loop rows point at
-    // one authored node, but a flattened copy is an unrolled list and every
-    // item in that list needs its own rotation identity.
+    // assign distinct identities to repeated nodes in flattened copies.
     const copiedNodes = nodes.map((node) => cloneNode(node))
     const items = editorNodesToRotation(copiedNodes, baselineRotationItems)
     if (nodes.length === 0 || items.length === 0) return 0
@@ -2717,14 +2484,10 @@ export function ProgramEditor() {
     })
   }, [bump, exitNodeSelectionMode, liftNodes, sections, showToast, storeClipboard])
 
-  // advance the anchor after each paste so copied row order is preserved.
+  // advance the anchor after each pasted node.
   const pasteNodes = useCallback(async (afterId: string | null) => {
-    /*
-      rich editor nodes contain source projection and inspection state. they
-      are safe for exact same-draft placement, but crossing to another
-      context-resonator rotation must rebuild them from the canonical shared
-      rotation node payload against that destination's runtime.
-    */
+    /* cross-context paste rebuilds editor nodes from canonical clipboard data
+       using the destination runtime. */
     if (!clipboard || clipboard.ownerId !== sessionOwnerId) {
       const payload = await readRotClip()
       if (!payload?.items.length) {
@@ -2736,7 +2499,7 @@ export function ProgramEditor() {
         return
       }
 
-      const appended = appendRotationCopies(payload.items)
+      const appended = appendRotationCopies(convertRotationNodesRoverGender(payload.items, useAppStore.getState().ui.preferences.roverGender))
       const appendedIds = new Set(appended.map((node) => node.id))
       const projectedSections = projectAppendedRotation({
         runtime: actRt,
@@ -3328,7 +3091,7 @@ export function ProgramEditor() {
     return blockAverageDamage(selectedBlock, selectedRun, blockRunTotals)
   }, [blockRunTotals, selectedBlock, selectedRun])
 
-  // notes mutate authored metadata only and cannot recursively own other notes.
+  // notes update authored metadata and cannot contain other notes.
   const noteHost = inspectorStep ?? inspectorCondition ?? inspectorHandoff ?? inspectorBlock ?? null
   const attachedNoteActions = (() => {
     if (!noteHost || noteHost.type === 'setup') {
@@ -4057,7 +3820,6 @@ export function ProgramEditor() {
       >
         <i className="rte-leader" ref={leaderRef} aria-hidden="true" />
 
-        {/* key by surface identity so transitions do not remount the leaving tree. */}
         {bankUp ? (
           <div className={`rte-surface ${leaving === true ? 'is-going' : 'is-coming'}`}>
           <Suspense fallback={<AppLoaderOverlay text="Loading saved rotations..." />}><SavedList

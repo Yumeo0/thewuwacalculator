@@ -6,89 +6,42 @@
 import { ensureResonatorData, hasResonatorData, retainResonatorData } from '@wuwacalc/core/data/gameData'
 import { collectResonatorIds, readStoredScenarioIds } from '@/application/persistence/resonatorScope'
 import { useTstStr } from '@/shared/util/toastStore'
-import {create} from 'zustand'
+import { create } from 'zustand'
 import { createUiActions } from './uiSlice'
 import { createInventoryActions } from './inventorySlice'
 import { createScenarioActions } from './scenarioSlice'
 import { createResonatorActions } from './resonatorSlice'
+import { convertStateRoverGender } from './roverGenderConversion'
+import { roverIdForGender } from '@/domain/entities/roverGender'
 import { cancelOptimizerRequest, createOptimizerActions } from './optimizerSlice'
 import { resetOptimizerRun } from './optimizerRunStore'
 import type { EnemyProfile } from '@wuwacalc/core/domain/entities/appState'
 import type { SimulationState } from '@/application/persistence/appStateTypes'
 import type { HistoryMax, PckrFreqUpd, ThemeMode, ThemePref, UiState } from '@/domain/entities/uiState'
 import type { PersistedState } from '@/application/persistence/appStateTypes'
-import type {BgThemeVar, BlurMode, DarkThemeVar, LightThemeVar,} from '@/domain/entities/themes'
-import type {
-    EchoInstance,
-    ResonatorId,
-    ResRuntime,
-    ResSeed,
-    TeamMemRtVie,
-} from '@wuwacalc/core/domain/entities/runtime'
+import type { BgThemeVar, BlurMode, DarkThemeVar, LightThemeVar } from '@/domain/entities/themes'
+import type { EchoInstance, ResonatorId, ResRuntime, ResSeed, TeamMemRtVie } from '@wuwacalc/core/domain/entities/runtime'
 import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts'
-import {
-    type CombatScenario,
-    type CombatScenarioId,
-    type EnvironmentManualEffect,
-    type EnvironmentTargetModifiers,
-    type ScenarioTeamMember,
-    type TeamMemberId,
-} from '@wuwacalc/core/domain/entities/combatScenario'
-import {
-    selectedCombatScenario,
-} from '@wuwacalc/core/domain/entities/scenarioLibrary'
+import { type CombatScenario, type CombatScenarioId, type EnvironmentManualEffect, type EnvironmentTargetModifiers, type ScenarioTeamMember, type TeamMemberId } from '@wuwacalc/core/domain/entities/combatScenario'
+import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import type { ScenarioWorkspace } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import type { CombatState } from '@wuwacalc/core/domain/entities/runtime'
-import type {
-    SavedBuild,
-    SavedEcho,
-    SavedRotation,
-    SavedScenario,
-} from '@wuwacalc/core/domain/entities/inventoryStorage'
+import type { SavedBuild, SavedEcho, SavedRotation, SavedScenario } from '@wuwacalc/core/domain/entities/inventoryStorage'
 import type { ShowcaseCardStyle, ShowcaseCardHidden, ShowcaseLayout, UploadPersistMode } from '@/domain/entities/preferences'
 import type { RoverGender } from '@/domain/entities/roverGender'
-import type {OptSets} from '@wuwacalc/core/domain/entities/optimizer'
-import type {OptInventorySelection, ResProf} from '@wuwacalc/core/domain/entities/profile'
-import type {SntSetConds} from '@wuwacalc/core/domain/entities/sonataSetConditionals'
-import type {SuggestState, SuggsViewMod, WeaponPlanSet} from '@wuwacalc/core/domain/entities/suggestions'
-import type {
-    OptPrgr,
-    OptStartPay,
-} from '@wuwacalc/core/engine/optimizer/types'
-import {
-    DEF_RES_ID,
-} from '@wuwacalc/core/engine/runtime/defaults'
+import type { OptSets } from '@wuwacalc/core/domain/entities/optimizer'
+import type { OptInventorySelection, ResProf } from '@wuwacalc/core/domain/entities/profile'
+import type { SntSetConds } from '@wuwacalc/core/domain/entities/sonataSetConditionals'
+import type { SuggestState, SuggsViewMod, WeaponPlanSet } from '@wuwacalc/core/domain/entities/suggestions'
+import type { OptPrgr, OptStartPay } from '@wuwacalc/core/engine/optimizer/types'
+import { DEF_RES_ID } from '@wuwacalc/core/engine/runtime/defaults'
 import { initAppStateWithUi, makeAppStateWithUi } from '@/application/persistence/appState'
-import {
-    applyHistoryEntry,
-    makeHistoryEntry,
-    queueHistoryCompaction,
-    retainQueuedHistoryCompactions,
-    changedPersistDomains,
-    mkMptyHistSt,
-    type PrssHistEnt,
-    type PrssHistStt,
-    resFllbHistL,
-    trimHistEnts,
-    RUNTIME_APP_HISTORY_ENABLED,
-} from '@/application/state/history'
-import {
-    ALL_DOMAIN_KEYS,
-    consumePersist,
-    loadPrssInvS,
-    markPrssDmns,
-    saveAppState,
-    type PersistKey,
-} from '@/application/persistence/storage'
-import {type RslvSystThem} from '@/shared/lib/systemTheme'
-import {
-    mkNtlAppStt,
-} from '@/application/state/storeHelpers'
-import {selectPersisted} from '@/application/state/serialization'
-import {
-    migrateAdvancedScenarioRotations,
-    type AdvancedRotationMigration,
-} from '@/application/persistence/advancedRotationMigration.ts'
+import { applyHistoryEntry, makeHistoryEntry, queueHistoryCompaction, retainQueuedHistoryCompactions, changedPersistDomains, mkMptyHistSt, type PrssHistEnt, type PrssHistStt, resFllbHistL, trimHistEnts, RUNTIME_APP_HISTORY_ENABLED } from '@/application/state/history'
+import { ALL_DOMAIN_KEYS, consumePersist, loadPrssInvS, markPrssDmns, saveAppState, type PersistKey } from '@/application/persistence/storage'
+import { type RslvSystThem } from '@/shared/lib/systemTheme'
+import { mkNtlAppStt } from '@/application/state/storeHelpers'
+import { selectPersisted } from '@/application/state/serialization'
+import { migrateAdvancedScenarioRotations, type AdvancedRotationMigration } from '@/application/persistence/advancedRotationMigration.ts'
 
 
 function applyPrssSna(
@@ -210,8 +163,7 @@ export interface AppStore extends Omit<PersistedState, 'simulation' | 'combat'> 
     scenarioId: CombatScenarioId,
     modifiers: EnvironmentTargetModifiers,
   ) => void
-  // resonator actions own profile switching, runtime creation, and
-  // target/suggestion updates for the currently selected simulation context.
+  // resonator actions manage profiles, runtimes, and simulation targets.
   setEnemy: (enemy: EnemyProfile) => void
   setActRes: (resonatorId: ResonatorId) => void
   actRes: (seed: ResSeed) => void
@@ -549,10 +501,12 @@ export const useAppStore = create<AppStore>((set, get) => {
   history: mkMptyHistSt(),
 
   hydrate: (payload) => {
-    if (deferForData(collectResonatorIds(payload), () => get().hydrate(payload), 'hydrate')) return
+    const gender = payload.ui.preferences.roverGender
+    const ids = collectResonatorIds(payload)
+    if (deferForData([...new Set(ids.flatMap((id) => [id, roverIdForGender(id, gender)]))], () => get().hydrate(payload), 'hydrate')) return
     get().ensureFullLibrary()
     const curSnap = selectPersisted(get())
-    const nextSnapshot = initAppStateWithUi(structuredClone(payload))
+    const nextSnapshot = convertStateRoverGender(initAppStateWithUi(structuredClone(payload)))
     const { ui } = get()
 
     cancelOptimizerRequest()

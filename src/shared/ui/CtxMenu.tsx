@@ -4,21 +4,8 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
-import type {
-  CSSProperties as CssProps,
-  KeyboardEvent as RctKbdVnt,
-  MouseEvent as RctMsVnt,
-  ReactNode,
-} from 'react'
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import type { CSSProperties as CssProps, KeyboardEvent as RctKbdVnt, MouseEvent as RctMsVnt, ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAnimatedVisibility } from '@/shared/hooks/useAnimatedVisibility'
 import { bodyPortal } from '@/shared/lib/portalTarget'

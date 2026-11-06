@@ -19,31 +19,13 @@ import { isRotationSkillVisible } from '@/modules/simulation/surfaces/rotation/s
 import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import { withDefEchoMg, withDefIconM, withDefResMg } from '@/shared/lib/imageFallback.ts'
-import {
-  buildGhostPill,
-  KIND_MIME,
-  PALETTE_MIME,
-} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/dragPayload.ts'
+import { buildGhostPill, KIND_MIME, PALETTE_MIME } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/dragPayload.ts'
 import type { PaletteSpec } from '@/modules/simulation/surfaces/rotation/program-editor/model/paletteSpec.ts'
 import { getEnemyIcon } from '@/domain/gameData/enemyDisplay'
-import {
-  ROT_SKILL_TABS,
-  SKILL_TAB_NAMES,
-  type SkillTabKey,
-} from '@/modules/simulation/model/skillTabs.ts'
-import {
-  makeConditionChoices,
-  visibleRotMembers,
-} from '@/modules/simulation/surfaces/rotation/shared/catalog.ts'
-import {
-  COND_KIND_META,
-  getBrowserChoiceLabel,
-  getCondOwnerKey,
-  getCondOwnerLabel,
-  groupCondChoices,
-  type CondKind,
-} from '@/modules/simulation/surfaces/rotation/program-editor/components/ConditionBrowser.tsx'
-import { isFormulaChoice } from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
+import { ROT_SKILL_TABS, SKILL_TAB_NAMES, type SkillTabKey } from '@/modules/simulation/model/skillTabs.ts'
+import { makeConditionChoices, visibleRotMembers } from '@/modules/simulation/surfaces/rotation/shared/catalog.ts'
+import { COND_KIND_META, getBrowserChoiceLabel, getCondOwnerKey, getCondOwnerLabel, groupCondChoices, type CondKind } from '@/modules/simulation/surfaces/rotation/program-editor/components/ConditionBrowser.tsx'
+import { isFormulaChoice } from '@/modules/simulation/surfaces/rotation/shared/conditions.ts'
 import type { CondChoice, RotationMember } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
 import type { FeatDef } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import type { AttributeKey, SkillAggType, SkillDef } from '@wuwacalc/core/domain/entities/stats.ts'

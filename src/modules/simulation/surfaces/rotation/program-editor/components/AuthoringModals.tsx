@@ -4,42 +4,20 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
-import type {
-  CondChoice,
-  FeatureConditionDraft,
-  RotationConditionValue,
-} from "@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts";
-import type {RtChng} from "@wuwacalc/core/domain/gameData/contracts.ts";
-import {useEffect, useMemo, useState, type ReactNode} from "react";
-import {
-  makeCondValue,
-  conditionChoiceLabel, isNmrcCondSt,
-  isFormulaChoice,
-  makeFeatCond,
-  makeFeatureDraft,
-  normFeatCond,
-  viewCondVlFl, serFeatCondD
-} from "@/modules/simulation/surfaces/rotation/shared/conditions.tsx";
-import {makeNodeId} from "@wuwacalc/core/domain/gameData/rotationNodeId.ts";
-import {AppModal} from "@/shared/ui/AppModal.tsx";
-import { ModalHeader } from "@/shared/ui/AppModalShell";
-import {Select, type SelectOption} from "@/application/ui/Select";
-import {Check, Crosshair, Plus, Repeat, Search, Sparkles, X} from "lucide-react";
-import {getResSeedBy} from "@wuwacalc/core/data/catalog/resonatorSeedService.ts";
-import {RichDscr} from "@/modules/simulation/ui/RichDescription.tsx";
-import {withDefIconM} from "@/shared/lib/imageFallback.ts";
-import {
-  COND_KIND_META,
-  COND_KIND_ORDER,
-  getBrowserChoiceLabel,
-  getCondGroupKey,
-  getCondGroupLabel,
-  getCondOwnerKey,
-  getCondOwnerLabel,
-  getCondTarget,
-  type CondKind,
-  type CondTarget,
-} from '@/modules/simulation/surfaces/rotation/program-editor/components/ConditionBrowser.tsx'
+import type { CondChoice, FeatureConditionDraft, RotationConditionValue } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
+import type { RtChng } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { makeCondValue, conditionChoiceLabel, isNmrcCondSt, isFormulaChoice, makeFeatCond, makeFeatureDraft, normFeatCond, serFeatCondD } from '@/modules/simulation/surfaces/rotation/shared/conditions.ts'
+import { viewCondVlFl } from '@/modules/simulation/surfaces/rotation/shared/ConditionValueField.tsx'
+import { makeNodeId } from '@wuwacalc/core/domain/gameData/rotationNodeId.ts'
+import { AppModal } from '@/shared/ui/AppModal.tsx'
+import { ModalHeader } from '@/shared/ui/AppModalShell'
+import { Select, type SelectOption } from '@/application/ui/Select'
+import { Check, Crosshair, Plus, Repeat, Search, Sparkles, X } from 'lucide-react'
+import { getResSeedBy } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'
+import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
+import { withDefIconM } from '@/shared/lib/imageFallback.ts'
+import { COND_KIND_META, COND_KIND_ORDER, getBrowserChoiceLabel, getCondGroupKey, getCondGroupLabel, getCondOwnerKey, getCondOwnerLabel, getCondTarget, type CondKind, type CondTarget } from '@/modules/simulation/surfaces/rotation/program-editor/components/ConditionBrowser.tsx'
 import { useMobileUi } from '@/shared/responsive/mobileUi'
 import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import { ListChecks, Users } from 'lucide-react'

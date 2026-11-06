@@ -5,13 +5,11 @@
 */
 
 import { createOptimizerProgress } from './lib/progressStore'
-import {type ReactNode, lazy, Suspense, useCallback, useRef} from 'react'
-import {useEffect, useLayoutEffect as useLytFfct, useMemo, useState} from 'react'
+import { type ReactNode, lazy, Suspense, useCallback, useRef } from 'react'
+import { useEffect, useLayoutEffect as useLytFfct, useMemo, useState } from 'react'
 import { useNavX } from '@/shared/navigation/useNavX'
-import type {RotationNode} from '@wuwacalc/core/domain/gameData/contracts'
-import {
-  cloneEchoLoadout,
-} from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
+import type { RotationNode } from '@wuwacalc/core/domain/gameData/contracts'
+import { cloneEchoLoadout } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import { OptimizerLab } from './transport/OptimizerLab.tsx'
 import { OptStage } from './transport/OptStage.tsx'
 import { OptTransport } from './transport/OptTransport.tsx'
@@ -21,87 +19,53 @@ import { AppModal } from '@/shared/ui/AppModal.tsx'
 import { useAppModal, useAppModalValue } from '@/shared/ui/useAppModal.ts'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
-import type {SelectOption, SelectGroup} from '@/application/ui/Select'
-import {getGameDataMode} from '@wuwacalc/core/data/gameData'
-import {getEchoById, listEchoes} from '@wuwacalc/core/data/catalog/echoCatalogService'
-import {weaponEquipState} from '@wuwacalc/core/engine/optimizer/context/weaponOverlays.ts'
-import {createCoreWorker} from '@wuwacalc/core/data/coreEnvironment'
-import {getWpnById} from '@wuwacalc/core/data/catalog/weaponCatalogService'
+import type { SelectOption, SelectGroup } from '@/application/ui/Select'
+import { getGameDataMode } from '@wuwacalc/core/data/gameData'
+import { useSavedRotationsLease } from '@/application/hooks/useSavedRotationsLease.ts'
+import { useResonatorData } from '@/application/hooks/useResonatorData.ts'
+import { getEchoById, listEchoes } from '@wuwacalc/core/data/catalog/echoCatalogService'
+import { weaponEquipState } from '@wuwacalc/core/engine/optimizer/context/weaponOverlays.ts'
+import { createCoreWorker } from '@wuwacalc/core/data/coreEnvironment'
+import { getWpnById } from '@wuwacalc/core/data/catalog/weaponCatalogService'
+import { listRotationDamageSources, resolveRotationDamageSource, rotationCombatSetup, rotationDamageContext } from '@wuwacalc/core/engine/rotation/damageSource.ts'
 import { makeRuntimeMap, mkPartRtLkp } from '@wuwacalc/core/engine/runtime/runtimeAdapters'
-import {useAppStore} from '@/application/state'
+import { useAppStore } from '@/application/state'
 import { useOptimizerRunStore } from '@/application/state/optimizerRunStore'
-import {
-  selActTgtSlc,
-  selEnemyProf,
-  selScenarioProfiles,
-} from '@/application/state'
+import { selActTgtSlc, selEnemyProf, selScenarioProfiles } from '@/application/state'
 import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary'
 import { contextScenarioMember } from '@wuwacalc/core/domain/entities/combatScenario.ts'
 import { indexEquippedEchoes } from '@/engine/runtime/inventoryUsage.ts'
-import {deriveOptSets, preserveToggles} from '@wuwacalc/core/engine/optimizer/config/defaultSettings.ts'
-import { getDefaultRotation } from '@wuwacalc/core/data/catalog/gameDataService.ts'
-import {applyKeepPrc, makeStatWeights} from '@wuwacalc/core/engine/optimizer/search/filtering.ts'
-import {compOptTgtCt} from '@wuwacalc/core/engine/optimizer/target/context'
-import {listOptTrgt} from '@wuwacalc/core/engine/optimizer/target/skills'
-import {countOptCombos, countTheory} from '@wuwacalc/core/engine/optimizer/search/counting'
+import { deriveOptSets, preserveToggles } from '@wuwacalc/core/engine/optimizer/config/defaultSettings.ts'
+import { applyKeepPrc, makeStatWeights } from '@wuwacalc/core/engine/search/score/statWeights.ts'
+import { compOptTgtCt } from '@wuwacalc/core/engine/search/context/target'
+import { listOptTrgt } from '@wuwacalc/core/engine/optimizer/target/skills'
+import { countOptCombos, countTheory } from '@wuwacalc/core/engine/optimizer/search/counting'
 import { optSetIdSet } from '@wuwacalc/core/engine/optimizer/config/allowedSets.ts'
-import type {CompactTheoryResult, OptBagResult, OptResultStats, TheoryResult, TheoryResultRow} from '@wuwacalc/core/engine/optimizer/types'
+import type { CompactTheoryResult, OptBagResult, TheoryResult, TheoryResultRow } from '@wuwacalc/core/engine/optimizer/types'
+import type { OptResultStats } from '@wuwacalc/core/engine/search/score/core'
 import type { OptBaselineInput, OptCompOutMs } from '@wuwacalc/core/engine/optimizer/compiler/compileWorker.types.ts'
-import {seedRsntById} from '@/modules/simulation/features/resonator/lib/seedData.ts'
+import { seedRsntById } from '@/modules/simulation/features/resonator/lib/seedData.ts'
 import AppLdrVrly from '@/shared/ui/AppLoaderOverlay'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
 
 
-import {
-  SetCond
-} from '@/modules/simulation/features/controls/SetConditional.tsx'
+import { SetCond } from '@/modules/simulation/features/controls/SetConditional.tsx'
 
 
 
 
 
-import {
-  type OptDisplayRow,
-  Row, OptimizerResultRows
-} from '@/modules/simulation/surfaces/optimizer/Row.tsx'
+import { type OptDisplayRow, Row, OptimizerResultRows } from '@/modules/simulation/surfaces/optimizer/Row.tsx'
 
-import {HEADER_TITLES} from '@/modules/simulation/surfaces/optimizer/lib/mockData.ts'
+import { HEADER_TITLES } from '@/modules/simulation/surfaces/optimizer/lib/mockData.ts'
 import { OPT_SKILL_TABS, getSkillTabLabel } from '@/modules/simulation/model/skillTabs'
 import { skillDisplayColor } from '@/modules/simulation/surfaces/rotation/shared/skillDisplay.ts'
-import {modalContent} from '@/modules/simulation/surfaces/optimizer/Modals.tsx'
+import { modalContent } from '@/modules/simulation/surfaces/optimizer/Modals.tsx'
 import { ResultToolbar } from '@/modules/simulation/surfaces/optimizer/ResultToolbar.tsx'
 
-import {
-  plchRslt,
-  vsblRsltsAt as getRowsAt,
-  type LegOptRsltEn,
-  prvwChs as getPreview,
-  rsltLdt,
-  buildFacetSlice,
-  buildResultView,
-  facetMatches,
-  isDefaultViewCriteria,
-  DEFAULT_VIEW_CRITERIA,
-  type ResultViewCriteria,
-  ResultFacetTable,
-  type Predicate,
-} from '@/modules/simulation/surfaces/optimizer/lib/results.ts'
-import {
-  type EchoPlan,
-  derEchoPlan,
-  resEchoPlan,
-  selMainEcho,
-} from '@/modules/simulation/surfaces/optimizer/lib/teammateEchoPlan.ts'
-import {
-  mkMptyPrgr,
-  mkMptyEchoPl,
-  mapMainStatF,
-  makeOpSlot,
-  normEchoLdt,
-  type OpEchoTarget,
-  type PrvwTgt,
-  smmrEchoLdt,
-} from '@/modules/simulation/surfaces/optimizer/lib/helpers.ts'
+import { plchRslt, vsblRsltsAt as getRowsAt, type LegOptRsltEn, prvwChs as getPreview, rsltLdt, buildFacetSlice, buildResultView, facetMatches, isDefaultViewCriteria, viewNeedsStats, DEFAULT_VIEW_CRITERIA, type ResultViewCriteria, ResultFacetTable, type Predicate } from '@/modules/simulation/surfaces/optimizer/lib/results.ts'
+import { type EchoPlan, derEchoPlan, resEchoPlan, selMainEcho } from '@/modules/simulation/surfaces/optimizer/lib/teammateEchoPlan.ts'
+import { mkMptyPrgr, mkMptyEchoPl, mapMainStatF, makeOpSlot, normEchoLdt, type OpEchoTarget, type PrvwTgt, smmrEchoLdt } from '@/modules/simulation/surfaces/optimizer/lib/helpers.ts'
 import { useMenuContributions } from '@/application/context-menu/AppContextMenu'
 import type { MenuContribution } from '@/application/context-menu/menuContributions'
 
@@ -168,12 +132,37 @@ function settleBand(band: HTMLElement | null): Promise<unknown> {
   })
 }
 
+
+// a runtime wearing a result's loadout, plus the weapon its search picked
+function withRsltLoadout(
+  runtime: ResRuntime,
+  echoes: Array<EchoInstance | null>,
+  equip: ReturnType<typeof weaponEquipState>,
+): ResRuntime {
+  return {
+    ...runtime,
+    build: {
+      ...runtime.build,
+      echoes,
+      ...(equip ? { weapon: { ...runtime.build.weapon, ...equip.weapon } } : {}),
+    },
+    ...(equip
+      ? { state: { ...runtime.state, controls: { ...runtime.state.controls, ...equip.controls } } }
+      : {}),
+  }
+}
+
 export function Optimizer() {
   useMenuContributions('optimizer.surface', optimizerSurfaceMenu)
   const navigate = useNavX()
   const activeTarget = useAppStore(selActTgtSlc)
   const enemyProfile = useAppStore(selEnemyProf)
   const scenario = useAppStore((state) => selectedCombatScenario(state.combat))
+  const scenarioWorkspace = useAppStore((state) => state.combat)
+  const liveScenarios = useMemo(() => scenarioWorkspace.order.flatMap((id) => {
+    const entry = scenarioWorkspace.scenariosById[id]
+    return entry ? [entry] : []
+  }), [scenarioWorkspace])
   const optimizerMember = contextScenarioMember(scenario)
   const optResId = optimizerMember.resonatorId
   const optRuntimesById = useMemo(() => mkPartRtLkp(scenario), [scenario])
@@ -200,6 +189,9 @@ export function Optimizer() {
       ...preserveToggles(storedOptSets),
     })
   }, [activeTarget, enemyProfile, needsTargetDefaults, optRt, optRuntimesById, storedOptSets])
+  useSavedRotationsLease()
+  const savedRotations = useAppStore((state) => state.library.rotations)
+  const savedRotationsHydrated = useAppStore((state) => state.savedRotationsHydrated)
   const optStts = useOptimizerRunStore((state) => state.status)
   const optResults = useOptimizerRunStore((state) => (
     Array.isArray(state.results)
@@ -233,7 +225,6 @@ export function Optimizer() {
   const updResOptInv = useAppStore((state) => state.updResOptInv)
   const optSetConds = optimizerMember.local.setConditionals
   const activeSeed = seedRsntById[optResId] ?? null
-  const defaultRotation = getDefaultRotation(optResId)
   const displayName = activeSeed?.name ?? 'Unknown'
   const rotationMode = optSets.rotationMode
   const targetMode: 'skill' | 'combo' = rotationMode ? 'combo' : 'skill'
@@ -454,32 +445,94 @@ export function Optimizer() {
     ? optSets.targetSkillId
     : trgtSkll[0]?.id ?? null
 
-  const comboOptions: SelectOption[] = (() => {
-    if (!effectRuntime) {
-      return []
-    }
+  const comboOptions: SelectOption[] = useMemo(
+    () => effectRuntime
+      ? listRotationDamageSources(scenario, savedRotations, optResId, liveScenarios).map((option) => ({
+        value: option.id,
+        label: option.label,
+      }))
+      : [],
+    [effectRuntime, scenario, savedRotations, optResId, liveScenarios],
+  )
 
-    return defaultRotation ? [{
-      value: `default:${optResId}`,
-      label: `${displayName} · Default Rotation`,
-    }] : []
-  })()
-
-  const comboAvailable = Boolean(effectRuntime && defaultRotation)
+  const pendingSavedSource = !savedRotationsHydrated && optSets.targetComboSourceId?.startsWith('saved:')
+  const rotationSource = useMemo(
+    () => pendingSavedSource
+      ? null
+      : resolveRotationDamageSource(optSets.targetComboSourceId, scenario, savedRotations, optResId, liveScenarios),
+    [optSets.targetComboSourceId, scenario, savedRotations, optResId, liveScenarios, pendingSavedSource],
+  )
+  const comboAvailable = Boolean(effectRuntime && rotationSource)
+  const sourceDataReady = useResonatorData(rotationMode
+    ? rotationSource?.savedTeamContext?.team.members.map((member) => member.resonatorId) ?? []
+    : [])
+  const savedRotationContext = useMemo(
+    () => rotationMode && effectRuntime && sourceDataReady ? rotationDamageContext(rotationSource, scenario, effectRuntime) : null,
+    [rotationMode, effectRuntime, rotationSource, scenario, sourceDataReady],
+  )
+  const scenarioCombatSetup = useMemo(() => rotationCombatSetup(scenario), [scenario])
+  const scoringRuntime = savedRotationContext?.runtime ?? effectRuntime
+  const scoringParticipants = savedRotationContext?.runtimesById ?? effectRuntimesById
+  const scoringTargets = savedRotationContext?.selectedTargets ?? activeTarget
+  const scoringSetup = rotationMode
+    ? savedRotationContext?.combatSetup ?? scenarioCombatSetup
+    : undefined
+  const previousSource = useRef<{
+    id: string
+    program: unknown
+    team: unknown
+    environment: unknown
+    initialOnFieldMemberId: unknown
+    setConditionals: string
+    enemy: unknown
+    teammates: readonly unknown[]
+  } | null>(null)
+  useLytFfct(() => {
+    const saved = rotationSource?.id.startsWith('saved:')
+      ? savedRotations.find((entry) => `saved:${entry.id}` === rotationSource.id)
+      : null
+    const live = rotationSource?.id.startsWith('scenario:')
+      ? liveScenarios.find((entry) => `scenario:${entry.id}` === rotationSource.id)
+      : null
+    const next = rotationMode && rotationSource ? {
+      id: rotationSource.id,
+      program: saved?.scenario.program.program ?? live?.program.program
+        ?? (rotationSource.id === 'live' ? scenario.program.program : null),
+      team: rotationSource.savedTeamContext?.team ?? null,
+      environment: rotationSource.savedTeamContext?.environment ?? scenario.environment,
+      initialOnFieldMemberId: rotationSource.savedTeamContext?.initialOnFieldMemberId ?? null,
+      setConditionals: JSON.stringify(optSetConds.off),
+      enemy: enemyProfile,
+      teammates: rotationSource.savedTeamContext ? [] : scenario.team.members
+        .filter((member) => member.id !== optimizerMember.id),
+    } : null
+    const previous = previousSource.current
+    if (previous && next && (
+      previous.id !== next.id || previous.program !== next.program
+      || previous.team !== next.team || previous.environment !== next.environment
+      || previous.initialOnFieldMemberId !== next.initialOnFieldMemberId
+      || previous.setConditionals !== next.setConditionals || previous.enemy !== next.enemy
+      || previous.teammates.length !== next.teammates.length
+      || previous.teammates.some((member, index) => member !== next.teammates[index])
+    )) clearRun()
+    previousSource.current = next
+  }, [rotationMode, rotationSource, scenario.program.program, scenario.environment,
+    scenario.team.members, savedRotations, liveScenarios, optSetConds, enemyProfile, optimizerMember.id, clearRun])
 
   useEffect(() => {
-    if (rotationMode && !comboAvailable) {
+    if (rotationMode && !comboAvailable && !pendingSavedSource) {
       updOptSets((settings) => ({
         ...settings,
         targetMode: 'skill',
         rotationMode: false,
       }))
     }
-  }, [rotationMode, comboAvailable, updOptSets])
+  }, [rotationMode, comboAvailable, pendingSavedSource, updOptSets])
 
-  const selRotTms: RotationNode[] | null = defaultRotation?.items ?? null
+  const selRotTms: RotationNode[] | null = rotationSource?.items ?? null
 
   useEffect(() => {
+    if (!savedRotationsHydrated && optSets.targetComboSourceId?.startsWith('saved:')) return
     const hasSelCmb = optSets.targetComboSourceId
       ? comboOptions.some((option) => option.value === optSets.targetComboSourceId)
       : false
@@ -497,7 +550,7 @@ export function Optimizer() {
       ...settings,
       targetComboSourceId: nextTgtCmbId,
     }))
-  }, [comboOptions, optSets, updOptSets])
+  }, [comboOptions, optSets, savedRotationsHydrated, updOptSets])
 
   const needsInventory = !isThryMode || optInvMdl.visible
   const optProfiles = useAppStore((state) => needsInventory && optSets.excludeEquipped ? selScenarioProfiles(state) : null)
@@ -670,7 +723,7 @@ export function Optimizer() {
     () => normEchoLdt(effectRuntime?.build.echoes ?? []).filter(
       (echo): echo is EchoInstance => echo != null,
     ),
-    [effectRuntime?.build.echoes],
+    [effectRuntime],
   )
 
   const shldCntCombo = fltrComboChs.length >= 5
@@ -710,6 +763,7 @@ export function Optimizer() {
 
   const bslnInput = useMemo<OptBaselineInput | null>(() => {
     if (
+      (rotationMode && (!rotationSource || !sourceDataReady)) ||
       !effectRuntime ||
       (!rotationMode && !targetSkillId) ||
       qppdChs.length === 0
@@ -723,27 +777,32 @@ export function Optimizer() {
       resonatorId: optResId,
       resSeed: seedRsntById[optResId],
       gameDataMode: getGameDataMode(),
-      runtime: effectRuntime,
-      runtimesById: effectRuntimesById,
+      runtime: scoringRuntime ?? effectRuntime,
+      runtimesById: scoringParticipants,
       settings: {
         rotationMode,
         targetSkillId,
       },
       invChs: qppdChs,
       enemyProfile,
-      selectedTargets: activeTarget,
+      selectedTargets: scoringTargets,
+      combatSetup: scoringSetup,
       setConds: optSetConds,
       rotTms: rotationMode ? selRotTms : undefined,
     }
   }, [
-    activeTarget,
     enemyProfile,
     qppdChs,
     optResId,
     optimizerMember.id,
     scenario.id,
     effectRuntime,
-    effectRuntimesById,
+    scoringRuntime,
+    scoringParticipants,
+    scoringTargets,
+    scoringSetup,
+    rotationSource,
+    sourceDataReady,
     optSetConds,
     targetSkillId,
     rotationMode,
@@ -779,7 +838,6 @@ export function Optimizer() {
         runId: 1,
         payload: bslnInput,
         mainIndex,
-        setConds: optSetConds,
       })
     }, 160)
 
@@ -788,20 +846,21 @@ export function Optimizer() {
       window.clearTimeout(timer)
       worker?.terminate()
     }
-  }, [bslnInput, optSetConds, qppdChs])
+  }, [bslnInput, qppdChs])
 
   const bslnVltn = baselineEvaluation?.input.deref() === bslnInput
     ? baselineEvaluation.result
     : null
 
   const baseResult = useMemo<OptDisplayRow>(() => {
-    if (!effectRuntime) {
+    const displayRuntime = effectRuntime
+    if (!displayRuntime) {
       return plchRslt()
     }
 
-    const summary = smmrEchoLdt(effectRuntime.build.echoes)
-    const baseWeapon = effectRuntime.build.weapon.id
-      ? getWpnById(effectRuntime.build.weapon.id)
+    const summary = smmrEchoLdt(displayRuntime.build.echoes)
+    const baseWeapon = displayRuntime.build.weapon.id
+      ? getWpnById(displayRuntime.build.weapon.id)
       : null
 
     return {
@@ -823,6 +882,7 @@ export function Optimizer() {
   const rsltsPerPage = 32
 
   const needsFacets = optToolsOpen || !isDefaultViewCriteria(viewCriteria) || findPreds.length > 0
+  const facetStats = viewNeedsStats(viewCriteria, findPreds)
   useEffect(() => {
     if (!needsFacets || optResults.length === 0) {
       setFacetTable(null)
@@ -851,6 +911,7 @@ export function Optimizer() {
         invChsByUid,
         optResultEchoes,
         optResultData,
+        withStats: facetStats,
       })
 
       for (let index = 0; index < slice.length; index += 1) {
@@ -874,7 +935,7 @@ export function Optimizer() {
         clearTimeout(tid)
       }
     }
-  }, [needsFacets, optResults, invChsByUid, optResultEchoes, optResultData])
+  }, [needsFacets, facetStats, optResults, invChsByUid, optResultEchoes, optResultData])
 
   const viewIndices = useMemo<number[] | null>(() => {
     if (!facetTable || isDefaultViewCriteria(viewCriteria)) {
@@ -1036,7 +1097,7 @@ export function Optimizer() {
     optResultEchoes,
     optResultData,
     optResults,
-    effectRuntime?.build.echoes,
+    effectRuntime,
     rslvPrvwTgt,
   ])
 
@@ -1045,8 +1106,7 @@ export function Optimizer() {
   }, [])
 
   // resolve the searched weapon for a result, if weapon search produced one.
-  // raw theory results carry an index into the run's weaponIds; materialized
-  // results carry the resolved id directly.
+  // raw theory results store a weaponIds index; materialized results store the ID.
   function rsltWeaponId(index: number): string | null {
     const entry = optResults[index] as
       | { weaponId?: string; weapon?: number }
@@ -1074,22 +1134,11 @@ export function Optimizer() {
 
     // a preview is detached until this explicit commit. clone it once more at
     // the boundary so later local edits cannot share objects with live state.
-    updateScenarioRuntime((runtime) => {
-      const equip = weaponId
-        ? weaponEquipState(weaponId, runtime.build.weapon.level, weaponSuggests)
-        : null
-      return {
-        ...runtime,
-        build: {
-          ...runtime.build,
-          echoes: cloneEchoLoadout(nextEchoes),
-          ...(equip ? { weapon: { ...runtime.build.weapon, ...equip.weapon } } : {}),
-        },
-        ...(equip
-          ? { state: { ...runtime.state, controls: { ...runtime.state.controls, ...equip.controls } } }
-          : {}),
-      }
-    })
+    updateScenarioRuntime((runtime) => withRsltLoadout(
+      runtime,
+      cloneEchoLoadout(nextEchoes),
+      weaponId ? weaponEquipState(weaponId, runtime.build.weapon.level, weaponSuggests) : null,
+    ))
   }
 
   function applyOptRslt(index: number) {
@@ -1116,7 +1165,7 @@ export function Optimizer() {
 
   const vsblHdrTtls = useMemo(() => {
     const base = rotationMode
-      ? HEADER_TITLES.filter((title) => title !== 'Ʃ BNS%' && title !== 'Ʃ AMP%')
+      ? HEADER_TITLES.filter((title) => title !== 'Ʃ AMP%')
       : HEADER_TITLES
     if (!showWeapon) {
       return base
@@ -1229,7 +1278,7 @@ export function Optimizer() {
   const cancelled = optStts === 'cancelled'
 
   const onRunOpt = useCallback(() => {
-    if (!optRt) {
+    if ((rotationMode && (!rotationSource || !sourceDataReady)) || !optRt) {
       return
     }
 
@@ -1242,18 +1291,19 @@ export function Optimizer() {
     setPageIndex(0)
     showBasePrvw()
     setProgress(mkMptyPrgr())
-    startOpt({
+    const launchSearch = () => startOpt({
       scenarioId: scenario.id,
       memberId: optimizerMember.id,
       resonatorId: optResId,
       resSeed: seedRsntById[optResId],
       gameDataMode: getGameDataMode(),
-      runtime: optRt,
-      runtimesById: effectRuntimesById,
+      runtime: scoringRuntime ?? optRt,
+      runtimesById: scoringParticipants,
       settings: runOptSets,
       invChs: fltrInvEchoE.map((entry) => entry.echo),
       enemyProfile,
-      selectedTargets: activeTarget,
+      selectedTargets: scoringTargets,
+      combatSetup: scoringSetup,
       setConds: optSetConds,
       rotTms: selRotTms,
       weaponPlan: weaponSuggests,
@@ -1263,10 +1313,46 @@ export function Optimizer() {
       },
       settle: () => settleBand(bandRef.current),
     })
+
+    // an empty build has no baseline to score, so the search starts right away
+    if (rotationMode && bslnInput) {
+      setBaselineEvaluation(null)
+      let baselineWorker: Worker | null = new Worker(
+        new URL('@wuwacalc/core/engine/optimizer/workers/compile.worker.ts', import.meta.url),
+        { type: 'module' },
+      )
+      baselineWorker.onmessage = (event: MessageEvent<OptCompOutMs>) => {
+        const message = event.data
+        if (message.type !== 'baselineDone') return
+        setBaselineEvaluation({ input: new WeakRef(bslnInput), result: message.result })
+        baselineWorker?.terminate()
+        baselineWorker = null
+        launchSearch()
+      }
+      baselineWorker.onerror = () => {
+        baselineWorker?.terminate()
+        baselineWorker = null
+        launchSearch()
+      }
+      baselineWorker.postMessage({
+        type: 'baseline',
+        runId: Date.now(),
+        payload: bslnInput,
+        mainIndex: Math.max(0, qppdChs.findIndex((echo) => echo.mainEcho)),
+      })
+      return
+    }
+
+    launchSearch()
   }, [
-    activeTarget,
+    bslnInput,
     enemyProfile,
-    effectRuntimesById,
+    scoringRuntime,
+    scoringParticipants,
+    scoringTargets,
+    scoringSetup,
+    rotationSource,
+    sourceDataReady,
     fltrInvEchoE,
     openUiModal,
     optCpuHintSe,
@@ -1275,6 +1361,8 @@ export function Optimizer() {
     optRt,
     optimizerMember.id,
     runOptSets,
+    qppdChs,
+    rotationMode,
     scenario.id,
     selRotTms,
     setOptCpuHin,
@@ -1590,7 +1678,10 @@ export function Optimizer() {
         onClose={setCondsMdl.hide}
         title="Sonata Set Config"
         setConds={optSetConds}
-        onSetCondsrx={(updater) => updResSetCon(optResId, updater)}
+        onSetCondsrx={(updater) => {
+          clearRun()
+          updResSetCon(optResId, updater)
+        }}
       />
 
       {wpnCondMdl.visible ? <Suspense fallback={<AppLdrVrly mode="scrim" text="Loading weapon settings..." />}>

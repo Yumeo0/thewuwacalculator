@@ -5,17 +5,8 @@
 */
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import type {
-  EditorSection,
-  LoopRunSelections,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
-import {
-  buildNodeIndex,
-  searchNodes,
-  SEARCH_KIND_NAMES,
-  type SearchNames,
-  type SearchHit,
-} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeSearch.ts'
+import type { EditorSection, LoopRunSelections } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
+import { buildNodeIndex, searchNodes, SEARCH_KIND_NAMES, type SearchNames, type SearchHit } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeSearch.ts'
 import { formatDamage } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 import type { RotationNodeTarget } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeNavigation.ts'
 import { AnchoredAppPopup, useAppPopupDismiss } from '@/shared/ui/AppPopup'

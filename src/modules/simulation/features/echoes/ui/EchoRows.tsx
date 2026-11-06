@@ -12,18 +12,8 @@ import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService'
 import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
 import { getSntSetClr, getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { EchoStatGlyph } from '@/modules/simulation/features/echoes/lib/statGlyph.tsx'
-import {
-  cmptBldCritGr,
-  cmptEchoCrit,
-  cmptEchoCritAll,
-  getCvToneColor,
-} from '@/modules/simulation/features/echoes/lib/metric.ts'
-import {
-  EchoCardBand,
-  EchoCardList,
-  EchoCardRibbon,
-  echoCardVars,
-} from '@/modules/simulation/features/echoes/ui/EchoCard.tsx'
+import { cmptBldCritGr, cmptEchoCrit, cmptEchoCritAll, getCvToneColor } from '@/modules/simulation/features/echoes/lib/metric.ts'
+import { EchoCardBand, EchoCardList, EchoCardRibbon, echoCardVars } from '@/modules/simulation/features/echoes/ui/EchoCard.tsx'
 import { formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'

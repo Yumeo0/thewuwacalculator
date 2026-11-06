@@ -17,10 +17,7 @@ import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets'
 import { getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { withDefEchoMg, withDefIconM } from '@/shared/lib/imageFallback'
 import { Choice, DropHead, DropHost, Glyph, OutRow, Slide, Toggle } from './Drop.tsx'
-import {
-  optSetPieceCount,
-  type OptSetPieceCount as PieceCount,
-} from '@wuwacalc/core/engine/optimizer/config/allowedSets.ts'
+import { optSetPieceCount, type OptSetPieceCount as PieceCount } from '@wuwacalc/core/engine/optimizer/config/allowedSets.ts'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
 
 const BUCKETS: PieceCount[] = [5, 3, 1]

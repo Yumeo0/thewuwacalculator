@@ -4,40 +4,25 @@
                states, and resolves feature and condition inspection metadata.
 */
 
-import type {
-    CondChoice,
-    FeatureMeta, NodeTotals,
-    EditConfig, SkillMenuEntry
-} from "@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts";
-import {createElement as mkElem} from "react";
-import type {MenuEntry} from "@/shared/ui/CtxMenu.tsx";
-import {ClipboardPaste, Copy, CopyPlus, Scissors, SquareDashedMousePointer as SqrDshdMsPnt} from "lucide-react";
-import type {ResRuntime} from "@wuwacalc/core/domain/entities/runtime.ts";
-import type {
-    FeatDef,
-    RotationNode,
-    RtChng,
-    SourceState
-} from "@wuwacalc/core/domain/gameData/contracts.ts";
-import {isStateVisible} from "@wuwacalc/core/engine/services/sourceStateService.ts";
-import {listStatesFor} from "@wuwacalc/core/data/catalog/gameDataService.ts";
-import {makeNodeId} from "@wuwacalc/core/domain/gameData/rotationNodeId.ts";
-import {listEquippedSourceStates} from "@wuwacalc/core/engine/services/runtimeSourceService.ts";
-import {negEffectsFor} from "@wuwacalc/core/engine/gameData/negativeEffects.ts";
+import type { CondChoice, FeatureMeta, NodeTotals, EditConfig, SkillMenuEntry } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
+import { createElement as mkElem } from 'react'
+import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
+import { ClipboardPaste, Copy, CopyPlus, Scissors, SquareDashedMousePointer as SqrDshdMsPnt } from 'lucide-react'
+import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
+import type { FeatDef, RotationNode, RtChng, SourceState } from '@wuwacalc/core/domain/gameData/contracts.ts'
+import { isStateVisible } from '@wuwacalc/core/engine/services/sourceStateService.ts'
+import { listStatesFor } from '@wuwacalc/core/data/catalog/gameDataService.ts'
+import { makeNodeId } from '@wuwacalc/core/domain/gameData/rotationNodeId.ts'
+import { listEquippedSourceStates } from '@wuwacalc/core/engine/services/runtimeSourceService.ts'
+import { negEffectsFor } from '@wuwacalc/core/engine/gameData/negativeEffects.ts'
 import { getTuneStrainMaxForTeam } from '@wuwacalc/core/engine/gameData/tuneStrain.ts'
-import {buildConditionChoices} from "@/modules/simulation/surfaces/rotation/shared/conditions.tsx";
-import type {SkillDef} from "@wuwacalc/core/domain/entities/stats.ts";
-import type {SimResult} from "@wuwacalc/core/engine/pipeline/types.ts";
+import { buildConditionChoices } from '@/modules/simulation/surfaces/rotation/shared/conditions.ts'
+import type { SkillDef } from '@wuwacalc/core/domain/entities/stats.ts'
+import type { SimResult } from '@wuwacalc/core/engine/pipeline/types.ts'
 import { isDamageRotationEntry } from '@wuwacalc/core/engine/pipeline/rotationTotals.ts'
 import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
-import {
-    DEFAULT_ROT_BLOCK_COLOR,
-    scopeLabelAt,
-} from '@/modules/simulation/surfaces/rotation/shared/containerMeta.ts'
-import {
-    skillDisplayColor,
-    supportSkillStyle,
-} from '@/modules/simulation/surfaces/rotation/shared/skillDisplay.ts'
+import { DEFAULT_ROT_BLOCK_COLOR, scopeLabelAt } from '@/modules/simulation/surfaces/rotation/shared/containerMeta.ts'
+import { skillDisplayColor, supportSkillStyle } from '@/modules/simulation/surfaces/rotation/shared/skillDisplay.ts'
 
 function editMenu(config: EditConfig = {}): MenuEntry[] {
     // edit actions are built from optional callbacks so callers can expose the same menu shape while disabling actions
@@ -166,7 +151,7 @@ export function enemyChoices(
         'tuneStrain',
         'Tune Strain',
         'enemy.status.tuneStrain',
-        getTuneStrainMaxForTeam(runtime),
+        getTuneStrainMaxForTeam(runtime, enemyId ? { id: enemyId } : undefined),
         'Set the target enemy Tune Strain stacks for following rotation actions.',
     )
     const negFfct = negEffectsFor(runtime, runtimesById)

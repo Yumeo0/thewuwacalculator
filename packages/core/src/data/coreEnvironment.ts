@@ -67,6 +67,7 @@ export interface CoreConfig {
 export type CoreWorkerRole =
   | 'evaluation'
   | 'suggestions'
+  | 'suggestions-candidate'
   | 'optimizer-task'
   | 'optimizer-theory'
   | 'optimizer-compile'

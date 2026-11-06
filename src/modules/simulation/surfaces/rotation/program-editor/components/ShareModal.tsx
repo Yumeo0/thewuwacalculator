@@ -11,12 +11,7 @@ import { AppModal } from '@/shared/ui/AppModal.tsx'
 import { ModalHeader } from '@/shared/ui/AppModalShell'
 import type { SavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import { useTstStr } from '@/shared/util/toastStore.ts'
-import {
-  makeRotationShare,
-  makeRotationExportPayload,
-  slugifyRotationFileName,
-  type RotationShare,
-} from '@/modules/simulation/surfaces/rotation/program-editor/saved/share.ts'
+import { makeRotationShare, makeRotationExportPayload, slugifyRotationFileName, type RotationShare } from '@/modules/simulation/surfaces/rotation/program-editor/saved/share.ts'
 import { xprtAppFile } from '@/application/persistence/fileCodec.ts'
 
 interface RotationShareModalProps {

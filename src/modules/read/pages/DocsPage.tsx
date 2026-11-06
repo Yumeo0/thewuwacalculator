@@ -4,26 +4,12 @@
                calculators without embedding engine constants in page markup.
 */
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties as CssProps,
-  type KeyboardEvent as RctKybrVnt,
-  type PointerEvent as RctPntrVnt,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties as CssProps, type KeyboardEvent as RctKybrVnt, type PointerEvent as RctPntrVnt } from 'react'
 import { useLocation } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
-import {
-  docTopics,
-  type DocBlock,
-  type DocSection,
-  type DocTopic,
-} from '@/data/content/docsContent'
+import { docTopics, type DocBlock, type DocSection, type DocTopic } from '@/data/content/docsContent'
 import { resDocTopic } from '@/modules/read/model/docs'
-import { GRADE_LADDER } from '@/shared/lib/evaluationGrades.ts'
+import { GRADE_LADDER } from '@/shared/lib/evaluationGrades'
 import { getNegBase, type NegFfctArch } from '@wuwacalc/core/engine/formulas/negativeEffects'
 import { getTuneLevel } from '@wuwacalc/core/engine/formulas/tuneRupture'
 import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay'

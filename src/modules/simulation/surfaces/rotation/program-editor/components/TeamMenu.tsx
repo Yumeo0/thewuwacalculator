@@ -7,16 +7,10 @@
 import { flushSync } from 'react-dom'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import {Box, ChevronDown, SlidersHorizontal} from 'lucide-react'
+import { Box, ChevronDown, SlidersHorizontal } from 'lucide-react'
 import { useAppStore } from '@/application/state'
 import { selectedCombatScenario } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
-import {
-  AnchoredAppPopup,
-  AppPopupFill,
-  AppPopupFooter,
-  AppPopupHeader,
-  useAppPopupDismiss,
-} from '@/shared/ui/AppPopup.tsx'
+import { AnchoredAppPopup, AppPopupFill, AppPopupFooter, AppPopupHeader, useAppPopupDismiss } from '@/shared/ui/AppPopup.tsx'
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'

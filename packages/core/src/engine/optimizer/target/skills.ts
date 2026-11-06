@@ -11,7 +11,7 @@ import type { SkillDef } from '@core/domain/entities/stats'
 import { listRtSkills } from '@core/engine/services/runtimeSourceService'
 import { resolveSkill } from '@core/engine/pipeline/resolveSkill'
 import { prepareSkill } from '@core/engine/pipeline/prepareRuntimeSkill'
-import { isOptDmgSkll } from '@core/engine/optimizer/rules/eligibility'
+import { isOptDmgSkll } from '@core/engine/search/score/eligibility'
 
 // local helper that defines which prepared skills can be selected
 // as direct optimizer targets

@@ -9,11 +9,7 @@ import { ListChevronsDownUp, ListChevronsUpDown, ScanSearch } from 'lucide-react
 import { observeSelectionPip } from '@/shared/lib/observeSelectionPip'
 import { Fragment, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
-import type {
-  EvaluationBuildSnapshot,
-  EvaluationOverviewStats,
-  EvaluationStatContribution,
-} from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
+import type { EvaluationBuildSnapshot, EvaluationOverviewStats, EvaluationStatContribution } from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
 import { isNoWeaponId, type ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { getSbstStepP } from '@wuwacalc/core/data/gameData/catalog/echoStats.ts'
 import { aggregateSubstats } from '@wuwacalc/core/engine/evaluation/substatMath.ts'
@@ -22,16 +18,8 @@ import type { StatTreeNode, StatViewRow } from '@/modules/simulation/model/stats
 import { overviewRowView } from '@/modules/simulation/model/statsView.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback'
 import { makeStatResidue, type ResidueRow, type ScopedAddend } from './lib/statResidue.ts'
-import {
-  ECHO_COST_MAX,
-  makeBuiltOnFrame,
-  type BuiltOnFrame,
-} from './lib/builtOn.ts'
-import {
-  STAT_ICON_MAP,
-  formatStatKeyLabel,
-  formatStatKeyValue,
-} from '@/modules/simulation/model/statsView.ts'
+import { ECHO_COST_MAX, makeBuiltOnFrame, type BuiltOnFrame } from './lib/builtOn.ts'
+import { STAT_ICON_MAP, formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import { getBuildEvaluationTone } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
 import { attributeAccent } from '@/domain/gameData/attributeDisplay'
 import { getResSeedBy, resResBaseSt } from '@wuwacalc/core/data/catalog/resonatorSeedService.ts'

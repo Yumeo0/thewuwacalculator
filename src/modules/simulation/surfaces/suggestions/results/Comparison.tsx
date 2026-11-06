@@ -13,14 +13,7 @@ import { withDefIconM, withDefWpnMg } from '@/shared/lib/imageFallback.ts'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
 import { cmptSetCnts } from '@/modules/simulation/features/echoes/lib/echoPane.ts'
-import {
-  fmtWpnStatDs,
-  getWeapon,
-  resPssvPrms,
-  weaponStatsAt,
-  WPN_STAT_CNS,
-  WPNSTATLBLS,
-} from '@/modules/simulation/features/weapons/lib/weapon.ts'
+import { fmtWpnStatDs, getWeapon, resPssvPrms, weaponStatsAt, WPN_STAT_CNS, WPNSTATLBLS } from '@/modules/simulation/features/weapons/lib/weapon.ts'
 import { getRarityColor, getWpnTypeLb, WPNTYPETOKEY } from '@/modules/simulation/model/display.ts'
 import { formatCompactNum, formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'

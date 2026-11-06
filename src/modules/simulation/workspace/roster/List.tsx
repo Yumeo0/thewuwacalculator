@@ -4,15 +4,7 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent, MouseEvent, RefCallback } from 'react'
 import { UsersRound } from 'lucide-react'
 import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats'

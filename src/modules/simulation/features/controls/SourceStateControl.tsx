@@ -16,11 +16,7 @@ import { ModeGlyph } from '@/modules/simulation/features/controls/ModeGlyph.tsx'
 import { NumberInput } from '@/modules/simulation/features/controls/NumberInput.tsx'
 import { getStateText } from '@/modules/simulation/model/sourceStateDisplay.ts'
 import { sourceOptions as sourceOptions } from '@wuwacalc/core/engine/services/sourceStateService.ts'
-import {
-  isSrcSttOn,
-  setSourceState,
-  setRtPath,
-} from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
+import { isSrcSttOn, setSourceState, setRtPath } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
 import type { RtUpdHnd } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
 import { getSrcSttDsb } from '@/modules/simulation/model/stateDisabledReason.ts'
 import { getSrcSttNct } from '@wuwacalc/core/engine/gameData/controlOptions.ts'

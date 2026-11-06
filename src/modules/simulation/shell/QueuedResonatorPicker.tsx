@@ -6,14 +6,11 @@
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import {
-  useResQStr,
-  type SnapPosition,
-} from '@/shared/util/resonatorQueueStore.ts'
-import {GrDrag} from "react-icons/gr";
-import {useAppStore} from "@/application/state";
-import {withDefResMg} from "@/shared/lib/imageFallback.ts";
-import {bodyPortal} from "@/shared/lib/portalTarget.ts";
+import { useResQStr, type SnapPosition } from '@/shared/util/resonatorQueueStore.ts'
+import { GrDrag } from 'react-icons/gr'
+import { useAppStore } from '@/application/state'
+import { withDefResMg } from '@/shared/lib/imageFallback.ts'
+import { bodyPortal } from '@/shared/lib/portalTarget.ts'
 
 const SNAP_MARGIN = 16
 

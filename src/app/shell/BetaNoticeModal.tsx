@@ -9,10 +9,7 @@ import { FlaskConical, TimerReset } from 'lucide-react'
 import { AppModal } from '@/shared/ui/AppModal'
 import { ModalShell } from '@/shared/ui/AppModalShell'
 import { MODAL_EXIT_MS } from '@/shared/ui/useAppModal'
-import {
-  acknowledgeBetaNotice,
-  isBetaNoticeAcknowledgedToday,
-} from '@/infra/persistence/betaNotice'
+import { acknowledgeBetaNotice, isBetaNoticeAcknowledgedToday } from '@/infra/persistence/betaNotice'
 
 const NOTICE_DELAY_MS = 10000
 const COUNTDOWN_TICK_MS = 100

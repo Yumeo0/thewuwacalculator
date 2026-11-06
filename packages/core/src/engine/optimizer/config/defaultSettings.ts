@@ -11,7 +11,7 @@ import type { SkillDef } from '@core/domain/entities/stats'
 import { getResSeedBy } from '@core/data/catalog/resonatorSeedService'
 import { getDefaultRotation } from '@core/data/catalog/gameDataService'
 import { makeRuntimeMap } from '@core/engine/runtime/runtimeAdapters'
-import { makeStatWeights } from '@core/engine/optimizer/search/filtering'
+import { makeStatWeights } from '@core/engine/search/score/statWeights'
 import { listOptTrgt } from '@core/engine/optimizer/target/skills'
 import { makeSkillCtx, prepareSkill } from '@core/engine/pipeline/prepareRuntimeSkill'
 
@@ -94,7 +94,7 @@ function makeTargetSkill(params: {
   return prepareSkill(runtime, targetSkill.id, context)
 }
 
-// carry execution/search preferences across resonator-specific reinitialization.
+// retain execution and search preferences when changing resonators.
 // each new resonator derives its own target independently of search preferences.
 export function preserveToggles(existing?: OptSets | null): Partial<OptSets> {
   if (!existing) {
@@ -178,11 +178,11 @@ export function deriveOptSets(params: {
   }
 
   const characterId = Number.parseInt(runtime.id, 10)
-  if (characterId === 1206 || characterId === 1209 || characterId === 1412 || characterId === 1505 || characterId === 1110) {
+  if (characterId === 1206 || characterId === 1209 || characterId === 1412 || characterId === 1505 || characterId === 1110 || characterId === 1512) {
     filterSet.add('er')
   }
 
-  if (characterId === 1212) {
+  if (characterId === 1212 || characterId === 1512) {
     filterSet.add('hp%')
   }
 

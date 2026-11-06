@@ -4,15 +4,8 @@
                menu recommendations across pickers.
 */
 
-import type {
-  PckrFreqBktS,
-  PckrFreqStt,
-  PckrFreqUpd,
-  PickFreqWeapon,
-} from '@/domain/entities/uiState'
-import {
-  PICK_FREQ_WEPS,
-} from '@/domain/entities/uiState'
+import type { PckrFreqBktS, PckrFreqStt, PckrFreqUpd, PickFreqWeapon } from '@/domain/entities/uiState'
+import { PICK_FREQ_WEPS } from '@/domain/entities/uiState'
 import type { ResProf } from '@wuwacalc/core/domain/entities/profile'
 import type { ResRuntime, TeamMemRtVie } from '@wuwacalc/core/domain/entities/runtime'
 import { isNoWeaponId } from '@wuwacalc/core/domain/entities/runtime'

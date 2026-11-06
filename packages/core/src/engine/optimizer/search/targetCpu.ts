@@ -11,7 +11,7 @@ import type {
   OptPrgr,
 } from '@core/engine/optimizer/types'
 import { CPU_JOB_SIZE } from '@core/engine/optimizer/config/constants'
-import { MAIN_FIRST } from '@core/engine/optimizer/config/constants'
+import { MAIN_FIRST } from '@core/engine/search/layout/constants'
 import { makeCpuScratch } from '@core/engine/optimizer/cpu/scratch'
 import { countMainCombos } from '@core/engine/optimizer/search/counting'
 import { mkOptPrgrTrc } from '@core/engine/optimizer/search/progress'

@@ -16,11 +16,7 @@ import { SIMULATION_ROUTES } from '@/shared/lib/appRoutes.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import { withDefResMg } from '@/shared/lib/imageFallback'
 import { useNavX } from '@/shared/navigation/useNavX'
-import {
-  isSeated,
-  useImportLanding,
-  type ImportLanding,
-} from '@/modules/simulation/features/echoes/lib/importLanding.ts'
+import { isSeated, useImportLanding, type ImportLanding } from '@/modules/simulation/features/echoes/lib/importLanding.ts'
 
 // a notification that can navigate to an unresolved destination needs a longer
 // lifetime than one confirming an already-seated import.

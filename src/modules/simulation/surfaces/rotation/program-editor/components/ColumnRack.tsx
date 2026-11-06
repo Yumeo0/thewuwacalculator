@@ -5,18 +5,7 @@
 
 import { useMemo, useState } from 'react'
 import { GripVertical } from 'lucide-react'
-import {
-  buildRegister,
-  GROUP_NAMES,
-  groupRem,
-  REGISTER_GROUPS,
-  STAT_HEADS,
-  STAT_KEYS,
-  STAT_NAMES,
-  statGroup,
-  type RegisterGroup,
-  type StatKey,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
+import { buildRegister, GROUP_NAMES, groupRem, REGISTER_GROUPS, STAT_HEADS, STAT_KEYS, STAT_NAMES, statGroup, type RegisterGroup, type StatKey } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 
 const WIDEST_BAND = 20
 

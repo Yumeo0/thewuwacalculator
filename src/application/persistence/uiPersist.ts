@@ -8,13 +8,7 @@ import * as z from 'zod/mini'
 import { APP_STATE_VER } from '@/application/persistence/appStateVersion'
 import { DEF_UI_PREFS } from '@/domain/entities/preferences'
 import { DEFAULT_BODY_FONT, DEF_BG_KEY, getPresetFontUrl } from '@/domain/entities/appearance'
-import {
-  DEFAULT_ROTATION_EDITOR_STAT_KEYS,
-  ROTATION_EDITOR_DAMAGE_DECIMALS,
-  ROTATION_EDITOR_REGISTER_GROUPS,
-  ROTATION_EDITOR_STAT_KEYS,
-  makeDefaultRotationEditorPreferences,
-} from '@/domain/entities/rotationEditorPreferences'
+import { DEFAULT_ROTATION_EDITOR_STAT_KEYS, ROTATION_EDITOR_DAMAGE_DECIMALS, ROTATION_EDITOR_REGISTER_GROUPS, ROTATION_EDITOR_STAT_KEYS, makeDefaultRotationEditorPreferences } from '@/domain/entities/rotationEditorPreferences'
 import { BG_THEMES, DARK_THEMES, LIGHT_THEMES } from '@/domain/entities/themes'
 import type { StoredUiState, ThemeMode, ThemePref, UiState } from '@/domain/entities/uiState'
 import { mkDefPckrFre, mkEmptyPckrFreqBkt, normalizePckrFreqState } from '@/engine/runtime/pickerFrequency'
@@ -280,7 +274,7 @@ const uiPersistSchema = z.strictObject({
   suggsViewMode: z._default(z.enum(['mainStats', 'setPlans', 'weapons', 'random', 'substats']), 'mainStats'),
   showSubHits: z.boolean(),
   compactInv: z._default(z.boolean(), false),
-  groupInv: z._default(z.boolean(), false),
+  groupInv: z._default(z.boolean(), true),
   seeEquipped: z._default(z.boolean(), true),
   haveHistory: z._default(z.boolean(), true),
   historyMax: histMaxSchm,
@@ -376,11 +370,11 @@ export function makeDefaultUiState(theme: ThemeMode = 'dark'): UiState {
     bodyFontUrl: getPresetFontUrl(DEFAULT_BODY_FONT),
     blurMode: false,
     entranceAnimations: true,
-    preferences: DEF_UI_PREFS,
+    preferences: structuredClone(DEF_UI_PREFS),
     suggsViewMode: 'mainStats',
     showSubHits: false,
     compactInv: false,
-    groupInv: false,
+    groupInv: true,
     seeEquipped: true,
     haveHistory: true,
     historyMax: 10,
@@ -424,7 +418,7 @@ export function normalizeUiState(rawUi: StoredUiState | undefined): UiState {
     },
     suggsViewMode: stored.suggsViewMode ?? 'mainStats',
     compactInv: stored.compactInv ?? false,
-    groupInv: stored.groupInv ?? false,
+    groupInv: stored.groupInv ?? true,
     seeEquipped: stored.seeEquipped ?? false,
     historyMax: stored.historyMax ?? 10,
     itemFreq: normalizePckrFreqState(stored.itemFreq),

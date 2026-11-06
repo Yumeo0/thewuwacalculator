@@ -10,12 +10,7 @@ import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import { readRtPath } from '@wuwacalc/core/domain/gameData/runtimePath.ts'
 import { getSrcSttNct, getSrcNumMax } from '@wuwacalc/core/engine/gameData/controlOptions.ts'
 import { isStateVisible, sourceOptions } from '@wuwacalc/core/engine/services/sourceStateService.ts'
-import {
-  isSrcSttOn,
-  setRtPath,
-  setSourceState,
-  type RtUpdHnd,
-} from './lib/runtimeStateUtils.ts'
+import { isSrcSttOn, setRtPath, setSourceState, type RtUpdHnd } from './lib/runtimeStateUtils.ts'
 
 const OWN_CONTROL = 'button, input, select, textarea, a, [role="button"], [role="radio"], [role="switch"], [role="listbox"], .app-select, .team-state-target'
 

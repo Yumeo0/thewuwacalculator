@@ -5,10 +5,7 @@
 
 import { Hash, Layers, List, ToggleRight, type LucideIcon } from 'lucide-react'
 import type { CondChoice } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
-import {
-  conditionChoiceLabel,
-  isFormulaChoice,
-} from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
+import { conditionChoiceLabel, isFormulaChoice } from '@/modules/simulation/surfaces/rotation/shared/conditions.ts'
 
 export type CondTarget = 'resonator' | 'enemy' | 'rotation'
 export type CondKind = 'toggle' | 'select' | 'stack' | 'number'

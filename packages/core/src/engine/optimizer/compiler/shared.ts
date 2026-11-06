@@ -1,29 +1,13 @@
 /*
   Author: Runor Ewhro
-  description: shared optimizer compiler helpers for stripping equipped
-               echoes out of a runtime, resolving locked-main candidates,
-               and building the common combinadic/counting payload used by
-               both target and rotation optimizer runs.
+  description: resolves locked-main candidates and builds the common
+               combinadic/counting payload
+               used by both target and rotation optimizer runs.
 */
 
-import type { ResRuntime } from '@core/domain/entities/runtime'
 import type { OptStartPay } from '@core/engine/optimizer/types'
 import { mkOptCmbnNdx } from '@core/engine/optimizer/combos/combinadic'
-import type { EncEchoRows } from '@core/engine/optimizer/encode/echoes'
-
-// return a runtime copy with all equipped echoes removed.
-//
-// the optimizer evaluates inventory echoes separately, so the runtime used
-// to build combat context should not carry the currently equipped 5-piece set.
-export function stripEchoes(runtime: ResRuntime): ResRuntime {
-  return {
-    ...runtime,
-    build: {
-      ...runtime.build,
-      echoes: [null, null, null, null, null],
-    },
-  }
-}
+import type { EncEchoRows } from '@core/engine/search/encode/echoes'
 
 // collect every inventory index allowed to serve as the locked main echo.
 //

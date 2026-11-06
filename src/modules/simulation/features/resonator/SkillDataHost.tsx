@@ -13,11 +13,7 @@ import { selWorkDrvd } from '@/application/state'
 import { useAppModal } from '@/shared/ui/useAppModal.ts'
 import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import { SkillData } from '@/modules/simulation/features/resonator/SkillData.tsx'
-import {
-  getResDtls,
-  getResonator,
-  type ResView,
-} from '@/modules/simulation/features/resonator/lib/resonator.ts'
+import { getResDtls, getResonator, type ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 
 export interface SkllDataTgt {
   resonatorId: string

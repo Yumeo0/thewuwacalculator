@@ -17,16 +17,8 @@ import { useAppModal } from '@/shared/ui/useAppModal'
 import AppLoaderOverlay from '@/shared/ui/AppLoaderOverlay'
 import { routeCtxBuilder } from '@/application/context-menu/routeContextBuilders.tsx'
 import { rtNavLnks } from '@/application/context-menu/routeChromeConfig'
-import {
-  RouteMenuContext,
-  type RouteHistoryScope,
-  type RouteMenuValue,
-} from '@/application/context-menu/routeMenuContext'
-import {
-  SIMULATION_ROUTES,
-  isSimulationRoute,
-  isSimulationSurfaceRoute,
-} from '@/shared/lib/appRoutes'
+import { RouteMenuContext, type RouteHistoryScope, type RouteMenuValue } from '@/application/context-menu/routeMenuContext'
+import { SIMULATION_ROUTES, isSimulationRoute, isSimulationSurfaceRoute } from '@/shared/lib/appRoutes'
 import { useTstStr } from '@/shared/util/toastStore'
 import { RUNTIME_APP_HISTORY_ENABLED } from '@/application/state/history'
 

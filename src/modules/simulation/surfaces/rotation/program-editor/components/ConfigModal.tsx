@@ -8,14 +8,8 @@ import { useCallback, useState } from 'react'
 import { Scale, TestTubes, X } from 'lucide-react'
 import { AppModal } from '@/shared/ui/AppModal.tsx'
 import type { ReactNode } from 'react'
-import {
-  DAMAGE_DECIMALS,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
-import type {
-  DamageDecimals,
-  RegisterGroup,
-  StatKey,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
+import { DAMAGE_DECIMALS } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
+import type { DamageDecimals, RegisterGroup, StatKey } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 import { ColumnRack } from '@/modules/simulation/surfaces/rotation/program-editor/components/ColumnRack.tsx'
 import { useColumnCeiling } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/useColumnCeiling'
 import { useAppStore } from '@/application/state'

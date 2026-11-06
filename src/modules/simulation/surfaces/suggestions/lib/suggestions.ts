@@ -11,9 +11,9 @@ import type { RandGnrtSets, WeaponPlanSet } from '@wuwacalc/core/domain/entities
 import { ECHO_MAIN_STATS, ECHO_SIDE_STATS } from '@wuwacalc/core/data/gameData/catalog/echoStats.ts'
 import { ECHO_SET_DEFS } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
 import { runtimeSig } from '@wuwacalc/core/engine/runtime/runtimeSignature.ts'
-import type { MainStatRecipe } from '@wuwacalc/core/engine/suggestions/mainStat-suggestion/utils.ts'
-import { formatCompactNum} from '@/modules/simulation/model/statsView.ts'
-import { getQppdEchoC} from '@/modules/simulation/features/echoes/lib/echoes.ts'
+import type { MainStatRecipe } from '@wuwacalc/core/engine/suggestions/mainStat/utils.ts'
+import { formatCompactNum } from '@/modules/simulation/model/statsView.ts'
+import { getQppdEchoC } from '@/modules/simulation/features/echoes/lib/echoes.ts'
 import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
 
 export type { SuggsViewMod } from '@wuwacalc/core/domain/entities/suggestions.ts'
@@ -169,6 +169,7 @@ export function inputSig(options: {
   rotationMode: boolean
   includeEchoAttacks?: boolean
   fixedEchoLoadout?: boolean
+  combatSetup?: import('@wuwacalc/core/engine/pipeline/index.ts').RotationCombatSetup
 }) {
   const {
     enemyProfile,
@@ -181,6 +182,7 @@ export function inputSig(options: {
     tgtFeatId: trgtFtrId,
     includeEchoAttacks = false,
     fixedEchoLoadout = false,
+    combatSetup,
   } = options
 
   return JSON.stringify({
@@ -194,6 +196,7 @@ export function inputSig(options: {
     rotationMode,
     includeEchoAttacks,
     fixedEchoLoadout,
+    combatSetup,
   })
 }
 

@@ -4,32 +4,12 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
-import {
-  useCallback,
-  useId,
-  useLayoutEffect,
-  useMemo,
-  useState,
-  memo,
-  type CSSProperties,
-  type KeyboardEvent as ReactKeyboardEvent,
-  type MouseEvent as ReactMouseEvent,
-  type ReactNode,
-} from 'react'
+import { useCallback, useId, useLayoutEffect, useMemo, useState, memo, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
 import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
 import { withDefResMg } from '@/shared/lib/imageFallback.ts'
-import {
-  formatDamage,
-  type DamageDecimals,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
+import { formatDamage, type DamageDecimals } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 import { RCN_BAND_LANES } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/consoleModel.ts'
-import type {
-  RcnBand,
-  RcnGlyph,
-  RcnModel,
-  RcnNode,
-  RcnStateTrack,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/consoleModel.ts'
+import type { RcnBand, RcnGlyph, RcnModel, RcnNode, RcnStateTrack } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/consoleModel.ts'
 import type { FlatRowTarget } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/flatRows.ts'
 import type { EditorMember } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 

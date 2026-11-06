@@ -10,17 +10,12 @@ import type { CSSProperties as CssProps } from 'react'
 import { ThumbsUp } from 'lucide-react'
 import type { GenWpn } from '@wuwacalc/core/domain/entities/weapon.ts'
 import { useAppStore } from '@/application/state'
-import {
-  WPNSTATLBLS,
-  WPN_STAT_CNS,
-  fmtWpnStatDs,
-  withDefWpnMg,
-} from '@/modules/simulation/features/weapons/lib/weapon.ts'
+import { WPNSTATLBLS, WPN_STAT_CNS, fmtWpnStatDs, withDefWpnMg } from '@/modules/simulation/features/weapons/lib/weapon.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { PickerModal as ShrdPckrMdl } from '@/modules/simulation/ui/PickerModal.tsx'
 import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
 import { rarityVars } from '@/modules/simulation/model/display.ts'
-import {FaStar} from "react-icons/fa";
+import { FaStar } from 'react-icons/fa'
 
 const WPN_STAT_FILTER_ORDER = [
   'critRate',

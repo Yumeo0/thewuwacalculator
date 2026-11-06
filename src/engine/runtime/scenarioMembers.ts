@@ -4,14 +4,7 @@
                removal, maintaining environment routing and member references.
 */
 
-import {
-  makeScenarioTeam,
-  reviseCombatScenario,
-  type CombatScenario,
-  type DormantScenarioMember,
-  type ScenarioTeamMember,
-  type TeamMemberId,
-} from '@wuwacalc/core/domain/entities/combatScenario'
+import { makeScenarioTeam, reviseCombatScenario, type CombatScenario, type DormantScenarioMember, type ScenarioTeamMember, type TeamMemberId } from '@wuwacalc/core/domain/entities/combatScenario'
 import { makeCustomBuff } from '@wuwacalc/core/engine/runtime/defaults'
 import { makeMemberManualEffect, memberManualEffectId, removeMemberEnvironmentState } from '@wuwacalc/core/engine/runtime/scenarioEnvironment'
 

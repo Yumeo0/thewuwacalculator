@@ -11,20 +11,8 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { useAppStore } from '@/application/state'
-import {
-  sbscToDrtyPr,
-} from '@/application/persistence/storage'
-import {
-  applyBgColor,
-  applyBgToDocument,
-  dtctBgClr,
-  dtctBgTxtMod,
-  getImmediateBgUrl,
-  readActiveBgKey,
-  readStoredBg,
-  resolveBg,
-  writeStoredBgColor,
-} from '@/application/theme/backgroundTheme'
+import { sbscToDrtyPr } from '@/application/persistence/storage'
+import { applyBgColor, applyBgToDocument, dtctBgClr, dtctBgTxtMod, getImmediateBgUrl, readActiveBgKey, readStoredBg, resolveBg, writeStoredBgColor } from '@/application/theme/backgroundTheme'
 import { applyBodyFon } from '@/application/theme/typography'
 import { AppTltpProv } from '@/shared/ui/Tooltip'
 import { AppCtxMenuPr } from '@/application/context-menu/AppContextMenu'

@@ -10,20 +10,7 @@ import { ChevronDown } from 'lucide-react'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import type { EditorStep } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import type { OffTuneTrace } from '@wuwacalc/core/domain/entities/stats'
-import {
-  GROUP_NAMES,
-  GROUP_SHORT,
-  bandSpan,
-  fmtExact,
-  fmtStatHeading,
-  offTuneState,
-  offTuneTraceAt,
-  type OffTuneAuthoringState,
-  type PercentDisplay,
-  type RegisterGroup,
-  type RegisterLayout,
-  type StatKey,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
+import { GROUP_NAMES, GROUP_SHORT, bandSpan, fmtExact, fmtStatHeading, offTuneState, offTuneTraceAt, type OffTuneAuthoringState, type PercentDisplay, type RegisterGroup, type RegisterLayout, type StatKey } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 
 const COLUMN_VARS: CSSProperties[] = Array.from(
   { length: 32 },

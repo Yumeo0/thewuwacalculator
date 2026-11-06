@@ -15,11 +15,7 @@ import { Expandable } from '@/shared/ui/Expandable'
 import { getResonator, getResDtls, type ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display.ts'
 import { withDefResMg } from '@/shared/lib/imageFallback.ts'
-import {
-  fmtSkllKey,
-  mrgDscrKywr,
-  skllLblMap,
-} from '@/modules/simulation/features/resonator/lib/panel.ts'
+import { fmtSkllKey, mrgDscrKywr, skllLblMap } from '@/modules/simulation/features/resonator/lib/panel.ts'
 import { useMobileUi } from '@/shared/responsive/mobileUi'
 import { MobilePages } from '@/shared/ui/mobile/MobilePages'
 import { BookOpen, List } from 'lucide-react'

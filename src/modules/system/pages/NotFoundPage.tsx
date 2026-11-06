@@ -4,7 +4,7 @@
 */
 
 import { useNavX } from '@/shared/navigation/useNavX'
-import {TbGoGame} from "react-icons/tb";
+import { TbGoGame } from 'react-icons/tb'
 
 export function NotFoundPage() {
   const navigate = useNavX()

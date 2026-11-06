@@ -139,7 +139,7 @@ function OptInvTile({
   })
 
   const onTileKeyDow = (event: KeyboardEvent<HTMLElement>) => {
-    // keyboard activation only belongs to the tile shell; child controls handle their own enter/space events.
+    // the tile handles keyboard activation; child controls handle their events.
     if (selectMode || event.currentTarget !== event.target) {
       return
     }
@@ -155,7 +155,7 @@ function OptInvTile({
       {...buttonProps}
       type="button"
       className={`inv-tile opi-tile${selected ? ' focus-selected' : ''}${selectMode ? ' selection-mode' : ''}${isPreview ? ' is-picked' : ''}`}
-      style={cardVars}
+      style={{ ...buttonProps.style, ...cardVars }}
       data-in={included ? 'true' : 'false'}
       data-inv-uid={entry.id}
       data-selection-focus-item="true"
@@ -361,8 +361,7 @@ export function OptimizerInventoryModal({
         }
 
         const usage = entry.echo.uid ? echoSgByUid[entry.echo.uid] ?? [] : []
-        // include usage names so an echo can be found by the resonator that is
-        // currently holding it, not only by echo identity.
+        // include equipped resonator names and ids in Echo search.
         const matchesSearch = mtchSrchTkns(echoSearchTokens, [
           definition.name,
           entry.echo.id,
@@ -668,6 +667,7 @@ export function OptimizerInventoryModal({
                 </div>
 
                 {showRdt && previewEntry ? (
+                  <div className="inv-rdt-wrapper">
                   <OptInvRdt
                     key={previewEntry.id}
                     entry={previewEntry}
@@ -676,6 +676,7 @@ export function OptimizerInventoryModal({
                     onInclude={() => applyEntries([previewEntry], true)}
                     onExclude={() => applyEntries([previewEntry], false)}
                   />
+                  </div>
                 ) : null}
               </>
             )}

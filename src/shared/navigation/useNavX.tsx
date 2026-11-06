@@ -10,10 +10,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import type { NavigateOptions } from 'react-router-dom'
 import { armMove, motionAllowed } from '@/shared/navigation/navMotion'
 import { useNavPrgrs } from '@/shared/navigation/navProgress'
-import {
-  isNavigationPathWarm,
-  warmNavigationPath,
-} from '@/shared/navigation/navigationPreload'
+import { isNavigationPathWarm, warmNavigationPath } from '@/shared/navigation/navigationPreload'
 import { isPersistentWorkspaceRoute } from '@/shared/lib/appRoutes'
 
 // commit even when preloading stalls; the route boundary handles subsequent loading.

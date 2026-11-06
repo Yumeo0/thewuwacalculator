@@ -1,15 +1,9 @@
 /*
   Author: Runor Ewhro
-  description: builds the compact per-weapon stat overlays used by theory weapon
-               search. each visible weapon (max-passive mode) is swapped into the
-               echo-stripped runtime and run through the same context compile
-               that produces the base context, then only the weapon-varying
-               packed slots (WEAPON_OVERLAY_SLOTS) are extracted. the combo space
-               is weapon-independent. setup runs once; evaluation
-               then scores each combo against every overlay and keeps the best.
+  description: compiles weapon-specific stat overlays for theory search.
 */
 
-import { optimizerFloats } from '@core/engine/optimizer/workers/payloadBuffers'
+import { optimizerFloats } from '@core/engine/search/layout/buffers'
 import type { OptStartPay } from '@core/engine/optimizer/types'
 import type { ResRuntime, WeaponState } from '@core/domain/entities/runtime'
 import type { GenWpn } from '@core/domain/entities/weapon'
@@ -23,14 +17,10 @@ import {
   weaponStatsAt,
 } from '@core/domain/services/weaponPlan'
 import { listStatesFor } from '@core/data/catalog/gameDataService'
-import { compOptTgtCt } from '@core/engine/optimizer/target/context'
-import { packTargetCtx } from '@core/engine/optimizer/context/pack'
-import { stripEchoes } from '@core/engine/optimizer/compiler/shared'
-import {
-  MAX_WEAPON_CANDIDATES,
-  WEAPON_OVERLAY_SLOTS,
-  WEAPON_OVERLAY_STRIDE,
-} from '@core/engine/optimizer/config/constants'
+import { compOptTgtCt } from '@core/engine/search/context/target'
+import { packTargetCtx } from '@core/engine/search/context/pack'
+import { stripEchoes } from '@core/engine/search/context/runtime'
+import { MAX_WEAPON_CANDIDATES, WEAPON_OVERLAY_SLOTS, WEAPON_OVERLAY_STRIDE } from '@core/engine/search/layout/constants'
 
 export interface WeaponOverlays {
   // w × WEAPON_OVERLAY_STRIDE floats, row-major; row w stores the weapon-varying
@@ -96,7 +86,7 @@ function maxControls(
 // the weapon state + passive controls the search used for a candidate, so the
 // optimizer's "equip" can reproduce exactly what was evaluated: id, the build's
 // weapon level, the plan's rank, and the plan's passive config (max, minus the
-// ones it turns off). returns null for an unknown id. mirrors buildWeaponOverlays.
+// ones it disables); return null for an unknown id.
 export function weaponEquipState(
     weaponId: string,
     level: number,

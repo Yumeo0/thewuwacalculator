@@ -7,14 +7,8 @@ import { describe, expect, it } from 'vitest'
 import { makeEchoUid } from '@core/domain/entities/runtime'
 import { getEchoSets, listChsByCos } from '@core/data/catalog/echoCatalogService'
 import { ECHO_SIDE_STATS } from '@core/data/gameData/catalog/echoStats'
-import {
-  applyMainSur,
-  applySetPlan,
-  mkEchoMainSt,
-  mkMainStatPt,
-  mkSetPlanCnd,
-  prepSetPlanFsb,
-} from '@core/engine/suggestions/mutate'
+import { applyMainSur, applySetPlan, mkEchoMainSt, mkMainStatPt, prepSetPlanFsb } from '@core/engine/suggestions/mutate'
+import { mkSetPlanCnd } from '@core/engine/search/combos/setPlans'
 
 describe('echo mutation invariants', () => {
   it('narrows bonus main stat options to the selected attribute', () => {

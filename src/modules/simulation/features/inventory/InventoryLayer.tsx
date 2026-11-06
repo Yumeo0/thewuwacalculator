@@ -7,10 +7,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
 import type { SavedBuild, SavedEcho } from '@wuwacalc/core/domain/entities/inventoryStorage'
-import {
-  cloneEchoFor,
-  cloneEchoLoadout,
-} from '@wuwacalc/core/domain/entities/inventoryStorage'
+import { cloneEchoFor, cloneEchoLoadout } from '@wuwacalc/core/domain/entities/inventoryStorage'
 import { initWpnStts } from '@wuwacalc/core/engine/runtime/sourceStateInit'
 import { useAppStore } from '@/application/state'
 import { useInventoryUiStore } from '@/application/state/inventoryUiStore'

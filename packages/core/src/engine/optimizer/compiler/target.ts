@@ -7,11 +7,12 @@
 
 import type { OptStartPay, PrepTargetSkill } from '@core/engine/optimizer/types'
 import { makeRuntimeMap } from '@core/engine/runtime/runtimeAdapters'
-import { encStatCstrs } from '@core/engine/optimizer/constraints/statConstraints'
-import { mkMainEchoRo, encEchoRows } from '@core/engine/optimizer/encode/echoes'
-import { buildSetRows, makeSetMask } from '@core/engine/optimizer/encode/sets'
-import { compOptTgtCt } from '@core/engine/optimizer/target/context'
-import { mkShrdPay, stripEchoes } from '@core/engine/optimizer/compiler/shared'
+import { encTgtStatCstrs } from '@core/engine/search/score/statConstraints'
+import { mkMainEchoRo, encEchoRows } from '@core/engine/search/encode/echoes'
+import { buildSetRows, makeSetMask } from '@core/engine/search/encode/sets'
+import { compOptTgtCt } from '@core/engine/search/context/target'
+import { mkShrdPay } from '@core/engine/optimizer/compiler/shared'
+import { stripEchoes } from '@core/engine/search/context/runtime'
 
 // compile the optimizer for a single selected target skill
 // this is the main bridge from editable runtime state into the packed payload
@@ -36,7 +37,7 @@ export function compTgtRun(input: OptStartPay, baseline = false): PrepTargetSkil
   })
 
   // encode stat-floor and stat-cap style optimizer constraints from settings
-  const constraints = baseline ? new Float32Array(0) : encStatCstrs(input.settings)
+  const constraints = baseline ? new Float32Array(0) : encTgtStatCstrs(input.settings)
 
   // encode the inventory echoes using the selected target skill shape
   const encoded = encEchoRows(input.invChs, target.selectedSkill, 'self')
@@ -44,7 +45,7 @@ export function compTgtRun(input: OptStartPay, baseline = false): PrepTargetSkil
   // build the shared payload used by both target and rotation optimizer modes
   const shared = mkShrdPay(encoded, input, constraints, baseline)
 
-  // capture the current runtime set state so evaluation can merge runtime sets correctly
+  // current runtime set state for evaluation's set merge
   const setRtMask = makeSetMask(runtime, input.setConds)
   const setConstLut = buildSetRows(runtime, input.setConds)
 
@@ -55,7 +56,6 @@ export function compTgtRun(input: OptStartPay, baseline = false): PrepTargetSkil
     sourceBaseStats: target.combat.baseStats,
     sourceFinals: target.combat.finalStats,
     selectedSkill: target.selectedSkill,
-    mode: 'self',
   })
 
   return {

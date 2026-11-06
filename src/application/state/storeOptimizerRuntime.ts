@@ -3,23 +3,11 @@
   description: manages optimizer worker requests, run tokens, payload transfers, compilation, and result materialization.
 */
 
-import { payloadTransfers } from '@wuwacalc/core/engine/optimizer/workers/payloadBuffers'
+import { payloadTransfers } from '@wuwacalc/core/engine/search/layout/buffers'
 import { createCoreWorker } from '@wuwacalc/core/data/coreEnvironment'
-import type {
-  OptBckn,
-  OptStoredResult,
-  OptRawResult,
-  OptStartPay,
-  PrepOptPay,
-} from '@wuwacalc/core/engine/optimizer/types'
+import type { OptBckn, OptStoredResult, OptRawResult, OptStartPay, PrepOptPay } from '@wuwacalc/core/engine/optimizer/types'
 import type { OptCompOutMs } from '@wuwacalc/core/engine/optimizer/compiler/compileWorker.types.ts'
-import {
-  CPU_JOB_SIZE,
-  TARGET_GPU_JOB,
-  ROT_GPU_JOB,
-  CPU_THEORY_JOB,
-  GPU_THEORY_JOB,
-} from '@wuwacalc/core/engine/optimizer/config/constants'
+import { CPU_JOB_SIZE, TARGET_GPU_JOB, ROT_GPU_JOB, CPU_THEORY_JOB, GPU_THEORY_JOB } from '@wuwacalc/core/engine/optimizer/config/constants'
 import { errorOpt, logOptimizer } from '@wuwacalc/core/engine/optimizer/config/log.ts'
 
 /** manages the store's compile worker and invalidates stale optimizer requests. */

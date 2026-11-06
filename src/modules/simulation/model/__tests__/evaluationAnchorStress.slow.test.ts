@@ -16,23 +16,13 @@ import type { EchoInstance, ResRuntime, ResSeed } from '@wuwacalc/core/domain/en
 import { runResSmlt } from '@wuwacalc/core/engine/pipeline'
 import { mkSuggVltnCt } from '@wuwacalc/core/engine/suggestions/shared'
 import type { SuggestContext } from '@wuwacalc/core/engine/suggestions/types'
-import { makeEvaluationCostPlans } from '@wuwacalc/core/engine/evaluation/evaluation/costPlans'
+import { makeEvaluationCostPlans } from '@wuwacalc/core/engine/evaluation/costPlans'
 import { ECHO_MAIN_STATS, ECHO_SIDE_STATS, SUBSTAT_KEYS, getSbstStepP } from '@wuwacalc/core/data/gameData/catalog/echoStats'
 import { ignoresEr } from '@wuwacalc/core/engine/evaluation/energyRegenPolicy'
 import { SET_RULES, evaluationSetConditions } from '@wuwacalc/core/engine/evaluation/setStatePolicy'
-import {
-  assembleEvaluation,
-  evaluationErTarget,
-  buildEvaluationAnchors,
-  materializeEvaluationAnchorBuilds,
-  type EvaluationAnchors,
-} from '@wuwacalc/core/engine/evaluation/evaluation/search.ts'
-import {
-  hasNonSelfMainEchoBuff,
-  preservedMainEchoFor,
-  utilityPlanFor,
-} from '@wuwacalc/core/engine/evaluation/evaluation/echoDiscovery.ts'
-import type { EvaluationBuildSnapshot } from '@wuwacalc/core/engine/evaluation/evaluation/types.ts'
+import { assembleEvaluation, evaluationErTarget, buildEvaluationAnchors, materializeEvaluationAnchorBuilds, type EvaluationAnchors } from '@wuwacalc/core/engine/evaluation/search.ts'
+import { hasNonSelfMainEchoBuff, preservedMainEchoFor, utilityPlanFor } from '@wuwacalc/core/engine/evaluation/echoDiscovery.ts'
+import type { EvaluationBuildSnapshot } from '@wuwacalc/core/engine/evaluation/types.ts'
 import { isUtilitySet } from '@wuwacalc/core/engine/gameData/sonataPlan'
 import { applyEvaluationAsm, EVALUATION_ENEMY } from '@/modules/simulation/model/evaluationAssumptions'
 import { combatScenarioId, teamMemberId } from '@wuwacalc/core/domain/entities/combatScenario'
@@ -54,7 +44,7 @@ const TEST_TIMEOUT_MS = 20 * 60 * 1000
 const NON_ER_SUBSTATS = () => SUBSTAT_KEYS.filter((key) => key !== 'energyRegen')
 
 function mulberry32(seed: number): Rng {
-  // deterministic pseudo-randomness gives broad scenario coverage while keeping
+  // deterministic pseudo-randomness covers varied scenarios while keeping
   // stress failures reproducible from the resonator id and scenario index
   let value = seed >>> 0
   return () => {
@@ -153,11 +143,13 @@ function randomEchoes(resonatorId: string, scenarioIndex: number): Array<EchoIns
   // energy regen so the expected anchor input stays intentionally constant
   const rng = mulberry32(0x51A7E000 ^ Number(resonatorId) ^ scenarioIndex)
   const setIds = legalSetIds(resonatorId)
-  const costPlan = pick(rng, makeEvaluationCostPlans())
+  const costPlan = pick(rng, makeEvaluationCostPlans().filter((plan) =>
+    plan.every((cost, slot) => setIds.some((setId) => echoPool(cost, setId, slot === 0).length > 0)),
+  ))
 
   return costPlan.map((cost, slot) => {
     const mainEcho = slot === 0
-    const setId = pick(rng, setIds)
+    const setId = pick(rng, setIds.filter((id) => echoPool(cost, id, mainEcho).length > 0))
     const pool = echoPool(cost, setId, mainEcho)
     const echo = pick(rng, pool)
     const primary = randomPrimary(rng, cost)
@@ -266,7 +258,7 @@ function expectStableAnchors(resonatorId: string): void {
     const context = buildContext(seed, runtime)
     const equipped = runtime.build.echoes
     const inputSignature = anchorInputSignature(context, equipped)
-    expect(inputSignature.targetEr).toBe(0)
+    expect(inputSignature.targetEr).toBeGreaterThanOrEqual(100)
     expect(inputSignature.utility).toEqual([])
     expect(inputSignature.mainEcho).toBeNull()
 

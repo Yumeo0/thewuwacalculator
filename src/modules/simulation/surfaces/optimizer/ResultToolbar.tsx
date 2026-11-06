@@ -5,37 +5,14 @@
 */
 
 import { useMemo, useState } from 'react'
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  CornerDownLeft,
-  Crosshair,
-  Filter as FilterIcon,
-  Terminal,
-  X,
-} from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, CornerDownLeft, Crosshair, Filter as FilterIcon, Terminal, X } from 'lucide-react'
 import { Expandable } from '@/shared/ui/Expandable'
 import { Select, type SelectOption } from '@/application/ui/Select'
 import { SonataTokens } from '@/modules/simulation/workspace/ui.tsx'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
 import { getSntSetIco } from '@/domain/gameData/sonataDisplay'
-import {
-  OP_SYMBOL,
-  VIEW_COLUMNS,
-  facetMainEchoes,
-  facetPlans,
-  facetSets,
-  isDefaultViewCriteria,
-  type CatCol,
-  type CmpOp,
-  type NumCol,
-  type Predicate,
-  type ResultFacetTable,
-  type ResultViewCriteria,
-  type ViewSortKey,
-} from '@/modules/simulation/surfaces/optimizer/lib/results.ts'
+import { OP_SYMBOL, VIEW_COLUMNS, facetMainEchoes, facetPlans, facetSets, isDefaultViewCriteria, type CatCol, type CmpOp, type NumCol, type Predicate, type ResultFacetTable, type ResultViewCriteria, type ViewSortKey } from '@/modules/simulation/surfaces/optimizer/lib/results.ts'
 
 const ALL = '__all__'
 const OPS: CmpOp[] = ['gte', 'gt', 'eq', 'lte', 'lt']

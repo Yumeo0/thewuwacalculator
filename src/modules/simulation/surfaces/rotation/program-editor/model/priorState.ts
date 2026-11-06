@@ -8,14 +8,8 @@ import type { ResRuntime } from '@wuwacalc/core/domain/entities/runtime.ts'
 import type { RuntimeValue } from '@wuwacalc/core/domain/gameData/contracts.ts'
 import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
 import { srcSttKey, srcSttMax } from '@wuwacalc/core/engine/runtime/sourceStateInit.ts'
-import {
-  cycleCondValue,
-  seedCondValue,
-} from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
-import type {
-  CondChoice,
-  RotationConditionValue,
-} from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
+import { cycleCondValue, seedCondValue } from '@/modules/simulation/surfaces/rotation/shared/conditions.ts'
+import type { CondChoice, RotationConditionValue } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
 import { isEditorBlock, type EditorCondition, type EditorNode, type EditorSection } from './program.ts'
 import { parseRegValue } from './registerValues.ts'
 

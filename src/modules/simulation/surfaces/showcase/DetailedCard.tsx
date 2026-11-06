@@ -23,22 +23,9 @@ import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
 import { withDefIconM } from '@/shared/lib/imageFallback.ts'
 import { groupUid } from '@/modules/simulation/features/echoes/lib/playerIdentity.ts'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
-import {
-  EvaluationSeqRail,
-  ResonatorName,
-  statFamily,
-  type CssVars,
-  type EvaluationEchoSelection,
-} from '@/modules/simulation/workspace/ui.tsx'
+import { EvaluationSeqRail, ResonatorName, statFamily, type CssVars, type EvaluationEchoSelection } from '@/modules/simulation/workspace/ui.tsx'
 import type { BuildRailModel, ShowcaseBuildModel } from '@/modules/simulation/workspace/BuildRail.tsx'
-import {
-  ShowcaseEchoMains,
-  ShowcaseEchoSubs,
-  ShowcaseStatRow,
-  loadoutCv,
-  makeRelStats,
-  type RelStats,
-} from './Showcase.tsx'
+import { ShowcaseEchoMains, ShowcaseEchoSubs, ShowcaseStatRow, loadoutCv, makeRelStats, type RelStats } from './Showcase.tsx'
 import { buildTotalsByKey, showcaseSecondaryRows } from './lib/showcaseStats.ts'
 import Thewuwacalculator from '@/assets/thewuwacalculator.svg?react'
 

@@ -21,44 +21,18 @@ import { withDefIconM, withDefResMg } from '@/shared/lib/imageFallback'
 import { glyphVars, resNodeIcon } from '@/shared/lib/gameAssets'
 import { ATTR_COLORS, rarityVars } from '@/modules/simulation/model/display.ts'
 import { useSkllData } from '@/modules/simulation/features/resonator/SkillDataHost.tsx'
-import {
-  mkForteDock,
-  mkForteMode,
-  mkForteTree,
-} from '@/modules/simulation/features/resonator/lib/forteTree.ts'
+import { mkForteDock, mkForteMode, mkForteTree } from '@/modules/simulation/features/resonator/lib/forteTree.ts'
 import { getResonator, type ResView } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import type { CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScenario.ts'
 import { MemberSelector } from './MemberSelector.tsx'
 import { TeamEditButton } from '@/modules/simulation/features/teams/TeamEditButton.tsx'
 import { ModulationStats } from './Stats.tsx'
-import {
-  makeStatsTree,
-  makeStatsView,
-  STAT_ICON_MAP,
-  STATS_VIEW_ROW_COUNT,
-} from '@/modules/simulation/model/statsView.ts'
-import type {
-  EvaluationBuildSnapshot,
-  EvaluationOverviewStats,
-  BuildEvaluationReport,
-} from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
-import {
-  ASCENSION_STOPS,
-  RES_LVL_MAX,
-  RES_LVL_MIN,
-  setResLvl,
-  setSkllLvl,
-  tglTrcNd,
-} from '@/modules/simulation/features/resonator/lib/buildEdits.ts'
+import { makeStatsTree, makeStatsView, STAT_ICON_MAP, STATS_VIEW_ROW_COUNT } from '@/modules/simulation/model/statsView.ts'
+import type { EvaluationBuildSnapshot, EvaluationOverviewStats, BuildEvaluationReport } from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
+import { ASCENSION_STOPS, RES_LVL_MAX, RES_LVL_MIN, setResLvl, setSkllLvl, tglTrcNd } from '@/modules/simulation/features/resonator/lib/buildEdits.ts'
 import { setRtPath } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
 import type { RtUpdHnd } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
-import {
-  countLive,
-  countModulationEffects,
-  makeModulationBays,
-  type BayGlyph,
-  type BayRow,
-} from './lib/modulationBays.ts'
+import { countLive, countModulationEffects, makeModulationBays, type BayGlyph, type BayRow } from './lib/modulationBays.ts'
 import { useMemberAnalysis, type MemberAnalysisSource } from './lib/memberSim.ts'
 import { useAppStore, selEnemyProf } from '@/application/state'
 import { isNoEnemy } from '@wuwacalc/core/domain/entities/appState.ts'

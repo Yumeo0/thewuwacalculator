@@ -12,7 +12,7 @@ import { isNoWeaponId, type ResRuntime } from '@wuwacalc/core/domain/entities/ru
 import type { CombatScenarioId } from '@wuwacalc/core/domain/entities/combatScenario.ts'
 import { useAppStore } from '@/application/state'
 import { listWpnsByTy } from '@wuwacalc/core/data/catalog/weaponCatalogService.ts'
-import {getRarityColor, getWpnTypeLb, WPNTYPETOKEY} from '@/modules/simulation/model/display.ts'
+import { getRarityColor, getWpnTypeLb, WPNTYPETOKEY } from '@/modules/simulation/model/display.ts'
 import type { PickFreqWeapon } from '@/domain/entities/uiState'
 import { glyphVars } from '@/shared/lib/gameAssets.ts'
 import { withDefWpnMg } from '@/shared/lib/imageFallback.ts'
@@ -25,24 +25,9 @@ import { mainPortal } from '@/shared/lib/portalTarget.ts'
 import { selInitRtLkp, selWorkDrvd } from '@/application/state'
 import type { RtUpdHnd } from '@/modules/simulation/features/controls/lib/runtimeStateUtils.ts'
 import { getResonator } from '@/modules/simulation/features/resonator/lib/resonator.ts'
-import {
-  RES_LVL_MAX,
-  RES_LVL_MIN,
-  setWpnLvl,
-} from '@/modules/simulation/features/resonator/lib/buildEdits.ts'
-import {
-  fmtWpnStatDs,
-  getWeapon,
-  resPssvPrms,
-  weaponStatsAt,
-  WPN_STAT_CNS,
-  WPNSTATLBLS,
-} from '@/modules/simulation/features/weapons/lib/weapon.ts'
-import {
-  applyWpnSel,
-  setWpnRank,
-  WPN_RANK_MAX,
-} from '@/modules/simulation/features/weapons/lib/weaponSlotOps.ts'
+import { RES_LVL_MAX, RES_LVL_MIN, setWpnLvl } from '@/modules/simulation/features/resonator/lib/buildEdits.ts'
+import { fmtWpnStatDs, getWeapon, resPssvPrms, weaponStatsAt, WPN_STAT_CNS, WPNSTATLBLS } from '@/modules/simulation/features/weapons/lib/weapon.ts'
+import { applyWpnSel, setWpnRank, WPN_RANK_MAX } from '@/modules/simulation/features/weapons/lib/weaponSlotOps.ts'
 import { WeaponPicker } from '@/modules/simulation/features/weapons/Picker.tsx'
 import { useWpnCnsl } from '@/modules/simulation/features/weapons/lib/weaponConsoleStore.ts'
 import { projectScenarioUiRuntimes } from '@wuwacalc/core/engine/runtime/scenarioRuntime.ts'

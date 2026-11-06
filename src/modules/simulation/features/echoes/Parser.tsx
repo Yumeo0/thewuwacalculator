@@ -19,12 +19,7 @@ import { ImportReceipt } from '@/modules/simulation/features/echoes/ImportReceip
 import { Edit } from '@/modules/simulation/features/echoes/Edit.tsx'
 import { ConfirmModal } from '@/shared/ui/ConfirmationModal.tsx'
 import { applyImprtRd } from '@/modules/simulation/features/echoes/lib/importApply.ts'
-import {
-  askForIdntty,
-  idntyDffrs,
-  readIdentity,
-  type PlayerIdentity,
-} from '@/modules/simulation/features/echoes/lib/playerIdentity.ts'
+import { askForIdntty, idntyDffrs, readIdentity, type PlayerIdentity } from '@/modules/simulation/features/echoes/lib/playerIdentity.ts'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
 import { EchoRows, EchoRowsFoot, makeEchoRows } from '@/modules/simulation/features/echoes/ui/EchoRows.tsx'
 import { useAppStore } from '@/application/state'
@@ -85,6 +80,8 @@ interface EchoMgPrsrMd {
   onDetectedResonator?: (resonatorId: string) => void
   allowDetectedDestination?: boolean
   headerExtra?: ReactNode
+  // process the card supplied before the reader opened.
+  initialFile?: File | null
   onClose: () => void
 }
 
@@ -101,6 +98,7 @@ export function Parser({
   onDetectedResonator,
   allowDetectedDestination = false,
   headerExtra,
+  initialFile = null,
   onClose,
 }: EchoMgPrsrMd) {
   const addEchoToInv = useAppStore((s) => s.addInvEcho)
@@ -220,6 +218,13 @@ export function Parser({
       }
     }
   }
+
+  const readInitialRef = useRef<File | null>(null)
+  useEffect(() => {
+    if (!visible || !initialFile || readInitialRef.current === initialFile) return
+    readInitialRef.current = initialFile
+    queueMicrotask(() => void onMgFile(initialFile))
+  })
 
   // register paste handling only while this parser instance is mounted.
   useEffect(() => {

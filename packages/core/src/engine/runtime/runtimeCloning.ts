@@ -6,6 +6,7 @@
 */
 
 import type { EnemyProfile } from '@core/domain/entities/appState'
+import { migrateLegacyEnemyProfile } from '@core/domain/gameData/enemyStateMigration'
 import { cloneEchoLoadout, cloneRotationNodes } from '@core/domain/entities/inventoryStorage'
 import type { ManualBuffs, MnlMod, QuickBuffs } from '@core/domain/entities/manualBuffs'
 import type { ResProf, SlotLocalState, SlotRatingState } from '@core/domain/entities/profile'
@@ -228,6 +229,7 @@ export function cloneResProf(profile: ResProf): ResProf {
 }
 
 export function cloneEnemyPr(enemy: EnemyProfile): EnemyProfile {
+  enemy = migrateLegacyEnemyProfile(enemy)
   return {
     id: enemy.id,
     level: enemy.level,

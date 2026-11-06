@@ -9,6 +9,9 @@ import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 import { buildDisplayAssets } from '../buildDisplayAssets.mjs'
 
+// Release libvips file handles before the regeneration checks on Windows.
+sharp.cache(false)
+
 describe('display asset generation', () => {
   it('encodes mislabeled PNGs, preserves originals and invalidates changed content', async () => {
     const root = await mkdtemp(join(tmpdir(), 'wuwa-display-'))
@@ -35,7 +38,7 @@ describe('display asset generation', () => {
       await buildDisplayAssets(options)
       expect(await readFile(manifestPath, 'utf8')).toBe(json)
       expect((await stat(file)).mtimeMs).toBe(written)
-      await rm(file)
+      await rm(file, { maxRetries: 5, retryDelay: 100 })
       await buildDisplayAssets(options)
       expect(await readFile(manifestPath, 'utf8')).toBe(json)
       expect((await stat(file)).size).toBeGreaterThan(0)
@@ -44,7 +47,7 @@ describe('display asset generation', () => {
       const changed = parseEntry(await readFile(manifestPath, 'utf8'))
       expect(changed.variants[0].src).not.toBe(entry.variants[0].src)
     } finally {
-      await rm(root, { recursive: true, force: true })
+      await rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
     }
   })
 })

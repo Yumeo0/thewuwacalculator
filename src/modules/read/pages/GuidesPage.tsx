@@ -5,28 +5,11 @@
                rendering from the guide content catalog.
 */
 
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties as CssProps,
-  type KeyboardEvent as RctKybrVnt,
-  type MouseEvent as RctMsVnt,
-  type ReactNode,
-} from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties as CssProps, type KeyboardEvent as RctKybrVnt, type MouseEvent as RctMsVnt, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { AnimatePresence as NmtPrsn, LayoutGroup, motion } from 'motion/react'
 import { ChevronLeft, Search, X } from 'lucide-react'
-import {
-  gdCtgr,
-  type GuideArticle,
-  type GuideBlock,
-  type GuideCategory,
-  type GuidePlateStep,
-} from '@/data/content/guidesContent'
+import { gdCtgr, type GuideArticle, type GuideBlock, type GuideCategory, type GuidePlateStep } from '@/data/content/guidesContent'
 import { resGdCtgr } from '@/modules/read/model/guides'
 import { CllpPageHeyf } from '@/shared/ui/CollapsiblePageHero'
 import { useNavX } from '@/shared/navigation/useNavX'

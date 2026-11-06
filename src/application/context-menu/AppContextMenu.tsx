@@ -6,18 +6,9 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react'
 import { useAppStore } from '@/application/state'
-import {
-  ContextMenu,
-  type CtxOpenEvent,
-  type MenuEntry,
-  useCtxMenu,
-} from '@/shared/ui/CtxMenu.tsx'
+import { ContextMenu, type CtxOpenEvent, type MenuEntry, useCtxMenu } from '@/shared/ui/CtxMenu.tsx'
 import { dialogPortal, mainPortal } from '@/shared/lib/portalTarget'
-import {
-  createMenuContributionRegistry,
-  normalizeMenuEntries,
-  type MenuContribution,
-} from './menuContributions'
+import { createMenuContributionRegistry, normalizeMenuEntries, type MenuContribution } from './menuContributions'
 
 type AppMenuEvent = CtxOpenEvent | MouseEvent | ReactMouseEvent<Element>
 

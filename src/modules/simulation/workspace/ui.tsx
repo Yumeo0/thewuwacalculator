@@ -9,21 +9,11 @@ import { currentPixelRatio } from '@/shared/lib/displayImageSizing'
 import type { CSSProperties, KeyboardEvent, MouseEvent, RefCallback } from 'react'
 import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats'
 import type { EchoInstance } from '@wuwacalc/core/domain/entities/runtime'
-import type {
-  EvaluationAlternative,
-  EvaluationBuildKey,
-  EvaluationEchoSlot,
-  EvaluationSetSummary,
-} from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
+import type { EvaluationAlternative, EvaluationBuildKey, EvaluationEchoSlot, EvaluationSetSummary } from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
 import type { MenuEntry } from '@/shared/ui/CtxMenu.tsx'
 import { ArrowUpFromLine, LibraryBig, Undo2 } from 'lucide-react'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger.tsx'
-import {
-  EchoCardBand,
-  EchoCardList,
-  EchoCardRibbon,
-  echoCardVars,
-} from '@/modules/simulation/features/echoes/ui/EchoCard.tsx'
+import { EchoCardBand, EchoCardList, EchoCardRibbon, echoCardVars } from '@/modules/simulation/features/echoes/ui/EchoCard.tsx'
 import { cmptEchoCrit } from '@/modules/simulation/features/echoes/lib/metric.ts'
 import { ATTR_COLORS } from '@/modules/simulation/model/display'
 import { countEchoSets } from '@wuwacalc/core/engine/pipeline/buildCombatContext'

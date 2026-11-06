@@ -16,11 +16,7 @@ import { getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { getWeightObj } from '@wuwacalc/core/data/scoring/charStatWeights'
 import { cmptEchoCrit, cmptEchoCritAll, getCvToneColor, getScrTone } from '@/modules/simulation/features/echoes/lib/metric.ts'
 import { useEchoScores } from '@/application/hooks/useEchoScoringRevision.ts'
-import {
-  formatCompactNum,
-  formatStatKeyLabel,
-  formatStatKeyValue,
-} from '@/modules/simulation/model/statsView.ts'
+import { formatCompactNum, formatStatKeyLabel, formatStatKeyValue } from '@/modules/simulation/model/statsView.ts'
 import type { StatViewRow, StatsView } from '@/modules/simulation/model/statsView.ts'
 import { buildTotalsByKey, showcaseSecondaryRows } from './lib/showcaseStats.ts'
 import { formatBuildEvaluationScore } from '@/modules/simulation/model/buildEvaluationDisplay.ts'

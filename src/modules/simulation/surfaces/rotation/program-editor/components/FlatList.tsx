@@ -8,49 +8,13 @@ import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 import type { MenuEntry } from '@/shared/ui/CtxMenu'
 import type { CSSProperties, MouseEvent } from 'react'
 import { useEffect, useMemo, useRef } from 'react'
-import type {
-  EditorMember,
-  EditorStep,
-  LoopRunSelections,
-  NodeOwner,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
-import type {
-  FlatRow,
-  FlatScope,
-  FlatRowTarget,
-  FlatWrite,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/flatRows.ts'
-import {
-  decorateFlatRows,
-  flatPeak,
-  flatTargetMatchesRuns,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/flatRows.ts'
+import type { EditorMember, EditorStep, LoopRunSelections, NodeOwner } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
+import type { FlatRow, FlatScope, FlatRowTarget, FlatWrite } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/flatRows.ts'
+import { decorateFlatRows, flatPeak, flatTargetMatchesRuns } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/flatRows.ts'
 import type { RotationNodeRevealRequest } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeNavigation.ts'
-import {
-  buildRegister,
-  factorAt,
-  formatDamage,
-  fmtStat,
-  isTextStatKey,
-  type OffTuneAuthoringState,
-  shortStat,
-  stepDamageAt,
-  type DamageDecimals,
-  type PercentDisplay,
-  type RegisterGroup,
-  type StatKey,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
-import {
-  OffTuneCell,
-  RegisterHead,
-  bandCells,
-  registerVars,
-  useScrollbarInset,
-} from '@/modules/simulation/surfaces/rotation/program-editor/components/RegisterCells.tsx'
-import {
-  makeRoster,
-  type TeamLookup,
-} from '@/modules/simulation/surfaces/rotation/program-editor/components/NodeList.tsx'
+import { buildRegister, factorAt, formatDamage, fmtStat, isTextStatKey, type OffTuneAuthoringState, shortStat, stepDamageAt, type DamageDecimals, type PercentDisplay, type RegisterGroup, type StatKey } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
+import { OffTuneCell, RegisterHead, bandCells, registerVars, useScrollbarInset } from '@/modules/simulation/surfaces/rotation/program-editor/components/RegisterCells.tsx'
+import { makeRoster, type TeamLookup } from '@/modules/simulation/surfaces/rotation/program-editor/components/NodeList.tsx'
 import { RES_NODE_KEYS, glyphVars, resNodeIcon, type ResNodeKey } from '@/shared/lib/gameAssets.ts'
 import { getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
 import { formatEffectConditionName } from '@/modules/simulation/model/sourceStateDisplay.ts'

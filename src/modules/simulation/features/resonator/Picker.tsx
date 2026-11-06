@@ -6,24 +6,17 @@
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { ensureResonatorData } from '@wuwacalc/core/data/gameData'
 import { useTstStr } from '@/shared/util/toastStore'
-import {type CSSProperties as CssProps, useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import { type CSSProperties as CssProps, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Check, Flame, History } from 'lucide-react'
 import type { ResMenuEnt } from '@wuwacalc/core/domain/entities/resonator.ts'
 import { useAppStore } from '@/application/state'
-import {
-  ATTR_FILTERS,
-  WEAPON_FILTERS,
-  WPNTYPETOKEY,
-} from '@/modules/simulation/features/resonator/lib/resonator.ts'
+import { ATTR_FILTERS, WEAPON_FILTERS, WPNTYPETOKEY } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { toTitle } from '@/shared/lib/format.ts'
 import { withDefIconM, withPickerImageFallback } from '@/shared/lib/imageFallback.ts'
 import { PickerModal as ShrdPckrMdl, type PckrMdlItem } from '@/modules/simulation/ui/PickerModal.tsx'
 import { useResQStr } from '@/shared/util/resonatorQueueStore.ts'
-import {
-  getRecs,
-  orderRecs,
-} from '@/modules/simulation/features/resonator/lib/recommendations.ts'
+import { getRecs, orderRecs } from '@/modules/simulation/features/resonator/lib/recommendations.ts'
 import { ATTR_COLORS, rarityVars } from '@/modules/simulation/model/display.ts'
 import { roverIsVisible } from '@/domain/entities/roverGender'
 

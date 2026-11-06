@@ -3,84 +3,23 @@
   description: coordinates editor surface switching, execution, comparison, selection, and document actions.
 */
 
-import {
-  type CSSProperties,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
-import {
-  ChevronsDownUp,
-  ChevronsUpDown,
-  ClipboardPaste,
-  CopyPlus,
-  DecimalsArrowLeft,
-  DecimalsArrowRight,
-  Download,
-  FolderInput,
-  GitCompare,
-  ListPlus,
-  MessageSquarePlus,
-  Microchip,
-  PanelRight,
-  Pencil,
-  Percent,
-  Play,
-  Radio,
-  RadioOff,
-  Redo2,
-  RotateCwSquare,
-  Save,
-  Settings,
-  Share2,
-  SquareDashedMousePointer,
-  Undo2,
-  Columns4,
-  Columns3,
-  Workflow,
-  ListOrdered
-} from '@/shared/ui/LucideMotionIcons.ts'
-import {
-  ArrowDownAZ,
-  ArrowDownWideNarrow,
-  ArrowUpNarrowWide,
-  Clock,
-  Command,
-  CornerDownLeft,
-  LayoutList,
-  List,
-  ListFilter,
-  Scale,
-  Swords,
-  TestTubes,
-  Timer,
-  Trash2,
-  UserRound,
-  Users,
-  UsersRound,
-  type LucideIcon,
-} from 'lucide-react'
+import { type CSSProperties, useEffect, useRef, useState } from 'react'
+import { ChevronsDownUp, ChevronsUpDown, ClipboardPaste, CopyPlus, DecimalsArrowLeft, DecimalsArrowRight, Download, FolderInput, GitCompare, ListPlus, MessageSquarePlus, Microchip, PanelRight, Pencil, Percent, Play, Radio, RadioOff, Redo2, RotateCwSquare, Save, Settings, Share2, SquareDashedMousePointer, Undo2, Columns4, Columns3, Workflow, ListOrdered } from '@/shared/ui/LucideMotionIcons.ts'
+import { ArrowDownAZ, ArrowDownWideNarrow, ArrowUpNarrowWide, Clock, Command, CornerDownLeft, LayoutList, List, ListFilter, Scale, Swords, TestTubes, Timer, Trash2, UserRound, Users, UsersRound, type LucideIcon } from 'lucide-react'
 import { LuListTree } from 'react-icons/lu'
 import { PiBroom } from 'react-icons/pi'
 import type { UiState } from '@/domain/entities/uiState'
-import {
-  AnchoredAppPopup,
-  AppPopupHeader,
-  useAppPopupDismiss,
-} from '@/shared/ui/AppPopup.tsx'
+import { AnchoredAppPopup, AppPopupHeader, useAppPopupDismiss } from '@/shared/ui/AppPopup.tsx'
 import type { RotationEditorPreferences } from '@/domain/entities/rotationEditorPreferences.ts'
 import { Select, type SelectOption } from '@/application/ui/Select'
 import { ColumnsMenu } from './ColumnsMenu.tsx'
 import { TeamMenu } from './TeamMenu.tsx'
 import { useColumnCeiling } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/useColumnCeiling'
 import { NodeSearch, type NodeSearchProps } from './NodeSearch.tsx'
-import {
-  DAMAGE_DECIMALS,
-  type StatKey,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
+import { DAMAGE_DECIMALS, type StatKey } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 import type { SavedListView } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/savedRotationList.ts'
 import type { RotationLoadMode } from '@/modules/simulation/surfaces/rotation/program-editor/saved/useLoadRotation.ts'
-import {useAppStore} from "@/application/state";
+import { useAppStore } from '@/application/state'
 
 type Surface = 'editor' | 'saved'
 type SavedPreferences = Pick<

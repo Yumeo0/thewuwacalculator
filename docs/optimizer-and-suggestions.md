@@ -15,8 +15,8 @@ These systems reuse the same canonical scenario and runtime assumptions as the r
 Primary files:
 
 - [packages/core/src/engine/suggestions/core.ts](../packages/core/src/engine/suggestions/core.ts)
-- [packages/core/src/engine/suggestions/mainStat-suggestion](../packages/core/src/engine/suggestions/mainStat-suggestion)
-- [packages/core/src/engine/suggestions/setPlan-suggestion](../packages/core/src/engine/suggestions/setPlan-suggestion)
+- [packages/core/src/engine/suggestions/mainStat](../packages/core/src/engine/suggestions/mainStat)
+- [packages/core/src/engine/suggestions/setPlan](../packages/core/src/engine/suggestions/setPlan)
 - [packages/core/src/engine/suggestions/worker.ts](../packages/core/src/engine/suggestions/worker.ts)
 - [src/modules/simulation/surfaces/suggestions/results](../src/modules/simulation/surfaces/suggestions/results)
 

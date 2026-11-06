@@ -6,9 +6,9 @@
 
 import { describe, expect, it } from 'vitest'
 import { listChsByCos } from '@core/data/catalog/echoCatalogService'
-import { MAIN_BUFF_LEN } from '@core/engine/optimizer/config/constants'
-import { prepareMainEchoChoices } from '@core/engine/evaluation/evaluation/echoDiscovery'
-import type { MainEchoProfile } from '@core/engine/evaluation/evaluation/stats'
+import { MAIN_BUFF_LEN } from '@core/engine/search/layout/constants'
+import { prepareMainEchoChoices } from '@core/engine/evaluation/echoDiscovery'
+import type { MainEchoProfile } from '@core/engine/evaluation/stats'
 
 function profile(id: string, sets: number[], buff: number, cost = 4): MainEchoProfile {
   const buffs = new Float32Array(MAIN_BUFF_LEN)

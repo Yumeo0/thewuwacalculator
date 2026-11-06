@@ -20,21 +20,7 @@ import { projectScenarioMemberRuntime } from '@wuwacalc/core/engine/runtime/scen
 import { getDefaultRotation } from '@wuwacalc/core/data/catalog/gameDataService.ts'
 import { migrateAdvancedScenarioRotations } from '@/application/persistence/advancedRotationMigration.ts'
 import { useAppStore } from '@/application/state/store'
-import {
-  APP_STORAGE_KEY,
-  APPSTORECMBT,
-  APPSTORECMBTINDEX,
-  APPSTOREINVC,
-  APPSTOREINVR,
-  APPSTOREINVS,
-  APPSTOREOPTS,
-  APPSTOREUIPP,
-  consumePersist,
-  loadPrssAppS,
-  loadPrssInvS,
-  parsePersisted,
-  saveAppState,
-} from '@/application/persistence/storage'
+import { APP_STORAGE_KEY, APPSTORECMBT, APPSTORECMBTINDEX, APPSTOREINVC, APPSTOREINVR, APPSTOREINVS, APPSTOREOPTS, APPSTOREUIPP, consumePersist, loadPrssAppS, loadPrssInvS, parsePersisted, saveAppState } from '@/application/persistence/storage'
 
 function makeMemoryStorage(): Storage {
   const values = new Map<string, string>()
@@ -119,13 +105,19 @@ describe('persisted state compatibility', () => {
     localStorage.setItem(APPSTOREUILY, JSON.stringify(layout))
     localStorage.removeItem(SHOWCASE_INDEX)
     const original = localStorage.setItem.bind(localStorage)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const write = vi.spyOn(localStorage, 'setItem').mockImplementation((key, value) => {
       if (key.startsWith(SHOWCASE_INDEX)) throw new Error('quota')
       original(key, value)
     })
-    expect(loadPrssAppS()?.ui.preferences.showcaseCards.a).toBeDefined()
-    expect(JSON.parse(localStorage.getItem(APPSTOREUILY)!).ui.preferences.showcaseCards.a).toBeDefined()
-    write.mockRestore()
+    try {
+      expect(loadPrssAppS()?.ui.preferences.showcaseCards.a).toBeDefined()
+      expect(JSON.parse(localStorage.getItem(APPSTOREUILY)!).ui.preferences.showcaseCards.a).toBeDefined()
+      expect(warn).toHaveBeenCalledExactlyOnceWith('[storage] failed to persist Showcase cards', expect.objectContaining({ message: 'quota' }))
+    } finally {
+      write.mockRestore()
+      warn.mockRestore()
+    }
   })
 
   it('round-trips preset targets and discards legacy current-rotation selections', () => {

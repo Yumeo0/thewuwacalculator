@@ -24,7 +24,7 @@ import { getEchoById } from '@core/data/catalog/echoCatalogService'
 import { runtimeSig } from '@core/engine/runtime/runtimeSignature'
 import type { SimResult } from '@core/engine/pipeline/types'
 import { runMainStatS } from '@core/engine/suggestions/client'
-import { applyMainSta } from '@core/engine/suggestions/mainStat-suggestion/utils'
+import { applyMainSta } from '@core/engine/suggestions/mainStat/utils'
 import { mkPrepMainSt } from '@core/engine/suggestions/shared'
 import type {
   MainStatPrep,

@@ -4,7 +4,7 @@
                unranking across both full and locked-main search modes.
 */
 
-import { ECHOES_PER_SET } from '@core/engine/optimizer/config/constants'
+import { ECHOES_PER_SET } from '@core/engine/search/layout/constants'
 
 const MAX_U32 = 0xFFFFFFFF
 

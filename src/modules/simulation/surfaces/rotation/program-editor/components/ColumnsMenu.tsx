@@ -6,23 +6,9 @@
 
 import { useCallback, useRef } from 'react'
 import { Columns3Cog } from '@/shared/ui/LucideMotionIcons.ts'
-import {
-  AnchoredAppPopup,
-  AppPopupFooter,
-  AppPopupHeader,
-  AppPopupFill,
-  useAppPopupDismiss,
-} from '@/shared/ui/AppPopup.tsx'
-import {
-  ColumnRack,
-  useColumnBudget,
-} from '@/modules/simulation/surfaces/rotation/program-editor/components/ColumnRack.tsx'
-import {
-  DEFAULT_STAT_KEYS,
-  REGISTER_GROUPS,
-  type RegisterGroup,
-  type StatKey,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
+import { AnchoredAppPopup, AppPopupFooter, AppPopupHeader, AppPopupFill, useAppPopupDismiss } from '@/shared/ui/AppPopup.tsx'
+import { ColumnRack, useColumnBudget } from '@/modules/simulation/surfaces/rotation/program-editor/components/ColumnRack.tsx'
+import { DEFAULT_STAT_KEYS, REGISTER_GROUPS, type RegisterGroup, type StatKey } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 import { useConfigurationSession } from '@/shared/ui/useConfigurationSession.ts'
 
 interface ColumnsMenuProps {

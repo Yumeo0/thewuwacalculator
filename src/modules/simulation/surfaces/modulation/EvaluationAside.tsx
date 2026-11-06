@@ -5,38 +5,16 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
-import type {
-  EvaluationFeature,
-  BuildEvaluationReport,
-} from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
-import { GRADE_LADDER } from '@/shared/lib/evaluationGrades.ts'
-import {
-  formatBuildEvaluationScore,
-  getBuildEvaluationTone,
-} from '@/modules/simulation/model/buildEvaluationDisplay.ts'
+import type { EvaluationFeature, BuildEvaluationReport } from '@wuwacalc/core/engine/evaluation/buildEvaluation.ts'
+import { GRADE_LADDER } from '@/shared/lib/evaluationGrades'
+import { formatBuildEvaluationScore, getBuildEvaluationTone } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
 import { formatCompactNum } from '@/modules/simulation/model/statsView.ts'
 import { formatTruncCompact } from '@wuwacalc/core/shared/lib/number.ts'
 import { getPrimarySkill, getSkillType } from '@/domain/gameData/skillTypes'
 import { RES_NODE_KEYS, glyphVars, resNodeIcon } from '@/shared/lib/gameAssets'
 import type { ResNodeKey } from '@/shared/lib/gameAssets'
-import {
-  DETAIL_BUILD_LABEL,
-  DETAIL_BUILD_ORDER,
-  SwapToken,
-  deltaSign,
-  fmtSignedPct,
-  groupAlternatives,
-  type AlternativePathGroup,
-  type CssVars,
-  type DetailBuildKey,
-} from '@/modules/simulation/workspace/ui.tsx'
-import {
-  ROTATION_CHART_COLORS,
-  getEvaluationFeatureTabLabel,
-  groupRotationFeatureRows,
-} from './evaluationFeatureDisplay.ts'
-
-/* ---------- the ladder the band is drawn from ---------- */
+import { DETAIL_BUILD_LABEL, DETAIL_BUILD_ORDER, SwapToken, deltaSign, fmtSignedPct, groupAlternatives, type AlternativePathGroup, type CssVars, type DetailBuildKey } from '@/modules/simulation/workspace/ui.tsx'
+import { ROTATION_CHART_COLORS, getEvaluationFeatureTabLabel, groupRotationFeatureRows } from './evaluationFeatureDisplay.ts'
 
 const LADDER = [...GRADE_LADDER].sort((left, right) => left[0] - right[0])
 const TOP = 200
@@ -49,10 +27,7 @@ function gradeAt(score: number): { at: number; label: string; color: string } {
   return { at: hit[0], label: hit[1], color: getBuildEvaluationTone(hit[0]).color }
 }
 
-/*
-  the window spans whole grades touched by the paths and build. divide the
-  band at grade boundaries that match the score band.
-*/
+// include the nearest grade boundaries around the current and proposed scores.
 function ladderWindow(points: number[]): [number, number] {
   const low = Math.min(...points)
   const high = Math.max(...points)
@@ -76,12 +51,8 @@ function windowScale(lo: number, hi: number): string {
   return `linear-gradient(90deg, ${stops.join(', ')})`
 }
 
-/*
-  a pointer crossing the list on its way somewhere else is not a reading. every
-  aim, arriving or leaving, waits out the same dwell. scrolling under the
-  cursor leaves the wheel and band still; adjacent row changes animate as one
-  continuous move.
-*/
+/* delay hover selection equally on entry and exit; scrolling does not change
+   the selected row until the pointer settles. */
 const DWELL_MS = 150
 
 /* how far apart, in percent of the window, two marks have to be to share a lane */
@@ -103,13 +74,7 @@ function useDwell<T>(): [T | null, (next: T | null) => void] {
   return [at, aim]
 }
 
-/* ---------- the wheel's segments ---------- */
-
-/*
-  two rings on one dial. each arc is a dashed circle: one visible run the
-  length of its share, then a gap the length of everything else, wound back to
-  where the arcs before it left off.
-*/
+// each arc shows its share as a dash and offsets by the preceding shares.
 const R_OUT = 78
 const R_IN = 57
 const C_OUT = 2 * Math.PI * R_OUT
@@ -163,8 +128,6 @@ function pct(value: number): string {
   return `${formatTruncCompact(value, 1)}%`
 }
 
-/* ---------- the aside ---------- */
-
 export function EvaluationAside({
   onClose,
   report,
@@ -180,11 +143,8 @@ export function EvaluationAside({
 
   const build = report.evaluation.builds[buildKey] ?? report.evaluation.builds.active
 
-  /*
-    the features are grouped by node so the inner ring's arcs are contiguous,
-    which is what lets one drawing carry both cuts. within a node they keep the
-    report's own order, which is damage first.
-  */
+  /* group features by node for contiguous inner arcs, preserving the report's
+     damage-first order within each group. */
   const wheel = useMemo(() => {
     const ranked = groupRotationFeatureRows(build.features)
 
@@ -284,8 +244,6 @@ export function EvaluationAside({
     }
   }, [here, paths])
 
-  /* ---------- what the hole reads ---------- */
-
   const lead = wheel.segs[0]
   const reading = (() => {
     if (pick?.kind === 'type') {
@@ -334,8 +292,6 @@ export function EvaluationAside({
     onMouseLeave: () => aimPick(null),
     onBlur: () => aimPick(null),
   })
-
-  /* ---------- the ladder's reading ---------- */
 
   const path = pathAt == null ? null : paths[pathAt]
   const lands = path ? path.representative.score : here

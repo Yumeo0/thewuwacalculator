@@ -4,8 +4,6 @@
                update toast surfaces.
 */
 
-import { CURRENT_CHANGE_NOTICE } from './currentChangelogNotice'
-
 export interface ChngEnt {
   type: 'paragraph'
   content: string
@@ -53,6 +51,8 @@ export interface WnEntry {
 }
 
 export interface ChngRcrd {
+  /** stable id for the latest notice and published entries. */
+  id?: string
   date: string
   shortDesc?: string
   patchVersion?: string
@@ -880,7 +880,9 @@ export const curChngEnts: ChngRcrd[] = [
     shortDesc: `3.7.0 beta update`,
   },
   {
-    ...CURRENT_CHANGE_NOTICE,
+    date: '28/09/2026',
+    patchVersion: '3.7 live',
+    shortDesc: '3.7 patch update',
     entries: [
       {
         type: 'paragraph',
@@ -1170,6 +1172,160 @@ export const curChngEnts: ChngRcrd[] = [
       ],
     },
     shortDesc: `New... EVERYTHING!? („°0°„)`,
+  },
+  {
+    date: '23/10/2026',
+    entries: [
+      {
+        type: 'paragraph',
+        content: `
+          <strong>optimizer</strong> and <strong>suggestions</strong> can select default rotations, the current live rotation, other live scenarios, and saved rotations containing the resonator in question. saved sources supply their team/environment while using the current searched build
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          for the <storng>optimizer</storng>, added cost-aware combination enumeration, cput/gpu pruning, specialized target shaders, adaptive batch sizing, and pipelined gpu readbacks. theory searches also gain pruning and revised buffer scheduling (tldr; more speed, better performance)
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          for the <strong>opimizer</strong>, results consistently use the weapon selected by the search. rotation constraints and displayed rows use the final set of stats. retained results receive more precise cpu rescoring, and a result deduplication bug during table growth is fixed
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          main-echo search in <strong>sonata set plan suggestions</strong> considers compatible equipped cost classes, including useful off-set main echoes. also, you can now see the main echo in the result list ui
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          in the <strong>optimizer</strong>, rotation results now show the final stat damage bonus column. sonata set conditional controls now show previously hidden teammate targeted effects
+        `,
+      }
+    ],
+    shortDesc: `searcher systems optimizations`,
+  },
+  {
+    id: '2026-10-24-3-8-1-beta',
+    date: '24/10/2026',
+    patchVersion: '3.8.1 beta',
+    entries: [
+      {
+        type: 'paragraph',
+        content: `
+          <strong>3.8.1 beta data</strong> is now included. Well, that's just <strong>Lily</strong> and <strong>Lullaby</strong>.
+        `,
+      }
+    ],
+    shortDesc: `3.8.1 beta update (,; ⩌ ;,)`,
+  },
+  {
+    id: '2026-10-27-16-26',
+    date: '27/10/2026',
+    entries: [
+      {
+        type: 'paragraph',
+        content: `
+          new <strong>Mornye Tools</strong> import. import your resonators, weapons, and Echoes from a <strong>Mornye Tools</strong> export; also, the app header’s wuwa bot card import button becomes a menu for game data, build-card screenshots, and shared rotations. app backup import area also accepts these formats.
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          imported builds, rotations, screenshots, and backups now consistently resolve to your selected Rover gender, including related skills, buffs, and saved settings (they lowkey didn't before now haha..)
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          for the <strong>opimizer</strong>, results consistently use the weapon selected by the search. rotation constraints and displayed rows use the final set of stats. retained results receive more precise cpu rescoring, and a result deduplication bug during table growth is fixed
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          corrected manual buff calculations. they were being counted twice in some calculations, which could inflate displayed stats and damage.
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          corrected Hecate sonata options. Hecate now supports all its seven valid Sonata sets.
+        `,
+      }
+    ],
+    shortDesc: `full(-ish) game data import`,
+  },
+  {
+    id: '2026-10-31-19-37',
+    date: '31/10/2026',
+    entries: [
+      {
+        type: 'paragraph',
+        content: `
+          <strong>3.8.3 beta data</strong> has been updated.
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          happy halloween... hope you're having fun.
+        `,
+      }
+    ],
+    shortDesc: `3.8.3 beta update`,
+  },
+  {
+    id: '2026-11-02-inventory-imports-enemies',
+    date: '02/11/2026',
+    entries: [
+      {
+        type: 'paragraph',
+        content: `
+          <strong>reworked inventory browsing.</strong> echoes and saved builds can be browsed in collapsible groups. collapsed groups show horizontally scrollable rows; expanding a group opens its paginated grid. jumping to a saved echo opens the appropriate group and page. new inventories start grouped by default.
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          <strong>two new dark themes:</strong> tidal slate and fuchsia noir. graphite pop also has darker surfaces.
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          <strong>improved build-card recognition.</strong> better recognition of resonators, rover variants, weapons, echoes, sonata sets, levels, and substats. portrait and weapon-icon matching help resolve unclear text, while extra reading passes recover difficult stat values.
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          <strong>updated enemy controls and readings.</strong> the enemy ui shows resistance changes, immunities, vulnerability, and damage bonuses more accurately, including effects with multiple readings.
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          <strong>corrected enemy mechanics.</strong> added sabercat prowler's invisibility, granting 30% all-attribute res. nameless explorer, desolate apparition, and thousand-puppet pavilion gain their enemy-specific +2 tune strain stack limit. nameless explorer and desolate apparition now use the target tune srain counter for their 4% vulnerability per stack.
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          <strong>special-damage and rotation calculation fixes.</strong> corrected crit. dmg defaults for tune rupture and negative-effect damage, addressing cases where critical damage became zero while average damage remained nonzero.
+        `,
+      },
+      {
+        type: 'paragraph',
+        content: `
+          <strong>echo quick setup improvements.</strong> adding a sonata set selects the largest valid piece count that fits the remaining slots. changing the main echo reuses a compatible cost slot when possible, preserving its existing configuration.
+        `,
+      }
+    ]
   },
 ]
 

@@ -4,43 +4,20 @@
 */
 
 import type { RunResult } from '@/modules/simulation/surfaces/rotation/program-editor/simulation/runProgram.ts'
-import type {
-  BuffLine,
-  EditorBlock,
-  EditorCondition,
-  EditorHandoff,
-  EditorMember,
-  EditorNode,
-  EditorNote,
-  EditorExecutionScope,
-  EditorSection,
-  EditorStep,
-  LoopRunSelections,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
+import type { BuffLine, EditorBlock, EditorCondition, EditorHandoff, EditorMember, EditorNode, EditorNote, EditorExecutionScope, EditorSection, EditorStep, LoopRunSelections } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import { editorNodeLabel } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats.ts'
 import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
 import { findNode, collectSubtrees } from '@/modules/simulation/surfaces/rotation/program-editor/model/treeEdit.ts'
 import { ACTIVE_RESONATOR_PATH } from '@wuwacalc/core/domain/gameData/rotationPaths.ts'
-import {
-  blockAverageDamage,
-  blockRunTotals as getBlockRunTotals,
-  collectSectionSteps,
-  isDisabledInTree,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/nodeMetrics.ts'
-import {
-  findNodeExecutionScope,
-  formatExecutionRun,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/executionScope.ts'
-import {
-  findFeatureOccurrences,
-  type FeatureOccurrence,
-} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeNavigation.ts'
+import { blockAverageDamage, blockRunTotals as getBlockRunTotals, collectSectionSteps, isDisabledInTree } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/nodeMetrics.ts'
+import { findNodeExecutionScope, formatExecutionRun } from '@/modules/simulation/surfaces/rotation/program-editor/model/executionScope.ts'
+import { findFeatureOccurrences, type FeatureOccurrence } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeNavigation.ts'
 import { loopBodyItems, stepCount, stepDamageAt, stepHasRun } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 import { ROT_LOOP_COLORS } from '@/modules/simulation/surfaces/rotation/shared/loopMeta.ts'
 import { ROT_BLOCK_COLORS } from '@/modules/simulation/surfaces/rotation/shared/containerMeta.ts'
 import { ROT_NOTE_COLORS } from '@/modules/simulation/surfaces/rotation/shared/noteMeta.ts'
-import { ROT_FORMULA_OWNER_KEY } from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
+import { ROT_FORMULA_OWNER_KEY } from '@/modules/simulation/surfaces/rotation/shared/conditions.ts'
 
 /** what a state write looked like on the run being read */
 interface ReadWrite {

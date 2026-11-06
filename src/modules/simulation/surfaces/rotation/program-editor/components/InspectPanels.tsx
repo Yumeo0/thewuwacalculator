@@ -4,75 +4,15 @@
 */
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
-import {
-  ArrowRight,
-  CheckCheck,
-  ChevronsDown,
-  ChevronsLeft,
-  ChevronsRight,
-  BarChart3,
-  ClipboardPaste,
-  Copy,
-  CopyPlus,
-  Eraser,
-  GitCompare,
-  Layers,
-  Plus,
-  Power,
-  PowerOff,
-  ChevronDown,
-  ChevronRight,
-  Minus,
-  Pencil,
-  Repeat,
-  RotateCcw,
-  Scissors,
-  Swords,
-  Timer,
-  TextQuote,
-  Trash2,
-  TriangleAlert,
-  SquarePen,
-  Unlink,
-  X,
-  MessageSquareText,
-  MessageSquarePlus
-} from 'lucide-react'
+import { ArrowRight, CheckCheck, ChevronsDown, ChevronsLeft, ChevronsRight, BarChart3, ClipboardPaste, Copy, CopyPlus, Eraser, GitCompare, Layers, Plus, Power, PowerOff, ChevronDown, ChevronRight, Minus, Pencil, Repeat, RotateCcw, Scissors, Swords, Timer, TextQuote, Trash2, TriangleAlert, SquarePen, Unlink, X, MessageSquareText, MessageSquarePlus } from 'lucide-react'
 import { ATTR_COLORS, getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
 import { withDefEchoMg, withDefIconM, withDefResMg, withDefWpnMg } from '@/shared/lib/imageFallback.ts'
 import { getSntSetNam } from '@wuwacalc/core/data/gameData/catalog/sonataSets.ts'
 import { getSntSetClr, getSntSetIco } from '@/domain/gameData/sonataDisplay'
 import { getEchoSetDe } from '@wuwacalc/core/data/gameData/echoSets/effects.ts'
-import type {
-  ConditionWriteAction,
-  EditorBlock,
-  EditorEcho,
-  EditorHandoff,
-  BuffLine,
-  EditorCondition,
-  EditorExecutionScope,
-  EditorSection,
-  LoopRunSelections,
-  EditorMember,
-  EditorNode,
-  EditorNote,
-  RotationSummary,
-  EditorStep,
-  SummaryGroup,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
-import {
-  editorNodeLabel,
-  isEditorBlock,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type InputHTMLAttributes,
-  type ReactNode,
-} from 'react'
+import type { ConditionWriteAction, EditorBlock, EditorEcho, EditorHandoff, BuffLine, EditorCondition, EditorExecutionScope, EditorSection, LoopRunSelections, EditorMember, EditorNode, EditorNote, RotationSummary, EditorStep, SummaryGroup } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
+import { editorNodeLabel, isEditorBlock } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react'
 import { Expandable } from '@/shared/ui/Expandable.tsx'
 import { Select, type SelectOption } from '@/application/ui/Select'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
@@ -82,29 +22,16 @@ import { ROT_LOOP_COLORS } from '@/modules/simulation/surfaces/rotation/shared/l
 import { ROT_BLOCK_COLORS } from '@/modules/simulation/surfaces/rotation/shared/containerMeta.ts'
 import { ROT_NOTE_COLORS } from '@/modules/simulation/surfaces/rotation/shared/noteMeta.ts'
 import { formatDamage, stepDamageAt, stepHasRun } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
-import {
-  formatExecutionRun,
-  formatExecutionScope,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/executionScope.ts'
-import type {
-  FeatureOccurrence,
-  RotationNodeTarget,
-} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeNavigation.ts'
-import { condActionFromChange } from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
-import { ROT_FORMULA_OWNER_KEY } from '@/modules/simulation/surfaces/rotation/shared/conditions.tsx'
+import { formatExecutionRun, formatExecutionScope } from '@/modules/simulation/surfaces/rotation/program-editor/model/executionScope.ts'
+import type { FeatureOccurrence, RotationNodeTarget } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeNavigation.ts'
+import { condActionFromChange } from '@/modules/simulation/surfaces/rotation/shared/conditions.ts'
+import { ROT_FORMULA_OWNER_KEY } from '@/modules/simulation/surfaces/rotation/shared/conditions.ts'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import { rarityVars } from '@/modules/simulation/model/display.ts'
-import {
-  fmtWpnStatDs,
-  WPNSTATLBLS,
-  WPN_STAT_CNS,
-} from '@/modules/simulation/features/weapons/lib/weapon.ts'
+import { fmtWpnStatDs, WPNSTATLBLS, WPN_STAT_CNS } from '@/modules/simulation/features/weapons/lib/weapon.ts'
 import { regTextValue } from '@/modules/simulation/surfaces/rotation/program-editor/model/registerValues.ts'
 import type { AttachedWrite } from '@/modules/simulation/surfaces/rotation/program-editor/model/nodeAuthoring.ts'
-import {
-  BuffRows,
-  InspectorSection,
-} from '@/modules/simulation/surfaces/rotation/program-editor/components/InspectorPrimitives.tsx'
+import { BuffRows, InspectorSection } from '@/modules/simulation/surfaces/rotation/program-editor/components/InspectorPrimitives.tsx'
 
 /** what the inspector can do to the one note a node is allowed to own */
 interface NoteActions {

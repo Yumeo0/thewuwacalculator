@@ -6,15 +6,9 @@
 
 import React from 'react'
 import * as RadixTooltip from '@radix-ui/react-tooltip'
-import type {
-  CSSProperties,
-  ReactNode} from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { useLayoutEffect, useRef } from 'react'
-import {
-  AppPopupSurface,
-  syncAppPopupTokens,
-  useAppPopup,
-} from '@/shared/ui/AppPopup'
+import { AppPopupSurface, syncAppPopupTokens, useAppPopup } from '@/shared/ui/AppPopup'
 
 export interface TooltipProps {
   children: ReactNode

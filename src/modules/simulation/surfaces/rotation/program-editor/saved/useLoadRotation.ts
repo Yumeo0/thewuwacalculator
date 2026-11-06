@@ -9,6 +9,7 @@ import { cloneRotationNodes, type SavedRotation } from '@wuwacalc/core/domain/en
 import { contextScenarioMember, type CombatScenario } from '@wuwacalc/core/domain/entities/combatScenario.ts'
 import { scenarioIdForContextResonator } from '@wuwacalc/core/domain/entities/scenarioLibrary.ts'
 import { useAppStore } from '@/application/state'
+import { convertScenarioRoverGender } from '@/application/state/roverGenderConversion'
 import { collectResonatorIds } from '@/application/persistence/resonatorScope.ts'
 import { ensureResonatorData, holdResonatorData } from '@wuwacalc/core/data/gameData'
 import { clearRotationEditorSession } from '@/modules/simulation/surfaces/rotation/program-editor/state/editorSessionStore.ts'
@@ -16,6 +17,7 @@ import { clearRotationEditorSession } from '@/modules/simulation/surfaces/rotati
 export type RotationLoadMode = 'build' | 'rotation'
 
 export async function loadRotationScenario(scenario: CombatScenario, mode: RotationLoadMode): Promise<void> {
+  scenario = convertScenarioRoverGender(scenario, useAppStore.getState().ui.preferences.roverGender)
   const contextId = contextScenarioMember(scenario).resonatorId
   const existingId = scenarioIdForContextResonator(useAppStore.getState().combat, contextId)
   const existing = existingId ? useAppStore.getState().combat.scenariosById[existingId] : null

@@ -4,19 +4,7 @@
                including right-click and long-press support.
 */
 
-import {
-  Children,
-  cloneElement,
-  isValidElement as isVldElem,
-  useCallback,
-  useEffect,
-  useRef,
-  type KeyboardEvent as RctKbdVnt,
-  type MouseEvent as RctMsVnt,
-  type PointerEvent as RctPntrVnt,
-  type ReactElement,
-  type ReactNode,
-} from 'react'
+import { Children, cloneElement, isValidElement as isVldElem, useCallback, useEffect, useRef, type KeyboardEvent as RctKbdVnt, type MouseEvent as RctMsVnt, type PointerEvent as RctPntrVnt, type ReactElement, type ReactNode } from 'react'
 import type { MenuEntry, CtxOpenEvent } from '@/shared/ui/CtxMenu.tsx'
 import { useAppCtxMen } from '@/application/context-menu/AppContextMenu'
 import { isDtblVntTgt } from '@/shared/lib/isEditableEventTarget'

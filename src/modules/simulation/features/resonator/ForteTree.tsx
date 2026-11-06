@@ -8,12 +8,7 @@
 import { Fragment, useState, type CSSProperties as CssProps } from 'react'
 import type { SkillTabKey } from '@wuwacalc/core/domain/entities/resonator'
 import { glyphVars } from '@/shared/lib/gameAssets.ts'
-import {
-  FORTE_SPINE,
-  type ForteBranch,
-  type ForteDock,
-  type ForteMode,
-} from '@/modules/simulation/features/resonator/lib/forteTree.ts'
+import { FORTE_SPINE, type ForteBranch, type ForteDock, type ForteMode } from '@/modules/simulation/features/resonator/lib/forteTree.ts'
 import { SKILL_LVL_MAX, SKILL_LVL_MIN } from '@/modules/simulation/features/resonator/lib/buildEdits.ts'
 
 /** which surface the tree is standing on, so each can bring its own skin */

@@ -10,13 +10,7 @@ import { useAppStore } from '@/application/state'
 import { ROVER_PAIRS, type RoverGender } from '@/domain/entities/roverGender'
 import { ATTR_COLORS, getAttributeIconSrc } from '@/domain/gameData/attributeDisplay'
 import type { AttributeKey } from '@wuwacalc/core/domain/entities/stats'
-import {
-  countRoverSaves,
-  describeRoverSaves,
-  pluralSaves,
-  totalRoverSaves,
-  type RoverForm,
-} from '@/modules/calibration/model/roverSaves'
+import { countRoverSaves, describeRoverSaves, pluralSaves, totalRoverSaves, type RoverForm } from '@/modules/calibration/model/roverSaves'
 
 const FACE: Record<RoverForm, string> = {
   male: `/assets/game/resonators/profiles/${ROVER_PAIRS[0].male}.webp`,

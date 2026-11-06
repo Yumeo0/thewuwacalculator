@@ -6,12 +6,7 @@
 import { useRef } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { echoStatIconSrc } from '@/modules/simulation/features/echoes/lib/statGlyph.tsx'
-import {
-  AnchoredAppPopup,
-  AppPopupFill,
-  AppPopupHeader,
-  useAppPopupDismiss,
-} from '@/shared/ui/AppPopup.tsx'
+import { AnchoredAppPopup, AppPopupFill, AppPopupHeader, useAppPopupDismiss } from '@/shared/ui/AppPopup.tsx'
 
 export function Glyph({ statKey, size = 0.8 }: { statKey: string; size?: number }) {
   const icon = echoStatIconSrc(statKey)

@@ -10,26 +10,11 @@ import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
 import { withDefEchoMg, withDefIconM, withDefResMg } from '@/shared/lib/imageFallback.ts'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
 import { getAttributeIconSrc } from '@/domain/gameData/attributeDisplay.ts'
-import {
-  formatDamage,
-  fmtStat,
-  fmtStatHeading,
-  factorAt,
-  GROUP_NAMES,
-  isTextStatKey,
-  STAT_NAMES,
-  statGroup,
-  type PercentDisplay,
-  type RegisterGroup,
-  type StatKey,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
+import { formatDamage, fmtStat, fmtStatHeading, factorAt, GROUP_NAMES, isTextStatKey, STAT_NAMES, statGroup, type PercentDisplay, type RegisterGroup, type StatKey } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 import { ROTATION_EDITOR_REGISTER_GROUPS } from '@/domain/entities/rotationEditorPreferences.ts'
 import { formatExecutionRun } from '@/modules/simulation/surfaces/rotation/program-editor/model/executionScope.ts'
 import type { ReadNode } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/readNode.ts'
-import {
-  BuffRows,
-  InspectorSection,
-} from '@/modules/simulation/surfaces/rotation/program-editor/components/InspectorPrimitives.tsx'
+import { BuffRows, InspectorSection } from '@/modules/simulation/surfaces/rotation/program-editor/components/InspectorPrimitives.tsx'
 
 const STAT_ORDER = Object.keys(STAT_NAMES) as StatKey[]
 

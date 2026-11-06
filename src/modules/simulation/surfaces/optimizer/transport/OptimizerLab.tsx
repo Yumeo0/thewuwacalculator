@@ -10,10 +10,7 @@ import type { EchoInstance, ResRuntime } from '@wuwacalc/core/domain/entities/ru
 import { getResonator } from '@/modules/simulation/features/resonator/lib/resonator.ts'
 import { EvaluationBand } from '@/modules/simulation/surfaces/modulation/EvaluationBand.tsx'
 import { useWorkspaceEvaluationSummary } from '@/modules/simulation/model/evaluationSummaryContext'
-import {
-  getBuildEvaluationGrade,
-  getBuildEvaluationTone,
-} from '@/modules/simulation/model/buildEvaluationDisplay.ts'
+import { getBuildEvaluationGrade, getBuildEvaluationTone } from '@/modules/simulation/model/buildEvaluationDisplay.ts'
 import { OptimizerEchoPreview } from '@/modules/simulation/surfaces/optimizer/transport/OptimizerEchoPreview.tsx'
 
 export function OptimizerLab({

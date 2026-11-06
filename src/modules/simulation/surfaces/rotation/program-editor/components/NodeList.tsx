@@ -17,84 +17,22 @@ import { withDefEchoMg, withDefResMg } from '@/shared/lib/imageFallback.ts'
 import { RichDscr } from '@/modules/simulation/ui/RichDescription.tsx'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import { getEchoById } from '@wuwacalc/core/data/catalog/echoCatalogService.ts'
-import {
-  OffTuneCell,
-  RegisterHead,
-  bandCells,
-  useScrollbarInset,
-} from '@/modules/simulation/surfaces/rotation/program-editor/components/RegisterCells.tsx'
+import { OffTuneCell, RegisterHead, bandCells, useScrollbarInset } from '@/modules/simulation/surfaces/rotation/program-editor/components/RegisterCells.tsx'
 import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
 import type { AttributeKey, SkillAggType } from '@wuwacalc/core/domain/entities/stats.ts'
-import type {
-  EditorBlock,
-  EditorCondition,
-  NodeGate,
-  EditorNode,
-  EditorNote,
-  NodeOwner,
-  EditorSection,
-  EditorStep,
-  EditorHandoff,
-  LoopRunSelections,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
+import type { EditorBlock, EditorCondition, NodeGate, EditorNode, EditorNote, NodeOwner, EditorSection, EditorStep, EditorHandoff, LoopRunSelections } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import type { EditorMember } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import { isEditorBlock } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
-import {
-  countNodes,
-  isUnrun,
-  type DropEdge,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/treeEdit.ts'
+import { countNodes, isUnrun, type DropEdge } from '@/modules/simulation/surfaces/rotation/program-editor/model/treeEdit.ts'
 import { carryFoldId } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/selection.ts'
-import {
-  readStickyScopes,
-  sameStack,
-  scrollToScope,
-  type StickyState,
-} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/enclosingScopes.ts'
-import {
-  atRun,
-  blockRatioAt,
-  blockRunsAt,
-  blockSteps,
-  blockTotal,
-  computeGhosts,
-  computeCondRuns,
-  factorAt,
-  computeLoopCrossings,
-  computeOwnerRuns,
-  formatDamage,
-  fmtStat,
-  isTextStatKey,
-  type OffTuneAuthoringState,
-  rowFoldGroupAt,
-  shortStat,
-  buildRegister,
-  type PercentDisplay,
-  type RegisterGroup,
-  type StatKey,
-  stepDamageAt,
-  stepHasRun,
-  type GhostMap,
-  type RunMap,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
-import type {
-  RotationNodeRevealRequest,
-} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeNavigation.ts'
-import {
-  collectEditorLoopScopeByNode,
-  editorLoopId,
-  selectedLoopRun,
-  selectedRunForLoopIds,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/executionScope.ts'
+import { readStickyScopes, sameStack, scrollToScope, type StickyState } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/enclosingScopes.ts'
+import { atRun, blockRatioAt, blockRunsAt, blockSteps, blockTotal, computeGhosts, computeCondRuns, factorAt, computeLoopCrossings, computeOwnerRuns, formatDamage, fmtStat, isTextStatKey, type OffTuneAuthoringState, rowFoldGroupAt, shortStat, buildRegister, type PercentDisplay, type RegisterGroup, type StatKey, stepDamageAt, stepHasRun, type GhostMap, type RunMap } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
+import type { RotationNodeRevealRequest } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/nodeNavigation.ts'
+import { collectEditorLoopScopeByNode, editorLoopId, selectedLoopRun, selectedRunForLoopIds } from '@/modules/simulation/surfaces/rotation/program-editor/model/executionScope.ts'
 import { DEFAULT_ROT_BLOCK_COLOR } from '@/modules/simulation/surfaces/rotation/shared/containerMeta.ts'
 import { ROT_NOTE_COLORS } from '@/modules/simulation/surfaces/rotation/shared/noteMeta.ts'
 import { formatEffectConditionName } from '@/modules/simulation/model/sourceStateDisplay.ts'
-import {
-  buildGhostPill,
-  EXTENT_MIME,
-  KIND_MIME,
-  PALETTE_MIME,
-} from '@/modules/simulation/surfaces/rotation/program-editor/interaction/dragPayload.ts'
+import { buildGhostPill, EXTENT_MIME, KIND_MIME, PALETTE_MIME } from '@/modules/simulation/surfaces/rotation/program-editor/interaction/dragPayload.ts'
 import type { PaletteSpec } from '@/modules/simulation/surfaces/rotation/program-editor/model/paletteSpec.ts'
 
 export interface TeamLookup {

@@ -6,28 +6,20 @@
 
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import * as Collapsible from "@radix-ui/react-collapsible";
-import type {
-  RotationMember,
-  SkillMenuEntry,
-  SkillMenuGroup
-} from "@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts";
-import {useAppStore} from "@/application/state";
-import {useMemo, useRef, useState} from "react";
-import type {CSSProperties as CssProps} from "react";
-import {ChevronDown, Layers, Search, X} from "lucide-react";
-import {resolveSkill} from "@wuwacalc/core/engine/pipeline/resolveSkill.ts";
-import {isRotationSkillVisible} from "@/modules/simulation/surfaces/rotation/shared/visibility.ts";
-import type {SkillDef} from "@wuwacalc/core/domain/entities/stats.ts";
-import {ROT_SKILL_TABS, SKILL_TAB_NAMES, type SkillTabKey} from "@/modules/simulation/model/skillTabs.ts";
-import {AppModal} from "@/shared/ui/AppModal.tsx";
-import {getSkillType} from "@/domain/gameData/skillTypes.ts";
-import {
-  getFeatVar,
-  getSkllMenuL,
-  getSubHitLbl,
-} from "@/modules/simulation/surfaces/rotation/shared/nodeTools.ts";
-import {ATTR_COLORS} from '@/domain/gameData/attributeDisplay.ts';
-import {withDefIconM, withDefResMg} from "@/shared/lib/imageFallback.ts";
+import type { RotationMember, SkillMenuEntry, SkillMenuGroup } from '@/modules/simulation/surfaces/rotation/shared/authoringTypes.ts'
+import { useAppStore } from '@/application/state'
+import { useMemo, useRef, useState } from 'react'
+import type { CSSProperties as CssProps } from 'react'
+import { ChevronDown, Layers, Search, X } from 'lucide-react'
+import { resolveSkill } from '@wuwacalc/core/engine/pipeline/resolveSkill.ts'
+import { isRotationSkillVisible } from '@/modules/simulation/surfaces/rotation/shared/visibility.ts'
+import type { SkillDef } from '@wuwacalc/core/domain/entities/stats.ts'
+import { ROT_SKILL_TABS, SKILL_TAB_NAMES, type SkillTabKey } from '@/modules/simulation/model/skillTabs.ts'
+import { AppModal } from '@/shared/ui/AppModal.tsx'
+import { getSkillType } from '@/domain/gameData/skillTypes.ts'
+import { getFeatVar, getSkllMenuL, getSubHitLbl } from '@/modules/simulation/surfaces/rotation/shared/nodeTools.ts'
+import { ATTR_COLORS } from '@/domain/gameData/attributeDisplay.ts'
+import { withDefIconM, withDefResMg } from '@/shared/lib/imageFallback.ts'
 
 interface TabGroup {
   tab: SkillTabKey

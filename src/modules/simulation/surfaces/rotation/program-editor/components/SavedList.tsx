@@ -7,42 +7,8 @@
 import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { ContextTrigger } from '@/application/context-menu/ContextTrigger'
 import type { MenuEntry } from '@/shared/ui/CtxMenu'
-import {
-  startTransition,
-  type CSSProperties,
-  type MouseEventHandler,
-  type SyntheticEvent,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
-import {
-  CMP_MAX,
-  formatSavedTime,
-  formatSavedFigure,
-  formatSavedTick,
-  makeSavedAxis,
-  makeSavedEntry,
-  makeSavedEntries,
-  groupSavedEntries,
-  makeMemberTakes,
-  rankSavedEntries,
-  makeSavedRoster,
-  makeSavedTicks,
-  resolveSavedAxis,
-  savedContributors,
-  type SavedAxis,
-  type SavedEntry,
-  type SavedGroup,
-  type SavedMember,
-  type SavedMemberTake,
-  type SavedRosterMember,
-  type SavedListView,
-  formatDuration,
-} from '@/modules/simulation/surfaces/rotation/program-editor/presentation/savedRotationList.ts'
+import { startTransition, type CSSProperties, type MouseEventHandler, type SyntheticEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { CMP_MAX, formatSavedTime, formatSavedFigure, formatSavedTick, makeSavedAxis, makeSavedEntry, makeSavedEntries, groupSavedEntries, makeMemberTakes, rankSavedEntries, makeSavedRoster, makeSavedTicks, resolveSavedAxis, savedContributors, type SavedAxis, type SavedEntry, type SavedGroup, type SavedMember, type SavedMemberTake, type SavedRosterMember, type SavedListView, formatDuration } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/savedRotationList.ts'
 import { ChevronDown, GitCompare } from 'lucide-react'
 import type { SavedRotation } from '@wuwacalc/core/domain/entities/inventoryStorage.ts'
 import type { RotationComparisonSummary } from '@wuwacalc/core/domain/entities/rotationSummary.ts'
@@ -56,21 +22,9 @@ import { useCompareMount } from '@/modules/simulation/surfaces/rotation/program-
 import { formatDamage } from '@/modules/simulation/surfaces/rotation/program-editor/presentation/registerRows.ts'
 import { useAppStore } from '@/application/state'
 import type { RunResult } from '@/modules/simulation/surfaces/rotation/program-editor/simulation/runProgram.ts'
-import {
-  NO_ROTATION_SUMMARY,
-  type EditorSection,
-} from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
+import { NO_ROTATION_SUMMARY, type EditorSection } from '@/modules/simulation/surfaces/rotation/program-editor/model/program.ts'
 import { savedRotationMembers } from '@/modules/simulation/surfaces/rotation/program-editor/simulation/simulation.ts'
-import {
-  BuildBand,
-  RotationNodesInspector,
-  RotationTotalsInspector,
-  SelectionInspector,
-  SupportReadings,
-  selectionTone,
-  type SelectionActions,
-  type SelectionSummary,
-} from '@/modules/simulation/surfaces/rotation/program-editor/components/InspectPanels.tsx'
+import { BuildBand, RotationNodesInspector, RotationTotalsInspector, SelectionInspector, SupportReadings, selectionTone, type SelectionActions, type SelectionSummary } from '@/modules/simulation/surfaces/rotation/program-editor/components/InspectPanels.tsx'
 
 const EMPTY_SECTIONS: EditorSection[] = []
 
@@ -219,35 +173,16 @@ function Portrait({
   )
 }
 
-/* ---- the cut ----
-   the picked row shows the cast. name, rate, and rank appear elsewhere;
-   this row identifies the participating members.
-*/
-
-/*
-  the cut's geometry, in its own unit so the whole strip scales with the root.
-  a pane is a parallelogram, so its box is one rake wider than the room it
-  occupies: each pane starts a rake back from where the last one ended, which
-  puts the two raked edges on the same line and leaves nothing between two
-  frames but the slash.
-*/
+// each portrait overlaps the previous portrait by the slanted edge width.
 const CUT_RAKE = 13
 const CUT_SLASH = 2
-/* what a pane reclaims by starting back on the last one's raked edge */
+// overlap after leaving the separator width visible.
 const CUT_STEP = CUT_RAKE - CUT_SLASH
 const CUT_ZOOM = 2.8
-/*
-  the panes nest: they share a floor and each one stands this much taller than
-  the one behind it. counted from the back, so the last pane always stands one
-  step and the head stands the whole cast's worth, which is what lets the order
-  of the strip be read off its skyline. a team is three, so the head never
-  stands more than three steps.
-*/
+// each earlier portrait extends one step above the following portrait.
 const CUT_LIFT = 3
-/* keep a leaving cut mounted through its fold-out animation. */
+// keep the outgoing row mounted until its exit animation finishes.
 const CUT_OUT_MS = 420
-/* the same, for a compared panel folding back under its neighbour */
-
 
 function cutShares(count: number): number[] {
   if (count <= 1) return [0.42]
@@ -256,20 +191,13 @@ function cutShares(count: number): number[] {
   return [0.28, 0.25, 0.24, 0.23]
 }
 
-/*
-  resonators without standing art use a centered default icon on an
-  element-coloured background.
-*/
+// use a default icon when a saved portrait image is unavailable.
 function withBareCut(event: SyntheticEvent<HTMLImageElement>) {
   event.currentTarget.closest('.rsl-cut__pane')?.classList.add('is-bare')
   withDefResMg(event)
 }
 
-/*
-  a pane is placed in two parts: its share of the run, and the whole steps of
-  rake it has reclaimed from the panes before it. that keeps the strip sized to
-  whatever room the lead column actually has while the seams stay exact.
-*/
+// calculate proportional widths and fixed overlap offsets separately.
 interface CutPane {
   member: SavedMember
   x: number
@@ -301,7 +229,7 @@ function buildComparePanes(members: SavedMember[]): CutPane[] {
   return panes
 }
 
-/* the headroom the whole strip needs, which is the head pane's own lift */
+// reserve the height of the first portrait.
 function cutRise(count: number): number {
   return count * CUT_LIFT
 }
@@ -329,11 +257,7 @@ function ResonanceCut({ members, out }: { members: SavedMember[]; out: boolean }
             '--rsl-cut-z': CUT_ZOOM * pane.member.faceScale,
           } as CSSProperties}
         >
-          {/* the sprite is placed on its height with an auto width, so before it
-              has loaded its box is zero wide. deferring it would never resolve:
-              a box with no width never meets the viewport, so the load it is
-              waiting on is the load that would give it one. mounting the cut on
-              at most two rows is the throttle here, not the loading hint */}
+          {/* mount the image immediately because its auto-width box is empty until it loads. */}
           <span className="rsl-cut__frame">
             <DisplayImage src={pane.member.sprite} alt="" onError={withBareCut} />
             <i className="rsl-cut__scrim" />
@@ -345,9 +269,7 @@ function ResonanceCut({ members, out }: { members: SavedMember[]; out: boolean }
   )
 }
 
-/*
-  mount transition art only for the selected row and the outgoing row.
-*/
+// mount transition art for the selected and outgoing rows.
 function useSvdLstCut(selectedId: string | null): string | null {
   const [leaving, setLeaving] = useState<string | null>(null)
   const held = useRef(selectedId)

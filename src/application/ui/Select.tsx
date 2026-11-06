@@ -8,13 +8,9 @@ import { DisplayImage } from '@/shared/ui/DisplayImage'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent as KeyboardEvent, ReactNode } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
-import {useAppStore} from "@/application/state";
-import {withDefIconM} from "@/shared/lib/imageFallback.ts";
-import {
-  AnchoredAppPopup,
-  useAppPopup,
-  useAppPopupDismiss,
-} from '@/shared/ui/AppPopup'
+import { useAppStore } from '@/application/state'
+import { withDefIconM } from '@/shared/lib/imageFallback.ts'
+import { AnchoredAppPopup, useAppPopup, useAppPopupDismiss } from '@/shared/ui/AppPopup'
 
 export type SelectValue = string | number
 
